@@ -1,0 +1,25 @@
+.gradle/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+local.properties
+.kotlin/
+*.hprof
+.DS_Store
+.idea/
+
+# Build outputs (generated artifacts, not source)
+outputs/
+
+# Signing secrets — NEVER commit these
+keystore.properties
+*.keystore
+*.jks
+secrets/
+
+# Environment / CI
+.env
+google-services.json
+GoogleService-Info.plist
+RALPH_PLAN.md
+RALPH_PROGRESS.md
+*.md.bak
