@@ -1,0 +1,113 @@
+package com.kursi.feature.game
+
+import com.kursi.ai.OpponentInsight
+import com.kursi.ai.advisor.MoveAdvice
+import com.kursi.engine.GameEvent
+import com.kursi.engine.Intent
+import com.kursi.engine.PlayerId
+import com.kursi.engine.PhaseView
+import com.kursi.engine.PlayerView
+import com.kursi.feature.game.narrative.ArcId
+import com.kursi.feature.game.narrative.ChatMessage
+import com.kursi.feature.game.narrative.ChatSuggestion
+
+/**
+ * Per-opponent persona info surfaced to the UI so the screen can show real names
+ * and monograms instead of generic "P1/P2/P3" labels.
+ *
+ * [seatColorArgb] is the persona's locked Okabe-Ito hue packed as a Long ARGB.
+ */
+data class OpponentPersona(
+    val playerId: PlayerId,
+    val name: String,
+    val monogram: String,
+    /** ARGB packed Long — e.g. 0xFF0072B2L. Convert to Color in the UI layer. */
+    val seatColorArgb: Long,
+)
+
+/**
+ * Immutable MVI state derived from the human player's [PlayerView].
+ *
+ * This is the single source of truth surfaced to the UI. It is produced exclusively by
+ * [session.GameSession] (which calls [com.kursi.engine.redact] before building this) so the
+ * composable layer never touches [com.kursi.engine.GameState].
+ */
+data class GameUiState(
+    /** The redacted view — only what the human player is allowed to see. */
+    val view: PlayerView,
+    /** Concrete legal intents for the human's current turn. Empty when it is NOT the human's turn. */
+    val legalIntents: List<Intent>,
+    /** Recent game events for the history panel (capped, most-recent last). */
+    val recentEvents: List<GameEvent>,
+    /** True when it is currently the human player's turn to act. */
+    val isHumanTurn: Boolean,
+    /** True when the game has ended. */
+    val isGameOver: Boolean,
+    /** The winner's player id (raw int seat), or null if the game is still running. */
+    val winnerSeat: Int?,
+    /**
+     * Persona info for each bot seat — keyed by [PlayerId].
+     * Empty map means no persona data (e.g. online game, or pre-persona test fixture).
+     */
+    val opponentPersonas: Map<PlayerId, OpponentPersona> = emptyMap(),
+    /**
+     * DECISION-COACH advice for the human's current decision, ranked best-first, with exactly
+     * one entry flagged [MoveAdvice.recommended]. Empty when it is not the human's turn, or
+     * while the advice is still being computed asynchronously (the screen renders fine without
+     * it and lights up the badges/odds once it arrives). Produced by [com.kursi.ai.advisor.MoveAdvisor].
+     */
+    val advice: List<MoveAdvice> = emptyList(),
+    /**
+     * PUBLIC-info opponent dossiers — one per opponent of the human, in seat order, derived by the
+     * decision-coach's belief from table-visible claims/blocks/reveals ONLY. Carries the real read
+     * the UI surfaces: posterior over likely roles, per-role claim counts, bluff-caught tallies and
+     * the inferred bluffRate. SECRECY: never contains an opponent's hidden cards. Empty until the
+     * session has run the coach (e.g. mid-compute, or a pre-insight test fixture). Keyed for lookup
+     * via [insightFor]. Produced by [com.kursi.ai.OpponentInsight.from].
+     */
+    val opponentInsights: List<OpponentInsight> = emptyList(),
+    /**
+     * DECISION-COACH TOGGLE — mirrors [AppPrefs.coachEnabled].
+     *
+     * When true (default), the full M2 proactive guidance is shown: recommended-move stars,
+     * per-option success odds/odds pills, safe-vs-bluff REAL/BLUFF badges, the coach-explains
+     * line, and the PickTarget weakest-target star.
+     *
+     * When false, all proactive guidance is HIDDEN — the player reads the table unaided.
+     * Observational, player-initiated info (long-press dossier/inspect chits, opponent claim
+     * tiles, suspicion pips, the Roznamcha log) is ALWAYS shown regardless of this flag.
+     */
+    val coachEnabled: Boolean = true,
+    /**
+     * M5 PASS-AND-PLAY. The raw seat index of the human who must act NOW (whose redacted [view] is
+     * shown), or null when it is not a human's turn. In single-human vs-AI this is always 0 on the
+     * human's turn. In pass-and-play it changes between hot-seat players — the handoff guard watches
+     * it to know when to blank the screen and prompt "pass the device".
+     */
+    val activeSeat: Int? = null,
+    /** True when this is a multi-human pass-and-play match (drives the handoff guard). */
+    val isPassAndPlay: Boolean = false,
+    /**
+     * DARBAR / NARRATIVE MODE — when true, bots chat freely, the four story arcs are playable, and
+     * bot targeting can be socially nudged (conspiracy + flaw-baiting). Off = the pristine, tuned AI
+     * with no chat (ranked / normal play is byte-for-byte unchanged).
+     */
+    val narrativeEnabled: Boolean = false,
+    /** The Darbar's running chat (most-recent last), capped. Empty outside narrative mode. */
+    val chatFeed: List<ChatMessage> = emptyList(),
+    /** What the player can SAY right now — tappable arc-start / arc-reply / table-talk chips. */
+    val chatSuggestions: List<ChatSuggestion> = emptyList(),
+    /** The arcs currently in flight (drives a small "live kissa" indicator). */
+    val activeArcs: List<ArcId> = emptyList(),
+    /** Count of chat lines the player hasn't opened yet — drives the Darbar toggle's unread badge. */
+    val unreadChat: Int = 0,
+) {
+    /** The PUBLIC-info dossier for [id], or null if none has been computed yet. */
+    fun insightFor(id: PlayerId): OpponentInsight? =
+        opponentInsights.firstOrNull { it.opponentId == id }
+
+    companion object {
+        /** Maximum number of events kept in [recentEvents]. */
+        const val MAX_EVENTS = 30
+    }
+}
