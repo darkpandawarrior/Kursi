@@ -1,0 +1,22 @@
+# Kursi iOS code signing via Fastlane Match.
+# Store certificates in a private Git repo; provide MATCH_GIT_URL + MATCH_PASSWORD as CI secrets.
+#
+# Setup (once):
+#   bundle exec fastlane match init
+#   bundle exec fastlane match appstore
+#
+# Renew:
+#   bundle exec fastlane match nuke distribution  # revoke and regenerate
+#   bundle exec fastlane match appstore
+
+git_url(ENV["MATCH_GIT_URL"] || "https://github.com/REPLACE_WITH_CERTS_REPO.git")
+storage_mode("git")
+
+type("appstore")
+
+app_identifier(["com.kursi.ios"])
+username(ENV["IOS_APPLE_ID"] || "")
+team_id(ENV["IOS_TEAM_ID"] || "")
+
+# Default: read-only (don't regenerate unless explicitly running `match renew_certs`).
+readonly(true)

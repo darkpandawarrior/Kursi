@@ -1,0 +1,11 @@
+First release. Gaddi taiyaar hai.
+
+- Full game engine: 5 roles, 2–10 players, challenge/block resolution
+- 10 AI bot personas with ISMCTS search
+- GAUNTLET escalating ladder
+- Team Khel faction mode
+- DARBAR narrative layer: bot chat, alliances, conspiracies
+- TAMASHA spectator demo mode
+- Interactive tutorial (Pehli Hazri)
+- Career stats + auto-resume
+- Compose Multiplatform: Android + iOS + Desktop + Web

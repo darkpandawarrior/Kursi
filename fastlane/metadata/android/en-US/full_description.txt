@@ -1,0 +1,32 @@
+Kursi ke liye kuch bhi karega.
+
+Bluffing card game set in a satirical India corporate-political underworld. Claim any role on your turn — whether you hold it or not. If someone calls your bluff and they're right, you lose influence. If they're wrong, they do. Last player standing wins the Gaddi.
+
+Five roles, each a deadpan archetype:
+• Netaji Vachan — claims FDI, blocks Foreign Aid. Believes his own lies in real time.
+• Bhai Teja — collects Supari, blocks assassination. Quiet, slow, unbothered.
+• Babu Filewala — levies Tax, blocks Vasooli. Power through delay and the comma.
+• Jugaadu Chhotu — Vasooli (steal). A solution for every problem. Mostly illegal.
+• Vakil Loophole — blocks Supari. Has read every rule twice, knows three exceptions.
+
+At 10 coins you must Khela (Coup). No exceptions.
+
+10 AI bots, each bluffs differently — Netaji claims his role even when holding Bhai, Bhai Teja goes silent before he strikes, Babu Filewala taxis obsessively, Jugaadu Chhotu does something unpredictable every time, Vakil Loophole challenges on principle. Then there's Didi (vengeance is her love language), Madam Ji (always two moves ahead), and four others.
+
+Modes:
+• vs AI — 1 human vs up to 9 bots
+• GAUNTLET (Tarakki ki Seedhi) — 5-rung escalating ladder from Easy/3p through Grandmaster/6p
+• Team Khel — faction play; allies are never legal targets
+• DARBAR — bots chat, conspire, form alliances and hold grudges. You can manipulate them.
+• TAMASHA — AI plays all seats. Watch it unfold.
+
+DARBAR runs four story arcs during games: GATHBANDHAN (two bots ally, one eventually defects), AFWAAH (a rumour about someone's role spreads, might be true), STING (a bot leaks a real card claim), BADLA (a bot declares a grudge and follows through).
+
+Everything else: interactive tutorial (Pehli Hazri), career stats and bot H2H records, auto-resume via deterministic intent log replay, full TalkBack semantics, CVD-safe role colours. Plays completely offline — no account, no ads, no server needed.
+
+The visual identity is License Raj Deco — 1950s–70s government-issue document aesthetic. Ration cards for liars. Enamel nameplates for crooks. Everything is on theme.
+
+Sab mile hue hain. Trust no claim. Especially your own.
+
+सारे पात्र काल्पनिक हैं।
+All characters and events are fictional. Satire only.
