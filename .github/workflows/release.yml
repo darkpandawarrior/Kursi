@@ -1,0 +1,205 @@
+name: Release
+
+# Manual release orchestration. Trigger from GitHub Actions → Run workflow.
+# All credential inputs are placeholders until you add the corresponding
+# repository secrets (see scripts/setup-secrets.md or keystore.properties.template).
+#
+# Rungs:
+#   android_rung — skip | internal | beta | production
+#   ios_rung     — skip | testflight | appstore
+on:
+  workflow_dispatch:
+    inputs:
+      android_rung:
+        description: "Android release rung"
+        type: choice
+        options: [skip, internal, beta, production]
+        default: internal
+      ios_rung:
+        description: "iOS release rung"
+        type: choice
+        options: [skip, testflight, appstore]
+        default: skip
+      version_bump:
+        description: "Version bump (applied before build)"
+        type: choice
+        options: [none, patch, minor, major]
+        default: patch
+
+permissions:
+  contents: write
+
+jobs:
+  # ── Version bump (optional) ────────────────────────────────────────────────
+  bump:
+    name: Bump Version
+    runs-on: ubuntu-latest
+    if: ${{ inputs.version_bump != 'none' }}
+    outputs:
+      version_name: ${{ steps.read.outputs.version_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Bump version
+        run: bash scripts/bump_version.sh --${{ inputs.version_bump }}
+      - name: Read new version
+        id: read
+        run: echo "version_name=$(cat VERSION | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+      - name: Commit version bump
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add VERSION BUILD_NUMBER
+          git commit -m "chore: bump version to $(cat VERSION | tr -d '[:space:]')"
+          git push
+
+  # ── Android release APK / AAB ─────────────────────────────────────────────
+  android:
+    name: Android (${{ inputs.android_rung }})
+    runs-on: ubuntu-latest
+    needs: [bump]
+    if: |
+      always() &&
+      inputs.android_rung != 'skip' &&
+      (needs.bump.result == 'success' || needs.bump.result == 'skipped')
+    environment: >-
+      ${{ inputs.android_rung == 'production' && 'play-production'
+       || (inputs.android_rung == 'beta' && 'play-beta' || 'play-internal') }}
+    env:
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main  # pick up the version-bump commit
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Ruby + Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      # Materialize signing secrets from base64-encoded repo secrets.
+      # Add these secrets in GitHub → Settings → Secrets and variables → Actions:
+      #   KEYSTORE_B64        — base64 of kursi-release.keystore
+      #   KEYSTORE_PASSWORD   — store password
+      #   KEY_ALIAS           — key alias (kursi)
+      #   KEY_PASSWORD        — key password
+      #   PLAYSTORE_CREDS_B64 — base64 of play-service-account.json
+      - name: Materialize signing secrets
+        run: |
+          set -euo pipefail
+          mkdir -p secrets
+          if [ -n "${KEYSTORE_B64:-}" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > secrets/kursi-release.keystore
+            {
+              echo "RELEASE_STORE_FILE=$PWD/secrets/kursi-release.keystore"
+              echo "RELEASE_STORE_PASSWORD=${KEYSTORE_PASSWORD:-}"
+              echo "RELEASE_KEY_ALIAS=${KEY_ALIAS:-kursi}"
+              echo "RELEASE_KEY_PASSWORD=${KEY_PASSWORD:-}"
+            } >> "$GITHUB_ENV"
+          fi
+          if [ -n "${PLAYSTORE_CREDS_B64:-}" ]; then
+            echo "$PLAYSTORE_CREDS_B64" | base64 -d > secrets/play-service-account.json
+            echo "PLAY_STORE_KEY_FILE_PATH=$PWD/secrets/play-service-account.json" >> "$GITHUB_ENV"
+          fi
+        env:
+          KEYSTORE_B64:      ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS:         ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD:      ${{ secrets.KEY_PASSWORD }}
+          PLAYSTORE_CREDS_B64: ${{ secrets.PLAYSTORE_CREDS_B64 }}
+
+      - name: Grant execute permission
+        run: chmod +x ./gradlew
+
+      - name: Build release AAB + APK
+        run: |
+          ./gradlew :cmp-android:bundleRelease :cmp-android:assembleRelease
+
+      - name: Upload release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kursi-release-apk
+          path: cmp-android/build/outputs/apk/release/kursi-release-*.apk
+
+      - name: Upload release AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kursi-release-aab
+          path: cmp-android/build/outputs/bundle/release/
+
+      - name: Deploy to Play Store (${{ inputs.android_rung }})
+        if: env.PLAY_STORE_KEY_FILE_PATH != ''
+        run: |
+          case "${{ inputs.android_rung }}" in
+            internal)    bundle exec fastlane android internal ;;
+            beta)        bundle exec fastlane android beta ;;
+            production)  bundle exec fastlane android production \
+                           rollout:${{ inputs.production_rollout || '0.10' }} ;;
+          esac
+
+  # ── iOS TestFlight / App Store ────────────────────────────────────────────
+  ios:
+    name: iOS (${{ inputs.ios_rung }})
+    runs-on: macos-latest
+    needs: [bump]
+    if: |
+      always() &&
+      inputs.ios_rung != 'skip' &&
+      (needs.bump.result == 'success' || needs.bump.result == 'skipped')
+    env:
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Cache Kotlin/Native toolchain
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: ${{ runner.os }}-konan-v1-${{ hashFiles('gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-konan-v1-
+
+      - name: Set up Ruby + Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Grant execute permission
+        run: chmod +x ./gradlew
+
+      - name: Build KMP iOS framework
+        run: ./gradlew :cmp-ios:linkReleaseFrameworkIosArm64
+
+      - name: Deploy to TestFlight / App Store
+        run: |
+          case "${{ inputs.ios_rung }}" in
+            testflight) bundle exec fastlane ios testflight ;;
+            appstore)   bundle exec fastlane ios appstore ;;
+          esac
+        env:
+          APP_STORE_CONNECT_API_KEY_ID:      ${{ secrets.ASC_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER_ID:   ${{ secrets.ASC_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
