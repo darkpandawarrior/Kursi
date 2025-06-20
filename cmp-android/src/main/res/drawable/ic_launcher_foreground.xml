@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    KURSI adaptive icon foreground — the "chair-R" glyph.
+
+    The R letterform reads as a chair in side profile:
+      • Left vertical stroke  = chair back (full height — the back leg)
+      • Top curve (bowl)      = chair-back rail
+      • Horizontal at mid     = the seat
+      • Diagonal stroke       = front chair leg (SHORTER than the back — the wobble)
+      • Brass coin            = propping up the short leg (power held up by money)
+
+    Colors:
+      • Glyph:  cream  #F4ECD8  (document cream from the License Raj Deco palette)
+      • Coin:   brass  #C99A3B  (aged brass accent)
+    Background is defined separately in ic_launcher_background.xml.
+
+    Safe zone: 72×72 dp centered in 108×108 dp adaptive icon canvas.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Chair back post + back leg (full height, left vertical) -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#F4ECD8"
+        android:strokeWidth="9"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M 33,20 L 33,90" />
+
+    <!-- Chair-back rail + bowl (R's bump, curves right and returns to seat level) -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#F4ECD8"
+        android:strokeWidth="9"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M 33,20 L 63,20 Q 81,20 81,37 Q 81,54 65,55 L 33,55" />
+
+    <!-- Front leg — diagonal, shorter than the back (the wobble).
+         Back leg ends at y=90; front ends at y=80 — 10dp gap = unstable throne. -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#F4ECD8"
+        android:strokeWidth="9"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M 66,55 L 76,80" />
+
+    <!-- Brass coin propping the short leg (the visual gag: power held up by money) -->
+    <path
+        android:fillColor="#C99A3B"
+        android:pathData="M 82,83 m -6,0 a 6,6 0 1,0 12,0 a 6,6 0 1,0 -12,0" />
+
+</vector>
