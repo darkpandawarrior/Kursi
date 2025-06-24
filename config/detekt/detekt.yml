@@ -1,0 +1,93 @@
+build:
+  maxIssues: 0
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+# ── Suppressions: rules that conflict with Compose conventions or produce noise ──
+
+style:
+  MagicNumber:
+    active: true
+    ignorePropertyDeclaration: true   # named color/size constants (Dp, Color) are self-documenting
+    ignoreNumbers:
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+      - '3'
+      - '4'
+      - '5'
+      - '6'
+      - '7'
+      - '8'
+      - '9'
+      - '10'
+      - '100'
+      - '360'
+      - '1000'
+    ignoreAnnotated:
+      - 'androidx.compose.ui.tooling.preview.Preview'
+      - 'androidx.compose.runtime.Composable'
+  MaxLineLength:
+    active: false     # .editorconfig / ktlint is the single source of truth for line length
+  WildcardImport:
+    active: false     # Compose + Kursi design-system generate many wildcard imports via IDE
+  ReturnCount:
+    active: true
+    max: 4            # Compose screens use early return for loading/error states
+  UnusedPrivateMember:
+    active: true
+    allowedNames: "(_|ignored|expected|serialVersionUID)"
+
+complexity:
+  LongMethod:
+    threshold: 80     # Compose screens are long but readable; engine state machines need depth
+    ignoreAnnotated:
+      - 'androidx.compose.runtime.Composable'
+  LongParameterList:
+    threshold: 8
+    ignoreAnnotated:
+      - 'androidx.compose.runtime.Composable'
+  CyclomaticComplexMethod:
+    threshold: 20     # Engine.applyIntent() is inherently complex by design (game rules)
+  TooManyFunctions:
+    thresholdInFiles: 40
+    thresholdInClasses: 20
+    thresholdInInterfaces: 15
+    thresholdInObjects: 20
+    thresholdInEnums: 10
+
+naming:
+  FunctionNaming:
+    # Composable functions are PascalCase — suppress across the board.
+    active: false
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][_A-Z0-9]*|[a-z][a-zA-Z0-9]*'   # allow camelCase for local constants
+
+performance:
+  SpreadOperator:
+    active: false     # Vararg spreading is idiomatic Kotlin in several engine call sites
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: true
+    exceptionNames:
+      - 'ArrayIndexOutOfBoundsException'
+      - 'Error'
+      - 'Exception'
+      - 'IllegalMonitorStateException'
+      - 'NullPointerException'
+      - 'RuntimeException'
+      - 'Throwable'
+    allowedExceptionNameRegex: '_|(ignored)'
+
+coroutines:
+  active: true
+  GlobalCoroutineUsage:
+    active: true
+  RedundantSuspendModifier:
+    active: true
+  SuspendFunWithFlowReturnType:
+    active: true
