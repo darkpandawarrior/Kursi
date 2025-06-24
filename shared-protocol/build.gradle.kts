@@ -7,7 +7,7 @@ kotlin {
     android {
         namespace = "com.kursi.protocol"
         compileSdk = 37
-        minSdk = 24
+        minSdk = 26
         withHostTest {}
     }
 

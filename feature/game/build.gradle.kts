@@ -40,7 +40,7 @@ kotlin {
     android {
         namespace = "com.kursi.feature.game"
         compileSdk = 37
-        minSdk = 24
+        minSdk = 26
         withHostTest {}
     }
 

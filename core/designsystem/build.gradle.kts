@@ -18,7 +18,7 @@ kotlin {
     android {
         namespace = "com.kursi.designsystem"
         compileSdk = 37
-        minSdk = 24
+        minSdk = 26
     }
 
     sourceSets {
