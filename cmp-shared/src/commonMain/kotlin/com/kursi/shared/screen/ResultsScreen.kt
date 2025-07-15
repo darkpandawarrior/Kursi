@@ -65,6 +65,7 @@ fun ResultsScreen(
      * was a gauntlet game, the human won, and a next rung exists. Null hides the PROMOTE CTA.
      */
     onNextGauntletRung: (() -> Unit)? = null,
+    onShare: (() -> Unit)? = null,
 ) {
     // M3 §4 — honest empty state. On a MatchSummaryStore cache miss (process death cleared the
     // in-memory store) we do NOT fabricate a 0-turn certificate; we show a "record expired" notice.
@@ -215,6 +216,14 @@ fun ResultsScreen(
                     label = s.reviewCta,
                     sublabel = s.reviewCtaSub,
                     onClick = onReview,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            if (onShare != null) {
+                StampChit(
+                    label = "SHARE",
+                    sublabel = "Faisla share karo",
+                    onClick = onShare,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }

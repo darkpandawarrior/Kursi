@@ -30,6 +30,7 @@ kotlin {
             implementation(libs.ui)
             implementation(project(":feature:game"))
             implementation(project(":core:designsystem"))
+            implementation(project(":core:feedback"))
             implementation(project(":core:prefs"))
             implementation(project(":core:network"))
             implementation(project(":engine"))
