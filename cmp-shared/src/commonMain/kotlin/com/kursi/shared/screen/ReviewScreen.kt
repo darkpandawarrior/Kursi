@@ -1,0 +1,558 @@
+package com.kursi.shared.screen
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.kursi.designsystem.BrandTokens
+import com.kursi.designsystem.KursiNeutrals
+import com.kursi.designsystem.KursiType
+import com.kursi.feature.game.GameScreen
+import com.kursi.feature.game.GameUiState
+import com.kursi.feature.game.Language
+import com.kursi.feature.game.session.CompletedMatch
+import com.kursi.feature.game.session.MatchReplay
+import com.kursi.feature.game.session.ReplayAnnotation
+import com.kursi.feature.game.session.ReplaySession
+import com.kursi.shared.strings.LocalKursiStrings
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+
+/**
+ * ReviewScreen — M6c REVIEW. Replays a recorded finished match on the REAL in-game table
+ * ([GameScreen], read-only) with a scrubber + advisor annotations (teach-by-review).
+ *
+ * # Determinism + secrecy
+ * The replay is reconstructed by [MatchReplay] from (seed + the human intent log) — the engine + bots
+ * are a pure function of those, so every reviewed [GameUiState] is bit-for-bit the one the human saw
+ * live, redacted exactly the same way (a reviewer never sees cards they couldn't see live).
+ *
+ * # The scrubber
+ * Walks the human-decision frames (plus the terminal game-over frame) with: step ◂ / ▸, jump to the
+ * previous / next HUMAN decision, a play/pause auto-advance, and a tappable turn-timeline of every
+ * step. The replay frames are the stops the live session paused control on — the meaningful review
+ * beats.
+ *
+ * # Annotations
+ * At each human-decision step the [ReplaySession] carries the advisor's [ReplayAnnotation] for that
+ * exact moment: what was played vs the recommended best, the EV gap, and the voiced belief read
+ * ("Teen NETA hisaab mein the — lalkaar faayde ka tha"). Surfaced in a bottom annotation panel.
+ *
+ * The heavy reconstruction (one ISMCTS read per decision) runs OFF the main thread via [buildReplay];
+ * the screen shows a teak void until it lands. The render harness can pass a pre-built [prebuilt]
+ * session + [initialStep] so a static fixture captures a mid-replay frame with its annotation.
+ */
+@Composable
+fun ReviewScreen(
+    match: CompletedMatch?,
+    language: Language,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    /** Render-harness only: a pre-built session so a static fixture renders without async build. */
+    prebuilt: ReplaySession? = null,
+    /** Render-harness only: the step to open on (clamped). Null in the real app (opens at step 0). */
+    initialStep: Int? = null,
+) {
+    val s = LocalKursiStrings.current
+
+    // Reconstruct the replay off the main thread (heavy: one advisor read per human decision).
+    var replay by remember(match, prebuilt) { mutableStateOf(prebuilt) }
+    LaunchedEffect(match, prebuilt) {
+        if (prebuilt == null && match != null) {
+            replay = withContext(kotlinx.coroutines.Dispatchers.Default) {
+                MatchReplay.replaySessionFor(match)
+            }
+        }
+    }
+
+    val r = replay
+    if (r == null) {
+        // Building (or no record) — teak void. The header still offers a way back.
+        Box(modifier.fillMaxSize().background(BrandTokens.TeakInk)) {
+            ReviewHeader(onBack = onBack, modifier = Modifier.align(Alignment.TopCenter))
+            Text(
+                "…",
+                style = KursiType.title.copy(fontSize = 28.sp),
+                color = BrandTokens.BrassAged.copy(alpha = 0.5f),
+                modifier = Modifier.align(Alignment.Center),
+            )
+        }
+        return
+    }
+
+    var step by remember(r) { mutableStateOf((initialStep ?: 0).coerceIn(0, r.stepCount - 1)) }
+    var playing by remember(r) { mutableStateOf(false) }
+
+    // Auto-advance while playing. Stops at the terminal frame.
+    LaunchedEffect(playing, r) {
+        if (playing) {
+            while (step < r.stepCount - 1) {
+                delay(1400)
+                if (step < r.stepCount - 1) step += 1 else break
+            }
+            playing = false
+        }
+    }
+
+    val ui: GameUiState = remember(r, step) { r.stepTo(step) }
+    val annotation: ReplayAnnotation? = remember(r, step) { r.annotationAt(step) }
+    val isTerminal = step == r.stepCount - 1
+
+    Box(modifier.fillMaxSize().background(BrandTokens.TeakInk)) {
+        Column(Modifier.fillMaxSize()) {
+            ReviewHeader(onBack = onBack)
+
+            // The REAL in-game table, read-only (every action is swallowed). Reused verbatim so the
+            // replay is visually identical to live play.
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                key(step) {
+                    GameScreen(
+                        state = ui,
+                        onAction = { /* read-only review — input is inert */ },
+                        showPrimerOverride = false,
+                        soundEnabled = false,
+                        reducedMotion = true,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+                // A faint "REVIEW" watermark so it's unmistakably a replay, not a live game.
+                ReviewWatermark(modifier = Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 12.dp))
+            }
+
+            // ── Advisor annotation panel (decision frames only) ──
+            AnimatedVisibility(
+                visible = annotation != null,
+                enter = fadeIn(tween(180)) + slideInVertically(tween(220)) { it / 2 },
+                exit = fadeOut(tween(120)) + slideOutVertically(tween(160)) { it / 2 },
+            ) {
+                annotation?.let { AnnotationPanel(it, language = language) }
+            }
+
+            // ── Scrubber transport + timeline ──
+            Scrubber(
+                replay = r,
+                step = step,
+                isTerminal = isTerminal,
+                playing = playing,
+                onTogglePlay = { playing = !playing },
+                onStep = { target -> playing = false; step = target.coerceIn(0, r.stepCount - 1) },
+            )
+        }
+    }
+}
+
+// ───────────────────────────── header ─────────────────────────────
+
+@Composable
+private fun ReviewHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val s = LocalKursiStrings.current
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(BrandTokens.TeakDark)
+            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                .clickable(onClick = onBack)
+                .semantics { contentDescription = "Back" }
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+        ) {
+            Text(s.reviewBack, style = KursiType.title.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary)
+        }
+        Text(
+            s.reviewHeader,
+            style = KursiType.title.copy(fontSize = 15.sp, letterSpacing = 1.sp),
+            color = BrandTokens.GoldAntique,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        // Corner stamp
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .border(1.dp, BrandTokens.StampRed.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
+        ) {
+            Text(
+                s.reviewBadge,
+                style = KursiType.label_micro.copy(fontSize = 8.sp, letterSpacing = 1.sp),
+                color = BrandTokens.StampRed.copy(alpha = 0.85f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReviewWatermark(modifier: Modifier = Modifier) {
+    val s = LocalKursiStrings.current
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(BrandTokens.TeakInk.copy(alpha = 0.55f))
+            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+    ) {
+        Text(
+            s.reviewBadge,
+            style = KursiType.label_micro.copy(fontSize = 8.sp, letterSpacing = 1.5.sp),
+            color = BrandTokens.GoldAntique.copy(alpha = 0.8f),
+        )
+    }
+}
+
+// ───────────────────────────── annotation panel ─────────────────────────────
+
+@Composable
+private fun AnnotationPanel(a: ReplayAnnotation, language: Language) {
+    val s = LocalKursiStrings.current
+    val accent = verdictColor(a.verdict)
+    val verdictWord = when (a.verdict) {
+        ReplayAnnotation.Verdict.SHARP -> s.reviewVerdictSharp
+        ReplayAnnotation.Verdict.FINE -> s.reviewVerdictFine
+        ReplayAnnotation.Verdict.LOOSE -> s.reviewVerdictLoose
+        ReplayAnnotation.Verdict.COSTLY -> s.reviewVerdictCostly
+    }
+    val belief = if (language == Language.ENGLISH) a.beliefEnglish else a.beliefHinglish
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF1C140E))
+            .border(width = 1.dp, color = accent.copy(alpha = 0.55f), shape = RoundedCornerShape(0.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .semantics {
+                contentDescription = "Advisor read. You played ${a.playedLabel}. Best move ${a.bestLabel}. $belief"
+            },
+    ) {
+        Column(
+            modifier = Modifier.widthIn(max = 760.dp).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            // Header row: advisor tag + verdict badge
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    s.reviewAdvisorHeader,
+                    style = KursiType.title.copy(fontSize = 12.sp, letterSpacing = 1.sp),
+                    color = BrandTokens.GoldAntique,
+                )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(accent.copy(alpha = 0.18f))
+                        .border(1.dp, accent.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                ) {
+                    Text(verdictWord, style = KursiType.label_micro.copy(fontSize = 9.sp, letterSpacing = 1.sp), color = accent)
+                }
+                Spacer(Modifier.weight(1f))
+                Text(
+                    s.reviewAdvisorSub,
+                    style = KursiType.caption.copy(fontSize = 9.sp, fontStyle = FontStyle.Italic),
+                    color = KursiNeutrals.TextMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
+            // The voiced belief read — the heart of the teach-by-review.
+            Text(
+                "“$belief”",
+                style = KursiType.title.copy(fontSize = 14.sp, fontStyle = FontStyle.Italic),
+                color = KursiNeutrals.TextPrimary,
+            )
+
+            // Played vs best + EV gap.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                MoveCell(label = s.reviewPlayedLabel, value = a.playedLabel, accent = accent, modifier = Modifier.weight(1f))
+                MoveCell(label = s.reviewBestLabel, value = a.bestLabel, accent = BrandTokens.GoldAntique, modifier = Modifier.weight(1f))
+            }
+            // EV gap line
+            if (a.matchedBest) {
+                Text(
+                    s.reviewMatchedBest,
+                    style = KursiType.caption.copy(fontSize = 11.sp),
+                    color = verdictColor(ReplayAnnotation.Verdict.SHARP),
+                )
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        s.reviewEvGapLabel + ":",
+                        style = KursiType.caption.copy(fontSize = 11.sp),
+                        color = KursiNeutrals.TextMuted,
+                    )
+                    Text(
+                        s.reviewEvGapValue(a.evGapPct),
+                        style = KursiType.title.copy(fontSize = 12.sp),
+                        color = accent,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MoveCell(label: String, value: String, accent: Color, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(BrandTokens.PaperCream.copy(alpha = 0.05f))
+            .border(1.dp, accent.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        Text(label, style = KursiType.label_micro.copy(fontSize = 8.sp, letterSpacing = 1.sp), color = KursiNeutrals.TextMuted)
+        Text(value, style = KursiType.title.copy(fontSize = 12.sp), color = KursiNeutrals.TextPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+private fun verdictColor(v: ReplayAnnotation.Verdict): Color = when (v) {
+    ReplayAnnotation.Verdict.SHARP -> Color(0xFF6FCF97)   // green — best/near-best
+    ReplayAnnotation.Verdict.FINE -> Color(0xFFB7C66B)    // olive — close enough
+    ReplayAnnotation.Verdict.LOOSE -> Color(0xFFE0B354)   // amber — leaked some EV
+    ReplayAnnotation.Verdict.COSTLY -> BrandTokens.StampRed // red — costly miss
+}
+
+// ───────────────────────────── scrubber ─────────────────────────────
+
+@Composable
+private fun Scrubber(
+    replay: ReplaySession,
+    step: Int,
+    isTerminal: Boolean,
+    playing: Boolean,
+    onTogglePlay: () -> Unit,
+    onStep: (Int) -> Unit,
+) {
+    val s = LocalKursiStrings.current
+    val decisionIdx = replay.humanDecisionIndices
+    val prevDecision = decisionIdx.lastOrNull { it < step }
+    val nextDecision = decisionIdx.firstOrNull { it > step }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(BrandTokens.TeakDark)
+            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.5f), RoundedCornerShape(0.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Column(modifier = Modifier.widthIn(max = 760.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            // ── Timeline strip — one pip per step, decision pips brass, terminal pip red. ──
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    s.reviewTimeline,
+                    style = KursiType.label_micro.copy(fontSize = 8.sp, letterSpacing = 1.5.sp),
+                    color = KursiNeutrals.TextMuted,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    for (i in 0 until replay.stepCount) {
+                        val isDecision = i in decisionIdx
+                        val isCurrent = i == step
+                        val isLast = i == replay.stepCount - 1
+                        val pipColor = when {
+                            isCurrent -> BrandTokens.GoldAntique
+                            isLast -> BrandTokens.StampRed.copy(alpha = 0.8f)
+                            isDecision -> BrandTokens.BrassAged.copy(alpha = 0.85f)
+                            else -> BrandTokens.BrassDark.copy(alpha = 0.5f)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(if (isCurrent) 16.dp else 10.dp)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(pipColor)
+                                .clickable { onStep(i) }
+                                .semantics { contentDescription = "Step ${i + 1}" },
+                        )
+                    }
+                }
+            }
+
+            // ── Transport row ──
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TransportButton("⏮", s.reviewPrevDecision, enabled = prevDecision != null) { prevDecision?.let(onStep) }
+                TransportButton("◂", s.reviewStepBack, enabled = step > 0) { onStep(step - 1) }
+                // Play / pause — the hero control.
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(BrandTokens.BrassAged)
+                        .border(1.dp, BrandTokens.GoldAntique, CircleShape)
+                        .clickable(onClick = onTogglePlay)
+                        .semantics { contentDescription = if (playing) s.reviewPause else s.reviewPlay },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        if (playing) "❚❚" else "▶",
+                        style = KursiType.title.copy(fontSize = 16.sp),
+                        color = BrandTokens.TeakInk,
+                    )
+                }
+                TransportButton("▸", s.reviewStepForward, enabled = step < replay.stepCount - 1) { onStep(step + 1) }
+                TransportButton("⏭", s.reviewNextDecision, enabled = nextDecision != null) { nextDecision?.let(onStep) }
+
+                Spacer(Modifier.weight(1f))
+
+                // Step counter / terminal tag.
+                Text(
+                    if (isTerminal) s.reviewTerminal else s.reviewStepCounter(step + 1, replay.stepCount),
+                    style = KursiType.caption.copy(fontSize = 11.sp),
+                    color = if (isTerminal) BrandTokens.StampRed.copy(alpha = 0.85f) else KursiNeutrals.TextMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TransportButton(glyph: String, label: String, enabled: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(38.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0xFF1E1610))
+            .border(1.dp, BrandTokens.BrassAged.copy(alpha = if (enabled) 0.7f else 0.25f), RoundedCornerShape(8.dp))
+            .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
+            .alpha(if (enabled) 1f else 0.4f)
+            .semantics { contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(glyph, style = KursiType.title.copy(fontSize = 14.sp), color = BrandTokens.GoldAntique)
+    }
+}
+
+// ───────────────────────────── recent matches list (Career) ─────────────────────────────
+
+/**
+ * RecentMatchesList — the Review entry list shown on Career (M6c §1). Renders the persisted
+ * [CompletedMatch] records (most-recent first) as tappable office files; a tap opens [ReviewScreen]
+ * on that game. Empty list → an honest "no file closed yet" notice.
+ */
+@Composable
+fun RecentMatchesList(
+    matches: List<CompletedMatch>,
+    onReview: (index: Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val s = LocalKursiStrings.current
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(s.reviewRecentHeader, style = KursiType.title.copy(fontSize = 13.sp, letterSpacing = 1.sp), color = BrandTokens.GoldAntique)
+            Text(s.reviewRecentSub, style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic), color = KursiNeutrals.TextMuted)
+        }
+        if (matches.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
+                    .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                    .padding(20.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(s.reviewRecentEmpty, style = KursiType.caption.copy(fontSize = 11.sp, fontStyle = FontStyle.Italic), color = KursiNeutrals.TextMuted, textAlign = TextAlign.Center)
+            }
+        } else {
+            matches.forEachIndexed { index, m ->
+                RecentMatchRow(match = m, onClick = { onReview(index) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecentMatchRow(match: CompletedMatch, onClick: () -> Unit) {
+    val s = LocalKursiStrings.current
+    val won = match.humanWon
+    val tagColor = if (won) BrandTokens.GoldAntique else BrandTokens.StampRed
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0xFF1E1610))
+            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = "Review ${match.players}-player ${match.difficulty} game, ${if (won) "won" else "lost"}" }
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        // Win/loss roundel
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(tagColor.copy(alpha = 0.15f))
+                .border(1.dp, tagColor.copy(alpha = 0.7f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                if (won) s.reviewMatchWon.take(1) else s.reviewMatchLost.take(1),
+                style = KursiType.title.copy(fontSize = 13.sp),
+                color = tagColor,
+            )
+        }
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                s.reviewMatchCaption(match.players, match.difficultyEnum.name, match.humanLog.size),
+                style = KursiType.title.copy(fontSize = 13.sp),
+                color = KursiNeutrals.TextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val winnerName = match.personas.firstOrNull { it.seat == match.winnerSeat }?.name
+            Text(
+                (if (won) s.reviewMatchWon else s.reviewMatchLost) + (winnerName?.let { " · $it" } ?: ""),
+                style = KursiType.caption.copy(fontSize = 10.sp),
+                color = tagColor.copy(alpha = 0.85f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Text(s.reviewCta, style = KursiType.label_micro.copy(fontSize = 8.sp, letterSpacing = 1.sp), color = BrandTokens.GoldAntique.copy(alpha = 0.7f))
+    }
+}

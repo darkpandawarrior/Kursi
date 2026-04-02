@@ -1,0 +1,24 @@
+package com.kursi.ios
+
+import androidx.compose.ui.window.ComposeUIViewController
+import com.kursi.shared.KursiApp
+
+/**
+ * Entry point exposed to Swift/Objective-C.
+ *
+ * The Xcode app calls `MainViewControllerKt.MainViewController()` to obtain a
+ * [UIViewController] that hosts the full Compose UI tree ([KursiApp]).
+ *
+ * Usage in Swift:
+ * ```swift
+ * import KursiKit
+ *
+ * struct ContentView: UIViewControllerRepresentable {
+ *     func makeUIViewController(context: Context) -> UIViewController {
+ *         MainViewControllerKt.MainViewController()
+ *     }
+ *     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+ * }
+ * ```
+ */
+fun MainViewController() = ComposeUIViewController { KursiApp() }
