@@ -1,0 +1,147 @@
+default_platform(:android)
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+def current_version_name
+  File.read("../VERSION").strip
+end
+
+def current_build_number
+  File.read("../BUILD_NUMBER").strip.to_i
+end
+
+def current_version_code
+  1 + current_build_number
+end
+
+private_lane :prepare_changelog do
+  log = changelog_from_git_commits(
+    pretty: "- %s",
+    merge_commit_filtering: "exclude_merges",
+    commits_count: 20
+  ) || ""
+  # Truncate to Play's 500-char limit at a bullet boundary
+  if log.length > 500
+    log = log[0, 497].gsub(/\n-[^\n]*\z/, "") + "..."
+  end
+  FileUtils.mkdir_p("fastlane/metadata/android/en-US/changelogs")
+  File.write(
+    "fastlane/metadata/android/en-US/changelogs/#{current_version_code}.txt",
+    log.empty? ? "Bug fixes and improvements." : log
+  )
+end
+
+# ── Android ──────────────────────────────────────────────────────────────────
+
+platform :android do
+
+  desc "Run JVM tests"
+  lane :test do
+    gradle(task: "jvmTest", flags: "--continue")
+  end
+
+  desc "Build debug APK"
+  lane :build_debug do
+    gradle(task: "assembleDebug", project_dir: ".")
+  end
+
+  desc "Build release APK + AAB (requires signing config)"
+  lane :build_release do
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      project_dir: ".",
+      flags: "-x test"
+    )
+    gradle(
+      task: "assemble",
+      build_type: "Release",
+      project_dir: ".",
+      flags: "-x test"
+    )
+  end
+
+  desc "Upload AAB to Play Store internal track"
+  lane :internal do
+    build_release
+    prepare_changelog
+    upload_to_play_store(
+      track: "internal",
+      aab: "cmp-android/build/outputs/bundle/release/cmp-android-release.aab",
+      skip_upload_apk: true,
+      release_status: "draft"
+    )
+  end
+
+  desc "Promote internal → open beta"
+  lane :beta do
+    upload_to_play_store(
+      track: "internal",
+      track_promote_to: "beta"
+    )
+  end
+
+  desc "Promote beta → production (10% staged rollout)"
+  lane :production do |options|
+    rollout = options[:rollout] || "0.10"
+    upload_to_play_store(
+      track: "beta",
+      track_promote_to: "production",
+      rollout: rollout.to_s
+    )
+  end
+
+  desc "CI: test + build debug"
+  lane :ci do
+    test
+    build_debug
+  end
+
+  desc "Capture render-harness screenshots (desktop JVM)"
+  lane :screenshots do
+    gradle(
+      task: ":cmp-desktop:renderScreens",
+      project_dir: "."
+    )
+  end
+
+end
+
+# ── iOS ───────────────────────────────────────────────────────────────────────
+
+platform :ios do
+
+  desc "Build KMP iOS framework + archive IPA via Xcode"
+  lane :build do
+    # 1. Build the KMP framework
+    sh("cd .. && ./gradlew :cmp-ios:linkReleaseFrameworkIosArm64")
+    # 2. Archive and export IPA (requires Xcode project at cmp-ios/iosApp)
+    build_app(
+      project: "cmp-ios/iosApp/iosApp.xcodeproj",
+      scheme: "iosApp",
+      export_method: "app-store",
+      output_directory: "outputs/ios",
+      output_name: "Kursi-#{current_version_name}.ipa"
+    )
+  end
+
+  desc "Upload to TestFlight"
+  lane :testflight do
+    build
+    upload_to_testflight(
+      api_key_path: ENV["APP_STORE_CONNECT_API_KEY_PATH"] || nil,
+      skip_waiting_for_build_processing: true
+    )
+  end
+
+  desc "Submit to App Store review"
+  lane :appstore do
+    testflight
+    deliver(
+      submit_for_review: true,
+      automatic_release: false,
+      force: true
+    )
+  end
+
+end
