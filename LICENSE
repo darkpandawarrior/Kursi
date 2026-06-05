@@ -1,0 +1,53 @@
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
+
+Copyright (c) 2024–2025 Siddharth Pandalai. All rights reserved.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KURSI — a bluffing card game of power, satire, and second chances
+सारे पात्र काल्पनिक हैं। (All characters are fictional.)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This work — including the source code, game design, original text,
+character names, role artwork concepts, Hinglish voice lines, and the
+"License Raj Deco" visual identity — is licensed under the Creative
+Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+
+You are free to:
+  Share  — copy and redistribute the material in any medium or format
+  Adapt  — remix, transform, and build upon the material
+
+Under the following terms:
+  Attribution       — You must give appropriate credit, provide a link to
+                      this license, and indicate if changes were made.
+  NonCommercial     — You may not use the material for commercial purposes.
+  ShareAlike        — If you remix, transform, or build upon this material,
+                      you must distribute your contributions under the same
+                      license as the original.
+
+No additional restrictions — You may not apply legal terms or technological
+measures that legally restrict others from doing anything the license permits.
+
+Full license text: https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT IS AND IS NOT PROTECTED
+
+Protected under this license (original creative expression):
+  • The "Kursi" brand, name, and identity
+  • All Hinglish voice lines, sarkari persona dialogue, and in-game text
+  • Role names: Neta, Bhai, Babu, Jugaadu, Vakil (and associated concepts)
+  • The "License Raj Deco" visual identity (teak/brass/cream palette, rubber-stamp
+    motifs, Rozha One typography, wax-seal composables, Canvas intaglio glyphs)
+  • India corporate-political-underworld satire narrative and DARBAR system
+  • AI persona designs (Bade Bhai, Sarkari Babu, Jungle Jugaadu, Neta Ji, …)
+  • All source code, architecture, and design documents in this repository
+
+NOT protected (public domain / uncopyrightable game mechanics):
+  • The social-deduction bluffing mechanic of claiming a role and challenging
+  • The underlying game-logic flow of Coup (Indie Boards and Cards)
+  • General action types: income, foreign aid, tax, steal, assassinate, coup
+
+See NOTICE for full attribution to Coup and third-party dependencies.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For commercial licensing enquiries: siddharthpandalai990@gmail.com
