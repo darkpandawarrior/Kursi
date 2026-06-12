@@ -16,7 +16,7 @@ kotlin {
     android {
         namespace = "com.kursi.core.prefs"
         compileSdk = 37
-        minSdk = 24
+        minSdk = 26
     }
 
     sourceSets {

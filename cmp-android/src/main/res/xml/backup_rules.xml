@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Android 11 and below: Auto Backup configuration.
+    multiplatform-settings writes to SharedPreferences — backed up by default,
+    which is what we want (career stats and gauntlet progress survive reinstalls).
+    Exclude anything that should NOT roam across devices.
+-->
+<full-backup-content>
+    <!-- exclude signing / session tokens if they ever exist -->
+    <exclude domain="sharedpref" path="kursi_session.xml" />
+</full-backup-content>

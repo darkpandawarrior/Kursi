@@ -42,7 +42,7 @@ android {
 
     defaultConfig {
         applicationId = "com.kursi.android"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 37
         versionCode = versionCodeBase + readBuildNumber()
         versionName = readVersionName()
