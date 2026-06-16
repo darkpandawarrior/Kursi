@@ -116,6 +116,10 @@ class AppPrefs(private val settings: Settings = Settings()) {
         /** Lifetime count of daily challenges won. */
         private const val KEY_DAILY_WON             = "daily_won"
 
+        // ── In-App Review ─────────────────────────────────────────────────────────
+        /** App version string for which the in-app review prompt has already been shown. */
+        private const val KEY_REVIEW_SHOWN_VERSION = "review_shown_version"
+
         // ── M6e GAUNTLET ladder (Tarakki ki Seedhi) ──────────────────────────────
         /**
          * Highest gauntlet RUNG the player has CLEARED, 0-based into [GauntletLadder.RUNGS]. -1 = none
@@ -559,6 +563,19 @@ class AppPrefs(private val settings: Settings = Settings()) {
     private val _gauntletFlow = MutableStateFlow(readGauntlet())
     /** Reactive gauntlet ladder progress for the Home entry + the Gauntlet screen. */
     val gauntletFlow: StateFlow<GauntletProgress> = _gauntletFlow.asStateFlow()
+
+    // ── In-App Review ───────────────────────────────────────────────────────────
+
+    private var reviewShownVersion: String
+        get() = settings.getString(KEY_REVIEW_SHOWN_VERSION, defaultValue = "")
+        set(v) { settings.putString(KEY_REVIEW_SHOWN_VERSION, v) }
+
+    fun shouldShowReview(currentVersion: String): Boolean =
+        reviewShownVersion != currentVersion
+
+    fun markReviewShown(version: String) {
+        reviewShownVersion = version
+    }
 
     // H2H codec: "id:played:wins;id:played:wins" — avoids a serialization dependency in :core:prefs.
     private fun encodeH2H(map: Map<String, PersonaRecord>): String =
