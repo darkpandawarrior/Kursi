@@ -18,6 +18,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.kursi.core.feedback.shareGameResult
 import com.kursi.core.prefs.AppPrefs
 import com.kursi.core.prefs.DecisionTally
 import com.kursi.designsystem.BrandTokens
@@ -577,6 +578,11 @@ fun KursiApp() {
                 val hasReplayable = recentRaw.isNotEmpty()
                 ResultsScreen(
                     summary = summary,
+                    onShare = summary?.let { sm ->
+                        {
+                            shareGameResult(buildShareText(sm.winnerName, sm.humanWon, sm.turnsTotal, sm.bluffsHeld))
+                        }
+                    },
                     onReview = if (hasReplayable) {
                         { navController.navigate(Route.Review(matchIndex = 0)) }
                     } else null,
@@ -632,3 +638,11 @@ private fun personaIdOf(name: String): String = name.lowercase().replace(" ", "_
 private fun TeakVoid() {
     Box(Modifier.fillMaxSize().background(BrandTokens.TeakInk))
 }
+
+private fun buildShareText(winnerName: String?, humanWon: Boolean, turns: Int, bluffsHeld: Int): String =
+    buildString {
+        if (humanWon) append("Mujhe Kursi mil gayi! 🏆 ")
+        else append("${winnerName ?: "Babu"} ne Kursi jeet li! ")
+        append("($turns turns, $bluffsHeld bluffs held)")
+        append("\n#KursiGame")
+    }
