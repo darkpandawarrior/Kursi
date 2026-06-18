@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="quick_play_ai"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_quick_play_short"
+        android:shortcutLongLabel="@string/shortcut_quick_play_long">
+        <intent
+            android:action="com.kursi.android.QUICK_PLAY"
+            android:targetPackage="com.kursi.android"
+            android:targetClass="com.kursi.android.MainActivity" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+</shortcuts>

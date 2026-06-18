@@ -128,7 +128,14 @@ dependencies {
     implementation(project(":feature:game"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:feedback"))
+    implementation(project(":core:prefs"))
 
     implementation(libs.activity.compose)
     implementation(libs.core.ktx)
+
+    implementation(platform(libs.firebase.bom))
+    implementation("com.google.firebase:firebase-messaging-ktx")
+
+    implementation(libs.play.review.ktx)
+    implementation(libs.play.app.update.ktx)
 }
