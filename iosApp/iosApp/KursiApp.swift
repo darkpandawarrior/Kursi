@@ -1,6 +1,8 @@
 import SwiftUI
 import StoreKit
 import UserNotifications
+import FirebaseCore
+import FirebaseMessaging
 
 @main
 struct KursiApp: App {
@@ -20,6 +22,9 @@ class KursiAppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        if Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
+            FirebaseApp.configure()
+        }
         UNUserNotificationCenter.current().requestAuthorization(
             options: [.alert, .sound, .badge]
         ) { _, _ in }
@@ -33,14 +38,12 @@ class KursiAppDelegate: NSObject, UIApplicationDelegate {
         checkForAppStoreUpdate()
     }
 
-    // Forward the APNs device token to Firebase Messaging.
-    // Requires Firebase iOS SDK (add pod 'Firebase/Messaging' + GoogleService-Info.plist).
-    // Uncomment the body once the SDK is wired:
-    //   Messaging.messaging().apnsToken = deviceToken
     func application(
         _ application: UIApplication,
         didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
-    ) {}
+    ) {
+        Messaging.messaging().apnsToken = deviceToken
+    }
 
     // ── In-App Review (SKStoreReviewController) ─────────────────────────────────
     // Reads ledger_wins and review_shown_version directly from UserDefaults — the
