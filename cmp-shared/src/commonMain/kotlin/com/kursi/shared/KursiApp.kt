@@ -3,6 +3,7 @@ package com.kursi.shared
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -93,6 +94,12 @@ fun KursiApp() {
         CompositionLocalProvider(
             LocalKursiStrings provides strings,
             LocalKursiVoice provides voice,
+        ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(BrandTokens.TeakInk)
+                .safeDrawingPadding(),
         ) {
         NavHost(navController = navController, startDestination = Route.Boot) {
 
@@ -622,6 +629,7 @@ fun KursiApp() {
                 )
             }
         }
+        } // NavHost + Box
         } // CompositionLocalProvider
     }
 }
