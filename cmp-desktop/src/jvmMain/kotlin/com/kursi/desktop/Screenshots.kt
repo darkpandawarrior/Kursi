@@ -268,6 +268,7 @@ fun main() {
             onRematch = {},
             onNewGame = {},
             onHome = {},
+            onShare = {},
         )
     }
     println("  wrote results.png")
