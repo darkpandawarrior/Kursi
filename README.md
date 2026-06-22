@@ -2,8 +2,6 @@
 
 # Kursi
 
-<img src="docs/screenshots/home.png" width="300" alt="Kursi home screen" />
-
 *Kursi ke liye kuch bhi karega.*
 
 [![CI](https://github.com/darkpandawarrior/Kursi/actions/workflows/ci.yml/badge.svg)](https://github.com/darkpandawarrior/Kursi/actions/workflows/ci.yml)
@@ -25,28 +23,95 @@ Built in Kotlin Multiplatform. One codebase, four targets: Android, iOS, JVM des
 
 ## Screenshots
 
-| Home | 4-player game | Bluff caught |
-|:----:|:------------:|:------------:|
-| ![](docs/screenshots/home.png) | ![](docs/screenshots/4p_pick_action.png) | ![](docs/screenshots/tutorial_bluff_caught.png) |
+**DARBAR** — bots form alliances, spread rumours, hold grudges. The Afwaah arc is live: the table has piled on Babu, and the player can fuel it or flip the narrative.
 
-| Chit / dossier | GAUNTLET | DARBAR |
-|:--------------:|:--------:|:------:|
-| ![](docs/screenshots/4p_chit_dossier.png) | ![](docs/screenshots/gauntlet.png) | ![](docs/screenshots/darbar_table.png) |
+![DARBAR — live arc play](docs/screenshots/darbar_table.png)
 
-<details>
-<summary>Full gallery</summary>
+---
 
-| | | |
+### Core gameplay
+
+| Your turn — pick an action | Claim + coach odds | Block or let it pass? |
 |:-:|:-:|:-:|
-| ![](docs/screenshots/4p_reaction.png) | ![](docs/screenshots/4p_reaction_block.png) | ![](docs/screenshots/4p_confirm.png) |
-| ![](docs/screenshots/4p_exchange.png) | ![](docs/screenshots/4p_lose_influence.png) | ![](docs/screenshots/4p_game_over.png) |
-| ![](docs/screenshots/4p_mid_claim.png) | ![](docs/screenshots/4p_pick_target.png) | ![](docs/screenshots/4p_chit_risk.png) |
-| ![](docs/screenshots/lobby.png) | ![](docs/screenshots/setup.png) | ![](docs/screenshots/results.png) |
-| ![](docs/screenshots/career.png) | ![](docs/screenshots/story.png) | ![](docs/screenshots/settings.png) |
-| ![](docs/screenshots/team_table.png) | ![](docs/screenshots/spectator_demo.png) | ![](docs/screenshots/gazette_roles.png) |
-| ![](docs/screenshots/tutorial_intro.png) | ![](docs/screenshots/2p_pick_action.png) | ![](docs/screenshots/10p_pick_action.png) |
+| ![](docs/screenshots/4p_pick_action.png) | ![](docs/screenshots/4p_confirm.png) | ![](docs/screenshots/4p_reaction.png) |
 
-</details>
+| Block step — safe vs risky | Exchange — keep your roles | Influence lost |
+|:-:|:-:|:-:|
+| ![](docs/screenshots/4p_reaction_block.png) | ![](docs/screenshots/4p_exchange.png) | ![](docs/screenshots/4p_lose_influence.png) |
+
+---
+
+### Decision Coach
+
+The coach runs ISMCTS in the background and annotates every chip — recommended move starred, bluff odds on every claim, weakest target on the board marked.
+
+| Coach on the action dock | Opponent dossier — posterior + claims | Bluff risk on your action |
+|:-:|:-:|:-:|
+| ![](docs/screenshots/4p_coach_action.png) | ![](docs/screenshots/4p_chit_dossier.png) | ![](docs/screenshots/4p_chit_risk.png) |
+
+| Coach on the reaction window | Coach off — play unaided | Rival claims live on the plate |
+|:-:|:-:|:-:|
+| ![](docs/screenshots/4p_coach_reaction.png) | ![](docs/screenshots/4p_pick_action_nocoach.png) | ![](docs/screenshots/4p_mid_claim.png) |
+
+---
+
+### Game modes
+
+| GAUNTLET — promotion ladder | Team Khel — faction table | TAMASHA — spectator / demo |
+|:-:|:-:|:-:|
+| ![](docs/screenshots/gauntlet.png) | ![](docs/screenshots/team_table.png) | ![](docs/screenshots/spectator_demo.png) |
+
+| 2-player duel | 10-player table | Pick your target |
+|:-:|:-:|:-:|
+| ![](docs/screenshots/2p_pick_action.png) | ![](docs/screenshots/10p_pick_action.png) | ![](docs/screenshots/4p_pick_target.png) |
+
+---
+
+### DARBAR story arcs
+
+| KISSA — story mode hub | Game over | Pass-and-play handoff |
+|:-:|:-:|:-:|
+| ![](docs/screenshots/story.png) | ![](docs/screenshots/4p_game_over.png) | ![](docs/screenshots/passandplay_handoff.png) |
+
+---
+
+### Career, replay, and ranking
+
+| Results certificate + share | Roznamcha — career dossier | Darja-suchi — local ranking |
+|:-:|:-:|:-:|
+| ![](docs/screenshots/results.png) | ![](docs/screenshots/career.png) | ![](docs/screenshots/leaderboard.png) |
+
+| Online standings | Replay scrubber + advisor | Recent matches list |
+|:-:|:-:|:-:|
+| ![](docs/screenshots/leaderboard_online.png) | ![](docs/screenshots/review_replay.png) | ![](docs/screenshots/review_recent_list.png) |
+
+---
+
+### Online & lobby
+
+| Online hub — modes | LAN browse | Waiting room |
+|:-:|:-:|:-:|
+| ![](docs/screenshots/online_hub.png) | ![](docs/screenshots/online_hub_lan.png) | ![](docs/screenshots/online_lobby.png) |
+
+| Connection lost — reconnecting | Hazri register — bot roster | Results expired state |
+|:-:|:-:|:-:|
+| ![](docs/screenshots/online_lobby_lost.png) | ![](docs/screenshots/lobby.png) | ![](docs/screenshots/results_expired.png) |
+
+---
+
+### Onboarding & settings
+
+| Home | Home with rank strip + daily | Tutorial — Pehli Hazri intro |
+|:-:|:-:|:-:|
+| ![](docs/screenshots/home.png) | ![](docs/screenshots/home_ranked.png) | ![](docs/screenshots/tutorial_intro.png) |
+
+| Bluff caught — teaching moment | Setup | Setup with Team Khel |
+|:-:|:-:|:-:|
+| ![](docs/screenshots/tutorial_bluff_caught.png) | ![](docs/screenshots/setup.png) | ![](docs/screenshots/setup_teams.png) |
+
+| Niyam Gazette — role reference | Settings | Reduced-motion frames |
+|:-:|:-:|:-:|
+| ![](docs/screenshots/gazette_roles.png) | ![](docs/screenshots/settings.png) | ![](docs/screenshots/reduced_motion_frames.png) |
 
 ---
 
@@ -177,7 +242,7 @@ Kotlin Multiplatform 2.4 · Compose Multiplatform 1.11 · Ktor 3.5 · multiplatf
 
 ## License
 
-CC BY-NC-SA 4.0 — source is available for study; commercial use needs permission. Copyright (c) 2024–2025 Siddharth Pandalai.
+CC BY-NC-SA 4.0 — source is available for study; commercial use needs permission. Copyright (c) 2025–2026 Siddharth Pandalai.
 
 Inspired by *Coup* (Rikki Tahta, Indie Boards and Cards, 2012). Game mechanics are uncopyrightable; all original expression is wholly original. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
