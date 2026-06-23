@@ -59,6 +59,7 @@ import com.kursi.shared.nav.MatchSummary
 import com.kursi.core.prefs.AppPrefs
 import com.kursi.core.prefs.DailyStanding
 import com.kursi.core.prefs.DecisionLedger
+import com.kursi.core.prefs.GauntletProgress
 import com.kursi.core.prefs.PersonaRecord
 import com.kursi.core.prefs.RankedStanding
 import com.kursi.core.prefs.StatsLedger
@@ -146,11 +147,32 @@ fun main() {
     )
     println("  wrote 4p_chit_risk.png")
 
-    // New app-flow screens (callbacks stubbed for static render).
-    renderComposable(outDir, "home") {
-        HomeScreen(onNewGame = {}, onGazette = {}, onSettings = {}, onOnlineTap = {}, launchIndex = 0)
+    // ── Home screen ── entrance animations gated on LaunchedEffect; needs 2-frame pump.
+    // home.png — fresh install, all 8 mode tiles visible, seal + persona on right panel.
+    renderComposableAnimated(outDir, "home") {
+        HomeScreen(onNewGame = {}, onGazette = {}, onSettings = {}, onOnlineTap = {}, launchIndex = 3)
     }
     println("  wrote home.png")
+
+    // home_mode_gauntlet.png — GAUNTLET tile pre-selected; right panel shows description + ENTER.
+    renderComposableAnimated(outDir, "home_mode_gauntlet") {
+        HomeScreen(
+            onNewGame = {}, onGazette = {}, onSettings = {}, onOnlineTap = {}, launchIndex = 1,
+            gauntlet = GauntletProgress(clearedRung = 1, wins = 7),
+            gauntletRungCount = 5,
+            initialSelectedKey = "gauntlet",
+        )
+    }
+    println("  wrote home_mode_gauntlet.png")
+
+    // home_mode_story.png — KISSA tile pre-selected; right panel shows KISSA description.
+    renderComposableAnimated(outDir, "home_mode_story") {
+        HomeScreen(
+            onNewGame = {}, onGazette = {}, onSettings = {}, onOnlineTap = {}, launchIndex = 7,
+            initialSelectedKey = "story",
+        )
+    }
+    println("  wrote home_mode_story.png")
 
     // M6a: the Niyam Gazette — DARBAR (roles) tab now includes the 6th role, PATRAKAAR.
     renderComposable(outDir, "gazette_roles") {
@@ -417,16 +439,46 @@ fun main() {
     }
     println("  wrote online_lobby_lost.png")
 
-    // M6d §1+§2 — Home with the ranked rank strip + the Aaj ki Chunauti daily entry surfaced.
-    renderComposable(outDir, "home_ranked") {
+    // home_ranked.png — ranked strip + daily challenge + career stats + gauntlet progress.
+    renderComposableAnimated(outDir, "home_ranked") {
         HomeScreen(
             onNewGame = {}, onGazette = {}, onSettings = {}, onOnlineTap = {}, launchIndex = 0,
             ranked = sampleRanked(),
             daily = DailyStanding(lastDay = 20_000L, lastWon = true, streak = 5, bestStreak = 9, played = 22, won = 14),
             todayDailyDone = false,
+            ledger = StatsLedger(
+                games = 14, wins = 9, bluffsHeld = 21, bluffsCaught = 6,
+                headToHead = mapOf(
+                    "netaji_vachan" to PersonaRecord(8, 5),
+                    "bhai_teja" to PersonaRecord(4, 2),
+                )
+            ),
+            gauntlet = GauntletProgress(clearedRung = 2, wins = 9),
+            gauntletRungCount = 5,
         )
     }
     println("  wrote home_ranked.png")
+
+    // home_resume.png — shows in-progress match resume strip + all progression data.
+    renderComposableAnimated(outDir, "home_resume") {
+        HomeScreen(
+            onNewGame = {}, onGazette = {}, onSettings = {}, onOnlineTap = {}, launchIndex = 5,
+            resumeLabel = "6-Player Hard · Rung 3 · Turn 14",
+            ranked = sampleRanked(),
+            daily = DailyStanding(lastDay = 20_001L, lastWon = false, streak = 3, bestStreak = 9, played = 22, won = 14),
+            todayDailyDone = false,
+            ledger = StatsLedger(
+                games = 14, wins = 9, bluffsHeld = 21, bluffsCaught = 6,
+                headToHead = mapOf(
+                    "netaji_vachan" to PersonaRecord(8, 5),
+                    "jugaadu_chhotu" to PersonaRecord(5, 3),
+                )
+            ),
+            gauntlet = GauntletProgress(clearedRung = 1, wins = 5),
+            gauntletRungCount = 5,
+        )
+    }
+    println("  wrote home_resume.png")
 
     // ── M5 pass-and-play handoff guard ──
     // A 2-human pass-and-play state where control rests on human seat 1 ("Khiladi 2"); the harness
@@ -707,6 +759,40 @@ private fun renderComposable(dir: File, name: String, content: @Composable () ->
         KursiTheme { content() }
     }
     val data = scene.render().encodeToData() ?: error("encode null for $name")
+    File(dir, "$name.png").writeBytes(data.bytes)
+    scene.close()
+}
+
+/**
+ * Two-frame render for screens that gate content behind entrance animations driven by
+ * [LaunchedEffect]. Frame 0 at t=0 triggers the effect (sets visible=true); frame 1 at
+ * t=800ms lets all [animateFloatAsState] tweens (max 420ms + 260ms delay = 680ms) settle
+ * to their final values before the image is captured.
+ */
+/**
+ * Multi-frame render for screens with LaunchedEffect-gated entrance animations.
+ *
+ * Why looping is necessary:
+ *   Frame 0 → initial composition, visible=false, LaunchedEffect REGISTERED
+ *   Frame 1 → LaunchedEffect body runs (visible=true), recomposition triggered
+ *   Frame 2 → recomposition with visible=true; animations START (alpha begins at 0f)
+ *   Frames 3-60 → animation clock advances; max tween is 260ms delay + 420ms = 680ms
+ *   Frame 60 (60×16ms = 960ms from start) → all tweens settled at 1f
+ *
+ * A two-frame call (render at t=0 then t=800ms) fails because the animation STARTS on
+ * frame 2, not completes: the animation clock is 800ms when the target first becomes 1f,
+ * so it still reads 0f progress at that capture time.
+ */
+private fun renderComposableAnimated(dir: File, name: String, content: @Composable () -> Unit) {
+    val scene = ImageComposeScene(width = 1440, height = 900, density = Density(1f)) {
+        KursiTheme { content() }
+    }
+    val frameNs = 16_000_000L   // 16 ms per frame
+    for (frame in 0L..60L) {
+        scene.render(nanoTime = frame * frameNs)
+    }
+    val data = scene.render(nanoTime = 61L * frameNs)
+        .encodeToData() ?: error("encode null for $name")
     File(dir, "$name.png").writeBytes(data.bytes)
     scene.close()
 }

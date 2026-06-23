@@ -39,11 +39,21 @@ The chair at the head is empty.
 
 ## Home
 
-| Home | Home with rank strip + daily challenge |
+| Fresh install | In a career — ranked + daily + gauntlet strips |
 |:-:|:-:|
 | ![](docs/screenshots/home.png) | ![](docs/screenshots/home_ranked.png) |
 
-From home you can start a new game, enter GAUNTLET mode, browse the Niyam Gazette (full rule reference), access online play, or review your career stats and rankings. Once you've played enough games, a local ELO rating appears — with a daily challenge (Aaj ki Chunauti) and your current winning streak.
+| Mid-game resume strip + all progression | GAUNTLET tile selected — right panel shows mode preview |
+|:-:|:-:|
+| ![](docs/screenshots/home_resume.png) | ![](docs/screenshots/home_mode_gauntlet.png) |
+
+| KISSA (story mode) tile selected |
+|:-:|
+| ![](docs/screenshots/home_mode_story.png) |
+
+The home screen has eight mode tiles across two columns — **New Game**, **KISSA** (story campaign), **GAUNTLET** (rung ladder), **TAMASHA** (spectate AI), **Tutorial**, **Rules / Gazette**, **Settings**, and **Multiplayer** (online, flagged PENDING SANCTION until server key is present). Selecting any tile opens a mode preview in the right panel with a full description, key details, and an ENTER button.
+
+Above the grid, continuity strips surface everything in progress: the **Aaj ki Chunauti** daily challenge with your current streak, your **ELO rank** (SECTION OFFICER → UNDER SECRETARY → DEWAN and above), **TARAKKI KI SEEDHI** gauntlet progress, career win-rate, and a one-tap **resume strip** when a match is in flight. A rotating ROZNAMCHA ticker scrolls satirical headlines across the top. The brass seal and your current on-duty bot persona appear in the right panel by default.
 
 ---
 
