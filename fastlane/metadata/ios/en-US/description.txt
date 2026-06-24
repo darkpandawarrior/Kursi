@@ -1,63 +1,29 @@
-KURSI — The Chair. The Power. The Bluff.
-
 Kursi ke liye kuch bhi karega.
 He'll do anything for the chair.
 
-A social-deduction bluffing card game set in a satirical modern-India corporate-political underworld. Claim roles you don't hold. Call bluffs you're not sure about. Steal, scheme, eliminate — in Hinglish.
+Bluffing card game set in a satirical modern-India corporate-political underworld. Claim roles you don't hold. Call bluffs you're not sure about. Steal, scheme, eliminate — in Hinglish.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-THE GAME
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Every player hides two role cards. On your turn, claim any role — whether you hold it or not. If an opponent calls your bluff, cards flip. Losers lose influence. Last player standing wins the Gaddi.
 
-5 roles. 5 archetypes of desi power:
+Five roles, five archetypes of desi power:
 • Netaji Vachan (Neta) — The Eternal Candidate. Made entirely of promises.
 • Bhai Teja (Bhai) — Owns the Silence. Quiet, slow, unbothered.
 • Babu Filewala (Babu) — Approver of Nothing. Power through the comma.
 • Jugaadu Chhotu (Jugaadu) — The Fix-It Man. Solutions mostly illegal.
 • Vakil Loophole (Vakil) — The Silver Tongue. Knows three exceptions to every rule.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-10 AI PERSONAS — EACH BLUFFS DIFFERENTLY
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Netaji Vachan — honest-sounding bluffer; claims Neta even when holding Bhai
-• Bhai Teja — silent aggressor; you won't know it's coming
-• Babu Filewala — deliberate, cautious, coin-hungry bureaucrat
-• Jugaadu Chhotu — unpredictable; wide-variance; the chaos agent
-• Vakil Loophole — challenge-specialist; blocks every claim on principle
-• Sharmaji's Son — eager overachiever; learns nothing from losses
-• Didi — iron-willed veteran; vengeance is her love language
-• Inspector Reddy — by-the-book (for the right bribe)
-• Startup Bro — will pivot strategy at any challenge
-• Madam Ji — patient chess player; always two moves ahead
+Ten bot personas, each bluffs differently. Netaji claims his role even when holding Bhai. Bhai Teja goes silent before he strikes. Babu Filewala taxis obsessively. Jugaadu Chhotu does something unpredictable every time. Vakil Loophole challenges on principle. Then there's Didi (vengeance is her love language), Madam Ji (always two moves ahead), Sharmaji's Son (learns nothing), Inspector Reddy (by-the-book, for the right bribe), Startup Bro (pivots every round).
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MODES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Modes:
 • vs AI — 1 human vs up to 9 bot personas
 • GAUNTLET (Tarakki ki Seedhi) — 5-rung escalating ladder to Grandmaster
-• Team Khel — Faction play: SAT vs VIP; allies are never targets
-• DARBAR — Bots chat, form alliances, spread rumours, conspire. You can manipulate them.
-• TAMASHA — Spectator demo: AI plays every seat
+• Team Khel — faction play; allies are never legal targets
+• DARBAR — bots chat, form alliances, spread rumours, hold grudges. You can manipulate them.
+• TAMASHA — AI plays all seats. Watch it unfold.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DARBAR — THE SOCIAL LAYER
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Story arcs play out at your table:
-• GATHBANDHAN — bots form alliances. Until one defects.
-• AFWAAH — a rumour about someone's role spreads. Is it true?
-• STING — a bot leaks a real card claim. Everyone is watching.
-• BADLA — a bot you hit declares a grudge. And follows through.
+DARBAR runs four story arcs at your table: GATHBANDHAN (two bots ally, one eventually defects), AFWAAH (a rumour about someone's role spreads, might be true), STING (a bot leaks a real card claim, now everyone is watching), BADLA (a bot you hit declares a grudge and follows through).
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MORE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Interactive PEHLI HAZRI tutorial
-• Career stats and bot H2H records
-• Auto-resume — close mid-game, return to the exact move
-• Full VoiceOver support
-• CVD-safe Okabe-Ito role colours
-• Plays fully offline — no account, no ads, no server
+Also: interactive Pehli Hazri tutorial, career stats and bot H2H records, auto-resume via deterministic replay, full VoiceOver support, CVD-safe Okabe-Ito role colours. Plays completely offline — no account, no ads, no server needed.
 
 Sab mile hue hain.
 Trust no claim. Especially your own.
