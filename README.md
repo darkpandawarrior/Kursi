@@ -487,7 +487,9 @@ Kotlin Multiplatform 2.4 · Compose Multiplatform 1.11 · Ktor 3.5 · multiplatf
 
 ## License
 
-CC BY-NC-SA 4.0 — source is available for study; commercial use needs permission. Copyright (c) 2025–2026 Siddharth Pandalai.
+CC BY-NC-SA 4.0 — Source code is available for study and non-commercial modification at https://github.com/darkpandawarrior/Kursi. Commercial use requires explicit written permission. 
+
+Copyright (c) 2026 darkpandwarrior.
 
 Inspired by *Coup* (Rikki Tahta, Indie Boards and Cards, 2012). Game mechanics are uncopyrightable; all original expression is wholly original. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
