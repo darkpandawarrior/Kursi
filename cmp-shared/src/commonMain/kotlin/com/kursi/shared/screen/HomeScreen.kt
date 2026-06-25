@@ -115,6 +115,8 @@ fun HomeScreen(
     gauntletRungCount: Int = 0,
     onGauntlet: () -> Unit = {},
     onSpectate: () -> Unit = {},
+    // Render harness: pre-select a mode tile so the right-panel preview is visible on frame 1.
+    initialSelectedKey: String? = null,
 ) {
     val persona = remember(launchIndex) {
         PersonaRoster.ALL[launchIndex % PersonaRoster.ALL.size]
@@ -260,6 +262,7 @@ fun HomeScreen(
                     gauntletRungCount = gauntletRungCount,
                     onGauntlet = onGauntlet,
                     onSpectate = onSpectate,
+                    initialSelectedKey = initialSelectedKey,
                 )
             } else {
                 CompactHomeLayout(
@@ -335,9 +338,10 @@ private fun ColumnScope.ExpandedHomeLayout(
     gauntletRungCount: Int,
     onGauntlet: () -> Unit,
     onSpectate: () -> Unit,
+    initialSelectedKey: String? = null,
 ) {
     val s = LocalKursiStrings.current
-    var selectedKey by remember { mutableStateOf<String?>(null) }
+    var selectedKey by remember(initialSelectedKey) { mutableStateOf(initialSelectedKey) }
     val modes = remember(s) {
         listOf(
             HomeModeData(
