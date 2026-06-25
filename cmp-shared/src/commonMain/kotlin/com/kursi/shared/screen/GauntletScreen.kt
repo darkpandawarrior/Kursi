@@ -238,6 +238,8 @@ private fun GauntletRungCard(
                     text = "$difficultyName · ${rung.players} kursiyaan",
                     style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
                     color = KursiNeutrals.TextMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
             // State badge

@@ -247,8 +247,8 @@ fun ResultsScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(s.resultsNewGame, style = KursiType.title.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary, textAlign = TextAlign.Center)
-                        Text("Reconfigure", style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted, textAlign = TextAlign.Center)
+                        Text(s.resultsNewGame, style = KursiType.title.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("Reconfigure", style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
                 // DAFTAR (HOME)
@@ -265,8 +265,8 @@ fun ResultsScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(s.resultsHome, style = KursiType.title.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary, textAlign = TextAlign.Center)
-                        Text("Main office", style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted, textAlign = TextAlign.Center)
+                        Text(s.resultsHome, style = KursiType.title.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("Main office", style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }

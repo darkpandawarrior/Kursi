@@ -203,6 +203,8 @@ private fun RankPlaque(ranked: RankedStanding) {
                     nextHint,
                     style = KursiType.body.copy(fontSize = 11.sp, fontStyle = FontStyle.Italic),
                     color = KursiNeutrals.TextSecondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }

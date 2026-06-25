@@ -89,6 +89,8 @@ fun CareerScreen(
                     "ROZNAMCHA — Career Register",
                     style = KursiType.title.copy(fontSize = 15.sp, letterSpacing = 1.sp),
                     color = BrandTokens.GoldAntique,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
 
