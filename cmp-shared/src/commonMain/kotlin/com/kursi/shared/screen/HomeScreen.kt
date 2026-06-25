@@ -767,7 +767,7 @@ private fun HeroPlayButton(
                     text = "Kursi kitne ki hai? — Challenge the Cabinet",
                     style = KursiType.body.copy(fontSize = 12.sp, fontStyle = FontStyle.Italic),
                     color = BrandTokens.BrassDark,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -890,12 +890,12 @@ private fun ModeRail(
 ) {
     val modes = remember(s) {
         listOf(
-            ModeRailItem("story",    "◉", s.homeCtaStory.take(8),    0xFF2D1F5EL, onStory),
-            ModeRailItem("gauntlet", "▲", s.homeCtaGauntlet.take(8), 0xFF1B4A2EL, onGauntlet),
-            ModeRailItem("tutorial", "✎", s.homeCtaTutorial.take(8), 0xFF1A3A3AL, onTutorial),
-            ModeRailItem("watch",    "◎", s.homeCtaSpectate.take(8), 0xFF1A2C4AL, onSpectate),
-            ModeRailItem("rules",    "§", s.homeCtaRules.take(8),    0xFF4A1A1AL, onGazette),
-            ModeRailItem("settings", "⚙", s.homeCtaSettings.take(8), 0xFF1A1E2EL, onSettings),
+            ModeRailItem("story",    "◉", s.homeCtaStory,    0xFF2D1F5EL, onStory),
+            ModeRailItem("gauntlet", "▲", s.homeCtaGauntlet, 0xFF1B4A2EL, onGauntlet),
+            ModeRailItem("tutorial", "✎", s.homeCtaTutorial, 0xFF1A3A3AL, onTutorial),
+            ModeRailItem("watch",    "◎", s.homeCtaSpectate, 0xFF1A2C4AL, onSpectate),
+            ModeRailItem("rules",    "§", s.homeCtaRules,    0xFF4A1A1AL, onGazette),
+            ModeRailItem("settings", "⚙", s.homeCtaSettings, 0xFF1A1E2EL, onSettings),
         )
     }
 
