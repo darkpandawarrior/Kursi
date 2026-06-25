@@ -163,6 +163,9 @@ private fun Action.toSnap(): SnapAction = when (this) {
     is Action.Steal -> SnapAction.Steal(target.raw)
     Action.Exchange -> SnapAction.Exchange
     is Action.Investigate -> SnapAction.Investigate(target.raw)
+    // Variant actions — no dedicated SnapAction type; map to Income as a no-op placeholder.
+    // These actions are not replayed in the classic sense; MatchSnapshot is for the classic path.
+    Action.BailPe, Action.Sabotage, is Action.Hawala, Action.Emergency -> SnapAction.Income
 }
 
 private fun SnapAction.toEngine(): Action = when (this) {

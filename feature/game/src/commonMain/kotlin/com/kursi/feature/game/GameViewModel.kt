@@ -424,6 +424,15 @@ class GameViewModel(
         val config = baseConfig.copy(
             teams = teams ?: baseConfig.teams,
             anarchy = action.anarchy,
+            // Variant flags — all false by default (classic behavior unchanged).
+            bailEnabled = action.bailEnabled,
+            sabotageEnabled = action.sabotageEnabled,
+            hawalaEnabled = action.hawalaEnabled,
+            emergencyEnabled = action.emergencyEnabled,
+            khazanaEnabled = action.khazanaEnabled,
+            khazanaTarget = action.khazanaTarget,
+            inflationEnabled = action.inflationEnabled,
+            scarcityEnabled = action.scarcityEnabled,
         )
         spectator = action.spectator
         // DARBAR: fresh narrative state for the new match.

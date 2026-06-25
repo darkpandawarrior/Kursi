@@ -66,6 +66,15 @@ sealed interface Route {
         val anarchy: Boolean = false,
         /** Deck-draft preset code (from DraftPresets); empty = standard deck. */
         val draftCode: String = "",
+        // ── Vishesh (Special) variants — all default false; classic path unchanged ───────────────────
+        val bailEnabled: Boolean = false,
+        val sabotageEnabled: Boolean = false,
+        val hawalaEnabled: Boolean = false,
+        val emergencyEnabled: Boolean = false,
+        val khazanaEnabled: Boolean = false,
+        val khazanaTarget: Int = 25,
+        val inflationEnabled: Boolean = false,
+        val scarcityEnabled: Boolean = false,
     ) : Route
 
     /** M6e GAUNTLET — the escalating promotion ladder (Tarakki ki Seedhi) hub. */
@@ -106,6 +115,15 @@ sealed interface Route {
         val draftCode: String = "",
         /** Anarchy (Andher Nagari) variant — Khela cost reduction. */
         val anarchy: Boolean = false,
+        // ── Vishesh (Special) variants — all default false; classic path unchanged ───────────────────
+        val bailEnabled: Boolean = false,
+        val sabotageEnabled: Boolean = false,
+        val hawalaEnabled: Boolean = false,
+        val emergencyEnabled: Boolean = false,
+        val khazanaEnabled: Boolean = false,
+        val khazanaTarget: Int = 25,
+        val inflationEnabled: Boolean = false,
+        val scarcityEnabled: Boolean = false,
     ) : Route
 
     /** S5 — Results / Faisla: reads a serialized MatchSummary, not the live VM. */

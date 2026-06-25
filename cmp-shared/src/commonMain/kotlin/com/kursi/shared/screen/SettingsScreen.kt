@@ -16,6 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -72,12 +75,16 @@ fun SettingsScreen(
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                s.back,
-                style = KursiType.body.copy(fontSize = 13.sp),
-                color = BrandTokens.BrassAged,
-                modifier = Modifier.clickable(onClick = onBack),
-            )
+            Box(
+                modifier = Modifier
+                    .defaultMinSize(minWidth = 64.dp, minHeight = 52.dp)
+                    .semantics(mergeDescendants = true) { role = Role.Button }
+                    .clickable(onClick = onBack)
+                    .padding(horizontal = 8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(s.back, style = KursiType.body.copy(fontSize = 13.sp), color = BrandTokens.BrassAged)
+            }
             Spacer(Modifier.weight(1f))
             Text(
                 s.settingsTitle,

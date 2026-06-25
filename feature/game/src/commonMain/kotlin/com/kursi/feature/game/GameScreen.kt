@@ -3110,6 +3110,11 @@ internal fun loseInfluenceCause(state: GameUiState): String {
             if (who != null) "Your block was challenged by $who — and it didn't hold."
             else "Your block was challenged and didn't hold."
         }
+        com.kursi.engine.LossReason.SABOTAGED -> "You played Bali Khel — sacrificed an influence for coins."
+        com.kursi.engine.LossReason.EMERGENCY_COUPED -> {
+            val who = lastDeclared?.actor?.let { name(it) }
+            if (who != null) "Lost to $who's ADHYADESH." else "Lost to an Emergency Coup."
+        }
     }
 }
 
@@ -4100,6 +4105,10 @@ private fun actionIcon(action: Action): String = when (action) {
     is Action.Investigate -> "🔍"
     is Action.Assassinate -> "🔪"
     is Action.Coup -> "💥"
+    Action.BailPe -> "🛡️"
+    Action.Sabotage -> "💸"
+    is Action.Hawala -> "🤝"
+    Action.Emergency -> "⚡"
 }
 
 // ─────────────────────────── Helpers ───────────────────────────
@@ -4138,6 +4147,10 @@ private fun actionName(action: Action): String = when (action) {
     is Action.Assassinate -> "Supari"
     is Action.Steal -> "Vasooli"
     is Action.Investigate -> "Jaanch"
+    Action.BailPe -> "Bail Pe Bahar"
+    Action.Sabotage -> "Bali Khel"
+    is Action.Hawala -> "Hawala"
+    Action.Emergency -> "Adhyadesh"
 }
 
 private fun roleLabel(role: Role): String = when (role) {
@@ -4360,5 +4373,9 @@ private fun confirmSummary(action: Action, target: PlayerId?, targetName: String
         Action.ForeignAid -> "FDI +2"
         Action.Income -> "Dehaadi +1"
         Action.Exchange -> "Setting (claims JUGAADU)"
+        Action.BailPe -> "Bail Pe Bahar (restore influence)"
+        Action.Sabotage -> "Bali Khel (sacrifice influence for coins)"
+        is Action.Hawala -> "Hawala (gift coins to$targetStr)"
+        Action.Emergency -> "ADHYADESH — mass-Coup all opponents"
     }
 }

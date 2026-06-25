@@ -113,6 +113,8 @@ fun main() {
         Action.Exchange -> "SETTING"; is Action.Steal -> "VASOOLI"
         is Action.Investigate -> "JAANCH"
         is Action.Assassinate -> "SUPARI"; is Action.Coup -> "KHELA"
+        Action.BailPe -> "BAIL PE"; Action.Sabotage -> "BALI KHEL"
+        is Action.Hawala -> "HAWALA"; Action.Emergency -> "ADHYADESH"
     }
     val legalAgainstP1 = chitState.legalIntents
         .filterIsInstance<Intent.DeclareAction>()
@@ -183,7 +185,7 @@ fun main() {
     renderComposable(outDir, "setup") {
         SetupScreen(
             onBack = {},
-            onNext = { _, _, _, _, _, _, _, _ -> },
+            onNext = { _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ -> },
             initialPlayers = 4,
             initialDifficulty = Difficulty.Medium,
         )
@@ -604,7 +606,7 @@ private fun renderTeamSetup(dir: File) {
         KursiTheme {
             SetupScreen(
                 onBack = {},
-                onNext = { _, _, _, _, _, _, _, _ -> },
+                onNext = { _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ -> },
                 initialPlayers = 4,
                 initialDifficulty = Difficulty.Medium,
                 initialTeamPlay = true,

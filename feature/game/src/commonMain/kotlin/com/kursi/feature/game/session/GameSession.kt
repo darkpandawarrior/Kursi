@@ -494,9 +494,11 @@ class GameSession(
                 val victim = event.player
                 val aggressor = when (event.reason) {
                     com.kursi.engine.LossReason.ASSASSINATED,
-                    com.kursi.engine.LossReason.COUPED -> lastActionActor
+                    com.kursi.engine.LossReason.COUPED,
+                    com.kursi.engine.LossReason.EMERGENCY_COUPED -> lastActionActor
                     com.kursi.engine.LossReason.LOST_CHALLENGE,
                     com.kursi.engine.LossReason.LOST_BLOCK_CHALLENGE -> lastChallenger
+                    com.kursi.engine.LossReason.SABOTAGED -> null  // voluntary; no grudge target
                 }
                 // Losing a whole influence is the heaviest hit → weight 2.
                 creditGrudge(victim = victim, aggressor = aggressor, weight = 2)
@@ -564,6 +566,7 @@ class GameSession(
             chatFeed = socialDirector?.feed().orEmpty(),
             chatSuggestions = socialDirector?.suggestions(redact(state, humanSeat)).orEmpty(),
             activeArcs = socialDirector?.activeArcs().orEmpty(),
+            lifetimeCoins = state.lifetimeCoins,
         )
     }
 }

@@ -261,6 +261,10 @@ class MoveAdvisor(
             is Action.Assassinate -> "Assassinate → ${playerName(a.target, view)}"
             is Action.Steal -> "Steal → ${playerName(a.target, view)}"
             is Action.Investigate -> "Investigate → ${playerName(a.target, view)} (PATRAKAAR)"
+            Action.BailPe -> "Bail Pe Bahar (restore influence)"
+            Action.Sabotage -> "Bali Khel (sacrifice → coins)"
+            is Action.Hawala -> "Hawala → ${playerName(a.to, view)}"
+            Action.Emergency -> "ADHYADESH (mass-Coup)"
         }
         is Intent.Block -> "Block as ${intent.role.name}"
         is Intent.Challenge -> "Challenge"

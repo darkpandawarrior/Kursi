@@ -121,6 +121,8 @@ internal fun mapEventToMoment(
         // peek is a secrecy-bounded fact, narrated in the log/recap via KursiVoice rather than
         // shown as a public moment. Fold it into the neighbouring beat (no standalone moment).
         is Action.Investigate -> null
+        // Variant actions — no distinct table-theatre overlay (folded into log narration).
+        Action.BailPe, Action.Sabotage, is Action.Hawala, Action.Emergency -> null
     }
 
     is GameEvent.Blocked -> KursiMoment.Block(
@@ -173,6 +175,12 @@ internal fun mapEventToMoment(
     is GameEvent.Exchanged,
     is GameEvent.Investigated,
     is GameEvent.InvestigateRedraw,
+    // Variant events — narrated in the log; no table-theatre overlay.
+    is GameEvent.InfluenceRestored,
+    is GameEvent.CoinsGifted,
+    is GameEvent.EmergencyDeclared,
+    is GameEvent.KhazanaWon,
+    is GameEvent.DarjaReached,
     -> null
 }
 

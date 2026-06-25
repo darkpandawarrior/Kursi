@@ -2006,6 +2006,10 @@ internal fun actionHindiName(action: Action): String = when (action) {
     is Action.Investigate -> "JAANCH"
     is Action.Assassinate -> "SUPARI"
     is Action.Coup       -> "KHELA"
+    Action.BailPe        -> "BAIL PE"
+    Action.Sabotage      -> "BALI KHEL"
+    is Action.Hawala     -> "HAWALA"
+    Action.Emergency     -> "ADHYADESH"
 }
 
 internal fun actionCostSummary(action: Action): String = when (action) {
@@ -2017,4 +2021,8 @@ internal fun actionCostSummary(action: Action): String = when (action) {
     is Action.Investigate -> "peek"
     is Action.Assassinate -> "−3"
     is Action.Coup       -> "−7"
+    Action.BailPe        -> "−9 restore"
+    Action.Sabotage      -> "+3 −card"
+    is Action.Hawala     -> "gift"
+    Action.Emergency     -> "−all coins"
 }

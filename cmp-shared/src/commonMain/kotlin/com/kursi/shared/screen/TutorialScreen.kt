@@ -260,7 +260,7 @@ private fun TutorialHeader(
                         .border(0.7.dp, BrandTokens.StampRed.copy(alpha = 0.4f), RoundedCornerShape(3.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                 ) {
-                    Text(badge, style = KursiType.caption.copy(fontSize = 7.sp, letterSpacing = 0.6.sp), color = BrandTokens.StampRed.copy(alpha = 0.8f))
+                    Text(badge, style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.6.sp), color = BrandTokens.StampRed.copy(alpha = 0.8f))
                 }
                 Text("$stepLabel ${step + 1}/$total", style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted)
             }
@@ -362,14 +362,19 @@ private fun CoachChit(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (canGoBack) {
-                    Text(
-                        text = backLabel,
-                        style = KursiType.label.copy(fontSize = 11.sp),
-                        color = BrandTokens.BrassDark.copy(alpha = 0.8f),
+                    Box(
                         modifier = Modifier
+                            .defaultMinSize(minWidth = 64.dp, minHeight = 52.dp)
+                            .semantics(mergeDescendants = true) {
+                                role = androidx.compose.ui.semantics.Role.Button
+                                contentDescription = backLabel
+                            }
                             .clickable(onClick = onBack)
-                            .semantics { role = androidx.compose.ui.semantics.Role.Button; contentDescription = backLabel },
-                    )
+                            .padding(horizontal = 8.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(text = backLabel, style = KursiType.label.copy(fontSize = 11.sp), color = BrandTokens.BrassDark.copy(alpha = 0.8f))
+                    }
                 } else {
                     Spacer(Modifier.width(1.dp))
                 }

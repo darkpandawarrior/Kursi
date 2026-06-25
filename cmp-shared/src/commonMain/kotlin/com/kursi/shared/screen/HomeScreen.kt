@@ -5,6 +5,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -41,6 +43,7 @@ import com.kursi.ai.persona.BotPersona
 import com.kursi.ai.persona.PersonaRoster
 import com.kursi.core.prefs.AppPrefs
 import com.kursi.designsystem.*
+import com.kursi.shared.strings.KursiStrings
 import com.kursi.shared.strings.LocalKursiStrings
 import kotlin.math.PI
 import kotlin.math.cos
@@ -217,7 +220,10 @@ fun HomeScreen(
             .background(BrandTokens.TeakInk)
             .drawBehind { drawHomeDepth() },
     ) {
-        val isExpanded = maxWidth >= 1024.dp
+        // 840dp threshold: tablets (≥600dp) get the two-column layout, phones (<840dp) get the
+        // mobile-first compact layout. The original 1024dp gate was leaving 600–900dp tablets on
+        // the cramped single-column path, wasting the extra surface area.
+        val isExpanded = maxWidth >= 840.dp
 
         Column(modifier = Modifier.fillMaxSize()) {
 
@@ -563,7 +569,16 @@ private fun ColumnScope.ExpandedHomeLayout(
     HomeFooter()
 }
 
-// ─────────────────────────── Compact layout (<1024dp) ────────────────────────
+// ─────────────────────────── Compact layout (<840dp) ─────────────────────────
+//
+// Mobile-first hierarchy:
+//   1. Wordmark (compact header — brand anchor)
+//   2. Resume strip — FIRST if a match is in progress (most time-sensitive action)
+//   3. Hero "NAYA KHEL" button — primary CTA, large and unmissable
+//   4. Mode rail — horizontal scroll of secondary modes (small, non-blocking)
+//   5. Continuity dashboard — career/daily/ranked in a single compact strip
+//   6. Persona teaser — subtle "who's on duty" chip
+//   7. Footer
 
 @Composable
 private fun ColumnScope.CompactHomeLayout(
@@ -599,73 +614,539 @@ private fun ColumnScope.CompactHomeLayout(
     onGauntlet: () -> Unit,
     onSpectate: () -> Unit,
 ) {
-    Box(
-        modifier = Modifier
-            .weight(1f)
-            .fillMaxWidth(),
-    ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
-        KursiWordmark(
-            displaySize = 56,
-            wordmarkAlpha = wordmarkAlpha,
-            wordmarkSlide = wordmarkSlide,
-            taglineAlpha = taglineAlpha,
-        )
+    val s = LocalKursiStrings.current
+
+    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+
+        // Background watermark seal — decorative, does not occupy content space
         BrassSeal(
             modifier = Modifier
-                .size(72.dp)
+                .size(260.dp)
+                .align(Alignment.Center)
                 .graphicsLayer {
-                    alpha = sealAlpha
+                    alpha = sealAlpha * 0.06f
                     scaleX = sealScale
                     scaleY = sealScale
                     rotationZ = sealRotation
                 },
         )
-        PersonaOnDutyCard(
-            persona = persona,
-            enlarged = false,
-            personaAlpha = personaAlpha,
-            personaSlide = personaSlide,
-            bobOffsetPx = personaBobPx,
-        )
-        HomeContinuityStrips(
-            ledger = ledger,
-            onCareer = onCareer,
-            resumeLabel = resumeLabel,
-            onResume = onResume,
-            ranked = ranked,
-            onLeaderboard = onLeaderboard,
-            daily = daily,
-            todayDailyDone = todayDailyDone,
-            onDaily = onDaily,
-            gauntlet = gauntlet,
-            gauntletRungCount = gauntletRungCount,
-            onGauntlet = onGauntlet,
-        )
-        CtaStack(
-            onNewGame = onNewGame,
-            onGazette = onGazette,
-            onSettings = onSettings,
-            onOnlineTap = onOnlineTap,
-            onStory = onStory,
-            onTutorial = onTutorial,
-            onGauntlet = onGauntlet,
-            onSpectate = onSpectate,
-            fullWidth = true,
-            ctaAlpha = ctaAlpha,
-            ctaSlide = ctaSlide,
-        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(top = 20.dp, bottom = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+
+            // ① Wordmark — compact header, brass gradient
+            KursiWordmark(
+                displaySize = 44,
+                wordmarkAlpha = wordmarkAlpha,
+                wordmarkSlide = wordmarkSlide,
+                taglineAlpha = taglineAlpha,
+            )
+
+            // ② Resume strip — always first when a match is in-progress
+            if (resumeLabel != null) {
+                ResumeStripProminent(label = resumeLabel, onResume = onResume)
+            }
+
+            // ③ Hero CTA — primary action, large and physically-stamped
+            HeroPlayButton(
+                persona = persona,
+                personaAlpha = personaAlpha,
+                personaBobPx = personaBobPx,
+                ctaAlpha = ctaAlpha,
+                ctaSlide = ctaSlide,
+                onClick = onNewGame,
+            )
+
+            // ④ Secondary mode rail — horizontal scroll, non-blocking
+            ModeRail(
+                s = s,
+                onStory = onStory,
+                onGauntlet = onGauntlet,
+                onTutorial = onTutorial,
+                onSpectate = onSpectate,
+                onGazette = onGazette,
+                onSettings = onSettings,
+                ctaAlpha = ctaAlpha,
+                ctaSlide = ctaSlide,
+            )
+
+            // ⑤ Continuity dashboard — all active progress, condensed
+            CompactContinuityDashboard(
+                ledger = ledger,
+                onCareer = onCareer,
+                ranked = ranked,
+                onLeaderboard = onLeaderboard,
+                daily = daily,
+                todayDailyDone = todayDailyDone,
+                onDaily = onDaily,
+                gauntlet = gauntlet,
+                gauntletRungCount = gauntletRungCount,
+                onGauntlet = onGauntlet,
+            )
+
+            // ⑥ Persona teaser — subtle, below all actions
+            PersonaTeaserChip(
+                persona = persona,
+                alpha = personaAlpha,
+                translationY = personaSlide + personaBobPx,
+            )
+        }
     }
-    } // Box
 
     HomeFooter()
+}
+
+// ─────────────────────────── Hero Play Button ─────────────────────────────────
+
+@Composable
+private fun HeroPlayButton(
+    persona: BotPersona,
+    personaAlpha: Float,
+    personaBobPx: Float,
+    ctaAlpha: Float,
+    ctaSlide: Float,
+    onClick: () -> Unit,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = tween(80, easing = FastOutSlowInEasing),
+        label = "heroPress",
+    )
+
+    val brassGradient = Brush.linearGradient(
+        listOf(BrandTokens.BrassDark, BrandTokens.BrassAged, BrandTokens.GoldAntique, BrandTokens.BrassAged),
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                alpha = ctaAlpha
+                translationY = ctaSlide
+                scaleX = pressScale
+                scaleY = pressScale
+            }
+            .clip(RoundedCornerShape(14.dp))
+            .background(brassGradient)
+            .border(
+                2.dp,
+                Brush.horizontalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark, BrandTokens.GoldAntique)),
+                RoundedCornerShape(14.dp),
+            )
+            .semantics(mergeDescendants = true) {
+                role = androidx.compose.ui.semantics.Role.Button
+                contentDescription = "Naya Khel — start a new game"
+            }
+            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 22.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "NAYA KHEL",
+                    style = MaterialTheme.typography.displayLarge.copy(
+                        fontSize = 32.sp,
+                        letterSpacing = 1.sp,
+                    ),
+                    color = BrandTokens.TeakDark,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Kursi kitne ki hai? — Challenge the Cabinet",
+                    style = KursiType.body.copy(fontSize = 12.sp, fontStyle = FontStyle.Italic),
+                    color = BrandTokens.BrassDark,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
+            // Stamp impression column
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(start = 12.dp),
+            ) {
+                // Persona monogram as opponent teaser
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(BrandTokens.TeakDark.copy(alpha = 0.35f))
+                        .border(1.5.dp, BrandTokens.GoldAntique.copy(alpha = 0.7f), CircleShape)
+                        .graphicsLayer {
+                            alpha = personaAlpha
+                            translationY = personaBobPx
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = persona.monogram,
+                        style = KursiType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
+                        color = BrandTokens.GoldAntique,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+                Spacer(Modifier.height(6.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(BrandTokens.StampRed.copy(alpha = 0.92f))
+                        .border(1.dp, BrandTokens.Oxblood, RoundedCornerShape(3.dp))
+                        .padding(horizontal = 6.dp, vertical = 3.dp),
+                ) {
+                    Text(
+                        text = "APPROVED",
+                        style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold),
+                        color = BrandTokens.PaperCream,
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ─────────────────────────── Prominent Resume Strip ──────────────────────────
+
+@Composable
+private fun ResumeStripProminent(label: String, onResume: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1f,
+        animationSpec = tween(80),
+        label = "resumePress",
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer { scaleX = pressScale; scaleY = pressScale }
+            .clip(RoundedCornerShape(10.dp))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(BrandTokens.GoldAntique.copy(alpha = 0.22f), BrandTokens.BrassAged.copy(alpha = 0.14f)),
+                ),
+            )
+            .border(2.dp, BrandTokens.GoldAntique.copy(alpha = 0.75f), RoundedCornerShape(10.dp))
+            .semantics(mergeDescendants = true) {
+                role = androidx.compose.ui.semantics.Role.Button
+                contentDescription = "Resume match: $label"
+            }
+            .clickable(interactionSource = interactionSource, indication = null, onClick = onResume)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("⟳", style = KursiType.title.copy(fontSize = 22.sp), color = BrandTokens.GoldAntique)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    LocalKursiStrings.current.homeResumeLabel,
+                    style = KursiType.title.copy(fontSize = 15.sp),
+                    color = BrandTokens.GoldAntique,
+                )
+                Text(
+                    label,
+                    style = KursiType.caption.copy(fontSize = 11.sp),
+                    color = KursiNeutrals.TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text("›", style = KursiType.title.copy(fontSize = 20.sp), color = BrandTokens.GoldAntique)
+        }
+    }
+}
+
+// ─────────────────────────── Mode Rail (horizontal scroll) ────────────────────
+
+private data class ModeRailItem(
+    val key: String,
+    val icon: String,
+    val label: String,
+    val accentArgb: Long,
+    val onClick: () -> Unit,
+)
+
+@Composable
+private fun ModeRail(
+    s: KursiStrings,
+    onStory: () -> Unit,
+    onGauntlet: () -> Unit,
+    onTutorial: () -> Unit,
+    onSpectate: () -> Unit,
+    onGazette: () -> Unit,
+    onSettings: () -> Unit,
+    ctaAlpha: Float,
+    ctaSlide: Float,
+) {
+    val modes = remember(s) {
+        listOf(
+            ModeRailItem("story",    "◉", s.homeCtaStory.take(8),    0xFF2D1F5EL, onStory),
+            ModeRailItem("gauntlet", "▲", s.homeCtaGauntlet.take(8), 0xFF1B4A2EL, onGauntlet),
+            ModeRailItem("tutorial", "✎", s.homeCtaTutorial.take(8), 0xFF1A3A3AL, onTutorial),
+            ModeRailItem("watch",    "◎", s.homeCtaSpectate.take(8), 0xFF1A2C4AL, onSpectate),
+            ModeRailItem("rules",    "§", s.homeCtaRules.take(8),    0xFF4A1A1AL, onGazette),
+            ModeRailItem("settings", "⚙", s.homeCtaSettings.take(8), 0xFF1A1E2EL, onSettings),
+        )
+    }
+
+    Column(
+        modifier = Modifier.graphicsLayer { alpha = ctaAlpha; translationY = ctaSlide },
+    ) {
+        Text(
+            text = "AUR MODES",
+            style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 2.sp),
+            color = KursiNeutrals.TextMuted,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(end = 16.dp),
+        ) {
+            items(modes) { mode ->
+                ModeRailTile(mode = mode)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModeRailTile(mode: ModeRailItem) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val pressScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.93f else 1f,
+        animationSpec = tween(70, easing = FastOutSlowInEasing),
+        label = "railTile_${mode.key}",
+    )
+    val accent = Color(mode.accentArgb)
+
+    Column(
+        modifier = Modifier
+            .width(72.dp)
+            .graphicsLayer { scaleX = pressScale; scaleY = pressScale }
+            .clip(RoundedCornerShape(10.dp))
+            .background(accent.copy(alpha = 0.55f))
+            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
+            .semantics(mergeDescendants = true) {
+                role = androidx.compose.ui.semantics.Role.Button
+                contentDescription = mode.label
+            }
+            .clickable(interactionSource = interactionSource, indication = null, onClick = mode.onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .background(accent.copy(alpha = 0.3f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = mode.icon,
+                style = KursiType.title.copy(fontSize = 24.sp),
+                color = Color.White.copy(alpha = 0.85f),
+            )
+        }
+        Text(
+            text = mode.label,
+            style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.3.sp),
+            color = KursiNeutrals.TextPrimary,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 6.dp),
+        )
+    }
+}
+
+// ─────────────────────────── Compact Continuity Dashboard ────────────────────
+// Condenses all progress signals (career, daily, ranked, gauntlet) into a
+// single slim section below the primary action so new players don't drown.
+
+@Composable
+private fun CompactContinuityDashboard(
+    ledger: com.kursi.core.prefs.StatsLedger,
+    onCareer: () -> Unit,
+    ranked: com.kursi.core.prefs.RankedStanding,
+    onLeaderboard: () -> Unit,
+    daily: com.kursi.core.prefs.DailyStanding,
+    todayDailyDone: Boolean,
+    onDaily: () -> Unit,
+    gauntlet: com.kursi.core.prefs.GauntletProgress,
+    gauntletRungCount: Int,
+    onGauntlet: () -> Unit,
+) {
+    val hasAnyProgress = ledger.games > 0 || !gauntlet.isFresh || daily.hasPlayed
+    if (!hasAnyProgress) return
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = "AAPKI TARAKKI",
+            style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 2.sp),
+            color = KursiNeutrals.TextMuted,
+        )
+        // Career stats row — always show if any games played
+        if (ledger.games > 0) {
+            CareerMiniStrip(ledger = ledger, onOpen = onCareer)
+        }
+        // Daily challenge pill — show when there's a daily to do (or done today)
+        if (daily.hasPlayed || !todayDailyDone) {
+            DailyChallengeStrip(
+                daily = daily,
+                todayDone = todayDailyDone,
+                onStart = onDaily,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        // Gauntlet progress pill
+        if (!gauntlet.isFresh && gauntletRungCount > 0) {
+            GauntletStrip(
+                gauntlet = gauntlet,
+                total = gauntletRungCount,
+                onOpen = onGauntlet,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        // Ranked strip
+        RankedStrip(ranked = ranked, onOpen = onLeaderboard, modifier = Modifier.fillMaxWidth())
+    }
+}
+
+@Composable
+private fun CareerMiniStrip(
+    ledger: com.kursi.core.prefs.StatsLedger,
+    onOpen: () -> Unit,
+) {
+    val s = LocalKursiStrings.current
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(BrandTokens.BrassAged.copy(alpha = 0.08f))
+            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+            .semantics(mergeDescendants = true) {
+                role = androidx.compose.ui.semantics.Role.Button
+                contentDescription = "Career stats. ${ledger.games} games, ${ledger.wins} wins."
+            }
+            .clickable(onClick = onOpen)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CareerStat(value = "${ledger.games}", label = "KHEL")
+                CareerStat(value = "${ledger.wins}", label = "JEET")
+                if (ledger.games > 0) {
+                    val pct = (ledger.wins * 100 / ledger.games)
+                    CareerStat(value = "$pct%", label = "RATE")
+                }
+            }
+            Text(
+                text = "›",
+                style = KursiType.title.copy(fontSize = 16.sp),
+                color = BrandTokens.BrassAged,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CareerStat(value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = value,
+            style = KursiType.numeric.copy(fontSize = 16.sp),
+            color = BrandTokens.GoldAntique,
+        )
+        Text(
+            text = label,
+            style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 1.sp),
+            color = KursiNeutrals.TextMuted,
+        )
+    }
+}
+
+// ─────────────────────────── Persona Teaser Chip ─────────────────────────────
+// Tiny "who's on duty" teaser — replaces the large PersonaOnDutyCard in the
+// compact layout; decorative, placed at the bottom of the scroll.
+
+@Composable
+private fun PersonaTeaserChip(
+    persona: BotPersona,
+    alpha: Float,
+    translationY: Float,
+) {
+    val seatColor = Color(persona.seatColorArgb)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer { this.alpha = alpha; this.translationY = translationY }
+            .clip(RoundedCornerShape(8.dp))
+            .background(BrandTokens.TeakDark.copy(alpha = 0.6f))
+            .border(1.dp, seatColor.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(Brush.radialGradient(listOf(seatColor.copy(alpha = 0.8f), seatColor.copy(alpha = 0.3f))))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                persona.monogram,
+                style = KursiType.caption.copy(fontSize = 9.sp),
+                color = KursiNeutrals.Cream,
+                textAlign = TextAlign.Center,
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "${persona.name} · ${persona.title}",
+                style = KursiType.caption.copy(fontSize = 10.sp),
+                color = KursiNeutrals.TextSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = "\"${onDutyCaption(persona.id)}\"",
+                style = KursiType.caption.copy(fontSize = 9.sp, fontStyle = FontStyle.Italic),
+                color = KursiNeutrals.TextMuted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Text(
+            text = "ON DUTY",
+            style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 1.sp),
+            color = seatColor.copy(alpha = 0.7f),
+        )
+    }
 }
 
 /**
@@ -1025,22 +1506,22 @@ fun BrassSeal(modifier: Modifier = Modifier) {
             )
             Text(
                 text = "·",
-                style = KursiType.caption.copy(fontSize = 6.sp),
+                style = KursiType.caption.copy(fontSize = 9.sp),
                 color = BrandTokens.BrassAged,
             )
             Text(
                 text = "ADHIKAAR",
-                style = KursiType.caption.copy(fontSize = 6.sp, letterSpacing = 1.sp),
+                style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 1.sp),
                 color = BrandTokens.BrassAged,
             )
             Text(
                 text = "·",
-                style = KursiType.caption.copy(fontSize = 6.sp),
+                style = KursiType.caption.copy(fontSize = 9.sp),
                 color = BrandTokens.BrassAged,
             )
             Text(
                 text = "SATYANAASH",
-                style = KursiType.caption.copy(fontSize = 6.sp, letterSpacing = 1.sp),
+                style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 1.sp),
                 color = BrandTokens.BrassAged,
             )
         }
@@ -1244,7 +1725,7 @@ private fun ModeGridTile(
                 ) {
                     Text(
                         text = badge,
-                        style = KursiType.caption.copy(fontSize = 7.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp),
+                        style = KursiType.caption.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp),
                         color = if (mode.isHero) KursiNeutrals.Cream else BrandTokens.StampRed.copy(alpha = 0.8f),
                     )
                 }
@@ -1374,7 +1855,7 @@ private fun ModePreviewPanel(
                             ) {
                                 Text(
                                     text = fieldLabel.uppercase(),
-                                    style = KursiType.caption.copy(fontSize = 8.sp, letterSpacing = 1.2.sp),
+                                    style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 1.2.sp),
                                     color = BrandTokens.BrassAged.copy(alpha = 0.7f),
                                 )
                                 Text(
@@ -1642,7 +2123,7 @@ fun StampChit(
                 ) {
                     Text(
                         text = disabledStamp,
-                        style = KursiType.caption.copy(fontSize = 8.sp, letterSpacing = 0.8.sp),
+                        style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.8.sp),
                         color = BrandTokens.StampRed.copy(alpha = 0.7f),
                     )
                 }

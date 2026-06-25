@@ -23,6 +23,10 @@ class KursiVoice(private val language: Language = Language.HINGLISH) {
             is Action.Investigate -> "Sting operation. Patta dekhenge, exposé chhapega."
             is Action.Assassinate -> "Ek file band. Hamesha ke liye. Number delete."
             is Action.Coup        -> "Cabinet reshuffle. Permanent waala."
+            Action.BailPe         -> "Bail mil gayi. Paisa laga, parda utha, wapas chhupa."
+            Action.Sabotage       -> "Bali Khel. Apna card phenko, khazaana lo. Sarkari jugaad."
+            is Action.Hawala      -> "Hawala. Sikke haath-se-haath. Koi receipt nahi."
+            Action.Emergency      -> "ADHYADESH! Rashtrapati raj. Sab ek saath giraao."
         }
         Language.ENGLISH -> when (action) {
             Action.Income         -> "Honest day's wage. Adorable."
@@ -33,6 +37,10 @@ class KursiVoice(private val language: Language = Language.HINGLISH) {
             is Action.Investigate -> "A little sting operation. Peek the card, print the exposé."
             is Action.Assassinate -> "One file closed. Permanently."
             is Action.Coup        -> "Cabinet reshuffle, permanent edition."
+            Action.BailPe         -> "Bail granted. Pay up. The card's back in hiding."
+            Action.Sabotage       -> "Sacrifice play. Lose a card, pocket the coins. Very dignified."
+            is Action.Hawala      -> "Under-the-table transfer. Coins change hands, no paperwork."
+            Action.Emergency      -> "Emergency powers. Everyone loses a card. Very constitutional."
         }
     }
 
@@ -46,6 +54,10 @@ class KursiVoice(private val language: Language = Language.HINGLISH) {
         is Action.Investigate -> "Investigate · claims PATRAKAAR · peek + force redraw · unblockable"
         is Action.Assassinate -> "Assassinate · pay 3 · claims BHAI · VAKIL blocks"
         is Action.Coup        -> "Coup · pay 7 · unblockable/unstoppable"
+        Action.BailPe         -> "Bail Pe Bahar · pay 9 · restore one face-up influence · unblockable"
+        Action.Sabotage       -> "Bali Khel · sacrifice face-down influence · gain 3 coins"
+        is Action.Hawala      -> "Hawala · gift up to 5 coins direct · unblockable"
+        Action.Emergency      -> "Adhyadesh · spend all coins · force-lose on all opponents · unblockable"
     }
 
     // ── Role tagline ───────────────────────────────────────────────────────
@@ -437,6 +449,10 @@ class KursiVoice(private val language: Language = Language.HINGLISH) {
             is Action.Investigate -> "$actorName ne Jaanch ki."
             is Action.Assassinate -> "$actorName ne Supari di."
             is Action.Coup        -> "$actorName ne Khela kiya."
+            Action.BailPe         -> "$actorName ne Bail Pe Bahar kheela."
+            Action.Sabotage       -> "$actorName ne Bali Khel kheela."
+            is Action.Hawala      -> "$actorName ne Hawala bheja."
+            Action.Emergency      -> "$actorName ne ADHYADESH laga diya."
         }
         Language.ENGLISH -> when (action) {
             Action.Income         -> "$actorName took Income. +1."
@@ -447,6 +463,10 @@ class KursiVoice(private val language: Language = Language.HINGLISH) {
             is Action.Investigate -> "$actorName ran Investigate."
             is Action.Assassinate -> "$actorName ran Assassinate."
             is Action.Coup        -> "$actorName ran Coup."
+            Action.BailPe         -> "$actorName played Bail Pe Bahar."
+            Action.Sabotage       -> "$actorName played Bali Khel."
+            is Action.Hawala      -> "$actorName sent Hawala."
+            Action.Emergency      -> "$actorName declared Emergency."
         }
     }
 
@@ -693,6 +713,10 @@ class KursiVoice(private val language: Language = Language.HINGLISH) {
         is Action.Investigate -> "Jaanch"
         is Action.Assassinate -> "Supari"
         is Action.Coup        -> "Khela"
+        Action.BailPe         -> "Bail Pe Bahar"
+        Action.Sabotage       -> "Bali Khel"
+        is Action.Hawala      -> "Hawala"
+        Action.Emergency      -> "Adhyadesh"
     }
 
     // ── Phase hint / subtitle band ─────────────────────────────────────────
@@ -768,6 +792,10 @@ class KursiVoice(private val language: Language = Language.HINGLISH) {
             is Action.Investigate -> "Target ka ek chhupa patta dekho, phir chaaho toh deck mein wapas — naya patta. PATRAKAAR ka daava. Block nahi, challenge ho sakta hai."
             is Action.Assassinate -> "3 sikke do, target ek card khoyega. VAKIL block kar sakta hai."
             is Action.Coup    -> "7 sikke do, target ek card khoyega. Na block, na challenge."
+            Action.BailPe     -> "9 sikke do, ek face-up card wapas chhup jaata hai. Block/challenge nahi."
+            Action.Sabotage   -> "Ek apna chhupa card phenko, 3 sikke khazaane se lo. Bali Khel."
+            is Action.Hawala  -> "Target ko seedha sikke do (max 5). Na block, na challenge."
+            Action.Emergency  -> "Saare sikke de do, baaki sab ek card kho dete hain. ADHYADESH."
         }
         Language.ENGLISH -> when (action) {
             Action.Income     -> "+1 coin from the treasury. Nobody can stop it."
@@ -778,6 +806,10 @@ class KursiVoice(private val language: Language = Language.HINGLISH) {
             is Action.Investigate -> "Peek one of the target's hidden cards, then optionally force it back into the deck for a redraw. Claims PATRAKAAR. Can't be blocked, can be challenged."
             is Action.Assassinate -> "Pay 3, target loses a card. VAKIL can block it."
             is Action.Coup    -> "Pay 7, target loses a card. No block, no challenge."
+            Action.BailPe     -> "Pay 9, restore one revealed card to face-down. Unblockable."
+            Action.Sabotage   -> "Sacrifice one face-down card, gain 3 coins from the treasury."
+            is Action.Hawala  -> "Gift up to 5 coins directly to a target. Unblockable."
+            Action.Emergency  -> "Pay all your coins, force every opponent to lose one card. Unblockable."
         }
     }
 
