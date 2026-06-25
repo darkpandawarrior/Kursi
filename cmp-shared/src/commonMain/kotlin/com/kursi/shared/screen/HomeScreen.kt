@@ -933,7 +933,7 @@ private fun ModeRailTile(mode: ModeRailItem) {
 
     Column(
         modifier = Modifier
-            .width(72.dp)
+            .width(108.dp)
             .graphicsLayer { scaleX = pressScale; scaleY = pressScale }
             .clip(RoundedCornerShape(10.dp))
             .background(accent.copy(alpha = 0.55f))
@@ -960,10 +960,10 @@ private fun ModeRailTile(mode: ModeRailItem) {
         }
         Text(
             text = mode.label,
-            style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.3.sp),
+            style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.sp),
             color = KursiNeutrals.TextPrimary,
             textAlign = TextAlign.Center,
-            maxLines = 2,
+            maxLines = 3,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .fillMaxWidth()

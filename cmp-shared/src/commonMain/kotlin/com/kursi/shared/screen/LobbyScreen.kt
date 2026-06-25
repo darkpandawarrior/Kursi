@@ -391,19 +391,16 @@ private fun PersonaRegisterRow(
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Text(
                             name,
                             style = KursiType.name.copy(fontSize = 14.sp),
                             color = if (isHuman) BrandTokens.GoldAntique else KursiNeutrals.TextPrimary,
                             fontWeight = if (isHuman) FontWeight.Bold else FontWeight.Normal,
-                        )
-                        Text(
-                            "· $archetype",
-                            style = KursiType.caption.copy(fontSize = 9.sp),
-                            color = KursiNeutrals.TextMuted,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
                         )
                         if (teamBadge != null) {
                             val teamHue = if (teamId == 0) BrandTokens.GoldAntique else BrandTokens.StampRed
@@ -419,16 +416,17 @@ private fun PersonaRegisterRow(
                         }
                     }
                     Text(
-                        title,
-                        style = KursiType.body.copy(fontSize = 11.sp, fontStyle = FontStyle.Italic),
+                        "$title  ·  $archetype",
+                        style = KursiType.body.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
                         color = KursiNeutrals.TextSecondary,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                     Text(
                         personalityLine,
                         style = KursiType.caption.copy(fontSize = 9.sp),
                         color = KursiNeutrals.TextMuted,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
@@ -474,7 +472,7 @@ private fun LobbyHeader(seed: Long, onBack: () -> Unit) {
                 .padding(horizontal = 20.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Text("← ${s.back}", style = KursiType.body.copy(fontSize = 13.sp), color = BrandTokens.BrassAged)
+            Text(s.back, style = KursiType.body.copy(fontSize = 13.sp), color = BrandTokens.BrassAged)
         }
         Text(
             s.lobbyHeader,
