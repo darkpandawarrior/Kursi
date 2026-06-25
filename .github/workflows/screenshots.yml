@@ -75,7 +75,7 @@ jobs:
       # PR: upload for human review
       - name: Upload screenshots (PR review)
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kursi-screenshots
           path: docs/screenshots/

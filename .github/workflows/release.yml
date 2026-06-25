@@ -127,13 +127,13 @@ jobs:
           ./gradlew :cmp-android:bundleRelease :cmp-android:assembleRelease
 
       - name: Upload release APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kursi-release-apk
           path: cmp-android/build/outputs/apk/release/kursi-release-*.apk
 
       - name: Upload release AAB artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kursi-release-aab
           path: cmp-android/build/outputs/bundle/release/
