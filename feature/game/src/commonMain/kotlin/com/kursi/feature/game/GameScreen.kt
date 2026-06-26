@@ -758,7 +758,7 @@ private fun DesktopLayout(
             )
 
             // ── What-just-happened recap (Clarity, Tenet 1 — always shown) ──
-            RecapRail(state = state, modifier = Modifier.fillMaxWidth())
+            RecapRail(state = state, gamePhase = gamePhase, modifier = Modifier.fillMaxWidth())
 
             // ── Main body: felt table + log rail ──────────────────────
             Row(
@@ -1228,7 +1228,7 @@ private fun OpponentChipItem(
         if (lastChatForSeat != null) {
             chatBubbleText = lastChatForSeat.body
             isSpeaking = true
-            kotlinx.coroutines.delay(3200)
+            kotlinx.coroutines.delay(5500)
             chatBubbleText = null
             isSpeaking = false
         }
@@ -1797,77 +1797,105 @@ private fun PhoneLayout(
     soundEnabled: Boolean = false,
     reducedMotion: Boolean = false,
 ) {
+    // HintRail is only relevant when the human has something to decide. During bot
+    // turns (Idle) it just repeats the StatusSpine — save the vertical space.
+    val isPlayerTurn = gamePhase is GamePhase.PickAction ||
+        gamePhase is GamePhase.PickTarget ||
+        gamePhase is GamePhase.Confirm ||
+        gamePhase is GamePhase.ReactionWindow ||
+        gamePhase is GamePhase.LoseInfluence ||
+        gamePhase is GamePhase.Exchange ||
+        gamePhase is GamePhase.InvestigatePeek
+
     FeltTableBackground(modifier = Modifier.fillMaxSize()) {
+        // No verticalScroll — everything must be on screen at once so the action
+        // dock is always reachable without scrolling. Heights are fixed/weighted
+        // so the layout adapts to any phone size without overflow.
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .fillMaxSize()
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
+            // ── TOP: turn status + what-just-happened (always visible) ──────────
             StatusSpineBar(state = state, gamePhase = gamePhase, modifier = Modifier.fillMaxWidth())
-            HintRail(
-                gamePhase = gamePhase,
-                state = state,
-                onOpenGazette = onOpenGazette,
-                modifier = Modifier.fillMaxWidth(),
-                onToggleCoach = onToggleCoach,
-                onPlayBestMove = { onAction(GameAction.PlayBestMove) },
-            )
-            RecapRail(state = state, modifier = Modifier.fillMaxWidth())
+            RecapRail(state = state, gamePhase = gamePhase, modifier = Modifier.fillMaxWidth())
 
+            // ── MIDDLE: opponents + felt + hand (fills remaining space) ──────────
             val opponentCount = state.view.players.count { it.id != state.view.viewer }
             val columns = if (opponentCount <= 2) 2 else 3
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(columns),
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(if (opponentCount <= 2) 140.dp else 220.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    .weight(1f)
+                    .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                val opponents = state.view.players.filter { it.id != state.view.viewer }
-                items(opponents) { opp ->
-                    OpponentChipItem(
-                        opp = opp,
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(columns),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(if (opponentCount <= 2) 104.dp else 172.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    val opponents = state.view.players.filter { it.id != state.view.viewer }
+                    items(opponents) { opp ->
+                        OpponentChipItem(
+                            opp = opp,
+                            state = state,
+                            gamePhase = gamePhase,
+                            onLocalPhase = onLocalPhase,
+                            onShowChit = onShowChit,
+                        )
+                    }
+                }
+
+                // Compact felt area — moment stamp theatre layers above.
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    val feltWidthPx = constraints.maxWidth.toFloat()
+                    val feltHeightPx = constraints.maxHeight.toFloat()
+
+                    FeltCenterTokens(state = state, gamePhase = gamePhase, onShowChit = onShowChit)
+
+                    GameMomentLayer(
                         state = state,
-                        gamePhase = gamePhase,
-                        onLocalPhase = onLocalPhase,
-                        onShowChit = onShowChit,
+                        widthPx = feltWidthPx,
+                        heightPx = feltHeightPx,
+                        soundEnabled = soundEnabled,
+                        reducedMotion = reducedMotion,
                     )
                 }
-            }
 
-            // Compact felt area — also hosts the action-moment stamp theatre, layered
-            // above the felt tokens but below the action dock (a sibling below in this Column).
-            BoxWithConstraints(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                val feltWidthPx = constraints.maxWidth.toFloat()
-                val feltHeightPx = constraints.maxHeight.toFloat()
-
-                FeltCenterTokens(state = state, gamePhase = gamePhase, onShowChit = onShowChit)
-
-                GameMomentLayer(
+                // Hand panel takes all remaining middle space.
+                YourHandPanel(
                     state = state,
-                    widthPx = feltWidthPx,
-                    heightPx = feltHeightPx,
-                    soundEnabled = soundEnabled,
-                    reducedMotion = reducedMotion,
+                    gamePhase = gamePhase,
+                    humanSeat = humanSeat,
+                    onAction = onAction,
+                    onShowChit = onShowChit,
+                    modifier = Modifier.weight(1f),
                 )
             }
 
-            YourHandPanel(
-                state = state,
-                gamePhase = gamePhase,
-                humanSeat = humanSeat,
-                onAction = onAction,
-                onShowChit = onShowChit,
-            )
+            // ── BOTTOM: hint (only on player turn) + action dock ────────────────
+            // HintRail lives here so it's paired visually with the action dock
+            // rather than buried above the table where the eye doesn't look.
+            if (isPlayerTurn) {
+                HintRail(
+                    gamePhase = gamePhase,
+                    state = state,
+                    onOpenGazette = onOpenGazette,
+                    modifier = Modifier.fillMaxWidth(),
+                    onToggleCoach = onToggleCoach,
+                    onPlayBestMove = { onAction(GameAction.PlayBestMove) },
+                )
+            }
 
             ActionDock(
                 state = state,
@@ -1876,34 +1904,59 @@ private fun PhoneLayout(
                 onLocalPhase = onLocalPhase,
                 onAction = onAction,
                 onShowChit = onShowChit,
+                compact = true,
             )
 
-            // ── ROZNAMCHA — collapsible teleprinter drawer (M4 §3 responsive: phone) ──
-            // On phone the log is a collapsible sheet so it never steals the table, yet stays
-            // one tap from the primary "what-just-happened" surface.
-            CollapsibleLogDrawer(state = state, onShowChit = onShowChit)
+            // ── ROZNAMCHA / DARBAR — collapsible bottom drawer with two tabs ──
+            CollapsibleLogDrawer(state = state, onShowChit = onShowChit, onAction = onAction)
         }
     }
 }
 
-/** Phone: a tap-to-expand teleprinter drawer that holds the full Roznamcha terminal. */
+/**
+ * Phone: a tap-to-expand drawer at the bottom of the game screen.
+ *
+ * In narrative mode it shows two tabs — ROZNAMCHA (game event log) and DARBAR (bot chat
+ * history). The DARBAR tab is the fix for "I didn't notice what the bots were saying" —
+ * the full conversation is always one tap away, no hidden 💬 button needed.
+ *
+ * In non-narrative mode the DARBAR tab is hidden and the drawer behaves as before.
+ */
 @Composable
 private fun CollapsibleLogDrawer(
     state: GameUiState,
     onShowChit: (ChitContent, androidx.compose.ui.geometry.Rect?) -> Unit = { _, _ -> },
+    onAction: (GameAction) -> Unit = {},
 ) {
     val voice = LocalKursiVoice.current
     var expanded by remember { mutableStateOf(false) }
+    // 0 = ROZNAMCHA, 1 = DARBAR
+    var activeTab by remember { mutableStateOf(0) }
     val eventCount = state.recentEvents.size
+    val chatCount = state.chatFeed.size
+    val unread = state.unreadChat
+    val hasNarrative = state.narrativeEnabled
+
+    // Auto-switch to DARBAR tab when new unread chat arrives and drawer is already open
+    LaunchedEffect(chatCount) {
+        if (expanded && hasNarrative && unread > 0) {
+            activeTab = 1
+            onAction(GameAction.MarkChatRead)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Drawer handle / toggle.
+        // ── Handle row ──────────────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(Squircle(KursiRadii.sm))
                 .background(Color(0xFF120D07))
-                .border(1.dp, BrandTokens.GoldAntique.copy(alpha = 0.6f), Squircle(KursiRadii.sm))
+                .border(
+                    1.dp,
+                    (if (unread > 0 && !expanded) BrandTokens.StampRed else BrandTokens.GoldAntique).copy(alpha = 0.6f),
+                    Squircle(KursiRadii.sm),
+                )
                 .inspectable(onClick = { expanded = !expanded }, onLongClick = {})
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -1915,15 +1968,66 @@ private fun CollapsibleLogDrawer(
                     .clip(androidx.compose.foundation.shape.CircleShape)
                     .background(KursiSemantics.Success),
             )
+            // ROZNAMCHA label
             Text(
                 text = voice.logPanelHeader,
                 style = KursiType.label_sm.copy(
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                     letterSpacing = 2.sp,
                 ),
-                color = BrandTokens.GoldAntique,
-                modifier = Modifier.weight(1f),
+                color = if (activeTab == 0 && expanded) BrandTokens.GoldAntique else BrandTokens.GoldAntique.copy(alpha = 0.55f),
             )
+            // DARBAR tab label — only when narrative mode is on
+            if (hasNarrative) {
+                Text(
+                    text = "·",
+                    color = BrandTokens.BrassDark,
+                    style = KursiType.label_sm,
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier
+                        .clip(Squircle(KursiRadii.xs))
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                        ) {
+                            activeTab = 1
+                            if (!expanded) expanded = true
+                            onAction(GameAction.MarkChatRead)
+                        }
+                        .padding(horizontal = 4.dp, vertical = 1.dp),
+                ) {
+                    Text(
+                        text = "DARBAR",
+                        style = KursiType.label_sm.copy(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            letterSpacing = 2.sp,
+                        ),
+                        color = if (activeTab == 1 && expanded) BrandTokens.GoldAntique
+                                else if (unread > 0) BrandTokens.StampRed
+                                else BrandTokens.GoldAntique.copy(alpha = 0.55f),
+                    )
+                    // Unread badge — shows even when drawer is closed so player knows new chat arrived
+                    if (unread > 0 && !expanded) {
+                        Box(
+                            modifier = Modifier
+                                .size(14.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(BrandTokens.StampRed),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = if (unread > 9) "9+" else unread.toString(),
+                                style = KursiType.label_micro.copy(fontSize = 7.sp),
+                                color = KursiNeutrals.Cream,
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = if (expanded) "▾" else "▴ $eventCount",
                 style = KursiType.label_micro.copy(
@@ -1932,10 +2036,130 @@ private fun CollapsibleLogDrawer(
                 color = BrandTokens.BrassAged,
             )
         }
+
+        // ── Expanded body ───────────────────────────────────────────────────────
         androidx.compose.animation.AnimatedVisibility(visible = expanded) {
-            Box(modifier = Modifier.fillMaxWidth().height(280.dp).padding(top = 6.dp)) {
-                GameLog(state = state, onShowChit = onShowChit)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // Tab selector bar — only shown in narrative mode
+                if (hasNarrative) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp, start = 4.dp, end = 4.dp)
+                            .clip(Squircle(KursiRadii.xs))
+                            .background(Color(0xFF120D07).copy(alpha = 0.7f)),
+                    ) {
+                        listOf("ROZNAMCHA" to 0, "DARBAR" to 1).forEach { (label, idx) ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable(
+                                        indication = null,
+                                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                    ) {
+                                        activeTab = idx
+                                        if (idx == 1) onAction(GameAction.MarkChatRead)
+                                    }
+                                    .background(
+                                        if (activeTab == idx) BrandTokens.BrassDark.copy(alpha = 0.5f)
+                                        else Color.Transparent,
+                                    )
+                                    .padding(vertical = 7.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = label,
+                                    style = KursiType.label_micro.copy(
+                                        letterSpacing = 1.5.sp,
+                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                    ),
+                                    color = if (activeTab == idx) BrandTokens.GoldAntique
+                                            else BrandTokens.BrassAged.copy(alpha = 0.5f),
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Box(modifier = Modifier.fillMaxWidth().height(280.dp).padding(top = 4.dp)) {
+                    if (!hasNarrative || activeTab == 0) {
+                        GameLog(state = state, onShowChit = onShowChit)
+                    } else {
+                        // ── DARBAR tab: inline chat feed so the player can review what bots said ──
+                        DarbarLogInline(state = state)
+                    }
+                }
             }
+        }
+    }
+}
+
+/**
+ * Inline chat log for the DARBAR tab inside CollapsibleLogDrawer.
+ * Shows the full Darbar chat history in a scrollable list — same content as the full
+ * DarbarPanel overlay, but embedded in the existing bottom drawer so players don't need
+ * to discover the hidden 💬 FAB. Newest message auto-scrolls into view.
+ */
+@Composable
+private fun DarbarLogInline(state: GameUiState) {
+    fun nameForSeat(senderSeat: Int, isNarrator: Boolean, fromPlayer: Boolean): String = when {
+        isNarrator -> "Sutradhar"
+        fromPlayer -> "Aap"
+        else -> state.opponentPersonas[PlayerId(senderSeat)]?.name ?: "Seat $senderSeat"
+    }
+    fun accentForSeat(senderSeat: Int, isNarrator: Boolean, fromPlayer: Boolean): Color = when {
+        isNarrator -> BrandTokens.GoldAntique
+        fromPlayer -> BrandTokens.BrassAged
+        else -> state.opponentPersonas[PlayerId(senderSeat)]
+            ?.let { Color(it.seatColorArgb) }
+            ?: if (senderSeat >= 0) KursiSeatColors[senderSeat] else BrandTokens.BrassAged
+    }
+
+    val listState = rememberLazyListState()
+    val feedSize = state.chatFeed.size
+    LaunchedEffect(feedSize) {
+        if (feedSize > 0) listState.animateScrollToItem(feedSize - 1)
+    }
+
+    if (state.chatFeed.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(
+                text = "Koi baat nahin abhi tak...",
+                style = KursiType.caption.copy(
+                    fontSize = 12.sp,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                ),
+                color = KursiNeutrals.TextMuted,
+            )
+        }
+        return
+    }
+
+    LazyColumn(
+        state = listState,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 8.dp),
+        contentPadding = PaddingValues(vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        items(state.chatFeed, key = { it.id }) { msg ->
+            val name = nameForSeat(msg.senderSeat, msg.isNarrator, msg.fromPlayer)
+            val accent = accentForSeat(msg.senderSeat, msg.isNarrator, msg.fromPlayer)
+            val emphatic = msg.tone in listOf(
+                com.kursi.feature.game.narrative.MessageTone.HOSTILE,
+                com.kursi.feature.game.narrative.MessageTone.BOAST,
+                com.kursi.feature.game.narrative.MessageTone.PANICKED,
+            )
+            SpeechBubble(
+                speakerName = name,
+                text = msg.body,
+                accent = accent,
+                fromPlayer = msg.fromPlayer,
+                modifier = Modifier.fillMaxWidth(),
+                monogram = null,
+                emphatic = emphatic,
+            )
         }
     }
 }
@@ -1945,17 +2169,22 @@ private fun CollapsibleLogDrawer(
 // spine on EVERY phase. ALWAYS shown — NOT gated under the coach (this is
 // comprehension, not advice). Routes all copy through KursiVoice (bilingual).
 
+/** Returns true for events that merit a plain-language recap line. */
+private fun isRecapWorthy(ev: GameEvent): Boolean = when (ev) {
+    is GameEvent.ActionDeclared, is GameEvent.Blocked, is GameEvent.Challenged,
+    is GameEvent.ChallengeRevealed, is GameEvent.InfluenceLost,
+    is GameEvent.PlayerEliminated, is GameEvent.CoinsTransferred,
+    is GameEvent.Exchanged, is GameEvent.GameEnded -> true
+    else -> false
+}
+
 /** The most recent event worth recapping in plain words (skips bookkeeping noise). */
 private fun mostRecentRecapEvent(state: GameUiState): GameEvent? =
-    state.recentEvents.lastOrNull { ev ->
-        when (ev) {
-            is GameEvent.ActionDeclared, is GameEvent.Blocked, is GameEvent.Challenged,
-            is GameEvent.ChallengeRevealed, is GameEvent.InfluenceLost,
-            is GameEvent.PlayerEliminated, is GameEvent.CoinsTransferred,
-            is GameEvent.Exchanged, is GameEvent.GameEnded -> true
-            else -> false
-        }
-    }
+    state.recentEvents.lastOrNull { isRecapWorthy(it) }
+
+/** The last [n] recap-worthy events, oldest first. Used by IdleDock feed. */
+private fun lastNRecapEvents(state: GameUiState, n: Int): List<GameEvent> =
+    state.recentEvents.filter { isRecapWorthy(it) }.takeLast(n)
 
 /** Resolve the primary + secondary display names a recap line needs for [event]. */
 private fun recapNames(event: GameEvent, state: GameUiState): Pair<String, String?> {
@@ -1975,52 +2204,190 @@ private fun recapNames(event: GameEvent, state: GameUiState): Pair<String, Strin
 }
 
 @Composable
-private fun RecapRail(state: GameUiState, modifier: Modifier = Modifier) {
+/**
+ * Top-of-screen recap strip. On bot turns: 1-line "JUST NOW" summary (keeps the player informed
+ * in real-time). On the player's own turn: expands to a multi-line "PICHLA DAV" (Previous Turn)
+ * block showing the last 3 meaningful events PLUS the last bot chat line if narrative is on.
+ * This is the fix for "if I was distracted I wouldn't know what passed" — the full chain of what
+ * happened during the bot turns is visible precisely when the player needs it (decision time).
+ */
+@OptIn(androidx.compose.animation.ExperimentalAnimationApi::class)
+private fun RecapRail(
+    state: GameUiState,
+    gamePhase: GamePhase,
+    modifier: Modifier = Modifier,
+) {
     val voice = LocalKursiVoice.current
-    val event = mostRecentRecapEvent(state) ?: return
-    val (actor, other) = recapNames(event, state)
-    val line = voice.recap(event, actor, other) ?: return
 
-    Row(
+    val isPickAction = gamePhase is GamePhase.PickAction
+    val feedEvents = if (isPickAction) lastNRecapEvents(state, 4) else emptyList()
+    val singleEvent = if (!isPickAction) mostRecentRecapEvent(state) else null
+
+    // Last bot chat line — shown in the "PICHLA DAV" block so players who miss the
+    // ephemeral speech bubble can still read what the bot said when it matters.
+    val lastBotChat = if (isPickAction && state.narrativeEnabled)
+        state.chatFeed.lastOrNull { !it.fromPlayer && !it.isNarrator }
+    else null
+
+    val hasContent = feedEvents.isNotEmpty() || singleEvent != null
+    if (!hasContent) return
+
+    // Re-expand every time the rail switches to PickAction mode (new player turn).
+    // Keyed on isPickAction so transitioning from bot turn → your turn auto-opens the block.
+    var expanded by remember(isPickAction) { mutableStateOf(true) }
+
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(Squircle(KursiRadii.sm))
             .background(BrandTokens.TeakDark.copy(alpha = 0.85f))
             .border(
                 KursiDimens.stroke_hairline,
-                BrandTokens.BrassDark.copy(alpha = 0.5f),
+                BrandTokens.BrassDark.copy(alpha = if (isPickAction) 0.7f else 0.5f),
                 Squircle(KursiRadii.sm),
             )
-            .padding(horizontal = KursiDimens.space_sm, vertical = 5.dp)
             .semantics(mergeDescendants = true) {
                 liveRegion = LiveRegionMode.Polite
-                contentDescription = "${voice.recapLabel}: $line"
             },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(KursiDimens.space_sm),
     ) {
-        // "JUST NOW" tag — a small brass pill so the recap reads as a settled record.
-        Box(
-            modifier = Modifier
-                .clip(Squircle(KursiRadii.xs))
-                .background(BrandTokens.BrassDark.copy(alpha = 0.5f))
-                .padding(horizontal = 6.dp, vertical = 2.dp),
-        ) {
-            Text(
-                text = voice.recapLabel,
-                style = KursiType.label_micro.copy(letterSpacing = 0.6.sp),
-                color = BrandTokens.GoldAntique,
-                maxLines = 1,
-            )
+        if (isPickAction && feedEvents.isNotEmpty()) {
+            // ── "PICHLA DAV" header row (tappable to collapse/expand) ────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    ) { expanded = !expanded }
+                    .padding(horizontal = KursiDimens.space_sm, vertical = 5.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // "PICHLA DAV" label pill
+                Box(
+                    modifier = Modifier
+                        .clip(Squircle(KursiRadii.xs))
+                        .background(BrandTokens.BrassDark.copy(alpha = 0.5f))
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                ) {
+                    Text(
+                        text = "PICHLA DAV",
+                        style = KursiType.label_micro.copy(letterSpacing = 0.6.sp),
+                        color = BrandTokens.GoldAntique,
+                        maxLines = 1,
+                    )
+                }
+                // Preview of the latest event when collapsed
+                val latestEvent = feedEvents.last()
+                val (lActor, lOther) = recapNames(latestEvent, state)
+                val latestLine = voice.recap(latestEvent, lActor, lOther) ?: ""
+                Text(
+                    text = if (expanded) "" else latestLine,
+                    style = KursiType.label_sm,
+                    color = KursiNeutrals.TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f).padding(horizontal = 6.dp),
+                )
+                Text(
+                    text = if (expanded) "▾" else "▴",
+                    style = KursiType.label_micro,
+                    color = BrandTokens.BrassAged.copy(alpha = 0.6f),
+                )
+            }
+
+            // ── Expanded event + chat feed ────────────────────────────────────────
+            androidx.compose.animation.AnimatedVisibility(visible = expanded) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = KursiDimens.space_sm)
+                        .padding(bottom = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    // Thin divider separates header from feed
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(BrandTokens.BrassDark.copy(alpha = 0.25f)),
+                    )
+                    val count = feedEvents.size
+                    feedEvents.forEachIndexed { idx, ev ->
+                        val (evActor, evOther) = recapNames(ev, state)
+                        val line = voice.recap(ev, evActor, evOther) ?: return@forEachIndexed
+                        // Oldest = most dim; newest = full brightness — creates visual recency gradient
+                        val alpha = when (count - idx) {
+                            1 -> 0.95f
+                            2 -> 0.65f
+                            3 -> 0.40f
+                            else -> 0.25f
+                        }
+                        Text(
+                            text = line,
+                            style = KursiType.body.copy(fontSize = 12.sp),
+                            color = KursiNeutrals.TextPrimary.copy(alpha = alpha),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    // ── Bot chat line — so players who missed the 3-second speech bubble
+                    // can still read what the bot said right before their turn ──────────
+                    if (lastBotChat != null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(BrandTokens.BrassDark.copy(alpha = 0.2f)),
+                        )
+                        val senderPlayer = state.view.players.firstOrNull { it.seatIndex == lastBotChat.senderSeat }
+                        val senderName = senderPlayer?.let { state.opponentPersonas[it.id]?.name }
+                            ?: voice.selfName
+                        Text(
+                            text = "💬 $senderName: \"${lastBotChat.body}\"",
+                            style = KursiType.body.copy(fontSize = 12.sp),
+                            color = BrandTokens.GoldAntique.copy(alpha = 0.8f),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+        } else {
+            // ── Single-line "JUST NOW" strip (bot turn / non-PickAction phases) ──
+            val event = singleEvent ?: return
+            val (actor, other) = recapNames(event, state)
+            val line = voice.recap(event, actor, other) ?: return
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = KursiDimens.space_sm, vertical = 5.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(KursiDimens.space_sm),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .clip(Squircle(KursiRadii.xs))
+                        .background(BrandTokens.BrassDark.copy(alpha = 0.5f))
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                ) {
+                    Text(
+                        text = voice.recapLabel,
+                        style = KursiType.label_micro.copy(letterSpacing = 0.6.sp),
+                        color = BrandTokens.GoldAntique,
+                        maxLines = 1,
+                    )
+                }
+                Text(
+                    text = line,
+                    style = KursiType.label_sm,
+                    color = KursiNeutrals.TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
-        Text(
-            text = line,
-            style = KursiType.label_sm,
-            color = KursiNeutrals.TextSecondary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
     }
 }
 
@@ -2273,6 +2640,8 @@ private fun ActionDock(
     onAction: (GameAction) -> Unit,
     onShowChit: (ChitContent, androidx.compose.ui.geometry.Rect?) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
+    // When true (phone layout) suppresses per-chip consequence text to save vertical space.
+    compact: Boolean = false,
 ) {
     // P2: the dock lifts when it's the player's turn or a reaction is on them.
     val docLifted = gamePhase is GamePhase.PickAction || gamePhase is GamePhase.PickTarget ||
@@ -2288,6 +2657,7 @@ private fun ActionDock(
                     onLocalPhase = onLocalPhase,
                     onAction = onAction,
                     onShowChit = onShowChit,
+                    compact = compact,
                 )
                 is GamePhase.PickTarget -> PickTargetDock(
                     action = gamePhase.action,
@@ -2327,6 +2697,20 @@ private fun ActionDock(
     }
 }
 
+/** A small label row used in the compact mobile action dock to separate grouped sections. */
+@Composable
+private fun ActionSectionLabel(label: String, color: Color) {
+    Text(
+        text = label.uppercase(),
+        style = KursiType.label_micro.copy(
+            letterSpacing = 1.2.sp,
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+        ),
+        color = color.copy(alpha = 0.7f),
+        modifier = Modifier.padding(top = 2.dp, bottom = 2.dp),
+    )
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PickActionDock(
@@ -2335,7 +2719,9 @@ private fun PickActionDock(
     onLocalPhase: (GamePhase?) -> Unit,
     onAction: (GameAction) -> Unit,
     onShowChit: (ChitContent, androidx.compose.ui.geometry.Rect?) -> Unit = { _, _ -> },
+    compact: Boolean = false,
 ) {
+    val showConsequence = !compact
     // Build a RiskAction inspect chit for [action] and route it through onShowChit with
     // the chip's captured [bounds]. Tap still declares; long-press reads the catch.
     val showRiskChit: (Action, androidx.compose.ui.geometry.Rect?) -> Unit = { action, bounds ->
@@ -2367,41 +2753,38 @@ private fun PickActionDock(
     val disruptColor = Color(0xFF8E2B22)    // alert_red
     val defendColor  = Color(0xFF3F6B5E)    // verdigris
 
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center,
-    ) {
-        FlowRow(
-            modifier = Modifier
-                .widthIn(max = 560.dp)
-                .padding(vertical = KursiDimens.space_xs),
-            horizontalArrangement = Arrangement.spacedBy(KursiDimens.space_sm, Alignment.CenterHorizontally),
-            verticalArrangement = Arrangement.spacedBy(KursiDimens.space_sm),
+    if (mustCoup) {
+        // ── Forced coup — single chip, no other options shown ──────────────
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            CompactActionChip(
+                icon = "💥", name = "KHELA", cost = "MAJBOORI", roleGlyph = "⚠",
+                familyColor = disruptColor, enabled = hasCoupTarget, forced = true,
+                action = Action.Coup(PlayerId(0)), onInspect = showRiskChit,
+                advice = if (coachActive) adviceForActionChip(state, Action.Coup(PlayerId(0))) else null,
+                onShowCoach = showCoachChit, showConsequence = showConsequence,
+                onClick = { onLocalPhase(GamePhase.PickTarget(Action.Coup(PlayerId(0)))) },
+            )
+        }
+    } else if (compact) {
+        // ── MOBILE: grouped layout with section labels ───────────────────────
+        // Three clear categories eliminate option paralysis. Each section is a
+        // small labelled block; chips never wrap unexpectedly within a section.
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            if (mustCoup) {
-                // Forced coup — only KHELA chip, filled alert_red
-                CompactActionChip(
-                    icon = "💥",
-                    name = "KHELA",
-                    cost = "MAJBOORI",
-                    roleGlyph = "⚠",
-                    familyColor = disruptColor,
-                    enabled = hasCoupTarget,
-                    forced = true,
-                    action = Action.Coup(PlayerId(0)),
-                    onInspect = showRiskChit,
-                    advice = if (coachActive) adviceForActionChip(state, Action.Coup(PlayerId(0))) else null,
-                    onShowCoach = showCoachChit,
-                    onClick = { onLocalPhase(GamePhase.PickTarget(Action.Coup(PlayerId(0)))) },
-                )
-            } else {
-                // ECONOMY — brass
+            // ① EARN COINS ─ no role claim, safe to use any time
+            ActionSectionLabel(label = "KAMAAI — Earn coins", color = brassColor)
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
                 CompactActionChip(
                     icon = "🪙", name = "DEHAADI", cost = "+1", roleGlyph = "",
                     familyColor = brassColor, enabled = true, forced = false,
                     action = Action.Income, onInspect = showRiskChit,
                     advice = if (coachActive) adviceForActionChip(state, Action.Income) else null,
-                    onShowCoach = showCoachChit,
+                    onShowCoach = showCoachChit, showConsequence = false,
                     onClick = { onAction(GameAction.Submit(Intent.DeclareAction(humanSeat, Action.Income))) },
                 )
                 CompactActionChip(
@@ -2409,7 +2792,7 @@ private fun PickActionDock(
                     familyColor = brassColor, enabled = true, forced = false,
                     action = Action.ForeignAid, onInspect = showRiskChit,
                     advice = if (coachActive) adviceForActionChip(state, Action.ForeignAid) else null,
-                    onShowCoach = showCoachChit,
+                    onShowCoach = showCoachChit, showConsequence = false,
                     onClick = { onAction(GameAction.Submit(Intent.DeclareAction(humanSeat, Action.ForeignAid))) },
                 )
                 CompactActionChip(
@@ -2417,48 +2800,26 @@ private fun PickActionDock(
                     familyColor = brassColor, enabled = true, forced = false,
                     action = Action.Tax, onInspect = showRiskChit,
                     advice = if (coachActive) adviceForActionChip(state, Action.Tax) else null,
-                    onShowCoach = showCoachChit,
+                    onShowCoach = showCoachChit, showConsequence = false,
                     onClick = { onAction(GameAction.Submit(Intent.DeclareAction(humanSeat, Action.Tax))) },
                 )
-                // DISRUPT — alert_red
+            }
+
+            // ② ATTACK / DISRUPT ─ costs coins or forces a loss
+            ActionSectionLabel(label = "HAMLA — Attack", color = disruptColor)
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
                 CompactActionChip(
                     icon = "🔪", name = "SUPARI", cost = "−3", roleGlyph = "🔪",
                     familyColor = disruptColor,
                     enabled = myCoins >= 3 && hasAssassinateTarget, forced = false,
                     action = Action.Assassinate(PlayerId(0)), onInspect = showRiskChit,
                     advice = if (coachActive) adviceForActionChip(state, Action.Assassinate(PlayerId(0))) else null,
-                    onShowCoach = showCoachChit,
+                    onShowCoach = showCoachChit, showConsequence = false,
                     onClick = { onLocalPhase(GamePhase.PickTarget(Action.Assassinate(PlayerId(0)))) },
                 )
-                // DEFEND/MOVE — verdigris
-                CompactActionChip(
-                    icon = "🤝", name = "SETTING", cost = "swap", roleGlyph = "🤝",
-                    familyColor = defendColor, enabled = true, forced = false,
-                    action = Action.Exchange, onInspect = showRiskChit,
-                    advice = if (coachActive) adviceForActionChip(state, Action.Exchange) else null,
-                    onShowCoach = showCoachChit,
-                    onClick = { onAction(GameAction.Submit(Intent.DeclareAction(humanSeat, Action.Exchange))) },
-                )
-                CompactActionChip(
-                    icon = "🪤", name = "VASOOLI", cost = "+2", roleGlyph = "🪤",
-                    familyColor = defendColor, enabled = hasStealTarget, forced = false,
-                    action = Action.Steal(PlayerId(0)), onInspect = showRiskChit,
-                    advice = if (coachActive) adviceForActionChip(state, Action.Steal(PlayerId(0))) else null,
-                    onShowCoach = showCoachChit,
-                    onClick = { onLocalPhase(GamePhase.PickTarget(Action.Steal(PlayerId(0)))) },
-                )
-                // JAANCH (PATRAKAAR / Investigate) — only on big tables (gated by hasInvestigateTarget).
-                if (hasInvestigateTarget) {
-                    CompactActionChip(
-                        icon = "🔍", name = "JAANCH", cost = "peek", roleGlyph = "📰",
-                        familyColor = defendColor, enabled = true, forced = false,
-                        action = Action.Investigate(PlayerId(0)), onInspect = showRiskChit,
-                        advice = if (coachActive) adviceForActionChip(state, Action.Investigate(PlayerId(0))) else null,
-                        onShowCoach = showCoachChit,
-                        onClick = { onLocalPhase(GamePhase.PickTarget(Action.Investigate(PlayerId(0)))) },
-                    )
-                }
-                // KHELA — alert_red, auto-promotes style at 7+ coins
                 CompactActionChip(
                     icon = "💥", name = "KHELA",
                     cost = if (myCoins >= 7) "−7" else "need 7",
@@ -2468,7 +2829,124 @@ private fun PickActionDock(
                     forced = myCoins >= 7,
                     action = Action.Coup(PlayerId(0)), onInspect = showRiskChit,
                     advice = if (coachActive) adviceForActionChip(state, Action.Coup(PlayerId(0))) else null,
-                    onShowCoach = showCoachChit,
+                    onShowCoach = showCoachChit, showConsequence = false,
+                    onClick = { onLocalPhase(GamePhase.PickTarget(Action.Coup(PlayerId(0)))) },
+                )
+            }
+
+            // ③ SPECIAL ─ steal, swap cards, investigate
+            ActionSectionLabel(label = "DAANV — Special", color = defendColor)
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                CompactActionChip(
+                    icon = "🤝", name = "SETTING", cost = "swap", roleGlyph = "🤝",
+                    familyColor = defendColor, enabled = true, forced = false,
+                    action = Action.Exchange, onInspect = showRiskChit,
+                    advice = if (coachActive) adviceForActionChip(state, Action.Exchange) else null,
+                    onShowCoach = showCoachChit, showConsequence = false,
+                    onClick = { onAction(GameAction.Submit(Intent.DeclareAction(humanSeat, Action.Exchange))) },
+                )
+                CompactActionChip(
+                    icon = "🪤", name = "VASOOLI", cost = "+2", roleGlyph = "🪤",
+                    familyColor = defendColor, enabled = hasStealTarget, forced = false,
+                    action = Action.Steal(PlayerId(0)), onInspect = showRiskChit,
+                    advice = if (coachActive) adviceForActionChip(state, Action.Steal(PlayerId(0))) else null,
+                    onShowCoach = showCoachChit, showConsequence = false,
+                    onClick = { onLocalPhase(GamePhase.PickTarget(Action.Steal(PlayerId(0)))) },
+                )
+                if (hasInvestigateTarget) {
+                    CompactActionChip(
+                        icon = "🔍", name = "JAANCH", cost = "peek", roleGlyph = "📰",
+                        familyColor = defendColor, enabled = true, forced = false,
+                        action = Action.Investigate(PlayerId(0)), onInspect = showRiskChit,
+                        advice = if (coachActive) adviceForActionChip(state, Action.Investigate(PlayerId(0))) else null,
+                        onShowCoach = showCoachChit, showConsequence = false,
+                        onClick = { onLocalPhase(GamePhase.PickTarget(Action.Investigate(PlayerId(0)))) },
+                    )
+                }
+            }
+        }
+    } else {
+        // ── DESKTOP: flat FlowRow (all chips in one flow, consequence text shown) ──
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            FlowRow(
+                modifier = Modifier
+                    .widthIn(max = 560.dp)
+                    .padding(vertical = KursiDimens.space_xs),
+                horizontalArrangement = Arrangement.spacedBy(KursiDimens.space_sm, Alignment.CenterHorizontally),
+                verticalArrangement = Arrangement.spacedBy(KursiDimens.space_sm),
+            ) {
+                CompactActionChip(
+                    icon = "🪙", name = "DEHAADI", cost = "+1", roleGlyph = "",
+                    familyColor = brassColor, enabled = true, forced = false,
+                    action = Action.Income, onInspect = showRiskChit,
+                    advice = if (coachActive) adviceForActionChip(state, Action.Income) else null,
+                    onShowCoach = showCoachChit, showConsequence = showConsequence,
+                    onClick = { onAction(GameAction.Submit(Intent.DeclareAction(humanSeat, Action.Income))) },
+                )
+                CompactActionChip(
+                    icon = "💵", name = "FDI", cost = "+2", roleGlyph = "",
+                    familyColor = brassColor, enabled = true, forced = false,
+                    action = Action.ForeignAid, onInspect = showRiskChit,
+                    advice = if (coachActive) adviceForActionChip(state, Action.ForeignAid) else null,
+                    onShowCoach = showCoachChit, showConsequence = showConsequence,
+                    onClick = { onAction(GameAction.Submit(Intent.DeclareAction(humanSeat, Action.ForeignAid))) },
+                )
+                CompactActionChip(
+                    icon = "💰", name = "GHOTALA", cost = "+3", roleGlyph = "⚖",
+                    familyColor = brassColor, enabled = true, forced = false,
+                    action = Action.Tax, onInspect = showRiskChit,
+                    advice = if (coachActive) adviceForActionChip(state, Action.Tax) else null,
+                    onShowCoach = showCoachChit, showConsequence = showConsequence,
+                    onClick = { onAction(GameAction.Submit(Intent.DeclareAction(humanSeat, Action.Tax))) },
+                )
+                CompactActionChip(
+                    icon = "🔪", name = "SUPARI", cost = "−3", roleGlyph = "🔪",
+                    familyColor = disruptColor,
+                    enabled = myCoins >= 3 && hasAssassinateTarget, forced = false,
+                    action = Action.Assassinate(PlayerId(0)), onInspect = showRiskChit,
+                    advice = if (coachActive) adviceForActionChip(state, Action.Assassinate(PlayerId(0))) else null,
+                    onShowCoach = showCoachChit, showConsequence = showConsequence,
+                    onClick = { onLocalPhase(GamePhase.PickTarget(Action.Assassinate(PlayerId(0)))) },
+                )
+                CompactActionChip(
+                    icon = "🤝", name = "SETTING", cost = "swap", roleGlyph = "🤝",
+                    familyColor = defendColor, enabled = true, forced = false,
+                    action = Action.Exchange, onInspect = showRiskChit,
+                    advice = if (coachActive) adviceForActionChip(state, Action.Exchange) else null,
+                    onShowCoach = showCoachChit, showConsequence = showConsequence,
+                    onClick = { onAction(GameAction.Submit(Intent.DeclareAction(humanSeat, Action.Exchange))) },
+                )
+                CompactActionChip(
+                    icon = "🪤", name = "VASOOLI", cost = "+2", roleGlyph = "🪤",
+                    familyColor = defendColor, enabled = hasStealTarget, forced = false,
+                    action = Action.Steal(PlayerId(0)), onInspect = showRiskChit,
+                    advice = if (coachActive) adviceForActionChip(state, Action.Steal(PlayerId(0))) else null,
+                    onShowCoach = showCoachChit, showConsequence = showConsequence,
+                    onClick = { onLocalPhase(GamePhase.PickTarget(Action.Steal(PlayerId(0)))) },
+                )
+                if (hasInvestigateTarget) {
+                    CompactActionChip(
+                        icon = "🔍", name = "JAANCH", cost = "peek", roleGlyph = "📰",
+                        familyColor = defendColor, enabled = true, forced = false,
+                        action = Action.Investigate(PlayerId(0)), onInspect = showRiskChit,
+                        advice = if (coachActive) adviceForActionChip(state, Action.Investigate(PlayerId(0))) else null,
+                        onShowCoach = showCoachChit, showConsequence = showConsequence,
+                        onClick = { onLocalPhase(GamePhase.PickTarget(Action.Investigate(PlayerId(0)))) },
+                    )
+                }
+                CompactActionChip(
+                    icon = "💥", name = "KHELA",
+                    cost = if (myCoins >= 7) "−7" else "need 7",
+                    roleGlyph = "⚠",
+                    familyColor = disruptColor,
+                    enabled = myCoins >= 7 && hasCoupTarget,
+                    forced = myCoins >= 7,
+                    action = Action.Coup(PlayerId(0)), onInspect = showRiskChit,
+                    advice = if (coachActive) adviceForActionChip(state, Action.Coup(PlayerId(0))) else null,
+                    onShowCoach = showCoachChit, showConsequence = showConsequence,
                     onClick = { onLocalPhase(GamePhase.PickTarget(Action.Coup(PlayerId(0)))) },
                 )
             }
@@ -2497,6 +2975,9 @@ private fun CompactActionChip(
     // DECISION-COACH read for this action (null until the advisor finishes / for no-claim moves).
     advice: com.kursi.ai.advisor.MoveAdvice? = null,
     onShowCoach: (com.kursi.ai.advisor.MoveAdvice, androidx.compose.ui.geometry.Rect?) -> Unit = { _, _ -> },
+    // On phone (compact=true) the per-chip consequence text is suppressed to save vertical space.
+    // The HintRail above the dock already surfaces contextual guidance.
+    showConsequence: Boolean = true,
 ) {
     val alertRed = Color(0xFF8E2B22)
     val chipAlpha = if (enabled) 1f else 0.45f
@@ -2538,7 +3019,7 @@ private fun CompactActionChip(
         Box(
             modifier = Modifier
                 .onGloballyPositioned { chipBounds = it.boundsInRoot() }
-                .height(44.dp)
+                .heightIn(min = 52.dp)
                 .widthIn(min = 96.dp, max = 168.dp)
                 .then(
                     if (recommended) Modifier.holoRimLight(
@@ -2613,9 +3094,10 @@ private fun CompactActionChip(
             val claimedName = (advice.intent as? Intent.DeclareAction)?.action?.let { Rules.claimedRole(it)?.let { r -> roleLabel(r) } }
             CoachBadge(truthful = advice.truthful, bluff = advice.bluff, claimedRoleName = claimedName)
         }
-        // CLARITY (Tenet 1) — ALWAYS-SHOWN what-now line: what this action does + its cost/risk.
-        // Not gated under the coach: this is comprehension, not advice. Dims with the chip.
-        if (action != null) {
+        // CLARITY (Tenet 1) — what this action does + its cost/risk.
+        // Suppressed on phone (compact=true): the HintRail above the dock covers context,
+        // and hiding per-chip text reduces the dock's height significantly.
+        if (showConsequence && action != null) {
             val voice = LocalKursiVoice.current
             Text(
                 text = voice.actionConsequence(action),
@@ -2983,7 +3465,7 @@ private fun ReactionChip(
         Box(
             modifier = Modifier
                 .onGloballyPositioned { chipBounds = it.boundsInRoot() }
-                .height(44.dp)
+                .heightIn(min = 52.dp)
                 .widthIn(min = 96.dp, max = 200.dp)
                 .clip(Squircle(KursiDimens.r_md))
                 .background(chipColor.copy(alpha = 0.15f))
@@ -3343,19 +3825,120 @@ private fun InvestigateChoice(
 private fun IdleDock(state: GameUiState) {
     val voice = LocalKursiVoice.current
     val actorName = actorName(state)
-    Box(
+
+    // Resolve the acting seat's color so the card is visually tied to that player.
+    val actorId: PlayerId? = when (val p = state.view.phase) {
+        is PhaseView.Turn -> p.actor
+        is PhaseView.Reactions -> p.actor
+        is PhaseView.InfluenceLoss -> p.loser
+        else -> null
+    }
+    val actorColor = actorId?.let { KursiSeatColors[it.raw] } ?: BrandTokens.BrassAged
+
+    // Last 3 meaningful events, oldest first — shows the full chain (e.g.
+    // "Babu used Tax → Netaji challenged → Babu revealed → Netaji lost").
+    val feedEvents = lastNRecapEvents(state, 3)
+
+    // Pulsing live-dot so the player knows the game is progressing.
+    val pulse by rememberInfiniteTransition(label = "idlePulse").animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.85f,
+        animationSpec = infiniteRepeatable(
+            tween(900, easing = FastOutSlowInEasing),
+            RepeatMode.Reverse,
+        ),
+        label = "idlePulseAlpha",
+    )
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .alpha(0.5f)
-            .padding(8.dp),
-        contentAlignment = Alignment.Center,
+            .clip(Squircle(KursiRadii.sm))
+            .background(actorColor.copy(alpha = 0.09f))
+            .border(1.dp, actorColor.copy(alpha = 0.3f), Squircle(KursiRadii.sm))
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text(
-            text = voice.opponentActing(actorName),
-            style = KursiType.body,
-            color = KursiNeutrals.TextMuted,
-            textAlign = TextAlign.Center,
-        )
+        // ── "Whose turn" header ──────────────────────────────────────────────
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .background(actorColor.copy(alpha = pulse)),
+            )
+            Text(
+                text = voice.opponentActing(actorName),
+                style = KursiType.label_sm.copy(fontSize = 13.sp, letterSpacing = 0.5.sp),
+                color = actorColor,
+            )
+        }
+
+        // ── Recent event feed: last 3 events, oldest dimmed, newest bright ──
+        // This makes challenge chains legible:
+        //   (dim)   Babu claimed VAKIL via GHOTALA
+        //   (mid)   Netaji challenged the claim
+        //   (bright) Babu revealed — TRUE, Netaji lost influence
+        if (feedEvents.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(actorColor.copy(alpha = 0.2f)),
+            )
+            val count = feedEvents.size
+            feedEvents.forEachIndexed { idx, ev ->
+                val (evActor, evOther) = recapNames(ev, state)
+                val line = voice.recap(ev, evActor, evOther) ?: return@forEachIndexed
+                // Oldest event = most dimmed; newest = full brightness
+                val alpha = when (count - idx) {
+                    1 -> 1.0f       // newest — full brightness
+                    2 -> 0.60f      // one back — medium
+                    else -> 0.35f   // oldest — dim
+                }
+                // Newest event gets a slightly larger text size to draw the eye
+                val textSize = if (idx == count - 1) 13.sp else 12.sp
+                Text(
+                    text = line,
+                    style = KursiType.body.copy(fontSize = textSize),
+                    color = KursiNeutrals.TextPrimary.copy(alpha = alpha),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.semantics {
+                        liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite
+                    },
+                )
+            }
+            // ── Last bot chat: what the acting bot just said ─────────────────────
+            // Shows only in narrative mode so the player can read what the bot said
+            // without depending on seeing the 5-second speech bubble on the plate.
+            val actorChatLine = if (state.narrativeEnabled) {
+                val actorIdx = actorId?.raw
+                if (actorIdx != null)
+                    state.chatFeed.lastOrNull { !it.fromPlayer && !it.isNarrator && it.senderSeat == actorIdx }
+                else null
+            } else null
+            if (actorChatLine != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(actorColor.copy(alpha = 0.15f)),
+                )
+                val senderPlayer = state.view.players.firstOrNull { it.seatIndex == actorChatLine.senderSeat }
+                val senderName = senderPlayer?.let { state.opponentPersonas[it.id]?.name } ?: actorName
+                Text(
+                    text = "💬 $senderName: \"${actorChatLine.body}\"",
+                    style = KursiType.body.copy(fontSize = 12.sp),
+                    color = BrandTokens.GoldAntique.copy(alpha = 0.75f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
     }
 }
 
