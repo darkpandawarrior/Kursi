@@ -59,6 +59,7 @@ import com.kursi.shared.screen.SettingsScreen
 import com.kursi.shared.screen.SetupScreen
 import com.kursi.shared.screen.StoryScreen
 import com.kursi.shared.screen.TutorialOfferDialog
+import com.kursi.shared.screen.ProfileSetupScreen
 import com.kursi.shared.screen.TutorialScreen
 import com.kursi.shared.strings.KursiStrings
 import com.kursi.shared.strings.LocalKursiStrings
@@ -106,7 +107,11 @@ fun KursiApp() {
             // S0 — splash decision: primer (first run) or straight to the hub.
             composable<Route.Boot> {
                 LaunchedEffect(Unit) {
-                    val dest: Route = if (prefs.hasSeenPrimer) Route.Home else Route.Primer
+                    val dest: Route = when {
+                        !prefs.hasSeenPrimer -> Route.Primer
+                        !prefs.hasPlayerProfile -> Route.ProfileSetup()
+                        else -> Route.Home
+                    }
                     navController.navigate(dest) { popUpTo(Route.Boot) { inclusive = true } }
                 }
                 TeakVoid()
@@ -116,8 +121,25 @@ fun KursiApp() {
             composable<Route.Primer> {
                 SwearingInPrimer(onDone = {
                     prefs.hasSeenPrimer = true
-                    navController.navigate(Route.Home) { popUpTo(Route.Primer) { inclusive = true } }
+                    // Route to profile setup if the player hasn't named themselves yet.
+                    val next = if (!prefs.hasPlayerProfile) Route.ProfileSetup() else Route.Home
+                    navController.navigate(next) { popUpTo(Route.Primer) { inclusive = true } }
                 })
+            }
+
+            // PEHLI HAZRI — player profile setup (name, avatar, seat color).
+            composable<Route.ProfileSetup> { backEntry ->
+                val fromSettings = backEntry.toRoute<Route.ProfileSetup>().fromSettings
+                ProfileSetupScreen(
+                    prefs = prefs,
+                    fromSettings = fromSettings,
+                    onBack = if (fromSettings) {{ navController.popBackStack() }} else null,
+                    onDone = {
+                        navController.navigate(Route.Home) {
+                            popUpTo(Route.ProfileSetup(fromSettings)) { inclusive = true }
+                        }
+                    },
+                )
             }
 
             // S1 — Home / Daftar hub.
@@ -316,6 +338,7 @@ fun KursiApp() {
                     onBack = { navController.popBackStack() },
                     onReplayPrimer = { navController.navigate(Route.Primer) },
                     onGazette = { navController.navigate(Route.Gazette) },
+                    onEditProfile = { navController.navigate(Route.ProfileSetup(fromSettings = true)) },
                 )
             }
 
@@ -487,6 +510,7 @@ fun KursiApp() {
                             playerCount = r.players,
                             difficulty = difficultyOf(r.difficulty),
                             seed = r.seed,
+                            playerName = prefs.displayName,
                             resumeLog = snap?.humanLog,
                             humanCount = r.humanCount,
                             teamCount = r.teamCount,
@@ -575,6 +599,7 @@ fun KursiApp() {
                         soundEnabled = soundEnabled,
                         reducedMotion = reducedMotion,
                         spectator = r.spectator,
+                        humanDisplayName = vm.humanDisplayName,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }

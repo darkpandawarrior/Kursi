@@ -137,12 +137,12 @@ class GameViewModel(
     private var adviceJob: Job? = null
 
     private companion object {
-        /** Pure bookkeeping (income / foreign aid / a coin tick / a bare turn pass): keep it snappy. */
-        const val TRIVIAL_STEP_MS = 720L
-        /** A declared action that actually lands (tax / steal / assassinate / exchange / block): readable. */
-        const val ROUTINE_STEP_MS = 1100L
-        /** Dramatic beats (challenge / block-stand / reveal / influence loss / elimination / win): full weight. */
-        const val DRAMATIC_STEP_MS = 2050L
+        /** Pure bookkeeping (income / foreign aid / a coin tick / a bare turn pass): readable but brisk. */
+        const val TRIVIAL_STEP_MS = 1600L
+        /** A declared action that actually lands (tax / steal / assassinate / exchange / block): give time to absorb. */
+        const val ROUTINE_STEP_MS = 2400L
+        /** Dramatic beats (challenge / block-stand / reveal / influence loss / elimination / win): full theatrical weight. */
+        const val DRAMATIC_STEP_MS = 4000L
 
         /** Okabe-Ito-ish hues for hot-seat human players (ARGB Long), distinct from the bot personas. */
         val HUMAN_SEAT_COLORS = longArrayOf(
@@ -182,6 +182,10 @@ class GameViewModel(
     private var matchPlayers: Int = 0
     private var matchDifficulty: Difficulty = Difficulty.Medium
     private var matchHumanCount: Int = 1
+
+    /** The human player's display name — threaded into moment beats and chat. Default "Khiladi". */
+    var humanDisplayName: String = "Khiladi"
+        private set
 
     /** M6e TAMASHA / DEMO — when true, the advisor auto-plays the human seat(s) so the whole game runs itself. */
     private var spectator: Boolean = false
@@ -435,6 +439,7 @@ class GameViewModel(
             scarcityEnabled = action.scarcityEnabled,
         )
         spectator = action.spectator
+        humanDisplayName = action.playerName.ifBlank { "Khiladi" }
         // DARBAR: fresh narrative state for the new match.
         narrativeEnabled = action.narrativeEnabled
         matchStoryArc = action.storyArc
@@ -657,7 +662,7 @@ class GameViewModel(
         spectateJob?.cancel()
         spectateJob = coroutineScope.launch {
             // Let the player watch the table settle before the demo "thinks" and acts.
-            delay((ROUTINE_STEP_MS * speedMultiplier).toLong().coerceIn(420L, 2600L))
+            delay((ROUTINE_STEP_MS * speedMultiplier).toLong().coerceIn(800L, 4800L))
             val best = currentSession.bestHumanMove() ?: return@launch
             // Re-check on the shown state: still this session, still the human's turn, still legal.
             val shown = _state.value ?: return@launch
@@ -694,7 +699,7 @@ class GameViewModel(
                 }
                 if (!allowed) break
                 // Let the player register what they're being relieved of before it fires.
-                delay((620L * speedMultiplier).toLong().coerceIn(160L, 1400L))
+                delay((1200L * speedMultiplier).toLong().coerceIn(400L, 2800L))
                 // Bail if the situation changed under us (race with the advance loop).
                 val shown = _state.value ?: break
                 if (!shown.isHumanTurn || decision.intent !in shown.legalIntents) break
@@ -756,7 +761,7 @@ class GameViewModel(
         }
         // M5 TURN-SPEED: scale the pacing by the live multiplier (SLOW 1.4× / NORMAL 1.0× / FAST 0.5×),
         // clamped so even FAST keeps a readable floor and SLOW never drags past ~3s.
-        return (base * speedMultiplier).toLong().coerceIn(180L, 3200L)
+        return (base * speedMultiplier).toLong().coerceIn(400L, 6000L)
     }
 
     /**

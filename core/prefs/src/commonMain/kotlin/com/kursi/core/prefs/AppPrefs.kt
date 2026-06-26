@@ -33,6 +33,14 @@ class AppPrefs(private val settings: Settings = Settings()) {
         private const val KEY_LANGUAGE         = "language"
         private const val KEY_COACH_ENABLED    = "coach_enabled"
 
+        // ── Player profile ──
+        /** Display name shown in-game and in moments; default empty string → "Khiladi" fallback. */
+        private const val KEY_PLAYER_NAME      = "player_name"
+        /** Index (0–11) into a fixed emoji avatar roster; -1 = no avatar set. */
+        private const val KEY_PLAYER_AVATAR_IDX = "player_avatar_idx"
+        /** Seat accent color as ARGB long (same encoding as OpponentPersona.seatColorArgb). */
+        private const val KEY_PLAYER_COLOR_ARGB = "player_color_argb"
+
         // ── M5 auto-mode / assistant ──
         /** Turn pacing: "SLOW" | "NORMAL" | "FAST" — scales the bot-step delays. */
         private const val KEY_TURN_SPEED       = "turn_speed"
@@ -138,6 +146,32 @@ class AppPrefs(private val settings: Settings = Settings()) {
         set(v) { settings.putBoolean(KEY_HAS_SEEN_PRIMER, v) }
 
     fun markPrimerSeen() { hasSeenPrimer = true }
+
+    // ── Player profile ─────────────────────────────────────────────────────────
+
+    /** The player's chosen display name. Empty string = not set (UI should show "Khiladi" as fallback). */
+    var playerName: String
+        get() = settings.getString(KEY_PLAYER_NAME, defaultValue = "")
+        set(v) { settings.putString(KEY_PLAYER_NAME, v.trim()) }
+
+    /** True once the player has completed the profile setup screen at least once. */
+    val hasPlayerProfile: Boolean get() = playerName.isNotBlank()
+
+    /** 0-based index into the canonical avatar emoji roster; -1 = none chosen. */
+    var playerAvatarIdx: Int
+        get() = settings.getInt(KEY_PLAYER_AVATAR_IDX, defaultValue = -1)
+        set(v) { settings.putInt(KEY_PLAYER_AVATAR_IDX, v) }
+
+    /**
+     * Seat accent color as packed ARGB Long (same as [com.kursi.feature.game.OpponentPersona.seatColorArgb]).
+     * 0L = not set; UI falls back to a default warm red.
+     */
+    var playerColorArgb: Long
+        get() = settings.getLong(KEY_PLAYER_COLOR_ARGB, defaultValue = 0L)
+        set(v) { settings.putLong(KEY_PLAYER_COLOR_ARGB, v) }
+
+    /** The display name to actually show (never empty — falls back to "Khiladi"). */
+    val displayName: String get() = playerName.ifBlank { "Khiladi" }
 
     // ── hasSeenTutorialOffer (M5 ONBOARD) ──────────────────────────────────────
 

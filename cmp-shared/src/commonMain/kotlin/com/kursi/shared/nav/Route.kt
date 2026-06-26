@@ -23,6 +23,14 @@ sealed interface Route {
     @Serializable
     data object Primer : Route
 
+    /**
+     * PEHLI HAZRI — Player profile setup: display name, avatar emoji, seat color.
+     * Shown after Primer on first run when no profile exists; also reachable from Settings.
+     * [fromSettings] true = shows back button instead of skip link.
+     */
+    @Serializable
+    data class ProfileSetup(val fromSettings: Boolean = false) : Route
+
     /** S7 — NIYAM GAZETTE: rules / who-beats-whom leaf overlay. */
     @Serializable
     data object Gazette : Route

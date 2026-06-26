@@ -226,7 +226,7 @@ private class EngineStep(start: GameState) {
         events.add(GameEvent.CoinsChanged(pid, +take))
         // Track lifetime coins for KhazanaRaj / Emergency unlock (only when feature is active).
         if (cfg.khazanaEnabled || cfg.emergencyEnabled) {
-            val prev = state.lifetimeCoins.getOrDefault(pid, 0)
+            val prev = state.lifetimeCoins[pid] ?: 0
             val next = prev + take
             state = state.copy(lifetimeCoins = state.lifetimeCoins + (pid to next))
             checkKhazanaMilestones(pid, prev, next)

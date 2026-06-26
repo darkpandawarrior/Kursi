@@ -47,6 +47,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onReplayPrimer: () -> Unit,
     onGazette: () -> Unit,
+    onEditProfile: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val s = LocalKursiStrings.current
@@ -110,6 +111,58 @@ fun SettingsScreen(
             modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(20.dp),
           ) {
+            // ── PROFILE ───────────────────────────────────────────────────────
+            if (onEditProfile != null) {
+                SettingsSection("APNA PROFILE") {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
+                            .background(BrandTokens.TeakDark.copy(alpha = 0.6f))
+                            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.35f), androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
+                            .clickable { onEditProfile() }
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        // Monogram circle
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(
+                                    if (prefs.playerColorArgb != 0L)
+                                        androidx.compose.ui.graphics.Color(prefs.playerColorArgb)
+                                    else BrandTokens.StampRed
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            val avatarEmoji = com.kursi.shared.screen.AVATAR_ROSTER.getOrNull(prefs.playerAvatarIdx)
+                            if (avatarEmoji != null) {
+                                Text(text = avatarEmoji, fontSize = 22.sp)
+                            } else {
+                                Text(
+                                    text = prefs.displayName.take(2).uppercase(),
+                                    style = KursiType.label_sm.copy(fontWeight = FontWeight.Bold, fontSize = 14.sp),
+                                    color = BrandTokens.PaperCream,
+                                )
+                            }
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = prefs.displayName,
+                                style = KursiType.name.copy(fontSize = 16.sp),
+                                color = KursiNeutrals.TextPrimary,
+                            )
+                            Text(
+                                text = "EDIT PROFILE  →",
+                                style = KursiType.label_micro.copy(letterSpacing = 0.8.sp, fontSize = 10.sp),
+                                color = BrandTokens.BrassAged.copy(alpha = 0.6f),
+                            )
+                        }
+                    }
+                }
+            }
             // ── BHASHA (Language) ──────────────────────────────────────────────
             SettingsSection(s.settingsLanguageSection) {
                 Row(
