@@ -64,6 +64,10 @@ object GameContextSerializer {
             is Action.Assassinate -> "assassinate_seat${a.target.raw}"
             is Action.Steal -> "steal_seat${a.target.raw}"
             is Action.Investigate -> "investigate_seat${a.target.raw}"
+            Action.BailPe -> "bail_pe_bahar"
+            Action.Sabotage -> "sabotage"
+            is Action.Hawala -> "hawala_seat${a.to.raw}"
+            Action.Emergency -> "adhyadesh"
         }
         is Intent.Block -> "block_as_${intent.role.label()}"
         is Intent.Challenge -> "challenge"

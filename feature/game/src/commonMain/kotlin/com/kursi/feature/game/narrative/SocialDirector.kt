@@ -128,8 +128,10 @@ class SocialDirector(
             is GameEvent.InfluenceLost -> {
                 val victim = e.player.raw
                 val aggressor = when (e.reason) {
-                    LossReason.ASSASSINATED, LossReason.COUPED -> lastActor
+                    LossReason.ASSASSINATED, LossReason.COUPED,
+                    LossReason.EMERGENCY_COUPED -> lastActor
                     LossReason.LOST_CHALLENGE, LossReason.LOST_BLOCK_CHALLENGE -> lastChallenger
+                    LossReason.SABOTAGED -> null  // voluntary sacrifice — no social credit to an aggressor
                 }
                 if (aggressor != null && aggressor != victim) {
                     social = social.afterHit(aggressor, victim, weight = 1.5f)

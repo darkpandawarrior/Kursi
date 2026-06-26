@@ -45,6 +45,10 @@ fun Action.toWire(): WireAction = when (this) {
     is Action.Steal -> WireAction.Steal(target.raw)
     Action.Exchange -> WireAction.Exchange
     is Action.Investigate -> WireAction.Investigate(target.raw)
+    Action.BailPe -> WireAction.BailPe
+    Action.Sabotage -> WireAction.Sabotage
+    is Action.Hawala -> WireAction.Hawala(to.raw)
+    Action.Emergency -> WireAction.Emergency
 }
 
 fun WireAction.toEngine(): Action = when (this) {
@@ -56,6 +60,10 @@ fun WireAction.toEngine(): Action = when (this) {
     is WireAction.Steal -> Action.Steal(PlayerId(target))
     WireAction.Exchange -> Action.Exchange
     is WireAction.Investigate -> Action.Investigate(PlayerId(target))
+    WireAction.BailPe -> Action.BailPe
+    WireAction.Sabotage -> Action.Sabotage
+    is WireAction.Hawala -> Action.Hawala(PlayerId(to))
+    WireAction.Emergency -> Action.Emergency
 }
 
 // ─────────────────────────── ReactionStep ───────────────────────────
@@ -79,6 +87,8 @@ fun LossReason.toWire(): WireLossReason = when (this) {
     LossReason.LOST_BLOCK_CHALLENGE -> WireLossReason.LOST_BLOCK_CHALLENGE
     LossReason.ASSASSINATED -> WireLossReason.ASSASSINATED
     LossReason.COUPED -> WireLossReason.COUPED
+    LossReason.SABOTAGED -> WireLossReason.SABOTAGED
+    LossReason.EMERGENCY_COUPED -> WireLossReason.EMERGENCY_COUPED
 }
 
 fun WireLossReason.toEngine(): LossReason = when (this) {
@@ -86,6 +96,8 @@ fun WireLossReason.toEngine(): LossReason = when (this) {
     WireLossReason.LOST_BLOCK_CHALLENGE -> LossReason.LOST_BLOCK_CHALLENGE
     WireLossReason.ASSASSINATED -> LossReason.ASSASSINATED
     WireLossReason.COUPED -> LossReason.COUPED
+    WireLossReason.SABOTAGED -> LossReason.SABOTAGED
+    WireLossReason.EMERGENCY_COUPED -> LossReason.EMERGENCY_COUPED
 }
 
 // ─────────────────────────── OwnCard ───────────────────────────
@@ -244,4 +256,9 @@ fun GameEvent.toWireFor(viewer: PlayerId): WireGameEvent = when (this) {
     is GameEvent.InvestigateRedraw -> WireGameEvent.InvestigateRedraw(target.raw)
     is GameEvent.TurnAdvanced -> WireGameEvent.TurnAdvanced(toSeat, turnNumber)
     is GameEvent.GameEnded -> WireGameEvent.GameEnded(winner.raw)
+    is GameEvent.InfluenceRestored -> WireGameEvent.InfluenceRestored(player.raw, card.raw, role.toWire())
+    is GameEvent.CoinsGifted -> WireGameEvent.CoinsGifted(from.raw, to.raw, amount)
+    is GameEvent.EmergencyDeclared -> WireGameEvent.EmergencyDeclared(actor.raw)
+    is GameEvent.KhazanaWon -> WireGameEvent.KhazanaWon(winner.raw, lifetimeCoins)
+    is GameEvent.DarjaReached -> WireGameEvent.DarjaReached(player.raw, level, lifetimeCoins)
 }

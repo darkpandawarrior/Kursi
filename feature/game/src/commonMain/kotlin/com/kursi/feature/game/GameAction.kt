@@ -51,6 +51,21 @@ sealed interface GameAction {
         val draftRoles: List<com.kursi.engine.Role>? = null,
         /** ANARCHY variant — the Khela cost falls over the game. */
         val anarchy: Boolean = false,
+        /** BAIL PE BAHAR — allow spending 9 coins to restore one revealed influence to face-down. */
+        val bailEnabled: Boolean = false,
+        /** BALI KHEL (Sabotage) — allow voluntarily sacrificing one influence to gain 3 coins. */
+        val sabotageEnabled: Boolean = false,
+        /** HAWALA — allow gifting up to 5 coins directly to any alive opponent. */
+        val hawalaEnabled: Boolean = false,
+        /** ADHYADESH (Emergency) — when 25 lifetime coins earned, declare mass-Coup paying all coins. */
+        val emergencyEnabled: Boolean = false,
+        /** KHAZANA RAJ — first to accumulate [khazanaTarget] lifetime coins wins instead of last-standing. */
+        val khazanaEnabled: Boolean = false,
+        val khazanaTarget: Int = 25,
+        /** MEHENGAI (Inflation) — all coin costs increase every few turns. */
+        val inflationEnabled: Boolean = false,
+        /** TANGI (Scarcity) — total coin pool capped (hoarding and denial strategies dominate). */
+        val scarcityEnabled: Boolean = false,
     ) : GameAction
 
     /**

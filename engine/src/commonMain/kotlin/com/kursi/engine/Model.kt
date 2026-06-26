@@ -30,6 +30,26 @@ sealed interface Action {
      * force the target to shuffle it back into the deck and redraw (an info-then-disrupt action). Not blockable.
      */
     data class Investigate(val target: PlayerId) : Action
+
+    // ── Variant actions (flag-gated; only appear in legalActions when their flag is set) ──────────────────
+
+    /** BAIL PE BAHAR — spend [GameConfig.bailCost] coins to restore the first face-up (revealed) influence
+     *  card back to face-down. Unchallengeable, unblockable. Requires [GameConfig.bailEnabled]. */
+    data object BailPe : Action
+
+    /** BALI KHEL (Sabotage) — voluntarily sacrifice one face-down influence card (player chooses via
+     *  [Phase.AwaitingInfluenceLoss] with reason SABOTAGED), and gain [GameConfig.sabotageGain] coins from
+     *  the treasury. Cannot be used when on last influence. Requires [GameConfig.sabotageEnabled]. */
+    data object Sabotage : Action
+
+    /** HAWALA — gift up to [GameConfig.hawalaMaxGift] of your coins directly to [to]. Bypasses the treasury.
+     *  Unchallengeable, unblockable. Requires [GameConfig.hawalaEnabled]. Creates alliances; game-theory rich. */
+    data class Hawala(val to: PlayerId) : Action
+
+    /** ADHYADESH (Emergency) — declare Emergency once [GameConfig.emergencyThreshold] lifetime coins earned.
+     *  Pay ALL current coins (min 7), then force every alive opponent to lose one influence (unchallengeable,
+     *  unblockable mass-Coup). Requires [GameConfig.emergencyEnabled]. Extremely rare — must be farm-built. */
+    data object Emergency : Action
 }
 
 /** Static capability tables — the single source of truth for what each action claims and who blocks it. */
@@ -40,6 +60,8 @@ object Rules {
         is Action.Steal -> Role.BABU
         Action.Exchange -> Role.JUGAADU
         is Action.Investigate -> Role.PATRAKAAR
+        // Variant actions carry no role claim — any claim is a provable bluff.
+        Action.BailPe, Action.Sabotage, is Action.Hawala, Action.Emergency -> null
         else -> null
     }
 
@@ -49,6 +71,8 @@ object Rules {
         Action.ForeignAid -> setOf(Role.NETA)
         is Action.Steal -> setOf(Role.BABU, Role.JUGAADU)
         is Action.Assassinate -> setOf(Role.VAKIL)
+        // Variant actions are unblockable — they bypass all reaction windows.
+        Action.BailPe, Action.Sabotage, is Action.Hawala, Action.Emergency -> emptySet()
         else -> emptySet()
     }
 
@@ -59,6 +83,7 @@ object Rules {
         is Action.Assassinate -> a.target
         is Action.Steal -> a.target
         is Action.Investigate -> a.target
+        is Action.Hawala -> a.to
         else -> null
     }
 }
@@ -114,6 +139,43 @@ data class GameConfig(
     val anarchy: Boolean = false,
     /** ANARCHY: the floor the falling Khela cost never drops below. */
     val coupCostFloor: Int = 3,
+
+    // ── Variant flags (all false = classic behavior, byte-for-byte unchanged) ──────────────────────────
+
+    /** BAIL PE BAHAR — allow spending [bailCost] coins to restore one face-up influence to face-down. */
+    val bailEnabled: Boolean = false,
+    val bailCost: Int = 9,
+
+    /** BALI KHEL (Sabotage) — allow voluntarily flipping a face-down card up to gain [sabotageGain] coins.
+     *  Cannot be used on last influence — suicide is not legal. */
+    val sabotageEnabled: Boolean = false,
+    val sabotageGain: Int = 3,
+
+    /** HAWALA — allow gifting up to [hawalaMaxGift] coins directly to any alive opponent. */
+    val hawalaEnabled: Boolean = false,
+    val hawalaMaxGift: Int = 5,
+
+    /** ADHYADESH (Emergency) — when a player's lifetime coin total reaches [emergencyThreshold], they may
+     *  declare Emergency: pay all current coins (min 7) to force all alive opponents to lose one influence.
+     *  Unchallengeable, unblockable. Extremely rare — requires deliberate farming without spending. */
+    val emergencyEnabled: Boolean = false,
+    val emergencyThreshold: Int = 25,
+
+    /** KHAZANA RAJ — alternate win condition: first player to accumulate [khazanaTarget] lifetime coins wins.
+     *  Elimination continues (a player with no influence can no longer earn coins, so they are effectively
+     *  out), but games run longer and favor economic strategies over pure aggression. */
+    val khazanaEnabled: Boolean = false,
+    val khazanaTarget: Int = 25,
+
+    /** MEHENGAI (Inflation) — all coin COSTS increase by 1 every [inflationInterval] turns, representing
+     *  runaway corruption. Income and gifts are unaffected. Cannot combine with ANARCHY (conflicting direction). */
+    val inflationEnabled: Boolean = false,
+    val inflationInterval: Int = 4,
+
+    /** TANGI (Scarcity) — the total coin pool is capped at [scarcitySupply] + startingCoins × seatCount
+     *  instead of the default 50+10×N. Every coin matters; hoarding and coin-denial strategies dominate. */
+    val scarcityEnabled: Boolean = false,
+    val scarcitySupply: Int = 20,
 ) {
     val roleCount: Int get() = activeRoles.size
     val deckSize: Int get() = roleCount * copiesPerRole
@@ -121,17 +183,28 @@ data class GameConfig(
     /** True when this game is the TEAMS variant (last-team-standing). False = classic free-for-all. */
     val isTeamGame: Boolean get() = teams != null
 
+    /** TANGI (Scarcity) — effective coin pool, capped when scarcityEnabled. Classic = default coinSupply. */
+    val effectiveCoinSupply: Int get() =
+        if (scarcityEnabled) scarcitySupply + startingCoins * seatCount else coinSupply
+
     /**
-     * The Khela (Coup) cost in effect on [turnNumber]. Constant [coupCost] in a normal game; under
-     * [anarchy] it steps down 1 per full round (≈[seatCount] turns) after a ~2-round grace, never below
-     * [coupCostFloor]. Both the affordability gate and the payment read this, so they always agree.
+     * The Khela (Coup) cost in effect on [turnNumber]. Classic = constant [coupCost].
+     * ANARCHY: cost falls 1 per full round after a grace period, never below [coupCostFloor].
+     * MEHENGAI (Inflation): cost rises 1 every [inflationInterval] turns. Mutually exclusive with ANARCHY.
      */
-    fun effectiveCoupCost(turnNumber: Int): Int {
-        if (!anarchy) return coupCost
-        val grace = seatCount * 2
-        val roundsPast = maxOf(0, turnNumber - grace) / seatCount
-        return (coupCost - roundsPast).coerceAtLeast(coupCostFloor)
+    fun effectiveCoupCost(turnNumber: Int): Int = when {
+        anarchy -> {
+            val grace = seatCount * 2
+            val roundsPast = maxOf(0, turnNumber - grace) / seatCount
+            (coupCost - roundsPast).coerceAtLeast(coupCostFloor)
+        }
+        inflationEnabled -> coupCost + (turnNumber / inflationInterval)
+        else -> coupCost
     }
+
+    /** Assassinate cost in effect on [turnNumber]. Rises under MEHENGAI (Inflation). */
+    fun effectiveAssassinateCost(turnNumber: Int): Int =
+        if (inflationEnabled) assassinateCost + (turnNumber / inflationInterval) else assassinateCost
 
     /** Team id of [seat], or null in free-for-all. Caller-checked against [isTeamGame] for team logic. */
     fun teamOfSeat(seat: Int): Int? = teams?.get(seat)
@@ -232,7 +305,13 @@ data class ReactionCtx(
     val block: BlockClaim? = null,
 )
 
-enum class LossReason { LOST_CHALLENGE, LOST_BLOCK_CHALLENGE, ASSASSINATED, COUPED }
+enum class LossReason {
+    LOST_CHALLENGE, LOST_BLOCK_CHALLENGE, ASSASSINATED, COUPED,
+    /** BALI KHEL — voluntary sacrifice in exchange for [GameConfig.sabotageGain] coins. */
+    SABOTAGED,
+    /** ADHYADESH — forced loss from an Emergency declaration (mass-Coup). */
+    EMERGENCY_COUPED,
+}
 
 /** Continuation for after a forced influence loss resolves — keeps `applyIntent` flat instead of nesting phases. */
 sealed interface AfterLoss {
@@ -251,6 +330,11 @@ sealed interface AfterLoss {
     data class BlockProven(val pending: PendingAction, val blocker: PlayerId, val provenCard: CardId) : AfterLoss
     /** A failed block-challenge (blocker bluffed): the block dies and the action effect resolves. */
     data class ResolveEffect(val pending: PendingAction) : AfterLoss
+    /**
+     * ADHYADESH (Emergency) mass-Coup chain: after the current target loses influence, force the next
+     * player in [remaining] to lose one too. Skips already-eliminated players. Turn ends when empty.
+     */
+    data class EmergencyNext(val actor: PlayerId, val remaining: List<PlayerId>) : AfterLoss
 }
 
 sealed interface Phase {
@@ -304,6 +388,19 @@ sealed interface GameEvent {
     data class InvestigateRedraw(val target: PlayerId) : GameEvent
     data class TurnAdvanced(val toSeat: Int, val turnNumber: Int) : GameEvent
     data class GameEnded(val winner: PlayerId) : GameEvent
+
+    // ── Variant events ───────────────────────────────────────────────────────────────────────────────────
+
+    /** BAIL PE BAHAR — [player]'s [card] ([role]) was restored from face-up back to face-down. */
+    data class InfluenceRestored(val player: PlayerId, val card: CardId, val role: Role) : GameEvent
+    /** HAWALA — [from] gifted [amount] coins directly to [to] (bypassing treasury). */
+    data class CoinsGifted(val from: PlayerId, val to: PlayerId, val amount: Int) : GameEvent
+    /** ADHYADESH — [actor] declared Emergency (paid all coins, mass-Coup begins). */
+    data class EmergencyDeclared(val actor: PlayerId) : GameEvent
+    /** KHAZANA RAJ win — [winner] reached [lifetimeCoins] total coins earned, winning by coin milestone. */
+    data class KhazanaWon(val winner: PlayerId, val lifetimeCoins: Int) : GameEvent
+    /** KHAZANA RAJ milestone — [player] crossed Darja [level] (1=Mukhiya,2=Sahib,3=Mantri,4=Sarkar). */
+    data class DarjaReached(val player: PlayerId, val level: Int, val lifetimeCoins: Int) : GameEvent
 }
 
 // ─────────────────────────── Player & game state ───────────────────────────
@@ -319,6 +416,9 @@ data class GameState(
     val phase: Phase,
     val rng: RngState,
     val turnNumber: Int,
+    /** Cumulative coins earned per player (never decremented by spending). Tracks KhazanaRaj progress
+     *  and Emergency unlock. Empty map in classic mode — only populated when khazanaEnabled or emergencyEnabled. */
+    val lifetimeCoins: Map<PlayerId, Int> = emptyMap(),
 ) {
     fun rngEngine(): Rng = rngFrom(rng)
     fun player(id: PlayerId): PlayerState = players.first { it.id == id }

@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -66,12 +67,16 @@ fun GauntletScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text(
-                    text = s.back,
-                    style = KursiType.body.copy(fontSize = 13.sp),
-                    color = BrandTokens.BrassAged,
-                    modifier = Modifier.clickable(onClick = onBack).semantics { role = androidx.compose.ui.semantics.Role.Button },
-                )
+                Box(
+                    modifier = Modifier
+                        .defaultMinSize(minWidth = 64.dp, minHeight = 52.dp)
+                        .semantics(mergeDescendants = true) { role = Role.Button }
+                        .clickable(onClick = onBack)
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(text = s.back, style = KursiType.body.copy(fontSize = 13.sp), color = BrandTokens.BrassAged)
+                }
                 Spacer(Modifier.weight(1f))
                 Text(
                     text = s.gauntletHeader,
@@ -86,7 +91,7 @@ fun GauntletScreen(
                         .border(0.8.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
                         .padding(horizontal = 8.dp, vertical = 4.dp),
                 ) {
-                    Text(s.gauntletBadge, style = KursiType.caption.copy(fontSize = 8.sp), color = KursiNeutrals.TextMuted)
+                    Text(s.gauntletBadge, style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted)
                 }
             }
 
@@ -264,7 +269,7 @@ private fun GauntletRungCard(
             ) {
                 Text(
                     text = tag,
-                    style = KursiType.caption.copy(fontSize = 7.sp, letterSpacing = 0.5.sp),
+                    style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.5.sp),
                     color = when (state) {
                         RungState.CURRENT -> BrandTokens.GoldAntique
                         RungState.CLEARED -> BrandTokens.BrassAged

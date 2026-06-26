@@ -51,6 +51,8 @@ fun WireLossReason.toEngineReason(): LossReason = when (this) {
     WireLossReason.LOST_BLOCK_CHALLENGE -> LossReason.LOST_BLOCK_CHALLENGE
     WireLossReason.ASSASSINATED -> LossReason.ASSASSINATED
     WireLossReason.COUPED -> LossReason.COUPED
+    WireLossReason.SABOTAGED -> LossReason.SABOTAGED
+    WireLossReason.EMERGENCY_COUPED -> LossReason.EMERGENCY_COUPED
 }
 
 fun WireReactionStep.toEngineStep(): ReactionStep = when (this) {
@@ -189,6 +191,11 @@ fun WireGameEvent.toEngineEvent(): GameEvent = when (this) {
     is WireGameEvent.InvestigateRedraw -> GameEvent.InvestigateRedraw(PlayerId(target))
     is WireGameEvent.TurnAdvanced -> GameEvent.TurnAdvanced(toSeat, turnNumber)
     is WireGameEvent.GameEnded -> GameEvent.GameEnded(PlayerId(winner))
+    is WireGameEvent.InfluenceRestored -> GameEvent.InfluenceRestored(PlayerId(player), CardId(card), role.toEngine())
+    is WireGameEvent.CoinsGifted -> GameEvent.CoinsGifted(PlayerId(from), PlayerId(to), amount)
+    is WireGameEvent.EmergencyDeclared -> GameEvent.EmergencyDeclared(PlayerId(actor))
+    is WireGameEvent.KhazanaWon -> GameEvent.KhazanaWon(PlayerId(winner), lifetimeCoins)
+    is WireGameEvent.DarjaReached -> GameEvent.DarjaReached(PlayerId(player), level, lifetimeCoins)
 }
 
 /**

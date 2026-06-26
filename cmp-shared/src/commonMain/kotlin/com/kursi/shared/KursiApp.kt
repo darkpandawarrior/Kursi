@@ -323,7 +323,7 @@ fun KursiApp() {
             composable<Route.Setup> {
                 SetupScreen(
                     onBack = { navController.popBackStack() },
-                    onNext = { seed, players, difficulty, humanCount, teamCount, narrative, anarchy, draftCode ->
+                    onNext = { seed, players, difficulty, humanCount, teamCount, narrative, anarchy, draftCode, bail, sabotage, hawala, emergency, khazana, khazanaTarget, inflation, scarcity ->
                         navController.navigate(
                             Route.Lobby(
                                 seed = seed,
@@ -334,6 +334,14 @@ fun KursiApp() {
                                 narrativeEnabled = narrative,
                                 anarchy = anarchy,
                                 draftCode = draftCode,
+                                bailEnabled = bail,
+                                sabotageEnabled = sabotage,
+                                hawalaEnabled = hawala,
+                                emergencyEnabled = emergency,
+                                khazanaEnabled = khazana,
+                                khazanaTarget = khazanaTarget,
+                                inflationEnabled = inflation,
+                                scarcityEnabled = scarcity,
                             ),
                         )
                     },
@@ -420,6 +428,14 @@ fun KursiApp() {
                                 narrativeEnabled = r.narrativeEnabled,
                                 draftCode = r.draftCode,
                                 anarchy = r.anarchy,
+                                bailEnabled = r.bailEnabled,
+                                sabotageEnabled = r.sabotageEnabled,
+                                hawalaEnabled = r.hawalaEnabled,
+                                emergencyEnabled = r.emergencyEnabled,
+                                khazanaEnabled = r.khazanaEnabled,
+                                khazanaTarget = r.khazanaTarget,
+                                inflationEnabled = r.inflationEnabled,
+                                scarcityEnabled = r.scarcityEnabled,
                             ),
                         ) { popUpTo(Route.Home) }
                     },
@@ -479,6 +495,14 @@ fun KursiApp() {
                             storyArc = r.storyArc.ifEmpty { null },
                             draftRoles = DraftPresets.rolesOf(r.draftCode.ifEmpty { null }),
                             anarchy = r.anarchy,
+                            bailEnabled = r.bailEnabled,
+                            sabotageEnabled = r.sabotageEnabled,
+                            hawalaEnabled = r.hawalaEnabled,
+                            emergencyEnabled = r.emergencyEnabled,
+                            khazanaEnabled = r.khazanaEnabled,
+                            khazanaTarget = r.khazanaTarget,
+                            inflationEnabled = r.inflationEnabled,
+                            scarcityEnabled = r.scarcityEnabled,
                         ),
                     )
                 }

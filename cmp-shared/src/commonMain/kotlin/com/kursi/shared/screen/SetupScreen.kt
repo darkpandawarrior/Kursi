@@ -1,15 +1,20 @@
 package com.kursi.shared.screen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +23,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -68,7 +74,7 @@ private enum class PlayMode { VS_AI, PASS_AND_PLAY }
 @Composable
 fun SetupScreen(
     onBack: () -> Unit,
-    onNext: (seed: Long, players: Int, difficulty: Difficulty, humanCount: Int, teamCount: Int, narrative: Boolean, anarchy: Boolean, draftCode: String) -> Unit,
+    onNext: (seed: Long, players: Int, difficulty: Difficulty, humanCount: Int, teamCount: Int, narrative: Boolean, anarchy: Boolean, draftCode: String, bailEnabled: Boolean, sabotageEnabled: Boolean, hawalaEnabled: Boolean, emergencyEnabled: Boolean, khazanaEnabled: Boolean, khazanaTarget: Int, inflationEnabled: Boolean, scarcityEnabled: Boolean) -> Unit,
     initialPlayers: Int = 4,
     initialDifficulty: Difficulty = Difficulty.Medium,
     /**
@@ -77,7 +83,7 @@ fun SetupScreen(
      * [onNext] so a fresh seed is generated; the app layer overrides it to route through the Lobby.
      */
     onStartPreset: (seed: Long, players: Int, difficulty: Difficulty) -> Unit =
-        { seed, players, difficulty -> onNext(seed, players, difficulty, 1, 0, false, false, "") },
+        { seed, players, difficulty -> onNext(seed, players, difficulty, 1, 0, false, false, "", false, false, false, false, false, 25, false, false) },
     /**
      * M7 ONLINE — the three online modes (PRIVATE KAMRA / KHULI BOLI / EK HI LAN) now route into the
      * Online Mehfil hub instead of sitting "JALD AANE WAALA". Defaults to a no-op so older call sites
@@ -126,6 +132,30 @@ fun SetupScreen(
     // Draft preset picker — vs-AI only; "" = classic (no draft)
     var selectedDraftCode by remember { mutableStateOf("") }
     val draftEligible = playMode == PlayMode.VS_AI
+
+    // Vishesh (Special) variant flags — all vs-AI only; all off by default
+    val visheshEligible = playMode == PlayMode.VS_AI
+    var bailEnabled by remember { mutableStateOf(false) }
+    var sabotageEnabled by remember { mutableStateOf(false) }
+    var hawalaEnabled by remember { mutableStateOf(false) }
+    var emergencyEnabled by remember { mutableStateOf(false) }
+    var khazanaEnabled by remember { mutableStateOf(false) }
+    var khazanaTarget by remember { mutableIntStateOf(25) }
+    var inflationEnabled by remember { mutableStateOf(false) }
+    var scarcityEnabled by remember { mutableStateOf(false) }
+    if (!visheshEligible) {
+        bailEnabled = false; sabotageEnabled = false; hawalaEnabled = false
+        emergencyEnabled = false; khazanaEnabled = false; inflationEnabled = false; scarcityEnabled = false
+    }
+    val anyVishesh = visheshEligible && (bailEnabled || sabotageEnabled || hawalaEnabled ||
+            emergencyEnabled || khazanaEnabled || inflationEnabled || scarcityEnabled)
+
+    // Advanced options (team/narrative/anarchy/draft) are behind an expandable
+    // section on mobile to keep the critical path short for casual players.
+    var advancedExpanded by remember { mutableStateOf(false) }
+    val hasAnyAdvanced = teamPlay || narrativeEnabled || anarchyEnabled || selectedDraftCode.isNotEmpty() || anyVishesh
+    // Auto-expand if any advanced option is already on (e.g. from a preset)
+    LaunchedEffect(hasAnyAdvanced) { if (hasAnyAdvanced) advancedExpanded = true }
 
     val difficultyMeta = listOf(
         DifficultyMeta(Difficulty.Easy,   s.diffEasyName,   s.diffEasyVoice),
@@ -246,128 +276,140 @@ fun SetupScreen(
                 }
             }
 
-            // ── 1-B: Player count ──────────────────────────────────────────────
+            // ── 1-B: Player count — large +/- stepper (replaces the barely-visible slider)
             FormSection(
                 label = s.setupPlayerSectionLabel,
                 sublabel = s.setupPlayerSublabel(playerCount),
             ) {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text("2", style = KursiType.caption, color = KursiNeutrals.TextMuted)
-                        Text(
-                            text = "⊙ $playerCount",
-                            style = KursiType.title.copy(fontSize = 20.sp),
-                            color = BrandTokens.GoldAntique,
-                        )
-                        Text("10", style = KursiType.caption, color = KursiNeutrals.TextMuted)
-                    }
-                    Slider(
-                        value = playerCount.toFloat(),
-                        onValueChange = { playerCount = it.toInt() },
-                        valueRange = 2f..10f,
-                        steps = 7,
-                        colors = SliderDefaults.colors(
-                            thumbColor = BrandTokens.GoldAntique,
-                            activeTrackColor = BrandTokens.BrassAged,
-                            inactiveTrackColor = BrandTokens.BrassDark.copy(alpha = 0.4f),
-                        ),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    // Brass abacus visual
-                    BrassAbacusRail(count = playerCount, modifier = Modifier.fillMaxWidth().padding(top = 2.dp))
-                }
+                PlayerCountStepper(
+                    count = playerCount,
+                    min = 2,
+                    max = 10,
+                    onChange = { playerCount = it },
+                )
             }
 
-            // ── 1-D: Team Khel (TEAMS variant) ─────────────────────────────────
-            if (teamEligible) {
-                FormSection(
-                    label = s.setupTeamLabel,
-                    sublabel = s.setupTeamSublabel,
-                ) {
-                    TeamToggle(
-                        on = teamPlay,
-                        onLabel = s.setupTeamToggleOn,
-                        offLabel = s.setupTeamToggleOff,
-                        teamAName = s.teamNameA,
-                        teamBName = s.teamNameB,
-                        onToggle = { teamPlay = it },
-                    )
-                }
-            }
-
-            // ── 1-E: Darbar (narrative/chat) ───────────────────────────────────
-            if (narrativeEligible) {
-                FormSection(
-                    label = s.setupDarbarLabel,
-                    sublabel = s.setupDarbarSub,
-                ) {
-                    TeamToggle(
-                        on = narrativeEnabled,
-                        onLabel = "DARBAR · CHALU",
-                        offLabel = "Classic (no chat)",
-                        teamAName = "",
-                        teamBName = "",
-                        onToggle = { narrativeEnabled = it },
-                    )
-                }
-            }
-
-            // ── 1-F: Anarchy (Andher Nagari) ───────────────────────────────────
-            if (anarchyEligible) {
-                FormSection(
-                    label = s.setupAnarchyLabel,
-                    sublabel = s.setupAnarchySub,
-                ) {
-                    TeamToggle(
-                        on = anarchyEnabled,
-                        onLabel = "ANDHER NAGARI · CHALU",
-                        offLabel = "Classic rules",
-                        teamAName = "",
-                        teamBName = "",
-                        onToggle = { anarchyEnabled = it },
-                    )
-                }
-            }
-
-            // ── 1-G: Deck draft (Nilaami) ──────────────────────────────────────
-            if (draftEligible) {
-                FormSection(
-                    label = s.setupDraftLabel,
-                    sublabel = s.setupDraftSub,
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        // CLASSIC option (no draft)
-                        DraftOptionChit(
-                            title = "CLASSIC",
-                            subtitle = "Standard deck — no draft",
-                            selected = selectedDraftCode.isEmpty(),
-                            onSelect = { selectedDraftCode = "" },
-                        )
-                        DraftPresets.ALL.forEach { preset ->
-                            DraftOptionChit(
-                                title = preset.title,
-                                subtitle = preset.subtitle,
-                                selected = selectedDraftCode == preset.code,
-                                onSelect = { selectedDraftCode = preset.code },
-                            )
-                        }
-                    }
-                }
-            }
-
-            // ── 1-C: Difficulty ────────────────────────────────────────────────
+            // ── 1-C: Difficulty — horizontal pill row (replaces 5 full-height cards)
             FormSection(
                 label = s.setupDifficultyLabel,
                 sublabel = s.setupDifficultySublabel,
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    difficultyMeta.forEach { meta ->
-                        DifficultyTab(meta = meta, selected = difficulty == meta.tier) {
-                            difficulty = meta.tier
+                DifficultyPillRow(
+                    meta = difficultyMeta,
+                    selected = difficulty,
+                    onSelect = { difficulty = it },
+                )
+                // Voice line for selected difficulty
+                val selectedMeta = difficultyMeta.first { it.tier == difficulty }
+                Text(
+                    text = "\"${selectedMeta.voiceLine}\"",
+                    style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
+                    color = KursiNeutrals.TextMuted,
+                    modifier = Modifier.padding(top = 8.dp, start = 4.dp),
+                )
+            }
+
+            // ── ADVANCED OPTIONS — collapsed by default; tap to expand ──────────
+            AdvancedOptionsSection(
+                expanded = advancedExpanded,
+                onToggle = { advancedExpanded = !advancedExpanded },
+                hasActiveOption = hasAnyAdvanced,
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // 1-D: Team Khel
+                    if (teamEligible) {
+                        FormSection(label = s.setupTeamLabel, sublabel = s.setupTeamSublabel) {
+                            TeamToggle(
+                                on = teamPlay,
+                                onLabel = s.setupTeamToggleOn,
+                                offLabel = s.setupTeamToggleOff,
+                                teamAName = s.teamNameA,
+                                teamBName = s.teamNameB,
+                                onToggle = { teamPlay = it },
+                            )
+                        }
+                    }
+                    // 1-E: Darbar (narrative)
+                    if (narrativeEligible) {
+                        FormSection(label = s.setupDarbarLabel, sublabel = s.setupDarbarSub) {
+                            TeamToggle(
+                                on = narrativeEnabled,
+                                onLabel = "DARBAR · CHALU",
+                                offLabel = "Classic (no chat)",
+                                teamAName = "",
+                                teamBName = "",
+                                onToggle = { narrativeEnabled = it },
+                            )
+                        }
+                    }
+                    // 1-F: Anarchy
+                    if (anarchyEligible) {
+                        FormSection(label = s.setupAnarchyLabel, sublabel = s.setupAnarchySub) {
+                            TeamToggle(
+                                on = anarchyEnabled,
+                                onLabel = "ANDHER NAGARI · CHALU",
+                                offLabel = "Classic rules",
+                                teamAName = "",
+                                teamBName = "",
+                                onToggle = { anarchyEnabled = it },
+                            )
+                        }
+                    }
+                    // 1-G: Vishesh (Special) variant modes
+                    if (visheshEligible) {
+                        FormSection(label = "VISHESH MODES", sublabel = "Experimental rules — vs-AI only. All off = classic.") {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                VisheshToggle("BAIL PE BAHAR", "Pay 9 coins to restore one revealed card face-down.", bailEnabled) { bailEnabled = it }
+                                VisheshToggle("BALI KHEL", "Sacrifice a face-down influence to gain 3 coins.", sabotageEnabled) { sabotageEnabled = it }
+                                VisheshToggle("HAWALA", "Gift up to 5 coins directly to any opponent.", hawalaEnabled) { hawalaEnabled = it }
+                                VisheshToggle("ADHYADESH", "Spend all coins to mass-Coup every opponent (needs 25 lifetime coins earned).", emergencyEnabled) { emergencyEnabled = it }
+                                VisheshToggle("KHAZANA RAJ", "First to earn $khazanaTarget lifetime coins wins (not last-standing).", khazanaEnabled) { khazanaEnabled = it }
+                                if (khazanaEnabled) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        listOf(25, 50, 100).forEach { target ->
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(4.dp))
+                                                    .background(if (khazanaTarget == target) BrandTokens.GoldAntique.copy(alpha = 0.2f) else BrandTokens.TeakDark)
+                                                    .border(1.dp, if (khazanaTarget == target) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
+                                                    .clickable { khazanaTarget = target }
+                                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                            ) {
+                                                Text("$target", style = KursiType.label.copy(fontSize = 11.sp), color = if (khazanaTarget == target) BrandTokens.GoldAntique else KursiNeutrals.TextMuted)
+                                            }
+                                        }
+                                        Text("coins", style = KursiType.caption.copy(fontSize = 10.sp), color = KursiNeutrals.TextMuted)
+                                    }
+                                }
+                                VisheshToggle("MEHENGAI", "All coin costs increase every few turns (inflation).", inflationEnabled) { inflationEnabled = it }
+                                VisheshToggle("TANGI", "Total coin pool is capped — hoarding and denial dominate.", scarcityEnabled) { scarcityEnabled = it }
+                            }
+                        }
+                    }
+
+                    // 1-H: Draft
+                    if (draftEligible) {
+                        FormSection(label = s.setupDraftLabel, sublabel = s.setupDraftSub) {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                DraftOptionChit(
+                                    title = "CLASSIC",
+                                    subtitle = "Standard deck — no draft",
+                                    selected = selectedDraftCode.isEmpty(),
+                                    onSelect = { selectedDraftCode = "" },
+                                )
+                                DraftPresets.ALL.forEach { preset ->
+                                    DraftOptionChit(
+                                        title = preset.title,
+                                        subtitle = preset.subtitle,
+                                        selected = selectedDraftCode == preset.code,
+                                        onSelect = { selectedDraftCode = preset.code },
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -397,6 +439,14 @@ fun SetupScreen(
                         narrativeEnabled && narrativeEligible,
                         anarchyEnabled && anarchyEligible,
                         if (draftEligible) selectedDraftCode else "",
+                        bailEnabled && visheshEligible,
+                        sabotageEnabled && visheshEligible,
+                        hawalaEnabled && visheshEligible,
+                        emergencyEnabled && visheshEligible,
+                        khazanaEnabled && visheshEligible,
+                        if (khazanaEnabled && visheshEligible) khazanaTarget else 25,
+                        inflationEnabled && visheshEligible,
+                        scarcityEnabled && visheshEligible,
                     )
                 },
                 modifier = Modifier.widthIn(max = 760.dp).fillMaxWidth(),
@@ -414,32 +464,43 @@ private fun SetupHeader(onBack: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .background(BrandTokens.TeakDark)
-            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp)),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(
-            text = s.back,
-            style = KursiType.body.copy(fontSize = 13.sp),
-            color = BrandTokens.BrassAged,
-            modifier = Modifier.clickable(onClick = onBack),
-        )
-        Spacer(Modifier.weight(1f))
+        // Back button: 48dp minimum tap target enforced via Box
+        Box(
+            modifier = Modifier
+                .defaultMinSize(minWidth = 64.dp, minHeight = 52.dp)
+                .semantics(mergeDescendants = true) {
+                    role = androidx.compose.ui.semantics.Role.Button
+                    contentDescription = s.back
+                }
+                .clickable(onClick = onBack)
+                .padding(horizontal = 20.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "← ${s.back}",
+                style = KursiType.body.copy(fontSize = 13.sp),
+                color = BrandTokens.BrassAged,
+            )
+        }
         Text(
             text = s.setupTitle,
             style = KursiType.title.copy(fontSize = 16.sp, letterSpacing = 1.sp),
             color = KursiNeutrals.TextPrimary,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.weight(1f))
         Box(
             modifier = Modifier
+                .padding(end = 16.dp)
                 .clip(RoundedCornerShape(4.dp))
                 .background(BrandTokens.BrassDark.copy(alpha = 0.3f))
                 .border(0.8.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
                 .padding(horizontal = 8.dp, vertical = 4.dp),
         ) {
-            Text(s.setupFormBadge, style = KursiType.caption.copy(fontSize = 8.sp), color = KursiNeutrals.TextMuted)
+            Text(s.setupFormBadge, style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted)
         }
     }
 }
@@ -564,7 +625,7 @@ private fun ModeChit(
                         .border(0.7.dp, BrandTokens.StampRed.copy(alpha = 0.4f), RoundedCornerShape(3.dp))
                         .padding(horizontal = 5.dp, vertical = 2.dp),
                 ) {
-                    Text(comingSoonBadge, style = KursiType.caption.copy(fontSize = 7.sp), color = BrandTokens.StampRed.copy(alpha = 0.7f))
+                    Text(comingSoonBadge, style = KursiType.caption.copy(fontSize = 9.sp), color = BrandTokens.StampRed.copy(alpha = 0.7f))
                 }
             } else if (onlineBadge != null) {
                 Box(
@@ -574,7 +635,7 @@ private fun ModeChit(
                         .border(0.7.dp, BrandTokens.GoldAntique.copy(alpha = 0.6f), RoundedCornerShape(3.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                 ) {
-                    Text(onlineBadge, style = KursiType.caption.copy(fontSize = 7.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.Bold), color = BrandTokens.GoldAntique)
+                    Text(onlineBadge, style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.Bold), color = BrandTokens.GoldAntique)
                 }
             } else if (selected) {
                 Box(
@@ -700,6 +761,41 @@ private fun TeamToggle(
     }
 }
 
+/** A compact on/off row toggle for Vishesh (Special) variant flags. */
+@Composable
+private fun VisheshToggle(
+    label: String,
+    subtitle: String,
+    on: Boolean,
+    onToggle: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(6.dp))
+            .background(if (on) BrandTokens.GoldAntique.copy(alpha = 0.10f) else BrandTokens.TeakDark.copy(alpha = 0.6f))
+            .border(if (on) 1.dp else 0.8.dp, if (on) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.35f), RoundedCornerShape(6.dp))
+            .clickable { onToggle(!on) }
+            .semantics(mergeDescendants = true) { role = androidx.compose.ui.semantics.Role.Switch; contentDescription = "$label: ${if (on) "on" else "off"}" }
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(label, style = KursiType.label.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp), color = if (on) BrandTokens.GoldAntique else KursiNeutrals.TextSecondary)
+            Text(subtitle, style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted, maxLines = 2)
+        }
+        Box(
+            modifier = Modifier.size(width = 36.dp, height = 20.dp).clip(RoundedCornerShape(50))
+                .background(if (on) BrandTokens.GoldAntique.copy(alpha = 0.4f) else BrandTokens.TeakDark)
+                .border(0.8.dp, if (on) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.5f), RoundedCornerShape(50)),
+            contentAlignment = if (on) Alignment.CenterEnd else Alignment.CenterStart,
+        ) {
+            Box(modifier = Modifier.padding(3.dp).size(14.dp).clip(CircleShape).background(if (on) BrandTokens.GoldAntique else BrandTokens.BrassAged.copy(alpha = 0.5f)))
+        }
+    }
+}
+
 /** A small faction nameplate pill used in the Team Khel toggle + lobby. */
 @Composable
 private fun TeamPill(name: String, teamId: Int) {
@@ -728,6 +824,274 @@ private fun StepperButton(symbol: String, enabled: Boolean, onClick: () -> Unit)
         contentAlignment = Alignment.Center,
     ) {
         Text(symbol, style = KursiType.title.copy(fontSize = 18.sp), color = BrandTokens.GoldAntique)
+    }
+}
+
+// ─────────────────────────── Player Count Stepper ─────────────────────────────
+// Replaces the barely-visible Slider + 14dp bead rail with large +/- buttons
+// and a clear numeric display. 56dp buttons meet the 48dp minimum touch target.
+
+@Composable
+private fun PlayerCountStepper(
+    count: Int,
+    min: Int,
+    max: Int,
+    onChange: (Int) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        // Minus button — large tap target
+        Box(
+            modifier = Modifier
+                .defaultMinSize(minWidth = 56.dp, minHeight = 56.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(
+                    if (count > min) BrandTokens.BrassDark.copy(alpha = 0.3f)
+                    else BrandTokens.TeakDark.copy(alpha = 0.4f)
+                )
+                .border(
+                    1.5.dp,
+                    if (count > min) BrandTokens.BrassAged.copy(alpha = 0.7f) else BrandTokens.BrassDark.copy(alpha = 0.25f),
+                    RoundedCornerShape(10.dp),
+                )
+                .semantics { role = androidx.compose.ui.semantics.Role.Button; contentDescription = "Decrease players" }
+                .clickable(enabled = count > min) { onChange(count - 1) }
+                .alpha(if (count > min) 1f else 0.4f),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("−", style = KursiType.display.copy(fontSize = 26.sp), color = BrandTokens.GoldAntique)
+        }
+
+        // Count display
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "$count",
+                style = KursiType.display.copy(fontSize = 48.sp),
+                color = BrandTokens.GoldAntique,
+            )
+            Text(
+                text = if (count == 1) "KHILADI" else "KHILADI",
+                style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 2.sp),
+                color = KursiNeutrals.TextMuted,
+            )
+            // Compact bead visual (larger beads, easier to read)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
+                modifier = Modifier.padding(top = 8.dp),
+            ) {
+                repeat(max) { i ->
+                    Box(
+                        modifier = Modifier
+                            .size(if (i < count) 10.dp else 6.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (i < count) BrandTokens.GoldAntique
+                                else BrandTokens.BrassDark.copy(alpha = 0.3f),
+                            ),
+                    )
+                }
+            }
+        }
+
+        // Plus button — large tap target
+        Box(
+            modifier = Modifier
+                .defaultMinSize(minWidth = 56.dp, minHeight = 56.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(
+                    if (count < max) BrandTokens.BrassAged.copy(alpha = 0.3f)
+                    else BrandTokens.TeakDark.copy(alpha = 0.4f)
+                )
+                .border(
+                    1.5.dp,
+                    if (count < max) BrandTokens.GoldAntique.copy(alpha = 0.8f) else BrandTokens.BrassDark.copy(alpha = 0.25f),
+                    RoundedCornerShape(10.dp),
+                )
+                .semantics { role = androidx.compose.ui.semantics.Role.Button; contentDescription = "Increase players" }
+                .clickable(enabled = count < max) { onChange(count + 1) }
+                .alpha(if (count < max) 1f else 0.4f),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("+", style = KursiType.display.copy(fontSize = 26.sp), color = BrandTokens.GoldAntique)
+        }
+    }
+}
+
+// ─────────────────────────── Difficulty Pill Row ──────────────────────────────
+// Replaces 5 full-height cards with a horizontal LazyRow of compact pills —
+// dramatically reduces vertical scroll height on mobile.
+
+@Composable
+private fun DifficultyPillRow(
+    meta: List<DifficultyMeta>,
+    selected: Difficulty,
+    onSelect: (Difficulty) -> Unit,
+) {
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(end = 8.dp),
+    ) {
+        items(meta, key = { it.tier.name }) { m ->
+            val isSelected = m.tier == selected
+            val interactionSource = remember { MutableInteractionSource() }
+            val isPressed by interactionSource.collectIsPressedAsState()
+            val pressScale by androidx.compose.animation.core.animateFloatAsState(
+                targetValue = if (isPressed) 0.93f else 1f,
+                animationSpec = androidx.compose.animation.core.tween(70),
+                label = "diffPress_${m.tier.name}",
+            )
+            Column(
+                modifier = Modifier
+                    .width(80.dp)
+                    .graphicsLayer { scaleX = pressScale; scaleY = pressScale }
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        if (isSelected) BrandTokens.GoldAntique.copy(alpha = 0.22f)
+                        else BrandTokens.BrassDark.copy(alpha = 0.12f)
+                    )
+                    .border(
+                        if (isSelected) 2.dp else 1.dp,
+                        if (isSelected) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.4f),
+                        RoundedCornerShape(10.dp),
+                    )
+                    .semantics(mergeDescendants = true) {
+                        role = androidx.compose.ui.semantics.Role.RadioButton
+                        contentDescription = m.nameplate
+                    }
+                    .clickable(interactionSource = interactionSource, indication = null) { onSelect(m.tier) }
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                // Difficulty level indicator: filled dots
+                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    val level = meta.indexOf(m) + 1
+                    repeat(5) { i ->
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (i < level) {
+                                        if (isSelected) BrandTokens.GoldAntique else BrandTokens.BrassAged
+                                    } else BrandTokens.BrassDark.copy(alpha = 0.3f)
+                                ),
+                        )
+                    }
+                }
+                Text(
+                    text = m.nameplate,
+                    style = KursiType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.sp),
+                    color = if (isSelected) BrandTokens.GoldAntique else KursiNeutrals.TextSecondary,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (isSelected) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(BrandTokens.GoldAntique)
+                            .padding(horizontal = 4.dp, vertical = 1.dp),
+                    ) {
+                        Text(
+                            "✓",
+                            style = KursiType.caption.copy(fontSize = 8.sp),
+                            color = BrandTokens.TeakDark,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ─────────────────────────── Advanced Options Section ─────────────────────────
+// Collapsible wrapper so casual players see a short form; power players expand.
+
+@Composable
+private fun AdvancedOptionsSection(
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    hasActiveOption: Boolean,
+    content: @Composable () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        // Header row — tap to expand/collapse
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(BrandTokens.TeakDark.copy(alpha = 0.6f))
+                .border(
+                    1.dp,
+                    if (hasActiveOption) BrandTokens.GoldAntique.copy(alpha = 0.6f)
+                    else BrandTokens.BrassDark.copy(alpha = 0.4f),
+                    RoundedCornerShape(8.dp),
+                )
+                .semantics(mergeDescendants = true) {
+                    role = androidx.compose.ui.semantics.Role.Button
+                    contentDescription = "Advanced options. ${if (expanded) "Tap to collapse." else "Tap to expand."}"
+                }
+                .clickable(onClick = onToggle)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            "ADVANCED OPTIONS",
+                            style = KursiType.label.copy(fontSize = 11.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold),
+                            color = if (hasActiveOption) BrandTokens.GoldAntique else BrandTokens.BrassAged,
+                        )
+                        if (hasActiveOption) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(BrandTokens.GoldAntique.copy(alpha = 0.2f))
+                                    .border(0.7.dp, BrandTokens.GoldAntique.copy(alpha = 0.7f), RoundedCornerShape(3.dp))
+                                    .padding(horizontal = 5.dp, vertical = 2.dp),
+                            ) {
+                                Text("ACTIVE", style = KursiType.caption.copy(fontSize = 8.sp, letterSpacing = 0.5.sp), color = BrandTokens.GoldAntique)
+                            }
+                        }
+                    }
+                    Text(
+                        text = "Teams · Darbar · Anarchy · Deck",
+                        style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
+                        color = KursiNeutrals.TextMuted,
+                    )
+                }
+                Text(
+                    text = if (expanded) "▲" else "▼",
+                    style = KursiType.body.copy(fontSize = 14.sp),
+                    color = BrandTokens.BrassAged,
+                )
+            }
+        }
+
+        // Animated content
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(),
+            exit = shrinkVertically(),
+        ) {
+            content()
+        }
     }
 }
 
@@ -884,7 +1248,7 @@ private fun PresetChit(
                         .border(0.7.dp, BrandTokens.GoldAntique.copy(alpha = 0.6f), RoundedCornerShape(3.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp),
                 ) {
-                    Text(stamp, style = KursiType.caption.copy(fontSize = 7.sp, letterSpacing = 0.6.sp), color = BrandTokens.GoldAntique.copy(alpha = 0.85f))
+                    Text(stamp, style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.6.sp), color = BrandTokens.GoldAntique.copy(alpha = 0.85f))
                 }
             }
             // Brass monogram rail — the curated cast, capped so 10p stays legible.
@@ -899,7 +1263,7 @@ private fun PresetChit(
                             .border(0.8.dp, BrandTokens.GoldAntique.copy(alpha = 0.6f), CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(mono.take(2), style = KursiType.caption.copy(fontSize = 7.sp, fontWeight = FontWeight.Bold), color = BrandTokens.TeakDark)
+                        Text(mono.take(2), style = KursiType.caption.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold), color = BrandTokens.TeakDark)
                     }
                 }
                 if (lineupMonograms.size > shown.size) {

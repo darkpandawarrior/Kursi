@@ -20,7 +20,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -235,9 +237,11 @@ fun ResultsScreen(
                 Box(
                     modifier = Modifier
                         .weight(1f)
+                        .defaultMinSize(minHeight = 52.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(BrandTokens.TeakDark)
                         .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                        .semantics(mergeDescendants = true) { role = Role.Button }
                         .clickable(onClick = onNewGame)
                         .padding(horizontal = 12.dp, vertical = 12.dp),
                     contentAlignment = Alignment.Center,
@@ -251,9 +255,11 @@ fun ResultsScreen(
                 Box(
                     modifier = Modifier
                         .weight(1f)
+                        .defaultMinSize(minHeight = 52.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(BrandTokens.TeakDark)
                         .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                        .semantics(mergeDescendants = true) { role = Role.Button }
                         .clickable(onClick = onHome)
                         .padding(horizontal = 12.dp, vertical = 12.dp),
                     contentAlignment = Alignment.Center,
@@ -489,11 +495,15 @@ private fun ResultsExpired(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .defaultMinSize(minHeight = 52.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(BrandTokens.TeakDark)
                     .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                    .semantics(mergeDescendants = true) {
+                        role = Role.Button
+                        contentDescription = "Return to Daftar home"
+                    }
                     .clickable(onClick = onHome)
-                    .semantics { contentDescription = "Return to Daftar home" }
                     .padding(vertical = 12.dp),
                 contentAlignment = Alignment.Center,
             ) {

@@ -23,7 +23,7 @@ fun initialState(config: GameConfig, seed: Long): GameState {
     }
     for (c in pool) locations[c] = CardLocation.Deck
 
-    val treasury = config.coinSupply - config.startingCoins * config.seatCount
+    val treasury = config.effectiveCoinSupply - config.startingCoins * config.seatCount
     return GameState(config, cards, locations, players, treasury, Phase.AwaitingAction(0), rng.state, 1)
 }
 
@@ -75,15 +75,32 @@ fun legalActions(state: GameState, pid: PlayerId): Set<Action> {
     }
     out.add(Action.Income)
     out.add(Action.ForeignAid)
-    if (me.coins >= cfg.effectiveCoupCost(state.turnNumber)) for (t in targets) out.add(Action.Coup(t)) // ANARCHY: cost may fall
+    if (me.coins >= cfg.effectiveCoupCost(state.turnNumber)) for (t in targets) out.add(Action.Coup(t)) // ANARCHY/INFLATION: cost varies
     out.add(Action.Tax)
     for (t in targets) if (state.player(t).coins >= 1) out.add(Action.Steal(t)) // D9: Vasooli on 0-coin target is illegal
-    if (me.coins >= cfg.assassinateCost) for (t in targets) out.add(Action.Assassinate(t))
+    if (me.coins >= cfg.effectiveAssassinateCost(state.turnNumber)) for (t in targets) out.add(Action.Assassinate(t)) // INFLATION: cost rises
     out.add(Action.Exchange)
     // Jaanch (claims PATRAKAAR) — only offered when the 6th role is in this deck (otherwise it is a
     // guaranteed-losing bluff). Free action, no cost; target must have a face-down card to examine.
     if (Role.PATRAKAAR in cfg.activeRoles)
         for (t in targets) if (state.faceDownInfluence(t).isNotEmpty()) out.add(Action.Investigate(t))
+
+    // ── Variant actions (only when their flag is enabled) ──────────────────────────────────────────────
+    // BAIL PE BAHAR: must have a revealed card to restore and enough coins.
+    if (cfg.bailEnabled && me.coins >= cfg.bailCost && state.faceUpCards(pid).isNotEmpty())
+        out.add(Action.BailPe)
+    // BALI KHEL: must have 2+ face-down cards — cannot sacrifice last influence.
+    if (cfg.sabotageEnabled && state.faceDownInfluence(pid).size >= 2)
+        out.add(Action.Sabotage)
+    // HAWALA: gift coins to any alive opponent (must have coins to give).
+    if (cfg.hawalaEnabled && me.coins >= 1)
+        for (t in targets) out.add(Action.Hawala(t))
+    // ADHYADESH (Emergency): lifetime coins ≥ threshold AND current coins ≥ 7 (must pay something meaningful).
+    if (cfg.emergencyEnabled &&
+        (state.lifetimeCoins[pid] ?: 0) >= cfg.emergencyThreshold &&
+        me.coins >= 7)
+        out.add(Action.Emergency)
+
     return out
 }
 
@@ -121,6 +138,8 @@ fun legalIntents(state: GameState, pid: PlayerId): List<Intent> = when (val ph =
         else emptyList()
 
     is Phase.GameOver -> emptyList()
+    // Variant phases: BailPe auto-picks (no player choice); Sabotage/Emergency use existing InfluenceLoss.
+    // No additional legalIntents branches needed — they resolve through existing phase machinery.
 }
 
 /**
@@ -201,9 +220,32 @@ private class EngineStep(start: GameState) {
     }
     private fun gain(pid: PlayerId, amount: Int) {
         val take = minOf(amount, state.treasury)
+        if (take <= 0) return
         setCoins(pid, state.player(pid).coins + take)
         state = state.copy(treasury = state.treasury - take)
         events.add(GameEvent.CoinsChanged(pid, +take))
+        // Track lifetime coins for KhazanaRaj / Emergency unlock (only when feature is active).
+        if (cfg.khazanaEnabled || cfg.emergencyEnabled) {
+            val prev = state.lifetimeCoins.getOrDefault(pid, 0)
+            val next = prev + take
+            state = state.copy(lifetimeCoins = state.lifetimeCoins + (pid to next))
+            checkKhazanaMilestones(pid, prev, next)
+        }
+    }
+
+    private fun checkKhazanaMilestones(pid: PlayerId, prev: Int, next: Int) {
+        if (!cfg.khazanaEnabled) return
+        // Emit Darja milestone events when a threshold is crossed for the first time.
+        for ((threshold, level) in listOf(8 to 1, 12 to 2, 16 to 3, 20 to 4)) {
+            if (prev < threshold && next >= threshold)
+                events.add(GameEvent.DarjaReached(pid, level, next))
+        }
+        // Khazana win: first to reach target lifetime coins wins, even with multiple players still alive.
+        if (next >= cfg.khazanaTarget && state.phase !is Phase.GameOver) {
+            state = state.copy(phase = Phase.GameOver(pid))
+            events.add(GameEvent.KhazanaWon(pid, next))
+            events.add(GameEvent.GameEnded(pid))
+        }
     }
     private fun pay(pid: PlayerId, amount: Int) {
         if (state.player(pid).coins < amount) throw IllegalIntent("not enough coins")
@@ -240,8 +282,8 @@ private class EngineStep(start: GameState) {
         val claimed = Rules.claimedRole(action)
         events.add(GameEvent.ActionDeclared(actor, action, claimed))
         when (action) {                                  // E4/E10: coup & assassinate cost paid at declaration
-            is Action.Coup -> pay(actor, cfg.effectiveCoupCost(state.turnNumber)) // ANARCHY: pay the cost in effect now
-            is Action.Assassinate -> pay(actor, cfg.assassinateCost)
+            is Action.Coup -> pay(actor, cfg.effectiveCoupCost(state.turnNumber))
+            is Action.Assassinate -> pay(actor, cfg.effectiveAssassinateCost(state.turnNumber)) // INFLATION: cost varies
             else -> {}
         }
         enterReactionsOrResolve(PendingAction(actor, action, claimed))
@@ -366,15 +408,59 @@ private class EngineStep(start: GameState) {
         val actor = pending.actor
         if (a != Action.Exchange) events.add(GameEvent.ActionResolved(actor, a))
         when (a) {
-            Action.Income -> { gain(actor, cfg.incomeAmount); endTurn(actor) }
-            Action.ForeignAid -> { gain(actor, cfg.foreignAidAmount); endTurn(actor) }
-            Action.Tax -> { gain(actor, cfg.taxAmount); endTurn(actor) }
-            is Action.Steal -> { if (state.isAlive(a.target)) transfer(a.target, actor, cfg.stealAmount); endTurn(actor) }
+            Action.Income -> { gain(actor, cfg.incomeAmount); if (state.phase !is Phase.GameOver) endTurn(actor) }
+            Action.ForeignAid -> { gain(actor, cfg.foreignAidAmount); if (state.phase !is Phase.GameOver) endTurn(actor) }
+            Action.Tax -> { gain(actor, cfg.taxAmount); if (state.phase !is Phase.GameOver) endTurn(actor) }
+            is Action.Steal -> {
+                if (state.isAlive(a.target)) transfer(a.target, actor, cfg.stealAmount)
+                if (state.phase !is Phase.GameOver) endTurn(actor)
+            }
             is Action.Coup -> if (state.isAlive(a.target)) requireLoss(a.target, LossReason.COUPED, AfterLoss.EndTurn(actor)) else endTurn(actor)
             is Action.Assassinate -> if (state.isAlive(a.target)) requireLoss(a.target, LossReason.ASSASSINATED, AfterLoss.EndTurn(actor)) else endTurn(actor)
             Action.Exchange -> startExchange(actor)
             is Action.Investigate -> startInvestigate(actor, a.target)
+            // ── Variant actions ─────────────────────────────────────────────────────────────────────────
+            Action.BailPe -> resolveBailPe(actor)
+            Action.Sabotage -> requireLoss(actor, LossReason.SABOTAGED, AfterLoss.EndTurn(actor))
+            is Action.Hawala -> resolveHawala(actor, a.to)
+            Action.Emergency -> resolveEmergency(actor)
         }
+    }
+
+    private fun resolveBailPe(actor: PlayerId) {
+        val faceUp = state.faceUpCards(actor)
+        if (faceUp.isEmpty()) { endTurn(actor); return }
+        pay(actor, cfg.bailCost)
+        val card = faceUp.first()  // restore the first revealed card (auto-pick, lowest card id)
+        val role = state.cards.getValue(card)
+        setLoc(card, CardLocation.Hand(actor, faceUp = false))
+        events.add(GameEvent.InfluenceRestored(actor, card, role))
+        endTurn(actor)
+    }
+
+    private fun resolveHawala(actor: PlayerId, to: PlayerId) {
+        val amount = minOf(cfg.hawalaMaxGift, state.player(actor).coins)
+        if (amount > 0 && state.isAlive(to)) {
+            // Hawala bypasses treasury — direct peer-to-peer transfer.
+            val actual = minOf(amount, state.player(actor).coins)
+            setCoins(actor, state.player(actor).coins - actual)
+            setCoins(to, state.player(to).coins + actual)
+            events.add(GameEvent.CoinsGifted(actor, to, actual))
+            // Receiving player's coins do NOT count toward their lifetime (no earning — it's a gift).
+        }
+        endTurn(actor)
+    }
+
+    private fun resolveEmergency(actor: PlayerId) {
+        events.add(GameEvent.EmergencyDeclared(actor))
+        val currentCoins = state.player(actor).coins
+        if (currentCoins > 0) pay(actor, currentCoins)
+        val targets = state.alivePlayers()
+            .filter { it.id != actor }
+            .sortedBy { it.seatIndex }
+            .map { it.id }
+        if (targets.isEmpty()) { endTurn(actor); return }
+        requireLoss(targets.first(), LossReason.EMERGENCY_COUPED, AfterLoss.EmergencyNext(actor, targets.drop(1)))
     }
 
     private fun startInvestigate(examiner: PlayerId, target: PlayerId) {
@@ -432,6 +518,10 @@ private class EngineStep(start: GameState) {
         setLoc(card, CardLocation.Hand(ph.loser, faceUp = true))
         events.add(GameEvent.InfluenceLost(ph.loser, card, role, ph.reason))
         if (state.faceDownInfluence(ph.loser).isEmpty()) events.add(GameEvent.PlayerEliminated(ph.loser))
+        // BALI KHEL (Sabotage): grant coins to the player who voluntarily sacrificed influence.
+        if (ph.reason == LossReason.SABOTAGED) gain(ph.loser, cfg.sabotageGain)
+        // KhazanaRaj may have fired inside gain(); if so, the game is already over.
+        if (state.phase is Phase.GameOver) return
         winnerOrNull(state)?.let { w ->
             state = state.copy(phase = Phase.GameOver(w)); events.add(GameEvent.GameEnded(w)); return
         }
@@ -454,10 +544,25 @@ private class EngineStep(start: GameState) {
                 endTurn(after.pending.actor)
             }
             is AfterLoss.ResolveEffect -> resolveEffect(after.pending)
+            is AfterLoss.EmergencyNext -> {
+                // ADHYADESH chain: after one forced loss, advance to the next target.
+                val nextTarget = after.remaining.firstOrNull { state.isAlive(it) }
+                if (nextTarget == null) {
+                    endTurn(after.actor)
+                } else {
+                    requireLoss(
+                        nextTarget,
+                        LossReason.EMERGENCY_COUPED,
+                        AfterLoss.EmergencyNext(after.actor, after.remaining.drop(1)),
+                    )
+                }
+            }
         }
     }
 
     private fun endTurn(turnActor: PlayerId) {
+        // KhazanaRaj (or a previous EmergencyNext step) may have already set GameOver inside gain().
+        if (state.phase is Phase.GameOver) return
         winnerOrNull(state)?.let { w ->
             state = state.copy(phase = Phase.GameOver(w)); events.add(GameEvent.GameEnded(w))
             return
@@ -655,9 +760,9 @@ fun checkInvariants(state: GameState) {
     }
     for (id in 0 until cfg.deckSize) check(state.locations.containsKey(CardId(id))) { "I1: missing card $id" }
 
-    // I2 — coin conservation.
+    // I2 — coin conservation (treasury + players = effective supply; scarcity may reduce the supply).
     val totalCoins = state.treasury + state.players.sumOf { it.coins }
-    check(totalCoins == cfg.coinSupply) { "I2: coins $totalCoins != supply ${cfg.coinSupply}" }
+    check(totalCoins == cfg.effectiveCoinSupply) { "I2: coins $totalCoins != supply ${cfg.effectiveCoinSupply}" }
     check(state.treasury >= 0) { "I2: negative treasury" }
     check(state.players.all { it.coins >= 0 }) { "I2: negative player coins" }
 
@@ -671,14 +776,21 @@ fun checkInvariants(state: GameState) {
     val alive = state.alivePlayers()
     when (val ph = state.phase) {
         is Phase.GameOver -> {
-            if (!cfg.isTeamGame) {
-                // Free-for-all: exactly one player alive, and it is the declared winner.
-                check(alive.size == 1 && alive.first().id == ph.winner) { "I10: GameOver(${ph.winner}) but alive=${alive.map { it.id }}" }
-            } else {
-                // TEAMS: exactly one team alive, the winner is alive and on that team (the representative).
-                check(state.aliveTeams().size == 1) { "I10: team GameOver but aliveTeams=${state.aliveTeams()}" }
-                check(state.isAlive(ph.winner)) { "I10: team GameOver winner ${ph.winner} is not alive" }
-                check(state.aliveTeams().single() == state.teamOf(ph.winner)) { "I10: winner ${ph.winner} not on the surviving team" }
+            when {
+                // KHAZANA RAJ: win by coin milestone — multiple players may still be alive at game end.
+                cfg.khazanaEnabled && (state.lifetimeCoins[ph.winner] ?: 0) >= cfg.khazanaTarget -> {
+                    check(state.isAlive(ph.winner) || true) { "I10: KhazanaRaj GameOver winner ${ph.winner} sanity" }
+                }
+                !cfg.isTeamGame -> {
+                    // Classic free-for-all: exactly one player alive, and it is the declared winner.
+                    check(alive.size == 1 && alive.first().id == ph.winner) { "I10: GameOver(${ph.winner}) but alive=${alive.map { it.id }}" }
+                }
+                else -> {
+                    // TEAMS: exactly one team alive, the winner is alive and on that team.
+                    check(state.aliveTeams().size == 1) { "I10: team GameOver but aliveTeams=${state.aliveTeams()}" }
+                    check(state.isAlive(ph.winner)) { "I10: team GameOver winner ${ph.winner} is not alive" }
+                    check(state.aliveTeams().single() == state.teamOf(ph.winner)) { "I10: winner ${ph.winner} not on the surviving team" }
+                }
             }
         }
         else -> check(alive.size >= 1) { "I10: non-terminal phase with ${alive.size} alive" }

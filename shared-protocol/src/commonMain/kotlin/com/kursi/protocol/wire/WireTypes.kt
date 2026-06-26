@@ -70,6 +70,12 @@ sealed interface WireAction {
 
     @Serializable
     data class Investigate(val target: WirePlayerId) : WireAction
+
+    // ── Variant actions (all default=disabled; classic path never produces these) ──
+    @Serializable data object BailPe : WireAction
+    @Serializable data object Sabotage : WireAction
+    @Serializable data class Hawala(val to: WirePlayerId) : WireAction
+    @Serializable data object Emergency : WireAction
 }
 
 // ─────────────────────────── Intent ───────────────────────────
@@ -125,6 +131,8 @@ enum class WireLossReason {
     LOST_BLOCK_CHALLENGE,
     ASSASSINATED,
     COUPED,
+    SABOTAGED,
+    EMERGENCY_COUPED,
 }
 
 // ─────────────────────────── PhaseView ───────────────────────────
@@ -429,4 +437,26 @@ sealed interface WireGameEvent {
 
     @Serializable
     data class GameEnded(val winner: WirePlayerId) : WireGameEvent
+
+    // ── Variant events (emitted only in variant game modes) ────────────────────────────────────────────
+
+    /** BAIL PE BAHAR — a face-up card was restored to face-down by paying the bail cost. */
+    @Serializable
+    data class InfluenceRestored(val player: WirePlayerId, val card: WireCardId, val role: WireRole) : WireGameEvent
+
+    /** HAWALA — coins transferred directly between players (bypasses treasury). */
+    @Serializable
+    data class CoinsGifted(val from: WirePlayerId, val to: WirePlayerId, val amount: Int) : WireGameEvent
+
+    /** ADHYADESH (Emergency) — declared; actor pays all coins and chain-Coups all alive opponents. */
+    @Serializable
+    data class EmergencyDeclared(val actor: WirePlayerId) : WireGameEvent
+
+    /** KHAZANA RAJ — a player reached the lifetime coin milestone and won. */
+    @Serializable
+    data class KhazanaWon(val winner: WirePlayerId, val lifetimeCoins: Int) : WireGameEvent
+
+    /** DARJA milestone reached (corruption level 1-4 unlocked by lifetime coins). */
+    @Serializable
+    data class DarjaReached(val player: WirePlayerId, val level: Int, val lifetimeCoins: Int) : WireGameEvent
 }

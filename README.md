@@ -283,6 +283,22 @@ Multiple humans, one device. After each turn, a **handoff guard** blanks the scr
 
 ---
 
+### Vishesh Modes — Experimental Variants
+
+Seven additive rule variants, toggleable per-match from the Setup screen. All default **off**; classic rules are byte-for-byte unchanged when all are disabled. Variants can be combined freely.
+
+| Variant | Hindi name | What it does |
+|---------|-----------|--------------|
+| **Bail Pe Bahar** | बेल पे बाहर | Pay 9 coins to flip one revealed (face-up) card back face-down. Buys a second life — at a cost. |
+| **Bali Khel** | बलि खेल | Sacrifice one of your own face-down cards to gain 3 coins. Voluntary influence loss for tempo. |
+| **Hawala** | हवाला | Gift up to 5 coins directly to any alive opponent, bypassing the treasury. Under-the-table transfers. |
+| **Adhyadesh** | अध्यादेश | Once you've **earned** ≥ 25 lifetime coins, you can declare Emergency — pay all your coins and force every other player to lose one card. One-time nuclear option. |
+| **Khazana Raj** | खजाना राज | First player to **accumulate** a target amount (25 / 50 / 100) of lifetime earned coins wins the game outright — regardless of how many players are still alive. Changes the game from elimination to a coin race with four Darja milestones: Mukhiya → Sahib → Mantri → Sarkar. |
+| **Mehengai** | महँगाई | All coin costs (Coup + Assassinate) increase by 1 every few turns — inflation is real. |
+| **Tangi** | तंगी | Total coin supply is capped below the classic formula. Hoarding and denial become dominant strategies. |
+
+---
+
 ### 2–10 players
 
 | 2-player duel | 10-player table |

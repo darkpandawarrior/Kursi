@@ -16,6 +16,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -75,7 +79,8 @@ fun LobbyScreen(
     // navigates into the Game once the moment finishes (host goes idle).
     val momentHost = rememberMomentHost()
     var committing by remember { mutableStateOf(false) }
-    val tableAnchors = remember { centeredAnchors() }
+    // Anchors are wired from BoxWithConstraints below; initialised to a safe default.
+    var tableAnchors by remember { mutableStateOf(centeredAnchors(1080f, 1920f)) }
 
     LaunchedEffect(committing, momentHost.isActive) {
         if (committing && !momentHost.isActive) {
@@ -84,7 +89,13 @@ fun LobbyScreen(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize().background(BrandTokens.TeakInk)) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize().background(BrandTokens.TeakInk)) {
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val screenWidthPx = with(density) { maxWidth.toPx() }
+        val screenHeightPx = with(density) { maxHeight.toPx() }
+        LaunchedEffect(screenWidthPx, screenHeightPx) {
+            tableAnchors = centeredAnchors(screenWidthPx, screenHeightPx)
+        }
     Column(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -119,17 +130,39 @@ fun LobbyScreen(
                     .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
                     .padding(horizontal = 16.dp, vertical = 10.dp),
             ) {
-                Column {
-                    Text(
-                        ls.lobbyHeader,
-                        style = KursiType.title.copy(fontSize = 14.sp, letterSpacing = 1.sp),
-                        color = BrandTokens.GoldAntique,
-                    )
-                    Text(
-                        "Seed #$currentSeed · ${players}p · ${difficulty.name}",
-                        style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
-                        color = KursiNeutrals.TextMuted,
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column {
+                        Text(
+                            ls.lobbyHeader,
+                            style = KursiType.title.copy(fontSize = 14.sp, letterSpacing = 1.sp),
+                            color = BrandTokens.GoldAntique,
+                        )
+                        // Friendly cabinet number instead of raw seed
+                        val cabinetNo = (currentSeed % 9999).let { if (it < 0) it + 9999 else it }
+                        Text(
+                            "Cabinet #$cabinetNo · ${players}p · ${difficulty.name}",
+                            style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
+                            color = KursiNeutrals.TextMuted,
+                        )
+                    }
+                    // "Tap any row" discovery hint
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(BrandTokens.BrassAged.copy(alpha = 0.12f))
+                            .border(0.7.dp, BrandTokens.BrassAged.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                    ) {
+                        Text(
+                            "Tap a row for their voice →",
+                            style = KursiType.caption.copy(fontSize = 9.sp, fontStyle = FontStyle.Italic),
+                            color = KursiNeutrals.TextSecondary,
+                        )
+                    }
                 }
             }
 
@@ -242,11 +275,20 @@ fun LobbyScreen(
     }
 }
 
-/** Anchors that drive every moment to the screen centre — no live table to measure here. */
-private fun centeredAnchors(): TableAnchors = TableAnchors(
-    seatCenters = mapOf(0 to Offset(720f, 450f)),
-    treasuryCenter = Offset(720f, 450f),
-)
+/**
+ * Anchors that drive every moment to the screen centre — no live table to measure here.
+ * [screenWidthPx] and [screenHeightPx] come from BoxWithConstraints so the stamp lands
+ * on-screen even on portrait phones (the old hardcoded 720×450 was off-screen on ~360dp
+ * wide handsets at 3× density).
+ */
+private fun centeredAnchors(screenWidthPx: Float, screenHeightPx: Float): TableAnchors {
+    val cx = screenWidthPx / 2f
+    val cy = screenHeightPx * 0.42f
+    return TableAnchors(
+        seatCenters = mapOf(0 to Offset(cx, cy)),
+        treasuryCenter = Offset(cx, cy),
+    )
+}
 
 // ─────────────────────────── Helpers ─────────────────────────────────────────
 
@@ -372,7 +414,7 @@ private fun PersonaRegisterRow(
                                     .border(0.7.dp, teamHue.copy(alpha = 0.6f), RoundedCornerShape(3.dp))
                                     .padding(horizontal = 5.dp, vertical = 1.dp),
                             ) {
-                                Text(teamBadge, style = KursiType.caption.copy(fontSize = 7.sp, letterSpacing = 0.5.sp, fontWeight = FontWeight.Bold), color = teamHue)
+                                Text(teamBadge, style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.5.sp, fontWeight = FontWeight.Bold), color = teamHue)
                             }
                         }
                     }
@@ -391,11 +433,20 @@ private fun PersonaRegisterRow(
                     )
                 }
 
-                Text(
-                    "tap →",
-                    style = KursiType.caption.copy(fontSize = 9.sp),
-                    color = BrandTokens.BrassDark.copy(alpha = 0.5f),
-                )
+                // Visible tap affordance — was 9sp at 50% alpha (invisible)
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(BrandTokens.BrassDark.copy(alpha = 0.2f))
+                        .border(0.7.dp, BrandTokens.BrassAged.copy(alpha = 0.45f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 3.dp),
+                ) {
+                    Text(
+                        "VOICE ▸",
+                        style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.5.sp),
+                        color = BrandTokens.BrassAged.copy(alpha = 0.8f),
+                    )
+                }
             }
         }
     }
@@ -408,22 +459,30 @@ private fun LobbyHeader(seed: Long, onBack: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .background(BrandTokens.TeakDark)
-            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            s.back,
-            style = KursiType.body.copy(fontSize = 13.sp),
-            color = BrandTokens.BrassAged,
-            modifier = Modifier.clickable(onClick = onBack),
-        )
-        Spacer(Modifier.weight(1f))
+        // Back — 52dp minimum tap target
+        Box(
+            modifier = Modifier
+                .defaultMinSize(minWidth = 64.dp, minHeight = 52.dp)
+                .semantics(mergeDescendants = true) {
+                    role = Role.Button
+                    contentDescription = s.back
+                }
+                .clickable(onClick = onBack)
+                .padding(horizontal = 20.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("← ${s.back}", style = KursiType.body.copy(fontSize = 13.sp), color = BrandTokens.BrassAged)
+        }
         Text(
             s.lobbyHeader,
             style = KursiType.title.copy(fontSize = 16.sp, letterSpacing = 1.sp),
             color = KursiNeutrals.TextPrimary,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.width(64.dp)) // balance the back button
     }
 }

@@ -202,6 +202,10 @@ data class ReplayAnnotation(
                 is Action.Assassinate -> "SUPARI → ${seatName(a.target, view, personas)}"
                 is Action.Steal -> "VASOOLI → ${seatName(a.target, view, personas)}"
                 is Action.Investigate -> "JAANCH → ${seatName(a.target, view, personas)}"
+                Action.BailPe -> "BAIL PE BAHAR"
+                Action.Sabotage -> "BALI KHEL"
+                is Action.Hawala -> "HAWALA → ${seatName(a.to, view, personas)}"
+                Action.Emergency -> "ADHYADESH"
             }
             is Intent.Block -> "Block (${intent.role})"
             is Intent.Challenge -> "Lalkaar / Challenge"

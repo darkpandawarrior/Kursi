@@ -19,7 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -179,10 +181,14 @@ private fun ReviewHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
     ) {
         Box(
             modifier = Modifier
+                .defaultMinSize(minHeight = 52.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                .semantics(mergeDescendants = true) {
+                    role = Role.Button
+                    contentDescription = "Back"
+                }
                 .clickable(onClick = onBack)
-                .semantics { contentDescription = "Back" }
                 .padding(horizontal = 12.dp, vertical = 6.dp),
         ) {
             Text(s.reviewBack, style = KursiType.title.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary)
