@@ -22,6 +22,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kursi.designsystem.*
@@ -383,7 +384,8 @@ private fun ArcCard(
                     text = meta.blurb,
                     style = KursiType.body.copy(fontSize = 11.sp),
                     color = KursiNeutrals.TextMuted,
-                    maxLines = 2,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
 

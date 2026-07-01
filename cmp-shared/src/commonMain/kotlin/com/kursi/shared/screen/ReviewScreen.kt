@@ -294,6 +294,8 @@ private fun AnnotationPanel(a: ReplayAnnotation, language: Language) {
                 "“$belief”",
                 style = KursiType.title.copy(fontSize = 14.sp, fontStyle = FontStyle.Italic),
                 color = KursiNeutrals.TextPrimary,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
             )
 
             // Played vs best + EV gap.
