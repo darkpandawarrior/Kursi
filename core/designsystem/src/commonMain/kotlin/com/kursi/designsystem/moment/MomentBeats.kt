@@ -223,7 +223,8 @@ internal fun AssassinateBeat(
     val slipProgress = (progress / 0.45f).coerceAtMost(1f)
     TickerSlip(
         glyphText = "SUPARI",
-        effectText = "target: ${m.target}",
+        effectText = if (m.actorName.isNotEmpty() && m.targetName.isNotEmpty())
+            "${m.actorName} → ${m.targetName}" else "supari",
         tint = m.roleHue,
         progress = slipProgress,
     )
@@ -466,8 +467,8 @@ internal fun BlockBeat(
     val slipAlpha = if (progress > 0.55f) lerp(1f, 0.35f, (progress - 0.55f) / 0.30f) else 1f
     Box(Modifier.alpha(slipAlpha)) {
         TickerSlip(
-            glyphText = "BLK",
-            effectText = "blocked by seat ${m.actorSeat}",
+            glyphText = "ROKA",
+            effectText = if (m.blockerName.isNotEmpty()) "${m.blockerName} blocked" else "blocked",
             tint = m.roleHue.copy(alpha = 0.5f),
             progress = slipProgress,
         )
@@ -778,7 +779,8 @@ internal fun EliminationBeat(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "KURSI GAYI\nthand rakh 🪑",
+                text = if (m.playerName.isNotEmpty()) "${m.playerName} ki KURSI GAYI 🪑"
+                       else "KURSI GAYI\nthand rakh 🪑",
                 style = KursiType.label_sm.copy(fontSize = 13.sp),
                 color = KursiNeutrals.TextSecondary,
                 textAlign = TextAlign.Center,
@@ -822,7 +824,7 @@ internal fun TurnHandoffBeat(
         )
     }
 
-    // Destination seat gold rim pulse (0.60→1.0)
+    // Destination seat gold rim pulse (0.60→1.0) + name label
     val rimProgress = ((progress - 0.60f) / 0.40f).coerceIn(0f, 1f)
     if (rimProgress > 0f) {
         val rimAlpha = sin(rimProgress * PI.toFloat()) * 0.7f
@@ -833,6 +835,25 @@ internal fun TurnHandoffBeat(
                 center = toCenter,
                 style = Stroke(2.dp.toPx()),
             )
+        }
+        if (m.nextName.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset {
+                        IntOffset(
+                            (toCenter.x - 60.dp.toPx()).roundToInt(),
+                            (toCenter.y + 28.dp.toPx()).roundToInt(),
+                        )
+                    }
+                    .alpha(rimAlpha),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = m.nextName,
+                    style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BrandTokens.GoldAntique, textAlign = TextAlign.Center),
+                )
+            }
         }
     }
 }
@@ -909,7 +930,7 @@ internal fun WinBeat(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "Kursi aapki!",
+                text = if (m.winnerName.isNotEmpty()) "${m.winnerName} ki Kursi!" else "Kursi aapki!",
                 style = KursiType.title.copy(fontSize = 22.sp),
                 color = BrandTokens.GoldAntique,
                 textAlign = TextAlign.Center,

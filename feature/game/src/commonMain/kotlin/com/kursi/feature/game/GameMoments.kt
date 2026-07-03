@@ -85,37 +85,60 @@ internal fun roleHueOf(role: Role?): Color = when (role) {
  * carries no on-screen theatre of its own (e.g. coin bookkeeping that a parent beat already
  * animates, or transient card-replacement plumbing).
  *
- * Seat ids are resolved through [resolve]; engine roles map to hues via [roleHueOf].
+ * Seat ids are resolved through [resolve]; player names come from [state.opponentPersonas]
+ * so beats can show "Rahul stole from Priya" instead of raw seat indexes.
  */
 internal fun mapEventToMoment(
     event: GameEvent,
     resolve: SeatIdResolver,
-): KursiMoment? = when (event) {
+    state: GameUiState,
+    humanDisplayName: String = "Khiladi",
+): KursiMoment? {
+    // Helper: display name for a PlayerId (bot persona name, or player's display name for the human seat).
+    fun nameOf(id: PlayerId): String =
+        if (id == state.view.viewer) humanDisplayName
+        else state.opponentPersonas[id]?.name ?: "?"
+
+    return when (event) {
 
     is GameEvent.ActionDeclared -> when (val a = event.action) {
-        Action.Income      -> KursiMoment.Income(actorSeat = resolve.seatOf(event.actor))
-        Action.ForeignAid  -> KursiMoment.ForeignAid(actorSeat = resolve.seatOf(event.actor))
+        Action.Income      -> KursiMoment.Income(
+            actorSeat  = resolve.seatOf(event.actor),
+            actorName  = nameOf(event.actor),
+        )
+        Action.ForeignAid  -> KursiMoment.ForeignAid(
+            actorSeat  = resolve.seatOf(event.actor),
+            actorName  = nameOf(event.actor),
+        )
         Action.Tax         -> KursiMoment.Tax(
-            actorSeat = resolve.seatOf(event.actor),
-            roleHue   = roleHueOf(Role.NETA),
+            actorSeat  = resolve.seatOf(event.actor),
+            roleHue    = roleHueOf(Role.NETA),
+            actorName  = nameOf(event.actor),
         )
         Action.Exchange    -> KursiMoment.Exchange(
-            actorSeat = resolve.seatOf(event.actor),
-            roleHue   = roleHueOf(Role.JUGAADU),
+            actorSeat  = resolve.seatOf(event.actor),
+            roleHue    = roleHueOf(Role.JUGAADU),
+            actorName  = nameOf(event.actor),
         )
         is Action.Steal    -> KursiMoment.Steal(
-            actorSeat = resolve.seatOf(event.actor),
-            victim    = resolve.seatOf(a.target),
-            roleHue   = roleHueOf(Role.BABU),
+            actorSeat  = resolve.seatOf(event.actor),
+            victim     = resolve.seatOf(a.target),
+            roleHue    = roleHueOf(Role.BABU),
+            actorName  = nameOf(event.actor),
+            victimName = nameOf(a.target),
         )
         is Action.Assassinate -> KursiMoment.Assassinate(
-            actorSeat = resolve.seatOf(event.actor),
-            target    = resolve.seatOf(a.target),
-            roleHue   = roleHueOf(Role.BHAI),
+            actorSeat  = resolve.seatOf(event.actor),
+            target     = resolve.seatOf(a.target),
+            roleHue    = roleHueOf(Role.BHAI),
+            actorName  = nameOf(event.actor),
+            targetName = nameOf(a.target),
         )
         is Action.Coup     -> KursiMoment.Coup(
-            actorSeat = resolve.seatOf(event.actor),
-            target    = resolve.seatOf(a.target),
+            actorSeat  = resolve.seatOf(event.actor),
+            target     = resolve.seatOf(a.target),
+            actorName  = nameOf(event.actor),
+            targetName = nameOf(a.target),
         )
         // Jaanch (Investigate) has no bespoke table-theatre overlay of its own — the private
         // peek is a secrecy-bounded fact, narrated in the log/recap via KursiVoice rather than
@@ -129,11 +152,15 @@ internal fun mapEventToMoment(
         actorSeat   = resolve.seatOf(event.blocker),
         blockedSeat = resolve.seatOf(blockedActorOf(event.action) ?: event.blocker),
         roleHue     = roleHueOf(event.role),
+        blockerName = nameOf(event.blocker),
+        blockedName = blockedActorOf(event.action)?.let { nameOf(it) } ?: "",
     )
 
     is GameEvent.Challenged -> KursiMoment.Challenge(
-        actorSeat = resolve.seatOf(event.challenger),
-        claimant  = resolve.seatOf(event.target),
+        actorSeat      = resolve.seatOf(event.challenger),
+        claimant       = resolve.seatOf(event.target),
+        challengerName = nameOf(event.challenger),
+        claimantName   = nameOf(event.target),
     )
 
     is GameEvent.ChallengeRevealed -> KursiMoment.Reveal(
@@ -142,26 +169,32 @@ internal fun mapEventToMoment(
         claimedRole = event.role.name,
         truthful    = event.hadRole,
         roleHue     = roleHueOf(event.role),
+        playerName  = nameOf(event.player),
     )
 
     is GameEvent.InfluenceLost -> KursiMoment.InfluenceLoss(
-        actorSeat = resolve.seatOf(event.player),
-        lostRole  = event.role.name,
-        roleHue   = roleHueOf(event.role),
+        actorSeat  = resolve.seatOf(event.player),
+        lostRole   = event.role.name,
+        roleHue    = roleHueOf(event.role),
+        playerName = nameOf(event.player),
     )
 
     is GameEvent.PlayerEliminated -> KursiMoment.Elimination(
-        actorSeat = resolve.seatOf(event.player),
+        actorSeat  = resolve.seatOf(event.player),
+        playerName = nameOf(event.player),
     )
 
     is GameEvent.TurnAdvanced -> KursiMoment.TurnHandoff(
-        // toSeat is already a seat index; actorSeat is unknown here so we anchor the sweep on it too.
         actorSeat = event.toSeat,
         nextSeat  = event.toSeat,
+        nextName  = state.view.players.firstOrNull { it.seatIndex == event.toSeat }
+                        ?.let { p -> if (p.id == state.view.viewer) "Aap" else state.opponentPersonas[p.id]?.name ?: "" }
+                        ?: "",
     )
 
     is GameEvent.GameEnded -> KursiMoment.Win(
-        actorSeat = resolve.seatOf(event.winner),
+        actorSeat  = resolve.seatOf(event.winner),
+        winnerName = nameOf(event.winner),
     )
 
     // Events with no standalone moment — their effect is folded into a neighbouring beat.
@@ -182,6 +215,7 @@ internal fun mapEventToMoment(
     is GameEvent.KhazanaWon,
     is GameEvent.DarjaReached,
     -> null
+    }
 }
 
 /** The action's original actor (the one being blocked) for a Block beat anchor, if derivable. */
@@ -241,6 +275,7 @@ internal fun BoxScope.GameMomentLayer(
     heightPx: Float,
     soundEnabled: Boolean,
     reducedMotion: Boolean,
+    humanDisplayName: String = "Khiladi",
     modifier: Modifier = Modifier,
 ) {
     val host = remember { MomentHost() }
@@ -268,7 +303,7 @@ internal fun BoxScope.GameMomentLayer(
         val fresh = newlyAppended(previous = seen, current = current)
         seen = current
         fresh.forEach { event ->
-            mapEventToMoment(event, resolver)?.let { host.play(it) }
+            mapEventToMoment(event, resolver, state, humanDisplayName)?.let { host.play(it) }
         }
     }
 

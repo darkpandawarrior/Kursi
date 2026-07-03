@@ -60,9 +60,10 @@ sealed interface KursiMoment {
     @Immutable
     data class Income(
         override val actorSeat: SeatId,
+        val actorName: String = "",
         override val barkKey: BarkKey? = null,
     ) : KursiMoment {
-        override val durationMs = 600
+        override val durationMs = 900
         override val haptic = HapticBeat.Tick
     }
 
@@ -73,9 +74,10 @@ sealed interface KursiMoment {
     @Immutable
     data class ForeignAid(
         override val actorSeat: SeatId,
+        val actorName: String = "",
         override val barkKey: BarkKey? = null,
     ) : KursiMoment {
-        override val durationMs = 700
+        override val durationMs = 1000
         override val haptic = HapticBeat.Tick
     }
 
@@ -88,9 +90,10 @@ sealed interface KursiMoment {
     data class Tax(
         override val actorSeat: SeatId,
         val roleHue: Color,
+        val actorName: String = "",
         override val barkKey: BarkKey? = null,
     ) : KursiMoment {
-        override val durationMs = 750
+        override val durationMs = 1100
         override val haptic = HapticBeat.Tick
     }
 
@@ -103,9 +106,11 @@ sealed interface KursiMoment {
         override val actorSeat: SeatId,
         val victim: SeatId,
         val roleHue: Color,
+        val actorName: String = "",
+        val victimName: String = "",
         override val barkKey: BarkKey? = null,
     ) : KursiMoment {
-        override val durationMs = 850
+        override val durationMs = 1300
         override val haptic = HapticBeat.Thud
     }
 
@@ -119,9 +124,11 @@ sealed interface KursiMoment {
         override val actorSeat: SeatId,
         val target: SeatId,
         val roleHue: Color,
+        val actorName: String = "",
+        val targetName: String = "",
         override val barkKey: BarkKey? = null,
     ) : KursiMoment {
-        override val durationMs = 900
+        override val durationMs = 1500
         override val haptic = HapticBeat.Thud
     }
 
@@ -133,9 +140,10 @@ sealed interface KursiMoment {
     data class Exchange(
         override val actorSeat: SeatId,
         val roleHue: Color,
+        val actorName: String = "",
         override val barkKey: BarkKey? = null,
     ) : KursiMoment {
-        override val durationMs = 800
+        override val durationMs = 1100
         override val haptic = HapticBeat.Tick
     }
 
@@ -149,9 +157,11 @@ sealed interface KursiMoment {
     data class Coup(
         override val actorSeat: SeatId,
         val target: SeatId,
+        val actorName: String = "",
+        val targetName: String = "",
         override val barkKey: BarkKey? = null,
     ) : KursiMoment {
-        override val durationMs = 1400
+        override val durationMs = 2000
         override val haptic = HapticBeat.HeavyLong
     }
 
@@ -167,9 +177,11 @@ sealed interface KursiMoment {
         override val actorSeat: SeatId,
         val blockedSeat: SeatId,
         val roleHue: Color,
+        val blockerName: String = "",
+        val blockedName: String = "",
         override val barkKey: BarkKey? = null,
     ) : KursiMoment {
-        override val durationMs = 800
+        override val durationMs = 1200
         override val haptic = HapticBeat.Tick
     }
 
@@ -181,9 +193,11 @@ sealed interface KursiMoment {
     data class Challenge(
         override val actorSeat: SeatId,
         val claimant: SeatId,
+        val challengerName: String = "",
+        val claimantName: String = "",
         override val barkKey: BarkKey? = null,
     ) : KursiMoment {
-        override val durationMs = 700
+        override val durationMs = 1100
         override val haptic = HapticBeat.Tick
     }
 
@@ -201,9 +215,10 @@ sealed interface KursiMoment {
         val claimedRole: RoleId,
         val truthful: Boolean,
         val roleHue: Color,
+        val playerName: String = "",
         override val barkKey: BarkKey? = null,
     ) : KursiMoment {
-        override val durationMs = 1200
+        override val durationMs = 1800
         override val haptic = if (truthful) HapticBeat.Thud else HapticBeat.DoubleBuzz
     }
 
@@ -217,9 +232,10 @@ sealed interface KursiMoment {
         override val actorSeat: SeatId,
         val lostRole: RoleId,
         val roleHue: Color,
+        val playerName: String = "",
         override val barkKey: BarkKey? = null,
     ) : KursiMoment {
-        override val durationMs = 800
+        override val durationMs = 1300
         override val haptic = HapticBeat.Thud
     }
 
@@ -232,9 +248,10 @@ sealed interface KursiMoment {
     @Immutable
     data class Elimination(
         override val actorSeat: SeatId,
+        val playerName: String = "",
         override val barkKey: BarkKey? = null,
     ) : KursiMoment {
-        override val durationMs = 1300
+        override val durationMs = 2000
         override val haptic = HapticBeat.HeavyLong
     }
 
@@ -247,9 +264,10 @@ sealed interface KursiMoment {
     data class TurnHandoff(
         override val actorSeat: SeatId,
         val nextSeat: SeatId,
+        val nextName: String = "",
     ) : KursiMoment {
         override val barkKey = null
-        override val durationMs = 450
+        override val durationMs = 600
         override val haptic = HapticBeat.None
     }
 
@@ -262,9 +280,10 @@ sealed interface KursiMoment {
     @Immutable
     data class Win(
         override val actorSeat: SeatId,
+        val winnerName: String = "",
         override val barkKey: BarkKey? = null,
     ) : KursiMoment {
-        override val durationMs = 1400
+        override val durationMs = 2200
         override val haptic = HapticBeat.HeavyLong
     }
 }

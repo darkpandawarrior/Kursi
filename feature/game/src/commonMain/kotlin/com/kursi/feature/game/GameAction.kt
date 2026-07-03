@@ -37,6 +37,8 @@ sealed interface GameAction {
         val playerCount: Int,
         val difficulty: Difficulty = Difficulty.Medium,
         val seed: Long? = null,
+        /** The human player's display name — shown in moments, recap rail, and chat. */
+        val playerName: String = "Khiladi",
         val resumeLog: List<SnapIntent>? = null,
         val humanCount: Int = 1,
         val teamCount: Int = 0,
