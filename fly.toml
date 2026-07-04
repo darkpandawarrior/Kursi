@@ -1,0 +1,27 @@
+# Fly.io app config for the Kursi Ktor server. `app` is a placeholder — set the real app name
+# (fly apps create) before the first deploy; server-deploy.yml no-ops until FLY_API_TOKEN is set.
+app = "kursi-server"
+primary_region = "bom"
+
+[build]
+  dockerfile = "server/Dockerfile"
+
+[env]
+  PORT = "8080"
+
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+[[services.http_checks]]
+  # Adjust to a real route in configureRouting() if "/" isn't handled.
+  path = "/"
+  interval = "15s"
+  timeout = "5s"

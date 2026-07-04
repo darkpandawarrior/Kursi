@@ -1,0 +1,13 @@
+# Build context for server/Dockerfile is the repo root (a Gradle multi-module build needs
+# gradlew/settings.gradle.kts + all module sources) — everything not needed to build :server
+# is excluded here to keep the context small.
+.git
+**/build
+**/.gradle
+**/.kotlin
+**/.idea
+cmp-android
+cmp-ios
+cmp-desktop
+cmp-web
+outputs

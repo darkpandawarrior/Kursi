@@ -1,0 +1,36 @@
+name: Deploy Server (Fly.io)
+
+# Deploys the Ktor multiplayer server (server/Dockerfile) to Fly.io on push to main. Gated on
+# FLY_API_TOKEN: no Fly app exists yet (fly.toml's `app` name is a placeholder) — the job no-ops
+# until a real token secret and `fly apps create` are done.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - 'engine/**'
+      - 'shared-protocol/**'
+      - 'ai/**'
+      - 'core/network/**'
+      - 'fly.toml'
+  workflow_dispatch:
+
+concurrency:
+  group: server-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ !!secrets.FLY_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

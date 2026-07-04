@@ -488,6 +488,30 @@ bundle exec fastlane android internal
 bundle exec fastlane ios testflight
 ```
 
+### Distribution pipelines
+
+All gated on repo secrets and no-ops until configured — see each workflow's header comment:
+
+| Workflow | Target |
+|---|---|
+| `release.yml` | Play Store internal/beta/production (Android) + TestFlight/App Store (iOS) |
+| `publish-fdroid.yml` | Signs the reproducible `noGms` build, publishes to GitHub Releases (fdroiddata binary host) |
+| `indus-deploy.yml` | PhonePe Indus Appstore |
+| `amazon-appstore-deploy.yml` | Amazon Appstore (App Submission API) |
+| `huawei-appgallery-deploy.yml` | Huawei AppGallery (AGC Publish API) |
+| `samsung-galaxy-store-deploy.yml` | Samsung Galaxy Store (Content Publish API) |
+| `aptoide-deploy.yml` | Aptoide (Uploader API) |
+| `desktop-release.yml` | Dmg/Msi/Deb native installers → GitHub Release, per-OS runner matrix |
+| `web.yml` | GitHub Pages (wasmJs) |
+| `server-deploy.yml` | Fly.io (`fly.toml` + `server/Dockerfile`) |
+
+Not automatable, no CI job:
+- **Uptodown** — no public submission API; manual web-form upload.
+- **TapTap** — no public submission API; manual upload/contact-support via the developer console
+  (gaming-only anyway, but Kursi qualifies).
+- **[Obtainium](https://github.com/ImranR98/Obtainium)** — not a store; it tracks the GitHub
+  Releases `release.yml` already publishes, no separate config needed.
+
 ---
 
 ## Docs
