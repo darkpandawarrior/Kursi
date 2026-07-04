@@ -134,7 +134,7 @@ dependencies {
     implementation(libs.core.ktx)
 
     implementation(platform(libs.firebase.bom))
-    implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation(libs.firebase.messaging.ktx)
 
     implementation(libs.play.review.ktx)
     implementation(libs.play.app.update.ktx)

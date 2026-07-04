@@ -10,18 +10,19 @@ activity-compose = "1.13.0"
 core-ktx = "1.19.0"
 lifecycle = "2.11.0"
 ktor = "3.5.1"
-logback = "1.5.35"
+logback = "1.5.37"
 material-icons-extended = "1.7.3"
 material3 = "1.9.0"
 multiplatform-settings = "1.3.0"
 navigation-compose = "2.9.2"
-firebase-bom = "33.1.2"
+firebase-bom = "34.15.0"
 play-review = "2.0.2"
 play-app-update = "2.1.0"
 
 [libraries]
 # Exposed to build-logic so convention plugins can configure the Kotlin Multiplatform extension.
 components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }
+firebase-messaging-ktx = { module = "com.google.firebase:firebase-messaging-ktx" }
 foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 # Exposed to build-logic so the compose convention plugin can reference the Compose Gradle plugin class.
