@@ -122,21 +122,21 @@ jobs:
       - name: Grant execute permission
         run: chmod +x ./gradlew
 
-      - name: Build release AAB + APK
+      - name: Build release AAB + APK (Gms — the full-feature build that ships to Play/Indus)
         run: |
-          ./gradlew :cmp-android:bundleRelease :cmp-android:assembleRelease
+          ./gradlew :cmp-android:bundleGmsRelease :cmp-android:assembleGmsRelease
 
       - name: Upload release APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: kursi-release-apk
-          path: cmp-android/build/outputs/apk/release/kursi-release-*.apk
+          path: cmp-android/build/outputs/apk/gms/release/*.apk
 
       - name: Upload release AAB artifact
         uses: actions/upload-artifact@v4
         with:
           name: kursi-release-aab
-          path: cmp-android/build/outputs/bundle/release/
+          path: cmp-android/build/outputs/bundle/gmsRelease/
 
       - name: Deploy to Play Store (${{ inputs.android_rung }})
         if: env.PLAY_STORE_KEY_FILE_PATH != ''

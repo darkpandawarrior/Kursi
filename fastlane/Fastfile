@@ -40,22 +40,20 @@ platform :android do
     gradle(task: "jvmTest", flags: "--continue")
   end
 
-  desc "Build debug APK"
+  desc "Build debug APK (Gms — the full-feature build that ships to Play/Indus)"
   lane :build_debug do
-    gradle(task: "assembleDebug", project_dir: ".")
+    gradle(task: "assembleGmsDebug", project_dir: ".")
   end
 
-  desc "Build release APK + AAB (requires signing config)"
+  desc "Build release APK + AAB (Gms flavor; requires signing config)"
   lane :build_release do
     gradle(
-      task: "bundle",
-      build_type: "Release",
+      task: "bundleGmsRelease",
       project_dir: ".",
       flags: "-x test"
     )
     gradle(
-      task: "assemble",
-      build_type: "Release",
+      task: "assembleGmsRelease",
       project_dir: ".",
       flags: "-x test"
     )
@@ -67,7 +65,7 @@ platform :android do
     prepare_changelog
     upload_to_play_store(
       track: "internal",
-      aab: "cmp-android/build/outputs/bundle/release/cmp-android-release.aab",
+      aab: "cmp-android/build/outputs/bundle/gmsRelease/cmp-android-gms-release.aab",
       skip_upload_apk: true,
       release_status: "draft"
     )

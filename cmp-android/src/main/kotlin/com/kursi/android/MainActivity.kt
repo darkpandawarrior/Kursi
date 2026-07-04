@@ -7,11 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
-import com.google.android.play.core.appupdate.AppUpdateManagerFactory
-import com.google.android.play.core.appupdate.AppUpdateOptions
-import com.google.android.play.core.install.model.AppUpdateType
-import com.google.android.play.core.install.model.UpdateAvailability
-import com.google.android.play.core.review.ReviewManagerFactory
 import com.kursi.core.feedback.FeedbackAndroid
 import com.kursi.core.feedback.NotificationChannelManager
 import com.kursi.core.feedback.NotificationPermission
@@ -30,7 +25,7 @@ class MainActivity : ComponentActivity() {
         NotificationChannelManager.createChannels(this)
         updateNotificationPermissionState()
         scheduleInAppReview()
-        checkForUpdate()
+        PlayFeatures.checkForUpdate(this)
         enableEdgeToEdge()
         setContent {
             KursiApp()
@@ -57,36 +52,8 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             appPrefs.ledgerFlow.collect { ledger ->
                 if (ledger.wins >= 3 && appPrefs.shouldShowReview(BuildConfig.VERSION_NAME)) {
-                    launchInAppReview()
+                    PlayFeatures.launchInAppReview(this@MainActivity, appPrefs)
                 }
-            }
-        }
-    }
-
-    private fun launchInAppReview() {
-        val manager = ReviewManagerFactory.create(this)
-        manager.requestReviewFlow().addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                manager.launchReviewFlow(this, task.result).addOnCompleteListener {
-                    appPrefs.markReviewShown(BuildConfig.VERSION_NAME)
-                }
-            }
-        }
-    }
-
-    private fun checkForUpdate() {
-        val manager = AppUpdateManagerFactory.create(this)
-        manager.appUpdateInfo.addOnSuccessListener { info ->
-            val staleDays = info.clientVersionStalenessDays() ?: 0
-            if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
-                && staleDays >= 30
-                && info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
-            ) {
-                manager.startUpdateFlow(
-                    info,
-                    this,
-                    AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build(),
-                )
             }
         }
     }

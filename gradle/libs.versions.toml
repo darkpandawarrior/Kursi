@@ -22,7 +22,11 @@ play-app-update = "2.1.0"
 [libraries]
 # Exposed to build-logic so convention plugins can configure the Kotlin Multiplatform extension.
 components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }
-firebase-messaging-ktx = { module = "com.google.firebase:firebase-messaging-ktx" }
+
+# firebase-messaging-ktx was discontinued at 24.1.2 — KTX extensions are now included in the base
+# artifact (https://firebase.google.com/docs/android/kotlin-migration). Current BOM has no
+# constraint for the retired -ktx artifact, so it fails to resolve; use the base module instead.
+firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 # Exposed to build-logic so the compose convention plugin can reference the Compose Gradle plugin class.
@@ -64,7 +68,7 @@ ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "kto
 ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
 runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
 ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
-# Firebase — BOM manages firebase-messaging-ktx version at runtime
+# Firebase — BOM manages firebase-messaging's version at runtime
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 # Play Store in-app UX
 play-review-ktx = { module = "com.google.android.play:review-ktx", version.ref = "play-review" }

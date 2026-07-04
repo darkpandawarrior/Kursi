@@ -449,9 +449,9 @@ cd Kursi
 # Fastest path to the full game
 ./gradlew :cmp-desktop:run
 
-# Android
-./gradlew :cmp-android:assembleDebug
-adb install -r cmp-android/build/outputs/apk/debug/kursi-debug-1.0.0.apk
+# Android (gms = full-feature build with Firebase/Play Core; noGms = F-Droid/FOSS build)
+./gradlew :cmp-android:assembleGmsDebug
+adb install -r cmp-android/build/outputs/apk/gms/debug/cmp-android-gms-debug.apk
 
 # All JVM tests
 ./gradlew jvmTest
@@ -470,12 +470,14 @@ Version bump: `scripts/bump_version.sh --patch|--minor|--major`
 
 | Command | Output |
 |---------|--------|
-| `:cmp-android:assembleDebug` | `kursi-debug-{version}.apk` |
-| `:cmp-android:bundleRelease` | `.aab` for Play Store |
+| `:cmp-android:assembleGmsDebug` | Debug APK, full feature set |
+| `:cmp-android:bundleGmsRelease` | `.aab` for Play Store / Indus Appstore |
+| `:cmp-android:assembleNoGmsRelease -Pfdroid` | Reproducible FOSS APK (no Firebase/Play Core) for F-Droid |
 | `:cmp-desktop:run` | Launch desktop app |
-| `:cmp-desktop:packageDistributionForCurrentOS` | `.dmg` / `.deb` / `.exe` |
+| `:cmp-desktop:packageDmg` / `packageMsi` / `packageDeb` | Native installers (macOS/Windows/Linux runners respectively) |
 | `:cmp-web:wasmJsBrowserDistribution` | Wasm browser build |
 | `:cmp-ios:linkReleaseFrameworkIosArm64` | `KursiKit.framework` |
+| `:server:installDist` | Runnable server dir (used by `server/Dockerfile`) |
 | `make all` | All targets into `outputs/` |
 
 Fastlane:

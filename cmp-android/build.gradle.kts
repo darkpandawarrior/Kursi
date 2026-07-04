@@ -36,6 +36,10 @@ val keystoreProperties = Properties().apply {
 val hasReleaseSigning =
     keystorePropertiesFile.exists() || System.getenv("RELEASE_STORE_FILE") != null
 
+// F-Droid reproducible build flag (`./gradlew :cmp-android:assembleNoGmsRelease -Pfdroid`).
+// Disables R8/resource shrinking, which isn't bit-for-bit reproducible across machines.
+val fdroidBuild = providers.gradleProperty("fdroid").isPresent
+
 android {
     namespace = "com.kursi.android"
     compileSdk = 37
@@ -47,6 +51,18 @@ android {
         versionCode = versionCodeBase + readBuildNumber()
         versionName = readVersionName()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // gms: full feature set (Firebase Cloud Messaging, Play Core review/update) — what ships to
+    // Play/Indus. noGms: strips those non-free deps for F-Droid (see publish-fdroid.yml).
+    flavorDimensions += "services"
+    productFlavors {
+        create("gms") {
+            dimension = "services"
+        }
+        create("noGms") {
+            dimension = "services"
+        }
     }
 
     signingConfigs {
@@ -92,8 +108,8 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = !fdroidBuild
+            isShrinkResources = !fdroidBuild
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -133,9 +149,10 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.core.ktx)
 
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.messaging.ktx)
-
-    implementation(libs.play.review.ktx)
-    implementation(libs.play.app.update.ktx)
+    // Non-free, gms-flavor only — F-Droid's noGms flavor ships without these (PlayFeatures.kt
+    // and KursiFirebaseMessagingService.kt have a noGms no-op counterpart under src/noGms).
+    add("gmsImplementation", platform(libs.firebase.bom))
+    add("gmsImplementation", libs.firebase.messaging)
+    add("gmsImplementation", libs.play.review.ktx)
+    add("gmsImplementation", libs.play.app.update.ktx)
 }

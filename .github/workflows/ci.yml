@@ -70,14 +70,14 @@ jobs:
       - name: Grant execute permission
         run: chmod +x ./gradlew
 
-      - name: Assemble debug APK
-        run: ./gradlew :cmp-android:assembleDebug
+      - name: Assemble debug APK (Gms — the full-feature build that ships to Play/Indus)
+        run: ./gradlew :cmp-android:assembleGmsDebug
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: kursi-debug-apk
-          path: cmp-android/build/outputs/apk/debug/kursi-debug-*.apk
+          path: cmp-android/build/outputs/apk/gms/debug/*.apk
 
   # ── iOS compile check (KMP source compatibility) ──────────────────────────
   ios-compile:
