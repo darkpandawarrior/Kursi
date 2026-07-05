@@ -34,7 +34,9 @@ class SpectatorModeTest {
             ),
         )
         // No human input at all — poll until the spectator loop carries the game to game-over.
-        val reachedOver = withTimeoutOrNull(20_000) {
+        // 45s budget: this seed took 22.8s on CI hardware, well past the original 20s budget -
+        // CI runners are commonly slower than local dev machines for CPU-bound ISMCTS search.
+        val reachedOver = withTimeoutOrNull(45_000) {
             while (vm.state.value?.isGameOver != true) delay(25)
             true
         }

@@ -188,8 +188,9 @@ class VindictiveGrudgeTest {
                     is GameEvent.Challenged -> lastChallenger = ev.challenger
                     is GameEvent.InfluenceLost -> {
                         val aggressor = when (ev.reason) {
-                            LossReason.ASSASSINATED, LossReason.COUPED -> lastActionActor
+                            LossReason.ASSASSINATED, LossReason.COUPED, LossReason.EMERGENCY_COUPED -> lastActionActor
                             LossReason.LOST_CHALLENGE, LossReason.LOST_BLOCK_CHALLENGE -> lastChallenger
+                            LossReason.SABOTAGED -> null // voluntary; no grudge target
                         }
                         if (ev.player == PlayerId(0) && aggressor != null && aggressor != PlayerId(0)) {
                             lastAttackerOfSeat0 = aggressor

@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -664,6 +665,11 @@ class GameViewModel(
             // Let the player watch the table settle before the demo "thinks" and acts.
             delay((ROUTINE_STEP_MS * speedMultiplier).toLong().coerceIn(800L, 4800L))
             val best = currentSession.bestHumanMove() ?: return@launch
+            // bestHumanMove() is a synchronous, non-suspending ISMCTS search - a cancel() issued
+            // while it was running has no effect until it returns. Check explicitly here so a
+            // superseded job (cancelled by a newer maybeAutoSpectate call) aborts instead of racing
+            // the fresh job to submitIntent against the same mutable GameSession.state.
+            coroutineContext.ensureActive()
             // Re-check on the shown state: still this session, still the human's turn, still legal.
             val shown = _state.value ?: return@launch
             if (currentSession === session && shown.isHumanTurn && best in shown.legalIntents) {
