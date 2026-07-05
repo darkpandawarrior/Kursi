@@ -114,7 +114,7 @@ data class GameUiState(
 
     /** KHAZANA RAJ — Darja (corruption level) for [id] based on lifetime coins (0=none, 4=Sarkar). */
     fun darjaLevelFor(id: PlayerId): Int {
-        val coins = lifetimeCoins.getOrDefault(id, 0)
+        val coins = (lifetimeCoins[id] ?: 0)
         return when {
             coins >= 20 -> 4  // Sarkar
             coins >= 16 -> 3  // Mantri
@@ -126,7 +126,7 @@ data class GameUiState(
 
     /** KHAZANA RAJ — progress fraction [0.0..1.0] toward [GameConfig.khazanaTarget] for [id]. */
     fun khazanaProgressFor(id: PlayerId, target: Int): Float =
-        if (target <= 0) 0f else (lifetimeCoins.getOrDefault(id, 0).toFloat() / target).coerceIn(0f, 1f)
+        if (target <= 0) 0f else ((lifetimeCoins[id] ?: 0).toFloat() / target).coerceIn(0f, 1f)
 
     companion object {
         /** Maximum number of events kept in [recentEvents]. */
