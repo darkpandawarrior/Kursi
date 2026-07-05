@@ -31,14 +31,14 @@ data class GauntletRung(
  * each rung deals a varied, non-degenerate cast.
  */
 object GauntletLadder {
-
-    val RUNGS: List<GauntletRung> = listOf(
-        GauntletRung(index = 0, id = "probationer", difficulty = Difficulty.Easy,        players = 3, seed = 1947L),
-        GauntletRung(index = 1, id = "clerk",       difficulty = Difficulty.Medium,      players = 4, seed = 1962L),
-        GauntletRung(index = 2, id = "officer",     difficulty = Difficulty.Hard,        players = 4, seed = 1975L),
-        GauntletRung(index = 3, id = "secretary",   difficulty = Difficulty.Expert,      players = 5, seed = 1991L),
-        GauntletRung(index = 4, id = "cabinet",     difficulty = Difficulty.Grandmaster, players = 6, seed = 2014L),
-    )
+    val RUNGS: List<GauntletRung> =
+        listOf(
+            GauntletRung(index = 0, id = "probationer", difficulty = Difficulty.Easy, players = 3, seed = 1947L),
+            GauntletRung(index = 1, id = "clerk", difficulty = Difficulty.Medium, players = 4, seed = 1962L),
+            GauntletRung(index = 2, id = "officer", difficulty = Difficulty.Hard, players = 4, seed = 1975L),
+            GauntletRung(index = 3, id = "secretary", difficulty = Difficulty.Expert, players = 5, seed = 1991L),
+            GauntletRung(index = 4, id = "cabinet", difficulty = Difficulty.Grandmaster, players = 6, seed = 2014L),
+        )
 
     /** The last valid rung index — i.e. the top of the ladder. */
     val lastIndex: Int get() = RUNGS.lastIndex

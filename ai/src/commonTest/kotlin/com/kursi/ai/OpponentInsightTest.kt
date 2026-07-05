@@ -16,7 +16,6 @@ import kotlin.test.assertTrue
  * [BotMemory] fed ONLY public events + a redacted [PlayerView], never an opponent's hidden cards.
  */
 class OpponentInsightTest {
-
     @Test
     fun posteriors_are_wellFormed_and_pHolds_inRange() {
         val config = GameConfig.forPlayers(4)
@@ -26,9 +25,10 @@ class OpponentInsightTest {
         var state = initialState(config, seed)
         val memory = BotMemory()
         val human = PlayerId(0)
-        val policies: Map<PlayerId, Policy> = (0 until 4).associate {
-            PlayerId(it) to HardPolicy(seed + it * 17L)
-        }
+        val policies: Map<PlayerId, Policy> =
+            (0 until 4).associate {
+                PlayerId(it) to HardPolicy(seed + it * 17L)
+            }
 
         var steps = 0
         while (state.phase !is Phase.GameOver && steps++ < 120) {
@@ -79,27 +79,47 @@ class OpponentInsightTest {
         // base prior, because a copy is now publicly accounted for.
         val config = GameConfig.forPlayers(3)
         val viewer = PlayerId(0)
-        val opp = OpponentView(
-            id = PlayerId(1), seatIndex = 1, coins = 2,
-            faceUpRoles = listOf(Role.NETA), faceDownCount = 1, eliminated = false,
-        )
-        val opp2 = OpponentView(
-            id = PlayerId(2), seatIndex = 2, coins = 2,
-            faceUpRoles = emptyList(), faceDownCount = 2, eliminated = false,
-        )
-        val view = PlayerView(
-            viewer = viewer, config = config, treasury = 40, deckCount = 5,
-            turnNumber = 3, myCoins = 2, myInfluence = listOf(Role.BHAI, Role.BABU),
-            myFaceUp = emptyList(),
-            myCards = listOf(
-                OwnCard(CardId(0), Role.BHAI, false),
-                OwnCard(CardId(1), Role.BABU, false),
-            ),
-            players = listOf(
-                OpponentView(viewer, 0, 2, emptyList(), 2, false), opp, opp2,
-            ),
-            phase = PhaseView.Turn(viewer),
-        )
+        val opp =
+            OpponentView(
+                id = PlayerId(1),
+                seatIndex = 1,
+                coins = 2,
+                faceUpRoles = listOf(Role.NETA),
+                faceDownCount = 1,
+                eliminated = false,
+            )
+        val opp2 =
+            OpponentView(
+                id = PlayerId(2),
+                seatIndex = 2,
+                coins = 2,
+                faceUpRoles = emptyList(),
+                faceDownCount = 2,
+                eliminated = false,
+            )
+        val view =
+            PlayerView(
+                viewer = viewer,
+                config = config,
+                treasury = 40,
+                deckCount = 5,
+                turnNumber = 3,
+                myCoins = 2,
+                myInfluence = listOf(Role.BHAI, Role.BABU),
+                myFaceUp = emptyList(),
+                myCards =
+                    listOf(
+                        OwnCard(CardId(0), Role.BHAI, false),
+                        OwnCard(CardId(1), Role.BABU, false),
+                    ),
+                players =
+                    listOf(
+                        OpponentView(viewer, 0, 2, emptyList(), 2, false),
+                        opp,
+                        opp2,
+                    ),
+                phase = PhaseView.Turn(viewer),
+            )
 
         val insight = OpponentInsight.from(view, BotMemory(), PlayerId(1))
         assertNotNull(insight)
@@ -110,7 +130,7 @@ class OpponentInsightTest {
         assertTrue(
             pNeta < uniform,
             "with a NETA already face-up on seat 1, its hidden-slot NETA posterior ($pNeta) " +
-                "should sit below the uniform baseline ($uniform)"
+                "should sit below the uniform baseline ($uniform)",
         )
     }
 }

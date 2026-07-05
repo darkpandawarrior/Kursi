@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -42,7 +43,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.Text
 
 // ─────────────────────────── ChatAvatar ──────────────────────────────────────
 
@@ -63,26 +63,28 @@ fun ChatAvatar(
     size: Dp = 28.dp,
 ) {
     Box(
-        modifier = modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(
-                brush = Brush.radialGradient(
-                    // Brass highlight → seat color → brass shadow: identical layering to SeatAvatar
-                    listOf(
-                        BrandTokens.GoldAntique.copy(alpha = 0.55f),
-                        color,
-                        BrandTokens.BrassDark.copy(alpha = 0.75f),
-                    ),
+        modifier =
+            modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(
+                    brush =
+                        Brush.radialGradient(
+                            // Brass highlight → seat color → brass shadow: identical layering to SeatAvatar
+                            listOf(
+                                BrandTokens.GoldAntique.copy(alpha = 0.55f),
+                                color,
+                                BrandTokens.BrassDark.copy(alpha = 0.75f),
+                            ),
+                        ),
+                ).border(
+                    width = 1.dp,
+                    brush =
+                        Brush.radialGradient(
+                            listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark),
+                        ),
+                    shape = CircleShape,
                 ),
-            )
-            .border(
-                width = 1.dp,
-                brush = Brush.radialGradient(
-                    listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark),
-                ),
-                shape = CircleShape,
-            ),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -137,14 +139,17 @@ fun SpeechBubble(
 
     // Emphatic bubbles (HOSTILE / BOAST) get a static holo rim at moderate intensity —
     // enough to read as agitated / boastful without the full animated pulse.
-    val emphaticMod = if (emphatic) {
-        Modifier.holoRimLight(
-            accent = accent,
-            phase = 0.25f,
-            cornerRadius = KursiRadii.md,
-            intensity = 0.65f,
-        )
-    } else Modifier
+    val emphaticMod =
+        if (emphatic) {
+            Modifier.holoRimLight(
+                accent = accent,
+                phase = 0.25f,
+                cornerRadius = KursiRadii.md,
+                intensity = 0.65f,
+            )
+        } else {
+            Modifier
+        }
 
     Row(
         modifier = modifier,
@@ -163,21 +168,26 @@ fun SpeechBubble(
 
         // Bubble body
         Box(
-            modifier = Modifier
-                .widthIn(min = 80.dp, max = 300.dp)
-                .then(emphaticMod)
-                .decoPopoverPaper(radius = KursiRadii.md)
-                .then(
-                    // Player bubble: warm gold wash behind the cream paper
-                    if (fromPlayer) Modifier.background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                accent.copy(alpha = 0.08f),
-                                BrandTokens.GoldAntique.copy(alpha = 0.10f),
-                            ),
-                        ),
-                    ) else Modifier
-                ),
+            modifier =
+                Modifier
+                    .widthIn(min = 80.dp, max = 300.dp)
+                    .then(emphaticMod)
+                    .decoPopoverPaper(radius = KursiRadii.md)
+                    .then(
+                        // Player bubble: warm gold wash behind the cream paper
+                        if (fromPlayer) {
+                            Modifier.background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        accent.copy(alpha = 0.08f),
+                                        BrandTokens.GoldAntique.copy(alpha = 0.10f),
+                                    ),
+                                ),
+                            )
+                        } else {
+                            Modifier
+                        },
+                    ),
         ) {
             Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp)) {
                 // Speaker name line — small Rozha / caps, tinted accent
@@ -188,19 +198,22 @@ fun SpeechBubble(
                     if (!fromPlayer) {
                         // Accent rail: a tiny 3dp wide dot/stripe of the seat hue
                         Box(
-                            modifier = Modifier
-                                .size(width = 3.dp, height = 10.dp)
-                                .clip(Squircle(KursiRadii.xs))
-                                .background(accent.copy(alpha = 0.85f)),
+                            modifier =
+                                Modifier
+                                    .size(width = 3.dp, height = 10.dp)
+                                    .clip(Squircle(KursiRadii.xs))
+                                    .background(accent.copy(alpha = 0.85f)),
                         )
                         Spacer(Modifier.width(5.dp))
                     }
                     Text(
                         text = displayName,
-                        style = KursiType.label_micro.copy(
-                            fontSize = 9.sp,
-                            letterSpacing = 0.5.sp,
-                        ).rozha(),
+                        style =
+                            KursiType.label_micro
+                                .copy(
+                                    fontSize = 9.sp,
+                                    letterSpacing = 0.5.sp,
+                                ).rozha(),
                         color = if (fromPlayer) BrandTokens.GoldAntique else accent,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -210,11 +223,13 @@ fun SpeechBubble(
                 // Body text — DM Mono body style for the sarkari-teleprinter register
                 Text(
                     text = text,
-                    style = KursiType.body.copy(
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp,
-                        letterSpacing = 0.1.sp,
-                    ).dmMono(),
+                    style =
+                        KursiType.body
+                            .copy(
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp,
+                                letterSpacing = 0.1.sp,
+                            ).dmMono(),
                     color = BrandTokens.CreamInk,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -256,10 +271,11 @@ fun Modifier.speakingSeatGlow(
     val phase by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = 2200, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
         label = "speakingSeatGlowPhase",
     )
     return this.holoRimLight(

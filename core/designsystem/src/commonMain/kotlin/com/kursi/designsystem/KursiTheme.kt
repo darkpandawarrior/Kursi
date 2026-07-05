@@ -10,7 +10,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,40 +33,54 @@ import org.jetbrains.compose.resources.Font
 /** License Raj Deco brand surface palette. */
 object BrandTokens {
     // Ground — warm teak/oxblood
+
     /** Teak dark: deep warm council-chamber ground. */
-    val TeakDark  = Color(0xFF2A1B14)
+    val TeakDark = Color(0xFF2A1B14)
+
     /** Teak mid: slightly lighter warm teak — gradient end. */
-    val TeakMid   = Color(0xFF3A2418)
+    val TeakMid = Color(0xFF3A2418)
+
     /** Ink / outer window background — deepest teak. */
-    val TeakInk   = Color(0xFF1E1008)
+    val TeakInk = Color(0xFF1E1008)
 
     // Metal — aged brass / antique gold
+
     /** Aged brass: primary bezel and border metal. */
-    val BrassAged   = Color(0xFFC99A3B)
+    val BrassAged = Color(0xFFC99A3B)
+
     /** Antique gold: highlights, foil, coin tops. */
     val GoldAntique = Color(0xFFE8C874)
+
     /** Brass dark: shadow/rim on brass elements. */
-    val BrassDark   = Color(0xFF8A6A28)
+    val BrassDark = Color(0xFF8A6A28)
 
     // Paper / certificate
+
     /** Document cream: card faces, certificate paper. */
-    val PaperCream  = Color(0xFFEDE3CC)
+    val PaperCream = Color(0xFFEDE3CC)
+
     /** Cream ink: text on certificate paper. */
-    val CreamInk    = Color(0xFF3A2C14)
+    val CreamInk = Color(0xFF3A2C14)
+
     /** Parchment tint: slightly deeper panel insets. */
-    val PaperDeep   = Color(0xFFD4C9A8)
+    val PaperDeep = Color(0xFFD4C9A8)
 
     // Danger / stamp
+
     /** Oxblood: danger / elimination stamp. */
-    val Oxblood     = Color(0xFF7A2E2E)
+    val Oxblood = Color(0xFF7A2E2E)
+
     /** Stamp red: bright danger seal. */
-    val StampRed    = Color(0xFFC1272D)
+    val StampRed = Color(0xFFC1272D)
 
     // Semantic (kept functional)
+
     /** Success / truth — muted civil green. */
-    val CivilGreen  = Color(0xFF2D6A4F)
+    val CivilGreen = Color(0xFF2D6A4F)
+
     /** Block — civic blue. */
-    val CivicBlue   = Color(0xFF1B4F72)
+    val CivicBlue = Color(0xFF1B4F72)
+
     /** Pending — amber */
     val PendingAmber = Color(0xFFD4A017)
 }
@@ -77,8 +90,8 @@ object BrandTokens {
 /** Semantic outcome colors for the deco identity. */
 object KursiSemantics {
     val Success = Color(0xFF2D9E5A)
-    val Danger  = BrandTokens.StampRed
-    val Block   = Color(0xFF3A86FF)
+    val Danger = BrandTokens.StampRed
+    val Block = Color(0xFF3A86FF)
     val Pending = BrandTokens.PendingAmber
 }
 
@@ -89,23 +102,31 @@ object KursiSemantics {
 /** Surface palette — deco remapping. Legacy names kept for :feature:game compat. */
 object KursiFeltColors {
     /** Was FeltTop (green). Now: teak dark — the council-chamber ground. */
-    val FeltTop      = BrandTokens.TeakDark
+    val FeltTop = BrandTokens.TeakDark
+
     /** Was FeltBottom. Now: teak mid. */
-    val FeltBottom   = BrandTokens.TeakMid
+    val FeltBottom = BrandTokens.TeakMid
+
     /** App background. Now: deep teak ink. */
-    val Ink          = BrandTokens.TeakInk
+    val Ink = BrandTokens.TeakInk
+
     /** Inset surface. Now: teak dark. */
-    val Surface1     = BrandTokens.TeakDark
+    val Surface1 = BrandTokens.TeakDark
+
     /** Mid-level surface. Now: teak mid. */
-    val Surface2     = BrandTokens.TeakMid
+    val Surface2 = BrandTokens.TeakMid
+
     /** Raised surface. Now: slightly lighter teak. */
-    val Surface3     = Color(0xFF4A3020)
+    val Surface3 = Color(0xFF4A3020)
+
     /** Gold rim — aged brass bezel. */
-    val GoldRim      = BrandTokens.BrassAged
+    val GoldRim = BrandTokens.BrassAged
+
     /** Khokha coin / bright gold accent. */
-    val GoldCoin     = BrandTokens.GoldAntique
+    val GoldCoin = BrandTokens.GoldAntique
+
     /** Coin rim / shadow — brass dark. */
-    val GoldRimDark  = BrandTokens.BrassDark
+    val GoldRimDark = BrandTokens.BrassDark
 }
 
 // ─────────────────────────── Text / neutral palette ───────────────────────────
@@ -113,26 +134,31 @@ object KursiFeltColors {
 /** Neutral text and disabled colors — deco remapping. */
 object KursiNeutrals {
     /** Primary text on teak: warm near-white. */
-    val TextPrimary   = Color(0xFFF2E8D0)
+    val TextPrimary = Color(0xFFF2E8D0)
+
     /** Secondary text: muted parchment. */
     val TextSecondary = Color(0xFFCBB882)
+
     /** Muted text: aged brass tint. */
-    val TextMuted     = Color(0xFF8C7045)
+    val TextMuted = Color(0xFF8C7045)
+
     /** Disabled text: dim teak. */
-    val TextDisabled  = Color(0xFF5A4030)
+    val TextDisabled = Color(0xFF5A4030)
+
     /** Cream — used for text on certificate paper or in role cards. */
-    val Cream         = BrandTokens.PaperCream
+    val Cream = BrandTokens.PaperCream
 }
 
 // ─────────────────────────── Role hues (Okabe-Ito CVD-safe) — UNCHANGED ────────
 
 /** Role hues — locked Okabe-Ito palette. MUST NOT CHANGE per CVD contract. */
 object KursiRoleHues {
-    val Neta    = Color(0xFF0072B2)
-    val Bhai    = Color(0xFFD55E00)
-    val Babu    = Color(0xFF009E73)
+    val Neta = Color(0xFF0072B2)
+    val Bhai = Color(0xFFD55E00)
+    val Babu = Color(0xFF009E73)
     val Jugaadu = Color(0xFFE69F00)
-    val Vakil   = Color(0xFFCC79A7)
+    val Vakil = Color(0xFFCC79A7)
+
     /**
      * PATRAKAAR — Okabe-Ito "sky blue". The 6th canonical Okabe-Ito hue, deliberately the
      * lighter blue so it stays CVD-distinct from NETA's darker blue (the pair is designed to be
@@ -145,18 +171,20 @@ object KursiRoleHues {
 
 /** 10 distinct seat identity colors — separate from role hues. Unchanged. */
 object KursiSeatColors {
-    val all: List<Color> = listOf(
-        Color(0xFFE63946), // 0 — red
-        Color(0xFF457B9D), // 1 — steel
-        Color(0xFFF4A261), // 2 — apricot
-        Color(0xFF2A9D8F), // 3 — teal
-        Color(0xFF9B5DE5), // 4 — violet
-        Color(0xFFFFCA3A), // 5 — gold
-        Color(0xFFFF6B9D), // 6 — rose
-        Color(0xFF6A994E), // 7 — olive
-        Color(0xFF4CC9F0), // 8 — sky
-        Color(0xFFBC6C25), // 9 — umber
-    )
+    val all: List<Color> =
+        listOf(
+            Color(0xFFE63946), // 0 — red
+            Color(0xFF457B9D), // 1 — steel
+            Color(0xFFF4A261), // 2 — apricot
+            Color(0xFF2A9D8F), // 3 — teal
+            Color(0xFF9B5DE5), // 4 — violet
+            Color(0xFFFFCA3A), // 5 — gold
+            Color(0xFFFF6B9D), // 6 — rose
+            Color(0xFF6A994E), // 7 — olive
+            Color(0xFF4CC9F0), // 8 — sky
+            Color(0xFFBC6C25), // 9 — umber
+        )
+
     operator fun get(seatIndex: Int): Color = all[seatIndex % all.size]
 }
 
@@ -173,17 +201,22 @@ object KursiSeatColors {
  */
 object TextureTokens {
     /** Alpha of the guilloché line overlay on brass bezels. */
-    val guillocheLinesAlpha   = 0.18f
+    val guillocheLinesAlpha = 0.18f
+
     /** Alpha of the paper grain noise overlay on cream surfaces. */
-    val paperGrainAlpha       = 0.06f
+    val paperGrainAlpha = 0.06f
+
     /** Alpha of the engraved hatch on dark teak panels. */
-    val teakHatchAlpha        = 0.04f
+    val teakHatchAlpha = 0.04f
+
     /** Alpha of the ghosted chair-in-sunburst centre emblem. */
-    val emblomAlpha           = 0.035f
+    val emblomAlpha = 0.035f
+
     /** Number of guilloché sine waves per 100dp of width. */
-    val guillocheDensity      = 12
+    val guillocheDensity = 12
+
     /** Brass specular highlight width fraction (0..1). */
-    val brassSpecularWidth    = 0.25f
+    val brassSpecularWidth = 0.25f
 }
 
 // ─────────────────────────── Role frame patterns (CVD non-color channel) ─────
@@ -194,12 +227,12 @@ object TextureTokens {
  * dotted / woven / double-rule. Rendered in DecoTexture guilloché composable.
  */
 enum class RoleFramePattern {
-    SolidRing,    // NETA   — simple solid engraved ring
-    Hatched,      // BHAI   — 45° hatch inside the ring
-    Dotted,       // BABU   — evenly spaced dots
-    Woven,        // JUGAADU — interlocking braid pattern
-    DoubleRule,   // VAKIL  — two concentric rings
-    Ticked,       // PATRAKAAR — ring with radial tick marks (a press/registration bezel)
+    SolidRing, // NETA   — simple solid engraved ring
+    Hatched, // BHAI   — 45° hatch inside the ring
+    Dotted, // BABU   — evenly spaced dots
+    Woven, // JUGAADU — interlocking braid pattern
+    DoubleRule, // VAKIL  — two concentric rings
+    Ticked, // PATRAKAAR — ring with radial tick marks (a press/registration bezel)
 }
 
 // ─────────────────────────── Role visual ──────────────────────────────────────
@@ -236,83 +269,89 @@ data class RoleVisual(
 
 /** Stateless lookup — initialized once at app start. Never mutated. */
 object KursiColors {
-    val roles: Map<Role, RoleVisual> = mapOf(
-        Role.NETA to RoleVisual(
-            role          = Role.NETA,
-            color         = KursiRoleHues.Neta,
-            lightColor    = Color(0xFF3399CC),
-            characterName = "Netaji Vachan",
-            title         = "The Politician",
-            hindiAction   = "Ghotala",
-            actionLine    = "ACTION · Tax +3 Khokhas",
-            claimLineShort = "Tax +3",
-            blockLine     = "BLOCKS · Foreign Aid",
-            framePattern  = RoleFramePattern.SolidRing,
-        ),
-        Role.BHAI to RoleVisual(
-            role          = Role.BHAI,
-            color         = KursiRoleHues.Bhai,
-            lightColor    = Color(0xFFE87733),
-            characterName = "Bhai Teja",
-            title         = "The Don",
-            hindiAction   = "Supari",
-            actionLine    = "ACTION · Assassinate −3 (target loses influence)",
-            claimLineShort = "Supari −3",
-            blockLine     = "BLOCKS · —",
-            framePattern  = RoleFramePattern.Hatched,
-        ),
-        Role.BABU to RoleVisual(
-            role          = Role.BABU,
-            color         = KursiRoleHues.Babu,
-            lightColor    = Color(0xFF00C48D),
-            characterName = "Babu Filewala",
-            title         = "The Bureaucrat",
-            hindiAction   = "Vasooli",
-            actionLine    = "ACTION · Steal 2 Khokhas",
-            claimLineShort = "Steal 2",
-            blockLine     = "BLOCKS · Steal",
-            framePattern  = RoleFramePattern.Dotted,
-        ),
-        Role.JUGAADU to RoleVisual(
-            role          = Role.JUGAADU,
-            color         = KursiRoleHues.Jugaadu,
-            lightColor    = Color(0xFFFFBF33),
-            characterName = "Chhotu",
-            title         = "The Fixer",
-            hindiAction   = "Setting",
-            actionLine    = "ACTION · Exchange cards",
-            claimLineShort = "Exchange",
-            blockLine     = "BLOCKS · Steal",
-            framePattern  = RoleFramePattern.Woven,
-        ),
-        Role.VAKIL to RoleVisual(
-            role          = Role.VAKIL,
-            color         = KursiRoleHues.Vakil,
-            lightColor    = Color(0xFFDD99BF),
-            characterName = "Vakil Saab",
-            title         = "The Lawyer",
-            hindiAction   = "—",
-            actionLine    = "ACTION · None",
-            claimLineShort = "No action",
-            blockLine     = "BLOCKS · Assassinate",
-            framePattern  = RoleFramePattern.DoubleRule,
-        ),
-        Role.PATRAKAAR to RoleVisual(
-            role          = Role.PATRAKAAR,
-            color         = KursiRoleHues.Patrakaar,
-            lightColor    = Color(0xFF8CCBF0),
-            characterName = "Patrakaar Devi",
-            title         = "The Journalist",
-            hindiAction   = "Jaanch",
-            actionLine    = "ACTION · Investigate (peek a card, force a redraw)",
-            claimLineShort = "Jaanch",
-            blockLine     = "BLOCKS · —",
-            framePattern  = RoleFramePattern.Ticked,
-        ),
-    )
+    val roles: Map<Role, RoleVisual> =
+        mapOf(
+            Role.NETA to
+                RoleVisual(
+                    role = Role.NETA,
+                    color = KursiRoleHues.Neta,
+                    lightColor = Color(0xFF3399CC),
+                    characterName = "Netaji Vachan",
+                    title = "The Politician",
+                    hindiAction = "Ghotala",
+                    actionLine = "ACTION · Tax +3 Khokhas",
+                    claimLineShort = "Tax +3",
+                    blockLine = "BLOCKS · Foreign Aid",
+                    framePattern = RoleFramePattern.SolidRing,
+                ),
+            Role.BHAI to
+                RoleVisual(
+                    role = Role.BHAI,
+                    color = KursiRoleHues.Bhai,
+                    lightColor = Color(0xFFE87733),
+                    characterName = "Bhai Teja",
+                    title = "The Don",
+                    hindiAction = "Supari",
+                    actionLine = "ACTION · Assassinate −3 (target loses influence)",
+                    claimLineShort = "Supari −3",
+                    blockLine = "BLOCKS · —",
+                    framePattern = RoleFramePattern.Hatched,
+                ),
+            Role.BABU to
+                RoleVisual(
+                    role = Role.BABU,
+                    color = KursiRoleHues.Babu,
+                    lightColor = Color(0xFF00C48D),
+                    characterName = "Babu Filewala",
+                    title = "The Bureaucrat",
+                    hindiAction = "Vasooli",
+                    actionLine = "ACTION · Steal 2 Khokhas",
+                    claimLineShort = "Steal 2",
+                    blockLine = "BLOCKS · Steal",
+                    framePattern = RoleFramePattern.Dotted,
+                ),
+            Role.JUGAADU to
+                RoleVisual(
+                    role = Role.JUGAADU,
+                    color = KursiRoleHues.Jugaadu,
+                    lightColor = Color(0xFFFFBF33),
+                    characterName = "Chhotu",
+                    title = "The Fixer",
+                    hindiAction = "Setting",
+                    actionLine = "ACTION · Exchange cards",
+                    claimLineShort = "Exchange",
+                    blockLine = "BLOCKS · Steal",
+                    framePattern = RoleFramePattern.Woven,
+                ),
+            Role.VAKIL to
+                RoleVisual(
+                    role = Role.VAKIL,
+                    color = KursiRoleHues.Vakil,
+                    lightColor = Color(0xFFDD99BF),
+                    characterName = "Vakil Saab",
+                    title = "The Lawyer",
+                    hindiAction = "—",
+                    actionLine = "ACTION · None",
+                    claimLineShort = "No action",
+                    blockLine = "BLOCKS · Assassinate",
+                    framePattern = RoleFramePattern.DoubleRule,
+                ),
+            Role.PATRAKAAR to
+                RoleVisual(
+                    role = Role.PATRAKAAR,
+                    color = KursiRoleHues.Patrakaar,
+                    lightColor = Color(0xFF8CCBF0),
+                    characterName = "Patrakaar Devi",
+                    title = "The Journalist",
+                    hindiAction = "Jaanch",
+                    actionLine = "ACTION · Investigate (peek a card, force a redraw)",
+                    claimLineShort = "Jaanch",
+                    blockLine = "BLOCKS · —",
+                    framePattern = RoleFramePattern.Ticked,
+                ),
+        )
 
-    fun forRole(role: Role): RoleVisual =
-        roles[role] ?: error("No RoleVisual for $role — add to KursiColors.roles")
+    fun forRole(role: Role): RoleVisual = roles[role] ?: error("No RoleVisual for $role — add to KursiColors.roles")
 }
 
 // ─────────────────────────── Seal palette ─────────────────────────────────────
@@ -323,15 +362,20 @@ object KursiColors {
  */
 object KursiSealPalette {
     /** NETA — khadi white with saffron edge (use as badge fill). */
-    val Neta     = Color(0xFFF5F0E8)
+    val Neta = Color(0xFFF5F0E8)
+
     /** BHAI — blood maroon. */
-    val Bhai     = Color(0xFF8B1A1A)
+    val Bhai = Color(0xFF8B1A1A)
+
     /** BABU — sarkari grey-green. */
-    val Babu     = Color(0xFF5A7A6A)
+    val Babu = Color(0xFF5A7A6A)
+
     /** JUGAADU — jugaad yellow. */
-    val Jugaadu  = Color(0xFFD4A017)
+    val Jugaadu = Color(0xFFD4A017)
+
     /** VAKIL — ink black with red-tab feel (use red-edge tint). */
-    val Vakil    = Color(0xFF1A1A2E)
+    val Vakil = Color(0xFF1A1A2E)
+
     /** PATRAKAAR — newsprint blue-grey (the press card / ink-on-paper tint). */
     val Patrakaar = Color(0xFF2E5A78)
 }
@@ -356,11 +400,12 @@ data class KursiFonts(
  * because Font() returns the same object for the same resource key.
  */
 @Composable
-private fun rememberKursiFonts(): KursiFonts = KursiFonts(
-    rozhaOne  = FontFamily(Font(Res.font.rozha_one_regular,  weight = FontWeight.Normal)),
-    marcellus = FontFamily(Font(Res.font.marcellus_regular,  weight = FontWeight.Normal)),
-    dmMono    = FontFamily(Font(Res.font.dm_mono_medium,     weight = FontWeight.Medium)),
-)
+private fun rememberKursiFonts(): KursiFonts =
+    KursiFonts(
+        rozhaOne = FontFamily(Font(Res.font.rozha_one_regular, weight = FontWeight.Normal)),
+        marcellus = FontFamily(Font(Res.font.marcellus_regular, weight = FontWeight.Normal)),
+        dmMono = FontFamily(Font(Res.font.dm_mono_medium, weight = FontWeight.Medium)),
+    )
 
 /**
  * KursiType — License Raj Deco type scale.
@@ -378,115 +423,142 @@ private fun rememberKursiFonts(): KursiFonts = KursiFonts(
  */
 object KursiType {
     /** 28 / 700 — turn banner, Rozha One display. */
-    val display = TextStyle(
-        fontFamily = FontFamily.Serif,
-        fontSize   = 28.sp,
-        fontWeight = FontWeight(700),
-        lineHeight = 34.sp,
-        letterSpacing = 0.sp,
-    )
+    val display =
+        TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontSize = 28.sp,
+            fontWeight = FontWeight(700),
+            lineHeight = 34.sp,
+            letterSpacing = 0.sp,
+        )
+
     /** 26 / 700 — role names on hand cards. */
-    val cardRole = TextStyle(
-        fontFamily = FontFamily.Serif,
-        fontSize   = 26.sp,
-        fontWeight = FontWeight(700),
-        lineHeight = 30.sp,
-    )
+    val cardRole =
+        TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontSize = 26.sp,
+            fontWeight = FontWeight(700),
+            lineHeight = 30.sp,
+        )
+
     /** 20 / 700 — status spine, action buttons. Marcellus-style. */
-    val title = TextStyle(
-        fontFamily = FontFamily.Serif,
-        fontSize   = 20.sp,
-        fontWeight = FontWeight(700),
-        lineHeight = 26.sp,
-    )
+    val title =
+        TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontSize = 20.sp,
+            fontWeight = FontWeight(700),
+            lineHeight = 26.sp,
+        )
+
     /** 17 / 700 — player names. */
-    val name = TextStyle(
-        fontFamily = FontFamily.Serif,
-        fontSize   = 17.sp,
-        fontWeight = FontWeight(700),
-        lineHeight = 22.sp,
-    )
+    val name =
+        TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontSize = 17.sp,
+            fontWeight = FontWeight(700),
+            lineHeight = 22.sp,
+        )
+
     /** 15 / 500 — power lines, log rows. Small-caps feel. */
-    val body = TextStyle(
-        fontFamily = FontFamily.Serif,
-        fontSize   = 15.sp,
-        fontWeight = FontWeight(500),
-        lineHeight = 20.sp,
-    )
+    val body =
+        TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontSize = 15.sp,
+            fontWeight = FontWeight(500),
+            lineHeight = 20.sp,
+        )
+
     /** 13 / 600 uppercase + tracking — chips, coin counts, button sublabels. */
-    val label = TextStyle(
-        fontFamily    = FontFamily.Serif,
-        fontSize      = 13.sp,
-        fontWeight    = FontWeight(600),
-        lineHeight    = 18.sp,
-        letterSpacing = 0.8.sp,
-    )
+    val label =
+        TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontSize = 13.sp,
+            fontWeight = FontWeight(600),
+            lineHeight = 18.sp,
+            letterSpacing = 0.8.sp,
+        )
+
     /** 11 / 600 — pip labels, timers. DM Mono for numerals. */
-    val caption = TextStyle(
-        fontFamily    = FontFamily.Serif,
-        fontSize      = 11.sp,
-        fontWeight    = FontWeight(600),
-        lineHeight    = 14.sp,
-        letterSpacing = 0.3.sp,
-    )
+    val caption =
+        TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontSize = 11.sp,
+            fontWeight = FontWeight(600),
+            lineHeight = 14.sp,
+            letterSpacing = 0.3.sp,
+        )
+
     /** Monospaced numeric — coin counts, serial numbers. DM Mono. */
-    val numeric = TextStyle(
-        fontFamily    = FontFamily.Monospace,
-        fontSize      = 14.sp,
-        fontWeight    = FontWeight(600),
-        lineHeight    = 18.sp,
-        letterSpacing = 0.sp,
-    )
+    val numeric =
+        TextStyle(
+            fontFamily = FontFamily.Monospace,
+            fontSize = 14.sp,
+            fontWeight = FontWeight(600),
+            lineHeight = 18.sp,
+            letterSpacing = 0.sp,
+        )
 
     // ── Refined density ramp (Step 0) ─────────────────────────────
+
     /** 10/12 — cost chips, pip counts, log timestamps, affordance hints. */
-    val label_micro = TextStyle(
-        fontFamily    = FontFamily.Serif,
-        fontSize      = 10.sp,
-        fontWeight    = FontWeight(500),
-        lineHeight    = 12.sp,
-        letterSpacing = 0.2.sp,
-    )
+    val label_micro =
+        TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontSize = 10.sp,
+            fontWeight = FontWeight(500),
+            lineHeight = 12.sp,
+            letterSpacing = 0.2.sp,
+        )
+
     /** 11/14 — action name in dock chips, opponent meta, log actor. */
-    val label_sm = TextStyle(
-        fontFamily    = FontFamily.Serif,
-        fontSize      = 11.sp,
-        fontWeight    = FontWeight(600),
-        lineHeight    = 14.sp,
-        letterSpacing = 0.5.sp,
-    )
+    val label_sm =
+        TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontSize = 11.sp,
+            fontWeight = FontWeight(600),
+            lineHeight = 14.sp,
+            letterSpacing = 0.5.sp,
+        )
+
     /** 13/16 — opponent nameplate name, dock cost display. */
-    val label_md = TextStyle(
-        fontFamily    = FontFamily.Serif,
-        fontSize      = 13.sp,
-        fontWeight    = FontWeight(700),
-        lineHeight    = 16.sp,
-        letterSpacing = 0.3.sp,
-    )
+    val label_md =
+        TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontSize = 13.sp,
+            fontWeight = FontWeight(700),
+            lineHeight = 16.sp,
+            letterSpacing = 0.3.sp,
+        )
+
     /** 15/18 — status spine text, popover title. */
-    val title_sm = TextStyle(
-        fontFamily    = FontFamily.Serif,
-        fontSize      = 15.sp,
-        fontWeight    = FontWeight(700),
-        lineHeight    = 18.sp,
-        letterSpacing = 0.sp,
-    )
+    val title_sm =
+        TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontSize = 15.sp,
+            fontWeight = FontWeight(700),
+            lineHeight = 18.sp,
+            letterSpacing = 0.sp,
+        )
+
     /** 18/22 — reveal card persona name. */
-    val title_md = TextStyle(
-        fontFamily    = FontFamily.Serif,
-        fontSize      = 18.sp,
-        fontWeight    = FontWeight(700),
-        lineHeight    = 22.sp,
-        letterSpacing = 0.sp,
-    )
+    val title_md =
+        TextStyle(
+            fontFamily = FontFamily.Serif,
+            fontSize = 18.sp,
+            fontWeight = FontWeight(700),
+            lineHeight = 22.sp,
+            letterSpacing = 0.sp,
+        )
+
     /** 13 tabular — coin/treasury numerals (monospaced). */
-    val numeral_sm = TextStyle(
-        fontFamily    = FontFamily.Monospace,
-        fontSize      = 13.sp,
-        fontWeight    = FontWeight(600),
-        lineHeight    = 16.sp,
-        letterSpacing = 0.sp,
-    )
+    val numeral_sm =
+        TextStyle(
+            fontFamily = FontFamily.Monospace,
+            fontSize = 13.sp,
+            fontWeight = FontWeight(600),
+            lineHeight = 16.sp,
+            letterSpacing = 0.sp,
+        )
 }
 
 /**
@@ -500,21 +572,21 @@ private fun rememberKursiTypography(fonts: KursiFonts): Typography {
     val mc = fonts.marcellus
     val dm = fonts.dmMono
     return Typography(
-        displayLarge   = KursiType.display.copy(fontFamily = rz),
-        displayMedium  = KursiType.display.copy(fontFamily = rz),
-        displaySmall   = KursiType.display.copy(fontFamily = rz),
-        headlineLarge  = KursiType.title.copy(fontFamily = mc),
+        displayLarge = KursiType.display.copy(fontFamily = rz),
+        displayMedium = KursiType.display.copy(fontFamily = rz),
+        displaySmall = KursiType.display.copy(fontFamily = rz),
+        headlineLarge = KursiType.title.copy(fontFamily = mc),
         headlineMedium = KursiType.title.copy(fontFamily = mc),
-        headlineSmall  = KursiType.title.copy(fontFamily = mc),
-        titleLarge     = KursiType.title.copy(fontFamily = mc),
-        titleMedium    = KursiType.name.copy(fontFamily = mc),
-        titleSmall     = KursiType.name.copy(fontFamily = mc),
-        bodyLarge      = KursiType.body.copy(fontFamily = mc),
-        bodyMedium     = KursiType.body.copy(fontFamily = mc),
-        bodySmall      = KursiType.body.copy(fontFamily = mc),
-        labelLarge     = KursiType.label.copy(fontFamily = mc),
-        labelMedium    = KursiType.label.copy(fontFamily = mc),
-        labelSmall     = KursiType.numeral_sm.copy(fontFamily = dm),
+        headlineSmall = KursiType.title.copy(fontFamily = mc),
+        titleLarge = KursiType.title.copy(fontFamily = mc),
+        titleMedium = KursiType.name.copy(fontFamily = mc),
+        titleSmall = KursiType.name.copy(fontFamily = mc),
+        bodyLarge = KursiType.body.copy(fontFamily = mc),
+        bodyMedium = KursiType.body.copy(fontFamily = mc),
+        bodySmall = KursiType.body.copy(fontFamily = mc),
+        labelLarge = KursiType.label.copy(fontFamily = mc),
+        labelMedium = KursiType.label.copy(fontFamily = mc),
+        labelSmall = KursiType.numeral_sm.copy(fontFamily = dm),
     )
 }
 
@@ -538,12 +610,16 @@ object KursiDimens {
     val r_lg: androidx.compose.ui.unit.Dp = 14.dp
 
     // ── Stroke weights ───────────────────────────────────────────────────
+
     /** Hairline: default card/plate edge — brass at 40% alpha. */
     val stroke_hairline: androidx.compose.ui.unit.Dp = 0.75.dp
+
     /** Idle ring: opponent plate state ring when inactive. */
     val stroke_ring_idle: androidx.compose.ui.unit.Dp = 1.dp
+
     /** Active ring: thick ring for acting/targetable states. */
     val stroke_ring_active: androidx.compose.ui.unit.Dp = 2.dp
+
     /** Soft warm drop shadow depth. */
     val shadow_soft: androidx.compose.ui.unit.Dp = 3.dp
 }
@@ -561,13 +637,14 @@ val LocalKursiColors = staticCompositionLocalOf { KursiColors }
  *
  * Default falls back to system serif/mono so non-themed previews still render.
  */
-val LocalKursiFonts = staticCompositionLocalOf {
-    KursiFonts(
-        rozhaOne  = FontFamily.Serif,
-        marcellus = FontFamily.Serif,
-        dmMono    = FontFamily.Monospace,
-    )
-}
+val LocalKursiFonts =
+    staticCompositionLocalOf {
+        KursiFonts(
+            rozhaOne = FontFamily.Serif,
+            marcellus = FontFamily.Serif,
+            dmMono = FontFamily.Monospace,
+        )
+    }
 
 /**
  * Patches a [KursiType] token style with the real Rozha One display serif. Use on
@@ -592,23 +669,24 @@ fun TextStyle.dmMono(): TextStyle = this.copy(fontFamily = LocalKursiFonts.curre
 
 // ─────────────────────────── Material3 dark scheme (deco palette) ─────────────
 
-private val KursiDecoColorScheme = darkColorScheme(
-    primary            = BrandTokens.BrassAged,
-    onPrimary          = BrandTokens.TeakDark,
-    primaryContainer   = BrandTokens.BrassDark,
-    onPrimaryContainer = BrandTokens.PaperCream,
-    secondary          = BrandTokens.TeakMid,
-    onSecondary        = KursiNeutrals.TextPrimary,
-    background         = BrandTokens.TeakInk,
-    onBackground       = KursiNeutrals.TextPrimary,
-    surface            = BrandTokens.TeakMid,
-    onSurface          = KursiNeutrals.TextPrimary,
-    surfaceVariant     = Color(0xFF4A3020),
-    onSurfaceVariant   = KursiNeutrals.TextSecondary,
-    error              = BrandTokens.StampRed,
-    onError            = KursiNeutrals.TextPrimary,
-    outline            = BrandTokens.BrassAged,
-)
+private val KursiDecoColorScheme =
+    darkColorScheme(
+        primary = BrandTokens.BrassAged,
+        onPrimary = BrandTokens.TeakDark,
+        primaryContainer = BrandTokens.BrassDark,
+        onPrimaryContainer = BrandTokens.PaperCream,
+        secondary = BrandTokens.TeakMid,
+        onSecondary = KursiNeutrals.TextPrimary,
+        background = BrandTokens.TeakInk,
+        onBackground = KursiNeutrals.TextPrimary,
+        surface = BrandTokens.TeakMid,
+        onSurface = KursiNeutrals.TextPrimary,
+        surfaceVariant = Color(0xFF4A3020),
+        onSurfaceVariant = KursiNeutrals.TextSecondary,
+        error = BrandTokens.StampRed,
+        onError = KursiNeutrals.TextPrimary,
+        outline = BrandTokens.BrassAged,
+    )
 
 // ─────────────────────────── Theme entry point ───────────────────────────
 
@@ -628,11 +706,11 @@ private val KursiDecoColorScheme = darkColorScheme(
  */
 @Composable
 fun KursiTheme(content: @Composable () -> Unit) {
-    val fonts      = rememberKursiFonts()
+    val fonts = rememberKursiFonts()
     val typography = rememberKursiTypography(fonts)
     MaterialTheme(
         colorScheme = KursiDecoColorScheme,
-        typography  = typography,
+        typography = typography,
     ) {
         CompositionLocalProvider(
             LocalKursiFonts provides fonts,

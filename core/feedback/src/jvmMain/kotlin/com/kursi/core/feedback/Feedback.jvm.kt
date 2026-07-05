@@ -2,7 +2,6 @@ package com.kursi.core.feedback
 
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
-import javax.sound.sampled.SourceDataLine
 import kotlin.concurrent.thread
 import kotlin.math.PI
 import kotlin.math.exp
@@ -60,16 +59,16 @@ private fun renderClink(): ByteArray {
 }
 
 private class JvmSoundPlayer : SoundPlayer {
-
     private val format = AudioFormat(SAMPLE_RATE, 16, 1, true, false)
 
     // Pre-rendered PCM, one buffer per key.
-    private val samples: Map<SoundKey, ByteArray> = mapOf(
-        SoundKey.Stamp to renderTone(196.0, 120, 26.0, 0.5),  // low woody slam
-        SoundKey.Coin to renderClink(),                        // bright clink
-        SoundKey.Thud to renderTone(110.0, 160, 14.0, 0.55),   // deep thud
-        SoundKey.Win to renderWinSting(),                      // rising fanfare
-    )
+    private val samples: Map<SoundKey, ByteArray> =
+        mapOf(
+            SoundKey.Stamp to renderTone(196.0, 120, 26.0, 0.5), // low woody slam
+            SoundKey.Coin to renderClink(), // bright clink
+            SoundKey.Thud to renderTone(110.0, 160, 14.0, 0.55), // deep thud
+            SoundKey.Win to renderWinSting(), // rising fanfare
+        )
 
     @Volatile private var released = false
 
@@ -105,11 +104,12 @@ private class JvmSoundPlayer : SoundPlayer {
 
 /** A short rising three-note sting for the win fanfare. */
 private fun renderWinSting(): ByteArray {
-    val notes = listOf(
-        renderTone(523.25, 110, 9.0, 0.4), // C5
-        renderTone(659.25, 110, 9.0, 0.4), // E5
-        renderTone(783.99, 220, 7.0, 0.45), // G5 (held)
-    )
+    val notes =
+        listOf(
+            renderTone(523.25, 110, 9.0, 0.4), // C5
+            renderTone(659.25, 110, 9.0, 0.4), // E5
+            renderTone(783.99, 220, 7.0, 0.45), // G5 (held)
+        )
     val total = notes.sumOf { it.size }
     val out = ByteArray(total)
     var pos = 0

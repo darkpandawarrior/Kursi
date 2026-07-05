@@ -10,7 +10,6 @@ import kotlin.test.assertTrue
  * implied opponent rating or rounding.
  */
 class RankedEloTest {
-
     @Test
     fun win_always_increases_rating() {
         // Sweep a wide rating range against every difficulty; a win must strictly raise the rating.

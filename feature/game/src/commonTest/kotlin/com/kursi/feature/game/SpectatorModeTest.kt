@@ -20,53 +20,55 @@ import kotlin.test.assertTrue
  * poll is the most robust way to assert the demo plays itself end-to-end.
  */
 class SpectatorModeTest {
-
     @Test
-    fun spectatorGame_playsItselfToGameOver() = runBlocking {
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        val vm = GameViewModel(scope = scope)
-        vm.onAction(
-            GameAction.NewGame(
-                playerCount = 2,
-                difficulty = Difficulty.Easy,
-                seed = 1L,
-                spectator = true,
-            ),
-        )
-        // No human input at all — poll until the spectator loop carries the game to game-over.
-        // 45s budget: this seed took 22.8s on CI hardware, well past the original 20s budget -
-        // CI runners are commonly slower than local dev machines for CPU-bound ISMCTS search.
-        val reachedOver = withTimeoutOrNull(45_000) {
-            while (vm.state.value?.isGameOver != true) delay(25)
-            true
+    fun spectatorGame_playsItselfToGameOver() =
+        runBlocking {
+            val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+            val vm = GameViewModel(scope = scope)
+            vm.onAction(
+                GameAction.NewGame(
+                    playerCount = 2,
+                    difficulty = Difficulty.Easy,
+                    seed = 1L,
+                    spectator = true,
+                ),
+            )
+            // No human input at all — poll until the spectator loop carries the game to game-over.
+            // 45s budget: this seed took 22.8s on CI hardware, well past the original 20s budget -
+            // CI runners are commonly slower than local dev machines for CPU-bound ISMCTS search.
+            val reachedOver =
+                withTimeoutOrNull(45_000) {
+                    while (vm.state.value?.isGameOver != true) delay(25)
+                    true
+                }
+            val state = vm.state.value
+            vm.clear()
+            assertNotNull(state)
+            assertTrue(
+                reachedOver == true && state.isGameOver,
+                "a spectator demo must auto-play all the way to game-over (turn=${state.view.turnNumber})",
+            )
         }
-        val state = vm.state.value
-        vm.clear()
-        assertNotNull(state)
-        assertTrue(
-            reachedOver == true && state.isGameOver,
-            "a spectator demo must auto-play all the way to game-over (turn=${state.view.turnNumber})",
-        )
-    }
 
     @Test
-    fun nonSpectatorGame_doesNotAutoPlay_andWaitsForHuman() = runBlocking {
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        val vm = GameViewModel(scope = scope)
-        vm.onAction(
-            GameAction.NewGame(
-                playerCount = 2,
-                difficulty = Difficulty.Easy,
-                seed = 1L,
-                spectator = false,
-            ),
-        )
-        // Give any (incorrect) auto-play a generous window to misbehave; it must NOT advance past the human.
-        delay(1500)
-        val state = vm.state.value
-        vm.clear()
-        assertNotNull(state)
-        // Seat 0 opens with seed 1; without spectator auto-play the VM must STILL be waiting on the human.
-        assertTrue(state.isHumanTurn && !state.isGameOver, "non-spectator game waits for the human's move")
-    }
+    fun nonSpectatorGame_doesNotAutoPlay_andWaitsForHuman() =
+        runBlocking {
+            val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+            val vm = GameViewModel(scope = scope)
+            vm.onAction(
+                GameAction.NewGame(
+                    playerCount = 2,
+                    difficulty = Difficulty.Easy,
+                    seed = 1L,
+                    spectator = false,
+                ),
+            )
+            // Give any (incorrect) auto-play a generous window to misbehave; it must NOT advance past the human.
+            delay(1500)
+            val state = vm.state.value
+            vm.clear()
+            assertNotNull(state)
+            // Seat 0 opens with seed 1; without spectator auto-play the VM must STILL be waiting on the human.
+            assertTrue(state.isHumanTurn && !state.isGameOver, "non-spectator game waits for the human's move")
+        }
 }

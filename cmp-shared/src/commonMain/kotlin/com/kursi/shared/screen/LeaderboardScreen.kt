@@ -17,11 +17,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -61,25 +61,26 @@ fun LeaderboardScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             // Header with back
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BrandTokens.TeakDark)
-                    .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(BrandTokens.TeakDark)
+                        .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Box(
-                    modifier = Modifier
-                        .defaultMinSize(minHeight = 52.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                        .semantics(mergeDescendants = true) {
-                            role = Role.Button
-                            contentDescription = "Back to home"
-                        }
-                        .clickable(onClick = onBack)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    modifier =
+                        Modifier
+                            .defaultMinSize(minHeight = 52.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                            .semantics(mergeDescendants = true) {
+                                role = Role.Button
+                                contentDescription = "Back to home"
+                            }.clickable(onClick = onBack)
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
                 ) {
                     Text(s.leaderboardBack, style = KursiType.title.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary)
                 }
@@ -91,11 +92,12 @@ fun LeaderboardScreen(
             }
 
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(scroll)
-                    .padding(24.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(scroll)
+                        .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
@@ -133,13 +135,14 @@ fun LeaderboardScreen(
 private fun LeaderboardEmpty() {
     val s = LocalKursiStrings.current
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(BrandTokens.PaperCream.copy(alpha = 0.05f))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
-            .padding(28.dp)
-            .semantics { contentDescription = s.leaderboardEmpty },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(BrandTokens.PaperCream.copy(alpha = 0.05f))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                .padding(28.dp)
+                .semantics { contentDescription = s.leaderboardEmpty },
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -158,20 +161,20 @@ private fun RankPlaque(ranked: RankedStanding) {
     val rank = ranked.rank
     val rankColor = rankColor(rank)
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(
-                Brush.verticalGradient(
-                    listOf(BrandTokens.BrassDark.copy(alpha = 0.5f), BrandTokens.TeakDark.copy(alpha = 0.7f)),
-                ),
-            )
-            .border(1.5.dp, rankColor.copy(alpha = 0.55f), RoundedCornerShape(14.dp))
-            .padding(20.dp)
-            .semantics {
-                contentDescription =
-                    "Rank ${s.rankName(rank)}, rating ${ranked.rating}, peak ${ranked.peak}, over ${ranked.games} ranked games."
-            },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(BrandTokens.BrassDark.copy(alpha = 0.5f), BrandTokens.TeakDark.copy(alpha = 0.7f)),
+                    ),
+                ).border(1.5.dp, rankColor.copy(alpha = 0.55f), RoundedCornerShape(14.dp))
+                .padding(20.dp)
+                .semantics {
+                    contentDescription =
+                        "Rank ${s.rankName(rank)}, rating ${ranked.rating}, peak ${ranked.peak}, over ${ranked.games} ranked games."
+                },
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text(
@@ -181,9 +184,12 @@ private fun RankPlaque(ranked: RankedStanding) {
         )
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
             Box(
-                modifier = Modifier.size(76.dp).clip(CircleShape)
-                    .background(rankColor.copy(alpha = 0.14f))
-                    .border(2.dp, rankColor, CircleShape),
+                modifier =
+                    Modifier
+                        .size(76.dp)
+                        .clip(CircleShape)
+                        .background(rankColor.copy(alpha = 0.14f))
+                        .border(2.dp, rankColor, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text("${ranked.rating}", style = KursiType.display.copy(fontSize = 22.sp), color = rankColor)
@@ -196,9 +202,10 @@ private fun RankPlaque(ranked: RankedStanding) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                val nextHint = rank.next?.let { nx ->
-                    s.rankedToNext((nx.floor - ranked.rating).coerceAtLeast(0), s.rankName(nx))
-                } ?: s.rankedTopTier
+                val nextHint =
+                    rank.next?.let { nx ->
+                        s.rankedToNext((nx.floor - ranked.rating).coerceAtLeast(0), s.rankName(nx))
+                    } ?: s.rankedTopTier
                 Text(
                     nextHint,
                     style = KursiType.body.copy(fontSize = 11.sp, fontStyle = FontStyle.Italic),
@@ -219,34 +226,44 @@ private fun RankPlaque(ranked: RankedStanding) {
 }
 
 @Composable
-private fun TierProgressBar(progress: Float, color: Color) {
+private fun TierProgressBar(
+    progress: Float,
+    color: Color,
+) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(8.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(BrandTokens.TeakInk.copy(alpha = 0.6f))
-            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(4.dp)),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(BrandTokens.TeakInk.copy(alpha = 0.6f))
+                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(4.dp)),
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth(progress.coerceIn(0f, 1f))
-                .fillMaxHeight()
-                .clip(RoundedCornerShape(4.dp))
-                .background(Brush.horizontalGradient(listOf(color.copy(alpha = 0.6f), color))),
+            modifier =
+                Modifier
+                    .fillMaxWidth(progress.coerceIn(0f, 1f))
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Brush.horizontalGradient(listOf(color.copy(alpha = 0.6f), color))),
         )
     }
 }
 
 @Composable
-private fun MiniStat(label: String, value: String, modifier: Modifier = Modifier) {
+private fun MiniStat(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(BrandTokens.PaperCream.copy(alpha = 0.05f))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-            .padding(14.dp)
-            .semantics { contentDescription = "$label $value" },
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(BrandTokens.PaperCream.copy(alpha = 0.05f))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                .padding(14.dp)
+                .semantics { contentDescription = "$label $value" },
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -261,12 +278,13 @@ private fun MiniStat(label: String, value: String, modifier: Modifier = Modifier
 private fun RatingHistoryCard(ranked: RankedStanding) {
     val s = LocalKursiStrings.current
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
@@ -284,13 +302,14 @@ private fun RatingHistoryCard(ranked: RankedStanding) {
         } else {
             RatingSparkline(
                 points = pts,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(96.dp)
-                    .semantics {
-                        contentDescription =
-                            "Rating history: ${pts.size} points, from ${pts.first()} to ${pts.last()}."
-                    },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(96.dp)
+                        .semantics {
+                            contentDescription =
+                                "Rating history: ${pts.size} points, from ${pts.first()} to ${pts.last()}."
+                        },
             )
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("${pts.min()}", style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted)
@@ -301,21 +320,26 @@ private fun RatingHistoryCard(ranked: RankedStanding) {
 }
 
 @Composable
-private fun RatingSparkline(points: List<Int>, modifier: Modifier = Modifier) {
+private fun RatingSparkline(
+    points: List<Int>,
+    modifier: Modifier = Modifier,
+) {
     val lo = points.min()
     val hi = points.max()
     val span = (hi - lo).coerceAtLeast(1)
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(BrandTokens.TeakInk.copy(alpha = 0.5f))
-            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.3f), RoundedCornerShape(8.dp)),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(BrandTokens.TeakInk.copy(alpha = 0.5f))
+                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.3f), RoundedCornerShape(8.dp)),
     ) {
         androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize().padding(8.dp)) {
             if (points.size < 2) return@Canvas
             val w = size.width
             val h = size.height
             val stepX = w / (points.size - 1)
+
             fun yAt(v: Int): Float = h - ((v - lo).toFloat() / span) * h
             // Baseline rule
             drawLine(
@@ -355,12 +379,13 @@ private fun RatingSparkline(points: List<Int>, modifier: Modifier = Modifier) {
 private fun DailyStandingCard(daily: DailyStanding) {
     val s = LocalKursiStrings.current
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
@@ -406,21 +431,24 @@ data class OnlineStandingRow(
 private fun OnlineStandingsCard(standings: OnlineStandings) {
     val s = LocalKursiStrings.current
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
-            .border(1.dp, BrandTokens.GoldAntique.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
-            .padding(16.dp)
-            .semantics {
-                liveRegion = LiveRegionMode.Polite
-                contentDescription = if (standings.connected) s.leaderboardOnlineConnectedSub else s.leaderboardOnlineOfflineSub
-            },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
+                .border(1.dp, BrandTokens.GoldAntique.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                .padding(16.dp)
+                .semantics {
+                    liveRegion = LiveRegionMode.Polite
+                    contentDescription = if (standings.connected) s.leaderboardOnlineConnectedSub else s.leaderboardOnlineOfflineSub
+                },
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Box(
-                Modifier.size(10.dp).clip(CircleShape)
+                Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
                     .background(if (standings.connected) KursiSemantics.Success else BrandTokens.BrassDark),
             )
             Text(
@@ -445,13 +473,14 @@ private fun OnlineStandingsCard(standings: OnlineStandings) {
 @Composable
 private fun OnlineStandingRowView(row: OnlineStandingRow) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(if (row.isMe) BrandTokens.GoldAntique.copy(alpha = 0.12f) else BrandTokens.TeakDark.copy(alpha = 0.5f))
-            .border(1.dp, if (row.isMe) BrandTokens.GoldAntique.copy(alpha = 0.6f) else BrandTokens.BrassDark.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-            .semantics { contentDescription = "${row.position}. ${row.name}, rating ${row.rating}" },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(if (row.isMe) BrandTokens.GoldAntique.copy(alpha = 0.12f) else BrandTokens.TeakDark.copy(alpha = 0.5f))
+                .border(1.dp, if (row.isMe) BrandTokens.GoldAntique.copy(alpha = 0.6f) else BrandTokens.BrassDark.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .semantics { contentDescription = "${row.position}. ${row.name}, rating ${row.rating}" },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -469,15 +498,16 @@ private fun OnlineStandingRowView(row: OnlineStandingRow) {
 }
 
 /** Per-tier accent colour — climbs from brass through gold to the success green at the top. */
-private fun rankColor(rank: SarkariRank): Color = when (rank) {
-    SarkariRank.CLERK -> BrandTokens.BrassAged
-    SarkariRank.SECTION_OFFICER -> BrandTokens.BrassAged
-    SarkariRank.UNDER_SECRETARY -> BrandTokens.GoldAntique
-    SarkariRank.DEPUTY_SECRETARY -> BrandTokens.GoldAntique
-    SarkariRank.JOINT_SECRETARY -> BrandTokens.GoldAntique
-    SarkariRank.SECRETARY -> KursiSemantics.Success
-    SarkariRank.CABINET_SECRETARY -> KursiSemantics.Success
-}
+private fun rankColor(rank: SarkariRank): Color =
+    when (rank) {
+        SarkariRank.CLERK -> BrandTokens.BrassAged
+        SarkariRank.SECTION_OFFICER -> BrandTokens.BrassAged
+        SarkariRank.UNDER_SECRETARY -> BrandTokens.GoldAntique
+        SarkariRank.DEPUTY_SECRETARY -> BrandTokens.GoldAntique
+        SarkariRank.JOINT_SECRETARY -> BrandTokens.GoldAntique
+        SarkariRank.SECRETARY -> KursiSemantics.Success
+        SarkariRank.CABINET_SECRETARY -> KursiSemantics.Success
+    }
 
 // ─────────────────────────── Home strip + daily entry (reused) ────────────────
 
@@ -495,23 +525,26 @@ fun RankedStrip(
     val rank = ranked.rank
     val rankColor = rankColor(rank)
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(BrandTokens.TeakDark.copy(alpha = 0.7f))
-            .border(1.dp, rankColor.copy(alpha = 0.45f), RoundedCornerShape(10.dp))
-            .clickable(onClick = onOpen)
-            .semantics(mergeDescendants = true) {
-                liveRegion = LiveRegionMode.Polite
-                contentDescription =
-                    "Rank ${s.rankName(rank)}, rating ${ranked.rating}. Tap to open standings."
-            }
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(BrandTokens.TeakDark.copy(alpha = 0.7f))
+                .border(1.dp, rankColor.copy(alpha = 0.45f), RoundedCornerShape(10.dp))
+                .clickable(onClick = onOpen)
+                .semantics(mergeDescendants = true) {
+                    liveRegion = LiveRegionMode.Polite
+                    contentDescription =
+                        "Rank ${s.rankName(rank)}, rating ${ranked.rating}. Tap to open standings."
+                }.padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Box(
-                modifier = Modifier.size(34.dp).clip(CircleShape)
-                    .background(rankColor.copy(alpha = 0.14f))
-                    .border(1.5.dp, rankColor, CircleShape),
+                modifier =
+                    Modifier
+                        .size(34.dp)
+                        .clip(CircleShape)
+                        .background(rankColor.copy(alpha = 0.14f))
+                        .border(1.5.dp, rankColor, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text("${ranked.rating}", style = KursiType.numeric.copy(fontSize = 11.sp), color = rankColor)
@@ -531,11 +564,14 @@ fun RankedStrip(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                val sub = if (ranked.isProvisional) {
-                    s.rankedProvisional
-                } else rank.next?.let { nx ->
-                    s.rankedToNext((nx.floor - ranked.rating).coerceAtLeast(0), s.rankName(nx))
-                } ?: s.rankedTopTier
+                val sub =
+                    if (ranked.isProvisional) {
+                        s.rankedProvisional
+                    } else {
+                        rank.next?.let { nx ->
+                            s.rankedToNext((nx.floor - ranked.rating).coerceAtLeast(0), s.rankName(nx))
+                        } ?: s.rankedTopTier
+                    }
                 Text(
                     sub,
                     style = KursiType.caption.copy(fontSize = 9.sp, fontStyle = FontStyle.Italic),
@@ -563,16 +599,16 @@ fun DailyChallengeStrip(
     val s = LocalKursiStrings.current
     val accent = if (todayDone) BrandTokens.BrassAged else BrandTokens.StampRed
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(BrandTokens.TeakDark.copy(alpha = 0.7f))
-            .border(1.dp, accent.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
-            .clickable(onClick = onStart)
-            .semantics(mergeDescendants = true) {
-                contentDescription =
-                    if (todayDone) "${s.dailyCta}. ${s.dailyDoneSub}" else "${s.dailyCta}. ${s.dailyCtaSub}"
-            }
-            .padding(horizontal = 14.dp, vertical = 11.dp),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(BrandTokens.TeakDark.copy(alpha = 0.7f))
+                .border(1.dp, accent.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+                .clickable(onClick = onStart)
+                .semantics(mergeDescendants = true) {
+                    contentDescription =
+                        if (todayDone) "${s.dailyCta}. ${s.dailyDoneSub}" else "${s.dailyCta}. ${s.dailyCtaSub}"
+                }.padding(horizontal = 14.dp, vertical = 11.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("✦", style = KursiType.title.copy(fontSize = 16.sp), color = accent)
@@ -595,11 +631,12 @@ fun DailyChallengeStrip(
             }
             // Stamp badge
             Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(accent.copy(alpha = 0.15f))
-                    .border(1.dp, accent.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 6.dp, vertical = 3.dp),
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(accent.copy(alpha = 0.15f))
+                        .border(1.dp, accent.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 3.dp),
             ) {
                 Text(
                     if (todayDone) s.dailyDoneBadge else s.dailyOpenBadge,

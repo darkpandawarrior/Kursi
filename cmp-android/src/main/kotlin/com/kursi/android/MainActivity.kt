@@ -16,7 +16,6 @@ import com.kursi.shared.KursiApp
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-
     private val appPrefs = AppPrefs()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,13 +37,18 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun updateNotificationPermissionState() {
-        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
-                == PackageManager.PERMISSION_GRANTED
-            ) NotificationPermission.GRANTED else NotificationPermission.NOT_ASKED
-        } else {
-            NotificationPermission.GRANTED
-        }
+        val permission =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                    == PackageManager.PERMISSION_GRANTED
+                ) {
+                    NotificationPermission.GRANTED
+                } else {
+                    NotificationPermission.NOT_ASKED
+                }
+            } else {
+                NotificationPermission.GRANTED
+            }
         NotificationPermissionState.update(permission)
     }
 

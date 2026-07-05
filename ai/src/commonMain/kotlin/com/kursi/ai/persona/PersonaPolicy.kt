@@ -45,7 +45,6 @@ class PersonaPolicy(
     val base: Policy,
     private val seed: Long,
 ) : Policy {
-
     private val p = persona.personality
     private var rng = Rng(seed)
     private val grudge = GrudgeMap()
@@ -57,13 +56,15 @@ class PersonaPolicy(
     // [BotMemory] so the persona reasons over the same evidence the search does; otherwise we keep our
     // own memory that callers feed via [observe]. Either way [pHolds] reflects deduction, not just odds.
     private val beliefModel = BeliefModel()
+
     // Share the live belief memory of whichever search-based tier we wrap (Expert or Grandmaster) so
     // the persona's challenge/block decisions reason over the same evidence the search does.
-    private val sharedMemory: BotMemory = when (base) {
-        is ExpertPolicy -> base.memory
-        is GrandmasterPolicy -> base.memory
-        else -> BotMemory()
-    }
+    private val sharedMemory: BotMemory =
+        when (base) {
+            is ExpertPolicy -> base.memory
+            is GrandmasterPolicy -> base.memory
+            else -> BotMemory()
+        }
 
     // ── External notification ─────────────────────────────────────────────────
 
@@ -75,7 +76,10 @@ class PersonaPolicy(
      * a grudge more slowly than a fully vindictive one; the raw weight is at least 1 once it fires so a
      * single hit always registers.
      */
-    fun notifyHit(attacker: PlayerId, weight: Int = 1) {
+    fun notifyHit(
+        attacker: PlayerId,
+        weight: Int = 1,
+    ) {
         if (p.vindictiveness <= 0f) return
         val scaled = (weight * (0.5f + p.vindictiveness)).toInt().coerceAtLeast(1)
         grudge.add(attacker, scaled)
@@ -98,7 +102,10 @@ class PersonaPolicy(
      * policy's own [ExpertPolicy.observe] already updates the same shared memory — call exactly one of
      * the two per event to avoid double-counting; prefer the Expert's when present.
      */
-    fun observe(event: GameEvent, turnNumber: Int) {
+    fun observe(
+        event: GameEvent,
+        turnNumber: Int,
+    ) {
         // When wrapping a search tier (Expert/Grandmaster) we share ITS memory, and the ViewModel feeds
         // events straight into that policy's own observe(); updating here too would double-count. Only
         // self-feed when we own a private memory (non-search base tiers).
@@ -108,20 +115,26 @@ class PersonaPolicy(
 
     // ── Policy.decide ─────────────────────────────────────────────────────────
 
-    override fun decide(view: PlayerView, legal: List<Intent>): Intent {
+    override fun decide(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent {
         require(legal.isNotEmpty()) { "no legal intents supplied" }
         if (legal.size == 1) return legal.single()
 
         return when (view.phase) {
-            is PhaseView.Turn      -> decideTurn(view, legal)
+            is PhaseView.Turn -> decideTurn(view, legal)
             is PhaseView.Reactions -> decideReaction(view, legal)
-            else                   -> base.decide(view, legal) // InfluenceLoss/Exchange — delegate fully
+            else -> base.decide(view, legal) // InfluenceLoss/Exchange — delegate fully
         }
     }
 
     // ── Turn ──────────────────────────────────────────────────────────────────
 
-    private fun decideTurn(view: PlayerView, legal: List<Intent>): Intent {
+    private fun decideTurn(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent {
         val baseChoice = base.decide(view, legal)
 
         // 1. Maybe re-target if the base chose a targeted action.
@@ -135,9 +148,13 @@ class PersonaPolicy(
      * If the base chose a targeted action and targetingBias disagrees, pick a
      * better target from the legal intents of the same action type.
      */
-    private fun maybeRetarget(chosen: Intent, view: PlayerView, legal: List<Intent>): Intent {
+    private fun maybeRetarget(
+        chosen: Intent,
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent {
         val declared = chosen as? Intent.DeclareAction ?: return chosen
-        val targetOf = Rules.targetOf(declared.action) ?: return chosen  // untargeted action
+        val targetOf = Rules.targetOf(declared.action) ?: return chosen // untargeted action
 
         val aliveOpponents = view.players.filter { !it.eliminated && it.id != view.viewer }
         if (aliveOpponents.isEmpty()) return chosen
@@ -146,24 +163,29 @@ class PersonaPolicy(
         if (preferredTarget == null || preferredTarget == targetOf) return chosen
 
         // Find a legal intent of the same action type targeting our preferred target.
-        val sameTypeToPreferred = legal.filterIsInstance<Intent.DeclareAction>().firstOrNull { intent ->
-            Rules.targetOf(intent.action) == preferredTarget &&
-                actionsSameType(intent.action, declared.action)
-        }
+        val sameTypeToPreferred =
+            legal.filterIsInstance<Intent.DeclareAction>().firstOrNull { intent ->
+                Rules.targetOf(intent.action) == preferredTarget &&
+                    actionsSameType(intent.action, declared.action)
+            }
         return sameTypeToPreferred ?: chosen
     }
 
-    private fun pickTarget(opponents: List<OpponentView>, view: PlayerView): PlayerId? {
+    private fun pickTarget(
+        opponents: List<OpponentView>,
+        view: PlayerView,
+    ): PlayerId? {
         if (opponents.isEmpty()) return null
         return when (p.targetingBias) {
-            TargetingBias.LEADER   -> opponents.maxByOrNull { it.faceDownCount * 10 + it.coins }?.id
-            TargetingBias.WEAKEST  -> opponents.minByOrNull { it.faceDownCount * 10 + it.coins }?.id
+            TargetingBias.LEADER -> opponents.maxByOrNull { it.faceDownCount * 10 + it.coins }?.id
+            TargetingBias.WEAKEST -> opponents.minByOrNull { it.faceDownCount * 10 + it.coins }?.id
             TargetingBias.VINDICTIVE -> {
                 val ids = opponents.map { it.id }
                 grudge.topTarget(ids) ?: opponents.minByOrNull { it.faceDownCount }?.id
             }
             TargetingBias.RANDOM -> {
-                val (i, r) = rng.nextInt(opponents.size); rng = r
+                val (i, r) = rng.nextInt(opponents.size)
+                rng = r
                 opponents[i].id
             }
         }
@@ -179,40 +201,51 @@ class PersonaPolicy(
      *   skipped it — they love the bluff.
      * - predictability controls the jitter band around each gate (low = wider random spread).
      */
-    private fun maybeAdjustBluff(chosen: Intent, view: PlayerView, legal: List<Intent>): Intent {
+    private fun maybeAdjustBluff(
+        chosen: Intent,
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent {
         val declared = chosen as? Intent.DeclareAction ?: return chosen
-        val claimedRole = Rules.claimedRole(declared.action) ?: return chosen  // not a role-claim
+        val claimedRole = Rules.claimedRole(declared.action) ?: return chosen // not a role-claim
         val holdsRole = view.myInfluence.contains(claimedRole)
 
         // Jitter: [0, jitterRange) randomised addition/subtraction to thresholds
         val jitterRange = ((1f - p.predictability) * 25f).toInt().coerceAtLeast(1)
-        val (j, r1) = rng.nextInt(jitterRange + 1); rng = r1
-        val jitter = j - jitterRange / 2  // roughly ±jitterRange/2
+        val (j, r1) = rng.nextInt(jitterRange + 1)
+        rng = r1
+        val jitter = j - jitterRange / 2 // roughly ±jitterRange/2
 
         // For truthful claims, always keep (never suppress a truthful play).
         if (holdsRole) return chosen
 
         // Bluff case: gate based on bluffRate vs a random roll.
         val bluffGate = (p.bluffRate * 100f).toInt() + jitter
-        val (roll, r2) = rng.nextInt(100); rng = r2
-        if (roll < bluffGate) return chosen  // persona would make this bluff → keep
+        val (roll, r2) = rng.nextInt(100)
+        rng = r2
+        if (roll < bluffGate) return chosen // persona would make this bluff → keep
 
         // Persona would NOT make this bluff — fall back to Income or FDI if available.
-        val safeAction = legal.firstOrNull { it is Intent.DeclareAction && it.action == Action.Income }
-            ?: legal.firstOrNull { it is Intent.DeclareAction && it.action == Action.ForeignAid }
-            ?: return chosen  // no safe fallback — keep the bluff anyway
+        val safeAction =
+            legal.firstOrNull { it is Intent.DeclareAction && it.action == Action.Income }
+                ?: legal.firstOrNull { it is Intent.DeclareAction && it.action == Action.ForeignAid }
+                ?: return chosen // no safe fallback — keep the bluff anyway
         return safeAction
     }
 
     // ── Reactions ─────────────────────────────────────────────────────────────
 
-    private fun decideReaction(view: PlayerView, legal: List<Intent>): Intent {
+    private fun decideReaction(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent {
         val phase = view.phase as PhaseView.Reactions
 
         return when (phase.step) {
             ReactionStep.CHALLENGE_ACTION,
-            ReactionStep.CHALLENGE_BLOCK -> adjustChallenge(view, legal, phase)
-            ReactionStep.BLOCK           -> base.decide(view, legal)
+            ReactionStep.CHALLENGE_BLOCK,
+            -> adjustChallenge(view, legal, phase)
+            ReactionStep.BLOCK -> base.decide(view, legal)
         }
     }
 
@@ -228,13 +261,17 @@ class PersonaPolicy(
         phase: PhaseView.Reactions,
     ): Intent {
         val hasChallenge = legal.any { it is Intent.Challenge }
-        val passIntent   = legal.firstOrNull { it is Intent.Pass } ?: return base.decide(view, legal)
+        val passIntent = legal.firstOrNull { it is Intent.Pass } ?: return base.decide(view, legal)
         val challengeIntent = legal.firstOrNull { it is Intent.Challenge }
 
         if (!hasChallenge || challengeIntent == null) return base.decide(view, legal)
 
-        val claimedRole = if (phase.step == ReactionStep.CHALLENGE_BLOCK) phase.blockRole
-                          else phase.claimedRole
+        val claimedRole =
+            if (phase.step == ReactionStep.CHALLENGE_BLOCK) {
+                phase.blockRole
+            } else {
+                phase.claimedRole
+            }
         if (claimedRole == null) return base.decide(view, legal)
 
         // Guaranteed bluff — always challenge regardless of persona.
@@ -253,25 +290,26 @@ class PersonaPolicy(
         // scaled by how much evidence we actually have. An opponent we've watched bluff this role, or
         // who revealed it face-up, then scores well below the raw odds and gets challenged more.
         val deckPrior = pSlot(view, claimedRole)
-        val pHold = if (claimant != null) {
-            val belief = sharedMemory.beliefFor(claimant)
-            // Total absolute role-evidence we've gathered on this claimant. 0 ⇒ no deduction signal,
-            // so we trust the prior entirely (neutrality-preserving when nobody fed observe()).
-            val evidenceMass = belief.roleEvidence.values.sumOf { kotlin.math.abs(it) }
-            if (evidenceMass <= 0.0) {
-                deckPrior
+        val pHold =
+            if (claimant != null) {
+                val belief = sharedMemory.beliefFor(claimant)
+                // Total absolute role-evidence we've gathered on this claimant. 0 ⇒ no deduction signal,
+                // so we trust the prior entirely (neutrality-preserving when nobody fed observe()).
+                val evidenceMass = belief.roleEvidence.values.sumOf { kotlin.math.abs(it) }
+                if (evidenceMass <= 0.0) {
+                    deckPrior
+                } else {
+                    // Per-slot posterior (probability a single claimed card is the role), comparable to the
+                    // per-slot deckPrior. posterior() already returns the per-slot role probability folding
+                    // in evidence; pHolds raises it to faceDownCount, which we don't want here.
+                    val posterior = beliefModel.posterior(view, claimant, belief)[claimedRole] ?: deckPrior
+                    // Posterior weight grows with evidence, saturating at 0.65 once we've seen a few signals.
+                    val w = (evidenceMass / (evidenceMass + 4.0)).coerceIn(0.0, 0.65)
+                    (1.0 - w) * deckPrior + w * posterior
+                }
             } else {
-                // Per-slot posterior (probability a single claimed card is the role), comparable to the
-                // per-slot deckPrior. posterior() already returns the per-slot role probability folding
-                // in evidence; pHolds raises it to faceDownCount, which we don't want here.
-                val posterior = beliefModel.posterior(view, claimant, belief)[claimedRole] ?: deckPrior
-                // Posterior weight grows with evidence, saturating at 0.65 once we've seen a few signals.
-                val w = (evidenceMass / (evidenceMass + 4.0)).coerceIn(0.0, 0.65)
-                (1.0 - w) * deckPrior + w * posterior
+                deckPrior
             }
-        } else {
-            deckPrior
-        }
 
         val tau = lerp(0.20f, 0.50f, p.challengeAggression)
 
@@ -280,12 +318,18 @@ class PersonaPolicy(
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private fun remaining(view: PlayerView, role: Role): Int {
+    private fun remaining(
+        view: PlayerView,
+        role: Role,
+    ): Int {
         val gone = view.players.sumOf { opp -> opp.faceUpRoles.count { it == role } }
         return view.config.copiesPerRole - gone
     }
 
-    private fun pSlot(view: PlayerView, role: Role): Double {
+    private fun pSlot(
+        view: PlayerView,
+        role: Role,
+    ): Double {
         val faceUpGone = view.players.sumOf { it.faceUpRoles.size }
         val unseenR = remaining(view, role) - view.myInfluence.count { it == role }
         if (unseenR <= 0) return 0.0
@@ -294,13 +338,21 @@ class PersonaPolicy(
         return unseenR.toDouble() / totalUnseen
     }
 
-    private fun actionsSameType(a: Action, b: Action): Boolean = when {
-        a is Action.Coup && b is Action.Coup               -> true
-        a is Action.Assassinate && b is Action.Assassinate -> true
-        a is Action.Steal && b is Action.Steal             -> true
-        a is Action.Investigate && b is Action.Investigate -> true
-        else                                               -> false
-    }
+    private fun actionsSameType(
+        a: Action,
+        b: Action,
+    ): Boolean =
+        when {
+            a is Action.Coup && b is Action.Coup -> true
+            a is Action.Assassinate && b is Action.Assassinate -> true
+            a is Action.Steal && b is Action.Steal -> true
+            a is Action.Investigate && b is Action.Investigate -> true
+            else -> false
+        }
 
-    private fun lerp(min: Float, max: Float, t: Float): Float = min + (max - min) * t.coerceIn(0f, 1f)
+    private fun lerp(
+        min: Float,
+        max: Float,
+        t: Float,
+    ): Float = min + (max - min) * t.coerceIn(0f, 1f)
 }

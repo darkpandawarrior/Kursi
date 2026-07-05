@@ -1,7 +1,7 @@
 package com.kursi.ai
 
-import com.kursi.ai.persona.BotPersona
 import com.kursi.ai.persona.BarkSet
+import com.kursi.ai.persona.BotPersona
 import com.kursi.ai.persona.PersonaPolicy
 import com.kursi.ai.persona.PersonalityProfile
 import com.kursi.ai.persona.TargetingBias
@@ -18,23 +18,32 @@ import kotlin.test.assertTrue
  * the [:ai] gate without depending on the feature module.
  */
 class VindictiveGrudgeTest {
-
     /** Build a VINDICTIVE persona over a Hard base, with the given vindictiveness. */
-    private fun vindictivePersona(seed: Long, vindictiveness: Float = 0.9f): PersonaPolicy {
-        val profile = PersonalityProfile(
-            bluffRate = 0.40f,
-            challengeAggression = 0.50f,
-            economicAggression = 0.70f,
-            targetingBias = TargetingBias.VINDICTIVE,
-            risk = 0.50f,
-            vindictiveness = vindictiveness,
-            predictability = 0.50f,
-        )
-        val persona = BotPersona(
-            id = "test_vindictive", name = "Test Vindictive", title = "", archetype = "",
-            seatColorArgb = 0xFF000000L, monogram = "TV", personality = profile,
-            barks = BarkSet(emptyMap()),
-        )
+    private fun vindictivePersona(
+        seed: Long,
+        vindictiveness: Float = 0.9f,
+    ): PersonaPolicy {
+        val profile =
+            PersonalityProfile(
+                bluffRate = 0.40f,
+                challengeAggression = 0.50f,
+                economicAggression = 0.70f,
+                targetingBias = TargetingBias.VINDICTIVE,
+                risk = 0.50f,
+                vindictiveness = vindictiveness,
+                predictability = 0.50f,
+            )
+        val persona =
+            BotPersona(
+                id = "test_vindictive",
+                name = "Test Vindictive",
+                title = "",
+                archetype = "",
+                seatColorArgb = 0xFF000000L,
+                monogram = "TV",
+                personality = profile,
+                barks = BarkSet(emptyMap()),
+            )
         return PersonaPolicy(persona, HardPolicy(seed), seed)
     }
 
@@ -44,37 +53,52 @@ class VindictiveGrudgeTest {
     fun vindictive_retargets_toward_recent_attacker() {
         // Base policy that ALWAYS declares Coup on the FIRST legal Coup target (a fixed scapegoat),
         // so any retarget we observe is purely the persona's grudge logic at work.
-        val scapegoatBase = Policy { _, legal ->
-            legal.filterIsInstance<Intent.DeclareAction>()
-                .firstOrNull { it.action is Action.Coup }
-                ?: legal.first()
-        }
-        val profile = PersonalityProfile(
-            bluffRate = 0.0f, challengeAggression = 0.0f, economicAggression = 1.0f,
-            targetingBias = TargetingBias.VINDICTIVE, risk = 0.5f,
-            vindictiveness = 1.0f, predictability = 1.0f,
-        )
-        val persona = BotPersona(
-            id = "v", name = "V", title = "", archetype = "", seatColorArgb = 0L,
-            monogram = "V", personality = profile, barks = BarkSet(emptyMap()),
-        )
+        val scapegoatBase =
+            Policy { _, legal ->
+                legal
+                    .filterIsInstance<Intent.DeclareAction>()
+                    .firstOrNull { it.action is Action.Coup }
+                    ?: legal.first()
+            }
+        val profile =
+            PersonalityProfile(
+                bluffRate = 0.0f,
+                challengeAggression = 0.0f,
+                economicAggression = 1.0f,
+                targetingBias = TargetingBias.VINDICTIVE,
+                risk = 0.5f,
+                vindictiveness = 1.0f,
+                predictability = 1.0f,
+            )
+        val persona =
+            BotPersona(
+                id = "v",
+                name = "V",
+                title = "",
+                archetype = "",
+                seatColorArgb = 0L,
+                monogram = "V",
+                personality = profile,
+                barks = BarkSet(emptyMap()),
+            )
         val policy = PersonaPolicy(persona, scapegoatBase, seed = 1L)
 
         // Viewer = seat 0; opponents are seats 1, 2, 3. The base would Coup the lowest-id target;
         // we hold a grudge against seat 3, so the persona must retarget the Coup onto seat 3.
         val viewer = PlayerId(0)
         val view = turnViewWithCoupTargets(viewer, opponents = listOf(1, 2, 3))
-        val legal = listOf(
-            Intent.DeclareAction(viewer, Action.Coup(PlayerId(1))),
-            Intent.DeclareAction(viewer, Action.Coup(PlayerId(2))),
-            Intent.DeclareAction(viewer, Action.Coup(PlayerId(3))),
-        )
+        val legal =
+            listOf(
+                Intent.DeclareAction(viewer, Action.Coup(PlayerId(1))),
+                Intent.DeclareAction(viewer, Action.Coup(PlayerId(2))),
+                Intent.DeclareAction(viewer, Action.Coup(PlayerId(3))),
+            )
 
         // No grudge yet → base scapegoat (seat 1) survives.
         val before = policy.decide(view, legal) as Intent.DeclareAction
         assertTrue(
             (before.action as Action.Coup).target == PlayerId(1),
-            "with no grudge, persona should keep the base's scapegoat target (seat 1) but got ${before.action}"
+            "with no grudge, persona should keep the base's scapegoat target (seat 1) but got ${before.action}",
         )
 
         // Seat 3 hits us → grudge builds. Now the persona must retaliate onto seat 3.
@@ -82,7 +106,7 @@ class VindictiveGrudgeTest {
         val after = policy.decide(view, legal) as Intent.DeclareAction
         assertTrue(
             (after.action as Action.Coup).target == PlayerId(3),
-            "after seat 3 hit us, VINDICTIVE persona should Coup seat 3 but targeted ${after.action}"
+            "after seat 3 hit us, VINDICTIVE persona should Coup seat 3 but targeted ${after.action}",
         )
         assertTrue(policy.grudgeAgainst(PlayerId(3)) > 0.0, "grudge against seat 3 should be positive")
     }
@@ -101,7 +125,7 @@ class VindictiveGrudgeTest {
         repeat(30) { policy.notifyTurnPassed() }
         assertTrue(
             policy.grudgeAgainst(PlayerId(2)) == 0.0,
-            "after many turns the grudge should fully fade, was ${policy.grudgeAgainst(PlayerId(2))}"
+            "after many turns the grudge should fully fade, was ${policy.grudgeAgainst(PlayerId(2))}",
         )
     }
 
@@ -121,10 +145,12 @@ class VindictiveGrudgeTest {
         for (gameIdx in 0 until 60) {
             val seed = gameIdx.toLong() * 101L + 7L
             grudgePlayout(config, seed, wireGrudge = true).let {
-                grudgeHits += it.first; grudgeAttacks += it.second
+                grudgeHits += it.first
+                grudgeAttacks += it.second
             }
             grudgePlayout(config, seed, wireGrudge = false).let {
-                controlHits += it.first; controlAttacks += it.second
+                controlHits += it.first
+                controlAttacks += it.second
             }
         }
 
@@ -136,7 +162,7 @@ class VindictiveGrudgeTest {
         assertTrue(
             grudgeRate > controlRate,
             "VINDICTIVE retaliation rate ($grudgeRate) should exceed the no-grudge baseline ($controlRate). " +
-                "grudge=$grudgeHits/$grudgeAttacks control=$controlHits/$controlAttacks"
+                "grudge=$grudgeHits/$grudgeAttacks control=$controlHits/$controlAttacks",
         )
     }
 
@@ -145,14 +171,19 @@ class VindictiveGrudgeTest {
      * for seat 0. When [wireGrudge] is true, seat 0 receives notifyHit/decay attributed from the
      * public event stream (the same logic GameSession uses).
      */
-    private fun grudgePlayout(config: GameConfig, seed: Long, wireGrudge: Boolean): Pair<Int, Int> {
+    private fun grudgePlayout(
+        config: GameConfig,
+        seed: Long,
+        wireGrudge: Boolean,
+    ): Pair<Int, Int> {
         val vindictive = vindictivePersona(seed = seed, vindictiveness = 1.0f)
-        val policies: Map<PlayerId, Policy> = mapOf(
-            PlayerId(0) to vindictive,
-            PlayerId(1) to HardPolicy(seed + 11L),
-            PlayerId(2) to HardPolicy(seed + 22L),
-            PlayerId(3) to HardPolicy(seed + 33L),
-        )
+        val policies: Map<PlayerId, Policy> =
+            mapOf(
+                PlayerId(0) to vindictive,
+                PlayerId(1) to HardPolicy(seed + 11L),
+                PlayerId(2) to HardPolicy(seed + 22L),
+                PlayerId(3) to HardPolicy(seed + 33L),
+            )
 
         var state = initialState(config, seed)
         var lastActionActor: PlayerId? = null
@@ -187,11 +218,12 @@ class VindictiveGrudgeTest {
                     is GameEvent.ActionDeclared -> lastActionActor = ev.actor
                     is GameEvent.Challenged -> lastChallenger = ev.challenger
                     is GameEvent.InfluenceLost -> {
-                        val aggressor = when (ev.reason) {
-                            LossReason.ASSASSINATED, LossReason.COUPED, LossReason.EMERGENCY_COUPED -> lastActionActor
-                            LossReason.LOST_CHALLENGE, LossReason.LOST_BLOCK_CHALLENGE -> lastChallenger
-                            LossReason.SABOTAGED -> null // voluntary; no grudge target
-                        }
+                        val aggressor =
+                            when (ev.reason) {
+                                LossReason.ASSASSINATED, LossReason.COUPED, LossReason.EMERGENCY_COUPED -> lastActionActor
+                                LossReason.LOST_CHALLENGE, LossReason.LOST_BLOCK_CHALLENGE -> lastChallenger
+                                LossReason.SABOTAGED -> null // voluntary; no grudge target
+                            }
                         if (ev.player == PlayerId(0) && aggressor != null && aggressor != PlayerId(0)) {
                             lastAttackerOfSeat0 = aggressor
                             if (wireGrudge) vindictive.notifyHit(aggressor, weight = 2)
@@ -218,22 +250,36 @@ class VindictiveGrudgeTest {
     // ── Helpers ─────────────────────────────────────────────────────────────────
 
     /** A minimal Turn-phase [PlayerView] for [viewer] with [opponents] alive, each holding 2 cards. */
-    private fun turnViewWithCoupTargets(viewer: PlayerId, opponents: List<Int>): PlayerView {
+    private fun turnViewWithCoupTargets(
+        viewer: PlayerId,
+        opponents: List<Int>,
+    ): PlayerView {
         val config = GameConfig.forPlayers(opponents.size + 1)
-        val oppViews = (listOf(viewer.raw) + opponents).map { raw ->
-            OpponentView(
-                id = PlayerId(raw), seatIndex = raw, coins = if (raw == viewer.raw) 7 else 2,
-                faceUpRoles = emptyList(), faceDownCount = 2, eliminated = false,
-            )
-        }
+        val oppViews =
+            (listOf(viewer.raw) + opponents).map { raw ->
+                OpponentView(
+                    id = PlayerId(raw),
+                    seatIndex = raw,
+                    coins = if (raw == viewer.raw) 7 else 2,
+                    faceUpRoles = emptyList(),
+                    faceDownCount = 2,
+                    eliminated = false,
+                )
+            }
         return PlayerView(
-            viewer = viewer, config = config, treasury = 40, deckCount = 5,
-            turnNumber = 1, myCoins = 7, myInfluence = listOf(Role.NETA, Role.BHAI),
+            viewer = viewer,
+            config = config,
+            treasury = 40,
+            deckCount = 5,
+            turnNumber = 1,
+            myCoins = 7,
+            myInfluence = listOf(Role.NETA, Role.BHAI),
             myFaceUp = emptyList(),
-            myCards = listOf(
-                OwnCard(CardId(0), Role.NETA, faceUp = false),
-                OwnCard(CardId(1), Role.BHAI, faceUp = false),
-            ),
+            myCards =
+                listOf(
+                    OwnCard(CardId(0), Role.NETA, faceUp = false),
+                    OwnCard(CardId(1), Role.BHAI, faceUp = false),
+                ),
             players = oppViews,
             phase = PhaseView.Turn(actor = viewer),
         )

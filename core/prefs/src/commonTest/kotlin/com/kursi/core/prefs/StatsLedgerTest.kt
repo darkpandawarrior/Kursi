@@ -12,7 +12,6 @@ import kotlin.test.assertTrue
  * delimited H2H codec.
  */
 class StatsLedgerTest {
-
     @Test
     fun freshLedger_isAllZero() {
         val prefs = AppPrefs(MapSettings())
@@ -37,18 +36,19 @@ class StatsLedgerTest {
             opponentIds = listOf("bhai_teja", "babu_filewala"),
         )
         // Game 2: human loses vs bhai_teja + netaji_vachan.
-        val after = prefs.recordGame(
-            humanWon = false,
-            bluffsHeld = 1,
-            bluffsCaught = 3,
-            opponentIds = listOf("bhai_teja", "netaji_vachan"),
-        )
+        val after =
+            prefs.recordGame(
+                humanWon = false,
+                bluffsHeld = 1,
+                bluffsCaught = 3,
+                opponentIds = listOf("bhai_teja", "netaji_vachan"),
+            )
 
         assertEquals(2, after.games)
         assertEquals(1, after.wins)
         assertEquals(1, after.losses)
-        assertEquals(3, after.bluffsHeld)        // 2 + 1
-        assertEquals(4, after.bluffsCaught)      // 1 + 3
+        assertEquals(3, after.bluffsHeld) // 2 + 1
+        assertEquals(4, after.bluffsCaught) // 1 + 3
         assertEquals(0.5f, after.winRate)
 
         // bhai_teja faced twice, won once.
@@ -69,7 +69,9 @@ class StatsLedgerTest {
     fun ledger_persistsAcrossAppPrefsInstances() {
         val backing = MapSettings()
         AppPrefs(backing).recordGame(
-            humanWon = true, bluffsHeld = 5, bluffsCaught = 0,
+            humanWon = true,
+            bluffsHeld = 5,
+            bluffsCaught = 0,
             opponentIds = listOf("vakil_loophole"),
         )
 

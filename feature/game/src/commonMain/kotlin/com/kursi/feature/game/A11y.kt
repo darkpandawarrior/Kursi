@@ -10,7 +10,7 @@ import androidx.compose.ui.semantics.stateDescription
 import com.kursi.engine.Action
 import com.kursi.engine.Role as KursiRole
 
-/**
+/*
  * A11y (M3 §1) — accessibility semantics for the in-game surfaces.
  *
  * Compose merges a tappable Box's own visuals into a single node but does NOT synthesize a useful
@@ -26,38 +26,51 @@ fun Modifier.actionChipSemantics(
     action: Action?,
     enabled: Boolean,
     recommended: Boolean,
-): Modifier = semantics(mergeDescendants = true) {
-    role = Role.Button
-    if (!enabled) disabled()
-    val claim = action?.let { com.kursi.engine.Rules.claimedRole(it) }?.let { ", claims ${roleLabelA11y(it)}" } ?: ""
-    val state = buildString {
-        if (recommended) append("Coach recommends. ")
-        if (!enabled) append("Unavailable. ")
+): Modifier =
+    semantics(mergeDescendants = true) {
+        role = Role.Button
+        if (!enabled) disabled()
+        val claim =
+            action
+                ?.let {
+                    com.kursi.engine.Rules
+                        .claimedRole(it)
+                }?.let { ", claims ${roleLabelA11y(it)}" } ?: ""
+        val state =
+            buildString {
+                if (recommended) append("Coach recommends. ")
+                if (!enabled) append("Unavailable. ")
+            }
+        stateDescription = state.trim().ifEmpty { "Available" }
+        contentDescription = "$name, $cost$claim"
     }
-    stateDescription = state.trim().ifEmpty { "Available" }
-    contentDescription = "$name, $cost$claim"
-}
 
 /** Semantics for a reaction chip (challenge / block / pass). */
 fun Modifier.reactionChipSemantics(
     label: String,
     recommended: Boolean,
-): Modifier = semantics(mergeDescendants = true) {
-    role = Role.Button
-    stateDescription = if (recommended) "Coach recommends" else "Available"
-    contentDescription = label
-}
+): Modifier =
+    semantics(mergeDescendants = true) {
+        role = Role.Button
+        stateDescription = if (recommended) "Coach recommends" else "Available"
+        contentDescription = label
+    }
 
 /** Semantics for an exchange keep-option. */
 fun Modifier.keepOptionSemantics(
     roleNames: List<String>,
     recommended: Boolean,
-): Modifier = semantics(mergeDescendants = true) {
-    role = Role.Button
-    stateDescription = if (recommended) "Coach recommends" else "Available"
-    contentDescription = if (roleNames.isEmpty()) "Keep nothing"
-    else "Keep " + roleNames.joinToString(" and ")
-}
+): Modifier =
+    semantics(mergeDescendants = true) {
+        role = Role.Button
+        stateDescription = if (recommended) "Coach recommends" else "Available"
+        contentDescription =
+            if (roleNames.isEmpty()) {
+                "Keep nothing"
+            } else {
+                "Keep " + roleNames.joinToString(" and ")
+            }
+    }
 
 /** Semantics for one of the human's own influence cards during a lose-influence choice. */
 fun Modifier.loseInfluenceCardSemantics(role: KursiRole): Modifier =
@@ -67,7 +80,10 @@ fun Modifier.loseInfluenceCardSemantics(role: KursiRole): Modifier =
     }
 
 /** Semantics for an inspectable own card (long-press identity), not a loss choice. */
-fun Modifier.handCardSemantics(role: KursiRole, faceUp: Boolean): Modifier =
+fun Modifier.handCardSemantics(
+    role: KursiRole,
+    faceUp: Boolean,
+): Modifier =
     semantics(mergeDescendants = true) {
         contentDescription = if (faceUp) "Revealed ${roleLabelA11y(role)}" else "Your hidden ${roleLabelA11y(role)}"
     }
@@ -84,29 +100,32 @@ fun Modifier.opponentPlateSemantics(
     claim: String?,
     eliminated: Boolean,
     isValidTarget: Boolean,
-): Modifier = semantics(mergeDescendants = true) {
-    role = Role.Button
-    if (eliminated) disabled()
-    val parts = buildString {
-        append(name)
-        if (eliminated) {
-            append(", eliminated")
-        } else {
-            append(", $coins coins, $influenceAlive influence remaining")
-            if (influenceLost > 0) append(", $influenceLost revealed")
-            if (claim != null) append(", $claim")
-        }
+): Modifier =
+    semantics(mergeDescendants = true) {
+        role = Role.Button
+        if (eliminated) disabled()
+        val parts =
+            buildString {
+                append(name)
+                if (eliminated) {
+                    append(", eliminated")
+                } else {
+                    append(", $coins coins, $influenceAlive influence remaining")
+                    if (influenceLost > 0) append(", $influenceLost revealed")
+                    if (claim != null) append(", $claim")
+                }
+            }
+        if (isValidTarget) stateDescription = "Valid target"
+        contentDescription = parts
     }
-    if (isValidTarget) stateDescription = "Valid target"
-    contentDescription = parts
-}
 
 /** Plain-language role name for spoken output (avoids the glyph soup of the visual label). */
-fun roleLabelA11y(role: KursiRole): String = when (role) {
-    KursiRole.NETA -> "Neta"
-    KursiRole.BHAI -> "Bhai"
-    KursiRole.BABU -> "Babu"
-    KursiRole.JUGAADU -> "Jugaadu"
-    KursiRole.VAKIL -> "Vakil"
-    KursiRole.PATRAKAAR -> "Patrakaar"
-}
+fun roleLabelA11y(role: KursiRole): String =
+    when (role) {
+        KursiRole.NETA -> "Neta"
+        KursiRole.BHAI -> "Bhai"
+        KursiRole.BABU -> "Babu"
+        KursiRole.JUGAADU -> "Jugaadu"
+        KursiRole.VAKIL -> "Vakil"
+        KursiRole.PATRAKAAR -> "Patrakaar"
+    }

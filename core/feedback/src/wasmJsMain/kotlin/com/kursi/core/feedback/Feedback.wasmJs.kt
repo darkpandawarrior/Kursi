@@ -16,7 +16,11 @@ package com.kursi.core.feedback
  * Plays a short decaying sine beep. All work is inside JS with a try/catch so a missing
  * AudioContext (or autoplay block before the first gesture) never propagates an exception.
  */
-private fun jsBeep(freqHz: Double, durationMs: Double, amplitude: Double): Unit =
+private fun jsBeep(
+    freqHz: Double,
+    durationMs: Double,
+    amplitude: Double,
+): Unit =
     js(
         """{
             try {
@@ -37,7 +41,7 @@ private fun jsBeep(freqHz: Double, durationMs: Double, amplitude: Double): Unit 
                 osc.start(now);
                 osc.stop(now + durationMs / 1000.0);
             } catch (e) { /* no-op: audio unavailable */ }
-        }"""
+        }""",
     )
 
 /** Fires navigator.vibrate(ms) where supported. Swallows any error. */
@@ -49,11 +53,10 @@ private fun jsVibrate(ms: Int): Unit =
                     navigator.vibrate(ms);
                 }
             } catch (e) { /* no-op */ }
-        }"""
+        }""",
     )
 
 private class WasmSoundPlayer : SoundPlayer {
-
     override fun playSound(key: SoundKey) {
         when (key) {
             SoundKey.Stamp -> jsBeep(196.0, 120.0, 0.4)
@@ -69,13 +72,14 @@ private class WasmSoundPlayer : SoundPlayer {
     }
 
     override fun haptic(pattern: HapticPattern) {
-        val ms = when (pattern) {
-            HapticPattern.None -> return
-            HapticPattern.Tick -> 18
-            HapticPattern.Thud -> 45
-            HapticPattern.DoubleBuzz -> 90
-            HapticPattern.HeavyLong -> 120
-        }
+        val ms =
+            when (pattern) {
+                HapticPattern.None -> return
+                HapticPattern.Tick -> 18
+                HapticPattern.Thud -> 45
+                HapticPattern.DoubleBuzz -> 90
+                HapticPattern.HeavyLong -> 120
+            }
         jsVibrate(ms)
     }
 

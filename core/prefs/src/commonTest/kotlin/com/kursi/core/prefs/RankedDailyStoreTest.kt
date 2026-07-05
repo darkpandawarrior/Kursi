@@ -12,7 +12,6 @@ import kotlin.test.assertTrue
  * winning days, breaks it on a loss or a gap, and records one attempt per calendar day.
  */
 class RankedDailyStoreTest {
-
     // ── Ranked ELO standing ──────────────────────────────────────────────────
 
     @Test

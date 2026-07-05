@@ -101,16 +101,21 @@ class GameViewModel(
     val state: StateFlow<GameUiState?> = _state.asStateFlow()
 
     // ── DARBAR / narrative state ──────────────────────────────────────────────────
+
     /** True when the live match runs in narrative mode (bots chat + arcs + social nudges). */
     private var narrativeEnabled: Boolean = false
+
     /** The story arc the player led with on the Story screen (display only). */
     private var matchStoryArc: String? = null
+
     /** Highest chat-message id the player has already seen — drives the unread badge. */
     private var chatReadHwm: Long = 0L
+
     /** Serializes the two ASYNC director writers (the paced bot loop + a chat tap) so they never
      * touch the social fabric concurrently. The human-move path is serial by phase (only the human's
      * turn), and wasm is single-threaded — so this closes the realistic overlap. */
     private val darbarMutex = Mutex()
+
     /** The in-flight chat-handling coroutine; cancelled before a human game move. */
     private var darbarChatJob: Job? = null
 
@@ -119,7 +124,9 @@ class GameViewModel(
         if (!narrativeEnabled) this else copy(unreadChat = chatFeed.count { it.id > chatReadHwm && !it.fromPlayer })
 
     /** Publish [ui] to the UI, stamping the Darbar unread badge. */
-    private fun emitState(ui: GameUiState) { _state.value = ui.withUnread() }
+    private fun emitState(ui: GameUiState) {
+        _state.value = ui.withUnread()
+    }
 
     private val coroutineScope: CoroutineScope = scope
     private val job: Job? = scope.coroutineContext[Job]
@@ -140,20 +147,23 @@ class GameViewModel(
     private companion object {
         /** Pure bookkeeping (income / foreign aid / a coin tick / a bare turn pass): readable but brisk. */
         const val TRIVIAL_STEP_MS = 1600L
+
         /** A declared action that actually lands (tax / steal / assassinate / exchange / block): give time to absorb. */
         const val ROUTINE_STEP_MS = 2400L
+
         /** Dramatic beats (challenge / block-stand / reveal / influence loss / elimination / win): full theatrical weight. */
         const val DRAMATIC_STEP_MS = 4000L
 
         /** Okabe-Ito-ish hues for hot-seat human players (ARGB Long), distinct from the bot personas. */
-        val HUMAN_SEAT_COLORS = longArrayOf(
-            0xFF009E73L, // bluish green
-            0xFFD55E00L, // vermillion
-            0xFFCC79A7L, // reddish purple
-            0xFF56B4E9L, // sky blue
-            0xFFE69F00L, // orange
-            0xFF0072B2L, // blue
-        )
+        val HUMAN_SEAT_COLORS =
+            longArrayOf(
+                0xFF009E73L, // bluish green
+                0xFFD55E00L, // vermillion
+                0xFFCC79A7L, // reddish purple
+                0xFF56B4E9L, // sky blue
+                0xFFE69F00L, // orange
+                0xFF0072B2L, // blue
+            )
     }
 
     /** Keeps track of PersonaPolicy instances so we can feed events to ExpertPolicy.observe. */
@@ -212,15 +222,16 @@ class GameViewModel(
     private fun saveSnapshot() {
         val sink = onSnapshot ?: return
         val s = session ?: return
-        val snap = MatchSnapshot.of(
-            seed = matchSeed,
-            players = matchPlayers,
-            difficulty = matchDifficulty,
-            humanLog = s.humanActionLog(),
-            humanCount = matchHumanCount,
-            narrativeEnabled = narrativeEnabled,
-            chatLog = s.chatLog(),
-        )
+        val snap =
+            MatchSnapshot.of(
+                seed = matchSeed,
+                players = matchPlayers,
+                difficulty = matchDifficulty,
+                humanLog = s.humanActionLog(),
+                humanCount = matchHumanCount,
+                narrativeEnabled = narrativeEnabled,
+                chatLog = s.chatLog(),
+            )
         sink(snap.encode())
     }
 
@@ -249,36 +260,39 @@ class GameViewModel(
         if (matchRecorded) return
         val s = session ?: return
         matchRecorded = true
-        val personas = matchPersonas.values
-            .sortedBy { it.playerId.raw }
-            .map { p ->
-                com.kursi.feature.game.session.SnapPersona(
-                    seat = p.playerId.raw,
-                    name = p.name,
-                    monogram = p.monogram,
-                    seatColorArgb = p.seatColorArgb,
-                    isHuman = p.playerId.raw < matchHumanCount,
-                )
-            }
-        val record = com.kursi.feature.game.session.CompletedMatch.of(
-            seed = matchSeed,
-            players = matchPlayers,
-            difficulty = matchDifficulty,
-            humanLog = s.humanActionLog(),
-            winnerSeat = winnerSeat,
-            humanCount = matchHumanCount,
-            personas = personas,
-            tally = com.kursi.feature.game.session.SnapTally(
-                decisions = decisionTally.decisions,
-                matchedBest = decisionTally.matchedBest,
-                evLostMilli = decisionTally.evLostMilli,
-                challenges = decisionTally.challenges,
-                challengesGood = decisionTally.challengesGood,
-                bluffsTried = decisionTally.bluffsTried,
-                bluffsOk = decisionTally.bluffsOk,
-            ),
-            recordedOrdinal = nextRecordOrdinal++,
-        )
+        val personas =
+            matchPersonas.values
+                .sortedBy { it.playerId.raw }
+                .map { p ->
+                    com.kursi.feature.game.session.SnapPersona(
+                        seat = p.playerId.raw,
+                        name = p.name,
+                        monogram = p.monogram,
+                        seatColorArgb = p.seatColorArgb,
+                        isHuman = p.playerId.raw < matchHumanCount,
+                    )
+                }
+        val record =
+            com.kursi.feature.game.session.CompletedMatch.of(
+                seed = matchSeed,
+                players = matchPlayers,
+                difficulty = matchDifficulty,
+                humanLog = s.humanActionLog(),
+                winnerSeat = winnerSeat,
+                humanCount = matchHumanCount,
+                personas = personas,
+                tally =
+                    com.kursi.feature.game.session.SnapTally(
+                        decisions = decisionTally.decisions,
+                        matchedBest = decisionTally.matchedBest,
+                        evLostMilli = decisionTally.evLostMilli,
+                        challenges = decisionTally.challenges,
+                        challengesGood = decisionTally.challengesGood,
+                        bluffsTried = decisionTally.bluffsTried,
+                        bluffsOk = decisionTally.bluffsOk,
+                    ),
+                recordedOrdinal = nextRecordOrdinal++,
+            )
         lastCompletedMatch = record
         onCompletedMatch?.invoke(record)
     }
@@ -327,7 +341,7 @@ class GameViewModel(
      */
     fun toggleCoach() {
         val newValue = !(_state.value?.coachEnabled ?: true)
-        onCoachEnabledChange?.invoke(newValue)  // persist (coachEnabledFlow will re-emit and sync)
+        onCoachEnabledChange?.invoke(newValue) // persist (coachEnabledFlow will re-emit and sync)
         if (coachEnabledFlow == null) {
             // No flow wired (e.g. tests / render harness): update state directly.
             _state.value = _state.value?.copy(coachEnabled = newValue)
@@ -343,10 +357,10 @@ class GameViewModel(
      */
     fun onAction(action: GameAction) {
         when (action) {
-            is GameAction.NewGame      -> startGame(action)
-            is GameAction.Submit       -> submitIntent(action)
+            is GameAction.NewGame -> startGame(action)
+            is GameAction.Submit -> submitIntent(action)
             is GameAction.PlayBestMove -> playBestMove()
-            is GameAction.SendChat     -> sendChat(action)
+            is GameAction.SendChat -> sendChat(action)
             is GameAction.MarkChatRead -> markChatRead()
         }
     }
@@ -360,19 +374,22 @@ class GameViewModel(
         val cs = session ?: return
         if (!narrativeEnabled) return
         darbarChatJob?.cancel()
-        darbarChatJob = coroutineScope.launch {
-            val ui = darbarMutex.withLock { cs.applyHumanChat(action.input) }
-            // Only land it if the player's own line is the freshest thing — keep the live board view.
-            val shown = _state.value
-            if (cs === session && shown != null) {
-                _state.value = shown.copy(
-                    chatFeed = ui.chatFeed,
-                    chatSuggestions = ui.chatSuggestions,
-                    activeArcs = ui.activeArcs,
-                ).withUnread()
+        darbarChatJob =
+            coroutineScope.launch {
+                val ui = darbarMutex.withLock { cs.applyHumanChat(action.input) }
+                // Only land it if the player's own line is the freshest thing — keep the live board view.
+                val shown = _state.value
+                if (cs === session && shown != null) {
+                    _state.value =
+                        shown
+                            .copy(
+                                chatFeed = ui.chatFeed,
+                                chatSuggestions = ui.chatSuggestions,
+                                activeArcs = ui.activeArcs,
+                            ).withUnread()
+                }
+                if (_state.value?.isGameOver != true) saveSnapshot()
             }
-            if (_state.value?.isGameOver != true) saveSnapshot()
-        }
     }
 
     /** DARBAR — the player opened the Darbar; clear the unread badge. */
@@ -408,7 +425,7 @@ class GameViewModel(
 
     private fun startGame(action: GameAction.NewGame) {
         advanceJob?.cancel() // drop any paced bot round still running from a prior game
-        adviceJob?.cancel()  // drop any decision-coach computation from a prior game
+        adviceJob?.cancel() // drop any decision-coach computation from a prior game
         spectateJob?.cancel() // M6e: drop any spectator auto-play from a prior game
         // M6b: fresh match → fresh decision-quality tally.
         decisionTally = MatchDecisionTally()
@@ -422,23 +439,25 @@ class GameViewModel(
         val teams = TeamAssignment.build(action.playerCount, action.teamCount)
         // DRAFT variant — start from the hand-picked deck if one was chosen (fall back to classic scaling
         // if it can't form a viable deck for this seat count). ANARCHY + TEAMS layer on additively.
-        val baseConfig = action.draftRoles
-            ?.takeIf { it.size >= GameConfig.MIN_ACTIVE_ROLES }
-            ?.let { runCatching { GameConfig.drafted(action.playerCount, it) }.getOrNull() }
-            ?: GameConfig.forPlayers(action.playerCount)
-        val config = baseConfig.copy(
-            teams = teams ?: baseConfig.teams,
-            anarchy = action.anarchy,
-            // Variant flags — all false by default (classic behavior unchanged).
-            bailEnabled = action.bailEnabled,
-            sabotageEnabled = action.sabotageEnabled,
-            hawalaEnabled = action.hawalaEnabled,
-            emergencyEnabled = action.emergencyEnabled,
-            khazanaEnabled = action.khazanaEnabled,
-            khazanaTarget = action.khazanaTarget,
-            inflationEnabled = action.inflationEnabled,
-            scarcityEnabled = action.scarcityEnabled,
-        )
+        val baseConfig =
+            action.draftRoles
+                ?.takeIf { it.size >= GameConfig.MIN_ACTIVE_ROLES }
+                ?.let { runCatching { GameConfig.drafted(action.playerCount, it) }.getOrNull() }
+                ?: GameConfig.forPlayers(action.playerCount)
+        val config =
+            baseConfig.copy(
+                teams = teams ?: baseConfig.teams,
+                anarchy = action.anarchy,
+                // Variant flags — all false by default (classic behavior unchanged).
+                bailEnabled = action.bailEnabled,
+                sabotageEnabled = action.sabotageEnabled,
+                hawalaEnabled = action.hawalaEnabled,
+                emergencyEnabled = action.emergencyEnabled,
+                khazanaEnabled = action.khazanaEnabled,
+                khazanaTarget = action.khazanaTarget,
+                inflationEnabled = action.inflationEnabled,
+                scarcityEnabled = action.scarcityEnabled,
+            )
         spectator = action.spectator
         humanDisplayName = action.playerName.ifBlank { "Khiladi" }
         // DARBAR: fresh narrative state for the new match.
@@ -453,13 +472,14 @@ class GameViewModel(
         matchHumanCount = action.humanCount.coerceIn(1, action.playerCount)
 
         // Difficulty → BotDifficulty mapping.
-        val botDifficulty = when (action.difficulty) {
-            Difficulty.Easy        -> BotDifficulty.EASY
-            Difficulty.Medium      -> BotDifficulty.MEDIUM
-            Difficulty.Hard        -> BotDifficulty.HARD
-            Difficulty.Expert      -> BotDifficulty.EXPERT
-            Difficulty.Grandmaster -> BotDifficulty.GRANDMASTER
-        }
+        val botDifficulty =
+            when (action.difficulty) {
+                Difficulty.Easy -> BotDifficulty.EASY
+                Difficulty.Medium -> BotDifficulty.MEDIUM
+                Difficulty.Hard -> BotDifficulty.HARD
+                Difficulty.Expert -> BotDifficulty.EXPERT
+                Difficulty.Grandmaster -> BotDifficulty.GRANDMASTER
+            }
 
         // M5 PASS-AND-PLAY: the first [humanCount] seats are humans (hot-seat); bots fill the rest.
         val humanCount = action.humanCount.coerceIn(1, config.seatCount)
@@ -467,13 +487,16 @@ class GameViewModel(
         val botSeatCount = config.seatCount - humanCount
 
         // Assign one persona+policy per BOT seat.
-        val assignments = if (botSeatCount > 0) {
-            PersonaAssigner.assign(
-                seatCount  = botSeatCount,
-                difficulty = botDifficulty,
-                seed       = seed,
-            )
-        } else emptyList()
+        val assignments =
+            if (botSeatCount > 0) {
+                PersonaAssigner.assign(
+                    seatCount = botSeatCount,
+                    difficulty = botDifficulty,
+                    seed = seed,
+                )
+            } else {
+                emptyList()
+            }
 
         // Bots occupy the seats AFTER the human block: humanCount .. seatCount-1.
         val bots = mutableMapOf<PlayerId, Policy>()
@@ -484,24 +507,26 @@ class GameViewModel(
             val seatId = PlayerId(humanCount + index)
             bots[seatId] = policy
             personaMap[seatId] = policy
-            opponentPersonas[seatId] = OpponentPersona(
-                playerId     = seatId,
-                name         = persona.name,
-                monogram     = persona.monogram,
-                seatColorArgb = persona.seatColorArgb,
-            )
+            opponentPersonas[seatId] =
+                OpponentPersona(
+                    playerId = seatId,
+                    name = persona.name,
+                    monogram = persona.monogram,
+                    seatColorArgb = persona.seatColorArgb,
+                )
         }
         // PASS-AND-PLAY: give every human seat a labelled persona too, so the handoff guard + the
         // table can name "Khiladi 1 / 2 / ..." instead of a generic seat number. Single-human vs-AI
         // keeps seat 0 unlabelled (the player is "Aap").
         if (humanCount > 1) {
             humanSeats.sortedBy { it.raw }.forEachIndexed { i, seat ->
-                opponentPersonas[seat] = OpponentPersona(
-                    playerId      = seat,
-                    name          = "Khiladi ${i + 1}",
-                    monogram      = "K${i + 1}",
-                    seatColorArgb = HUMAN_SEAT_COLORS[i % HUMAN_SEAT_COLORS.size],
-                )
+                opponentPersonas[seat] =
+                    OpponentPersona(
+                        playerId = seat,
+                        name = "Khiladi ${i + 1}",
+                        monogram = "K${i + 1}",
+                        seatColorArgb = HUMAN_SEAT_COLORS[i % HUMAN_SEAT_COLORS.size],
+                    )
             }
         }
         activeBotPolicies = personaMap
@@ -509,48 +534,59 @@ class GameViewModel(
 
         // DARBAR: build the social conductor for narrative mode. It reads each bot's PersonalityProfile
         // (flaws) + name, and its grudge teeth route back into the real PersonaPolicy grudge maps.
-        val director: SocialDirector? = if (action.narrativeEnabled) {
-            val seats = (0 until config.seatCount).map { seat ->
-                val pid = PlayerId(seat)
-                if (seat < humanCount) {
-                    SeatInfo(seat, opponentPersonas[pid]?.name ?: "Aap", personaId = null, profile = null, isHuman = true)
-                } else {
-                    val pp = personaMap[pid]
-                    SeatInfo(seat, pp?.persona?.name ?: "Seat $seat", pp?.persona?.id, pp?.persona?.personality, isHuman = false)
-                }
+        val director: SocialDirector? =
+            if (action.narrativeEnabled) {
+                val seats =
+                    (0 until config.seatCount).map { seat ->
+                        val pid = PlayerId(seat)
+                        if (seat < humanCount) {
+                            SeatInfo(seat, opponentPersonas[pid]?.name ?: "Aap", personaId = null, profile = null, isHuman = true)
+                        } else {
+                            val pp = personaMap[pid]
+                            SeatInfo(seat, pp?.persona?.name ?: "Seat $seat", pp?.persona?.id, pp?.persona?.personality, isHuman = false)
+                        }
+                    }
+                SocialDirector(
+                    seed = seed,
+                    seats = seats,
+                    voice = ChatVoice(language),
+                    humanSeat = 0,
+                    onGrudge = { holder, target, weight -> personaMap[PlayerId(holder)]?.notifyHit(PlayerId(target), weight) },
+                )
+            } else {
+                null
             }
-            SocialDirector(
-                seed = seed,
-                seats = seats,
-                voice = ChatVoice(language),
-                humanSeat = 0,
-                onGrudge = { holder, target, weight -> personaMap[PlayerId(holder)]?.notifyHit(PlayerId(target), weight) },
-            )
-        } else null
 
-        val newSession = GameSession(
-            config           = config,
-            seed             = seed,
-            humanSeats       = humanSeats,
-            bots             = bots,
-            opponentPersonas = opponentPersonas,
-            socialDirector   = director,
-        )
+        val newSession =
+            GameSession(
+                config = config,
+                seed = seed,
+                humanSeats = humanSeats,
+                bots = bots,
+                opponentPersonas = opponentPersonas,
+                socialDirector = director,
+            )
         session = newSession
 
-        val initialUi = if (action.resumeLog != null) {
-            // RESUME: replay the human action log (+ the Darbar chat log) onto a fresh deterministic state.
-            newSession.restore(
-                action.resumeLog.map { it.toEngine() },
-                action.resumeChat?.map { it.afterHumanMoves to it.toInput() } ?: emptyList(),
-            )
-        } else {
-            newSession.start()
-        }
+        val initialUi =
+            if (action.resumeLog != null) {
+                // RESUME: replay the human action log (+ the Darbar chat log) onto a fresh deterministic state.
+                newSession.restore(
+                    action.resumeLog.map { it.toEngine() },
+                    action.resumeChat?.map { it.afterHumanMoves to it.toInput() } ?: emptyList(),
+                )
+            } else {
+                newSession.start()
+            }
         emitState(initialUi.copy(coachEnabled = coachEnabledFlow?.value ?: true))
         // A resumed game re-establishes its snapshot (identical content); a fresh game writes its
         // empty-log baseline so a relaunch before the first move still finds the in-progress match.
-        if (!initialUi.isGameOver) saveSnapshot() else { onSnapshot?.invoke(null); finishGameOver() }
+        if (!initialUi.isGameOver) {
+            saveSnapshot()
+        } else {
+            onSnapshot?.invoke(null)
+            finishGameOver()
+        }
         // If the human acts first, start coaching their opening decision immediately.
         requestAdvice(newSession)
         // M5: if the opening decision is auto-resolvable (e.g. resumed mid-forced-Coup), handle it.
@@ -585,11 +621,12 @@ class GameViewModel(
         darbarChatJob?.cancel()
 
         // Apply the human's own action immediately so their move + its moment lands at once.
-        val humanStep = try {
-            currentSession.applyHuman(action.intent)
-        } catch (e: IllegalStateException) {
-            return
-        }
+        val humanStep =
+            try {
+                currentSession.applyHuman(action.intent)
+            } catch (e: IllegalStateException) {
+                return
+            }
         feedEventsToExperts(humanStep.newEvents)
         // The human just acted — any coaching for the PREVIOUS decision is now stale.
         adviceJob?.cancel()
@@ -598,7 +635,9 @@ class GameViewModel(
         if (humanStep.ui.isGameOver) {
             onSnapshot?.invoke(null)
             finishGameOver() // M6b+M6c: the human's move ended the game — emit tally + record the match.
-        } else saveSnapshot()
+        } else {
+            saveSnapshot()
+        }
         // The human's move can immediately open a fresh decision on them (e.g. a reaction window
         // bounces back, or a 2p game returns straight to their turn). Coach it right away.
         if (humanStep.ui.isHumanTurn) {
@@ -613,32 +652,33 @@ class GameViewModel(
         // Then walk the bot round ONE action at a time with a readable pause between each, so the
         // player can follow who did what instead of the whole round resolving in a single jump.
         advanceJob?.cancel()
-        advanceJob = coroutineScope.launch {
-            var lastEvents = humanStep.newEvents
-            while (!currentSession.awaitingHumanOrOver()) {
-                delay(pauseFor(lastEvents)) // let the previous beat's moment breathe
-                // DARBAR: the social fabric is touched here AND by a chat tap — serialize the two.
-                val step = darbarMutex.withLock { currentSession.stepBotOnce() } ?: break
-                feedEventsToExperts(step.newEvents)
-                emitState(step.ui)
-                lastEvents = step.newEvents
+        advanceJob =
+            coroutineScope.launch {
+                var lastEvents = humanStep.newEvents
+                while (!currentSession.awaitingHumanOrOver()) {
+                    delay(pauseFor(lastEvents)) // let the previous beat's moment breathe
+                    // DARBAR: the social fabric is touched here AND by a chat tap — serialize the two.
+                    val step = darbarMutex.withLock { currentSession.stepBotOnce() } ?: break
+                    feedEventsToExperts(step.newEvents)
+                    emitState(step.ui)
+                    lastEvents = step.newEvents
+                }
+                // The bot round has resolved back to the human (or the game is over). If it is the
+                // human's decision now, kick off the decision-coach for it.
+                if (currentSession.awaitingHumanOrOver() && _state.value?.isHumanTurn == true) {
+                    requestAdvice(currentSession)
+                    // M5: auto-resolve a pass-only / forced decision the bot round handed back to us.
+                    maybeAutoResolve(currentSession)
+                    // M6e: in spectator mode, the demo plays the human decision the bot round handed back.
+                    maybeAutoSpectate(currentSession)
+                }
+                // The game can end during the bot round (a bot couped the human out) without the human
+                // acting again — clear the resume snapshot so a relaunch doesn't offer a finished match.
+                if (_state.value?.isGameOver == true) {
+                    onSnapshot?.invoke(null)
+                    finishGameOver() // M6b+M6c: a bot ended the game during the paced round.
+                }
             }
-            // The bot round has resolved back to the human (or the game is over). If it is the
-            // human's decision now, kick off the decision-coach for it.
-            if (currentSession.awaitingHumanOrOver() && _state.value?.isHumanTurn == true) {
-                requestAdvice(currentSession)
-                // M5: auto-resolve a pass-only / forced decision the bot round handed back to us.
-                maybeAutoResolve(currentSession)
-                // M6e: in spectator mode, the demo plays the human decision the bot round handed back.
-                maybeAutoSpectate(currentSession)
-            }
-            // The game can end during the bot round (a bot couped the human out) without the human
-            // acting again — clear the resume snapshot so a relaunch doesn't offer a finished match.
-            if (_state.value?.isGameOver == true) {
-                onSnapshot?.invoke(null)
-                finishGameOver() // M6b+M6c: a bot ended the game during the paced round.
-            }
-        }
     }
 
     /** The in-flight auto-mode resolve loop (auto-pass / auto-forced). Cancelled on each new submit. */
@@ -661,21 +701,22 @@ class GameViewModel(
         if (_state.value?.isHumanTurn != true) return false
         if (_state.value?.isGameOver == true) return false
         spectateJob?.cancel()
-        spectateJob = coroutineScope.launch {
-            // Let the player watch the table settle before the demo "thinks" and acts.
-            delay((ROUTINE_STEP_MS * speedMultiplier).toLong().coerceIn(800L, 4800L))
-            val best = currentSession.bestHumanMove() ?: return@launch
-            // bestHumanMove() is a synchronous, non-suspending ISMCTS search - a cancel() issued
-            // while it was running has no effect until it returns. Check explicitly here so a
-            // superseded job (cancelled by a newer maybeAutoSpectate call) aborts instead of racing
-            // the fresh job to submitIntent against the same mutable GameSession.state.
-            coroutineContext.ensureActive()
-            // Re-check on the shown state: still this session, still the human's turn, still legal.
-            val shown = _state.value ?: return@launch
-            if (currentSession === session && shown.isHumanTurn && best in shown.legalIntents) {
-                submitIntent(GameAction.Submit(best))
+        spectateJob =
+            coroutineScope.launch {
+                // Let the player watch the table settle before the demo "thinks" and acts.
+                delay((ROUTINE_STEP_MS * speedMultiplier).toLong().coerceIn(800L, 4800L))
+                val best = currentSession.bestHumanMove() ?: return@launch
+                // bestHumanMove() is a synchronous, non-suspending ISMCTS search - a cancel() issued
+                // while it was running has no effect until it returns. Check explicitly here so a
+                // superseded job (cancelled by a newer maybeAutoSpectate call) aborts instead of racing
+                // the fresh job to submitIntent against the same mutable GameSession.state.
+                coroutineContext.ensureActive()
+                // Re-check on the shown state: still this session, still the human's turn, still legal.
+                val shown = _state.value ?: return@launch
+                if (currentSession === session && shown.isHumanTurn && best in shown.legalIntents) {
+                    submitIntent(GameAction.Submit(best))
+                }
             }
-        }
         return spectateJob?.isActive == true
     }
 
@@ -695,25 +736,28 @@ class GameViewModel(
         if (_state.value?.isHumanTurn != true) return false
 
         autoJob?.cancel()
-        autoJob = coroutineScope.launch {
-            while (currentSession.awaitingHumanOrOver() && _state.value?.isHumanTurn == true) {
-                val decision = currentSession.autoDecision() ?: break
-                val allowed = when (decision.kind) {
-                    GameSession.AutoKind.ONLY_PASS -> autoPass
-                    GameSession.AutoKind.SINGLE_LEGAL,
-                    GameSession.AutoKind.FORCED_COUP -> autoForced
+        autoJob =
+            coroutineScope.launch {
+                while (currentSession.awaitingHumanOrOver() && _state.value?.isHumanTurn == true) {
+                    val decision = currentSession.autoDecision() ?: break
+                    val allowed =
+                        when (decision.kind) {
+                            GameSession.AutoKind.ONLY_PASS -> autoPass
+                            GameSession.AutoKind.SINGLE_LEGAL,
+                            GameSession.AutoKind.FORCED_COUP,
+                            -> autoForced
+                        }
+                    if (!allowed) break
+                    // Let the player register what they're being relieved of before it fires.
+                    delay((1200L * speedMultiplier).toLong().coerceIn(400L, 2800L))
+                    // Bail if the situation changed under us (race with the advance loop).
+                    val shown = _state.value ?: break
+                    if (!shown.isHumanTurn || decision.intent !in shown.legalIntents) break
+                    submitIntent(GameAction.Submit(decision.intent))
+                    // submitIntent kicks its own advance loop; yield so it can settle, then re-check.
+                    return@launch
                 }
-                if (!allowed) break
-                // Let the player register what they're being relieved of before it fires.
-                delay((1200L * speedMultiplier).toLong().coerceIn(400L, 2800L))
-                // Bail if the situation changed under us (race with the advance loop).
-                val shown = _state.value ?: break
-                if (!shown.isHumanTurn || decision.intent !in shown.legalIntents) break
-                submitIntent(GameAction.Submit(decision.intent))
-                // submitIntent kicks its own advance loop; yield so it can settle, then re-check.
-                return@launch
             }
-        }
         return autoJob?.isActive == true
     }
 
@@ -725,46 +769,50 @@ class GameViewModel(
      */
     private fun requestAdvice(session: GameSession) {
         adviceJob?.cancel()
-        adviceJob = coroutineScope.launch {
-            val advice = session.adviseHuman()
-            if (advice.isEmpty()) return@launch
-            // Only apply if we're still on the very decision this advice was computed for:
-            // same session, still the human's turn, advice not already set, and the advice
-            // covers exactly the currently-shown legal moves (order-independent membership).
-            val shown = _state.value
-            if (session === this@GameViewModel.session &&
-                shown != null &&
-                shown.isHumanTurn &&
-                shown.advice.isEmpty() &&
-                shown.legalIntents.toSet() == advice.map { it.intent }.toSet()
-            ) {
-                emitState(shown.copy(advice = advice))
+        adviceJob =
+            coroutineScope.launch {
+                val advice = session.adviseHuman()
+                if (advice.isEmpty()) return@launch
+                // Only apply if we're still on the very decision this advice was computed for:
+                // same session, still the human's turn, advice not already set, and the advice
+                // covers exactly the currently-shown legal moves (order-independent membership).
+                val shown = _state.value
+                if (session === this@GameViewModel.session &&
+                    shown != null &&
+                    shown.isHumanTurn &&
+                    shown.advice.isEmpty() &&
+                    shown.legalIntents.toSet() == advice.map { it.intent }.toSet()
+                ) {
+                    emitState(shown.copy(advice = advice))
+                }
             }
-        }
     }
 
     /** Three-tier rhythm: dramatic beats linger, declared actions are readable, bookkeeping is brisk. */
     private fun pauseFor(events: List<GameEvent>): Long {
-        val dramatic = events.any {
-            it is GameEvent.Challenged ||
-                it is GameEvent.ChallengeRevealed ||
-                it is GameEvent.Blocked ||
-                it is GameEvent.InfluenceLost ||
-                it is GameEvent.PlayerEliminated ||
-                it is GameEvent.GameEnded
-        }
-        val base = if (dramatic) {
-            DRAMATIC_STEP_MS
-        } else {
-            val routine = events.any {
-                it is GameEvent.ActionDeclared ||
-                    it is GameEvent.ActionResolved ||
-                    it is GameEvent.ActionNegated ||
-                    it is GameEvent.Exchanged ||
-                    it is GameEvent.CoinsTransferred
+        val dramatic =
+            events.any {
+                it is GameEvent.Challenged ||
+                    it is GameEvent.ChallengeRevealed ||
+                    it is GameEvent.Blocked ||
+                    it is GameEvent.InfluenceLost ||
+                    it is GameEvent.PlayerEliminated ||
+                    it is GameEvent.GameEnded
             }
-            if (routine) ROUTINE_STEP_MS else TRIVIAL_STEP_MS
-        }
+        val base =
+            if (dramatic) {
+                DRAMATIC_STEP_MS
+            } else {
+                val routine =
+                    events.any {
+                        it is GameEvent.ActionDeclared ||
+                            it is GameEvent.ActionResolved ||
+                            it is GameEvent.ActionNegated ||
+                            it is GameEvent.Exchanged ||
+                            it is GameEvent.CoinsTransferred
+                    }
+                if (routine) ROUTINE_STEP_MS else TRIVIAL_STEP_MS
+            }
         // M5 TURN-SPEED: scale the pacing by the live multiplier (SLOW 1.4× / NORMAL 1.0× / FAST 0.5×),
         // clamped so even FAST keeps a readable floor and SLOW never drags past ~3s.
         return (base * speedMultiplier).toLong().coerceIn(400L, 6000L)
@@ -784,9 +832,9 @@ class GameViewModel(
         activeBotPolicies.values.forEach { personaPolicy ->
             val turnNumber = _state.value?.view?.turnNumber ?: 0
             when (val base = personaPolicy.base) {
-                is ExpertPolicy      -> events.forEach { base.observe(it, turnNumber) }
+                is ExpertPolicy -> events.forEach { base.observe(it, turnNumber) }
                 is GrandmasterPolicy -> events.forEach { base.observe(it, turnNumber) }
-                else                 -> { /* non-search tiers keep their own memory via PersonaPolicy.observe */ }
+                else -> { /* non-search tiers keep their own memory via PersonaPolicy.observe */ }
             }
         }
     }

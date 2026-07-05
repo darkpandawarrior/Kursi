@@ -18,7 +18,6 @@ import kotlin.test.assertTrue
  * team is wiped from the opposition (i.e. teammate-hostile bot moves are filtered by teamSafeIntents).
  */
 class TeamKhelTest {
-
     @Test
     fun build_alternatesSeatsIntoTeams() {
         val map = TeamAssignment.build(playerCount = 4, teamCount = 2)

@@ -9,7 +9,6 @@ import com.kursi.feature.game.session.CompletedMatch
 import com.kursi.feature.game.session.MatchSnapshot
 import com.kursi.feature.game.session.ReplaySession
 import com.kursi.feature.game.session.SnapPersona
-import com.kursi.feature.game.session.toEngine
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -20,13 +19,11 @@ import kotlin.test.assertTrue
  * frames it yields are redacted from the HUMAN perspective (secrecy preserved during review).
  */
 class ReplaySessionTest {
-
     private val seed = 4242L
     private val players = 4
 
     /** Deterministic bots keyed off the seed — identical recipe used for the original run and replay. */
-    private fun botsFor(): Map<PlayerId, Policy> =
-        (1 until players).associate { seat -> PlayerId(seat) to EasyPolicy(seed * 31L + seat) as Policy }
+    private fun botsFor(): Map<PlayerId, Policy> = (1 until players).associate { seat -> PlayerId(seat) to EasyPolicy(seed * 31L + seat) as Policy }
 
     private fun makeSession(): com.kursi.feature.game.session.GameSession =
         com.kursi.feature.game.session.GameSession(
@@ -37,9 +34,7 @@ class ReplaySessionTest {
         )
 
     /** Drive a session to game-over with a deterministic "human", capturing the FULL state sequence. */
-    private fun driveCapturingStates(
-        session: com.kursi.feature.game.session.GameSession,
-    ): Pair<List<GameState>, List<com.kursi.engine.Intent>> {
+    private fun driveCapturingStates(session: com.kursi.feature.game.session.GameSession): Pair<List<GameState>, List<com.kursi.engine.Intent>> {
         val humanPolicy = EasyPolicy(99L)
         val states = ArrayList<GameState>()
         var ui = session.start()
@@ -48,7 +43,9 @@ class ReplaySessionTest {
             if (ui.isHumanTurn && ui.legalIntents.isNotEmpty()) {
                 states.add(session.snapshotState())
                 ui = session.submitHuman(humanPolicy.decide(ui.view, ui.legalIntents))
-            } else break
+            } else {
+                break
+            }
         }
         states.add(session.snapshotState()) // terminal
         return states to session.humanActionLog()
@@ -64,12 +61,13 @@ class ReplaySessionTest {
 
         // Rebuild a ReplaySession from the same seed + the recorded human log + the SAME bot recipe.
         val snapshot = MatchSnapshot.of(seed, players, Difficulty.Medium, log)
-        val replay = ReplaySession.build(
-            snapshot = snapshot,
-            humanSeats = setOf(PlayerId(0)),
-            bots = botsFor(),
-            winnerSeat = (original.snapshotState().phase as com.kursi.engine.Phase.GameOver).winner.raw,
-        )
+        val replay =
+            ReplaySession.build(
+                snapshot = snapshot,
+                humanSeats = setOf(PlayerId(0)),
+                bots = botsFor(),
+                winnerSeat = (original.snapshotState().phase as com.kursi.engine.Phase.GameOver).winner.raw,
+            )
 
         // DETERMINISM: the replay's captured GameState sequence equals the original, bit-for-bit.
         assertEquals(
@@ -86,24 +84,26 @@ class ReplaySessionTest {
         val winner = (original.snapshotState().phase as com.kursi.engine.Phase.GameOver).winner.raw
 
         // Encode → string → decode, exactly as AppPrefs persistence does for a finished match.
-        val record = CompletedMatch.of(
-            seed = seed,
-            players = players,
-            difficulty = Difficulty.Medium,
-            humanLog = log,
-            winnerSeat = winner,
-            personas = listOf(SnapPersona(seat = 0, name = "Aap", monogram = "A", seatColorArgb = 0xFF009E73L, isHuman = true)),
-        )
+        val record =
+            CompletedMatch.of(
+                seed = seed,
+                players = players,
+                difficulty = Difficulty.Medium,
+                humanLog = log,
+                winnerSeat = winner,
+                personas = listOf(SnapPersona(seat = 0, name = "Aap", monogram = "A", seatColorArgb = 0xFF009E73L, isHuman = true)),
+            )
         val decoded = CompletedMatch.decode(record.encode()) ?: error("record failed to decode")
         assertEquals(seed, decoded.seed)
         assertEquals(winner, decoded.winnerSeat)
 
-        val replay = ReplaySession.build(
-            snapshot = decoded.toSnapshot(),
-            humanSeats = setOf(PlayerId(0)),
-            bots = botsFor(),
-            winnerSeat = decoded.winnerSeat,
-        )
+        val replay =
+            ReplaySession.build(
+                snapshot = decoded.toSnapshot(),
+                humanSeats = setOf(PlayerId(0)),
+                bots = botsFor(),
+                winnerSeat = decoded.winnerSeat,
+            )
         assertEquals(originalStates, replay.gameStates())
     }
 
@@ -112,18 +112,22 @@ class ReplaySessionTest {
         val original = makeSession()
         val (_, log) = driveCapturingStates(original)
         val winner = (original.snapshotState().phase as com.kursi.engine.Phase.GameOver).winner.raw
-        val replay = ReplaySession.build(
-            snapshot = MatchSnapshot.of(seed, players, Difficulty.Medium, log),
-            humanSeats = setOf(PlayerId(0)),
-            bots = botsFor(),
-            winnerSeat = winner,
-        )
+        val replay =
+            ReplaySession.build(
+                snapshot = MatchSnapshot.of(seed, players, Difficulty.Medium, log),
+                humanSeats = setOf(PlayerId(0)),
+                bots = botsFor(),
+                winnerSeat = winner,
+            )
 
         // There is at least one human-decision step, and the final step is the terminal (not a decision).
         assertTrue(replay.humanDecisionIndices.isNotEmpty(), "expected at least one human decision")
         assertTrue(replay.stepCount >= 1)
-        assertEquals(replay.stepCount - 1, replay.humanDecisionIndices.last() + 1,
-            "terminal frame should be the step right after the last human decision")
+        assertEquals(
+            replay.stepCount - 1,
+            replay.humanDecisionIndices.last() + 1,
+            "terminal frame should be the step right after the last human decision",
+        )
 
         // stepTo every human-decision index yields a human-turn frame redacted for seat 0:
         // the human only ever sees their OWN hand (every other player's cards are hidden).

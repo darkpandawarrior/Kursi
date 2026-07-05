@@ -50,14 +50,15 @@ data class OnlineEngineProjection(
  *
  * All connection/turn/over flags pass straight through.
  */
-fun OnlineUiState.toEngineProjection(): OnlineEngineProjection = OnlineEngineProjection(
-    view = view?.toEngineView(),
-    legalIntents = legalIntents.map { it.toEngine() },
-    recentEvents = recentEvents.map { it.toEngineEvent() },
-    isHumanTurn = isHumanTurn,
-    isGameOver = isGameOver,
-    winnerSeat = winnerSeat,
-    mySeat = mySeat,
-    connection = connection,
-    lastError = lastError,
-)
+fun OnlineUiState.toEngineProjection(): OnlineEngineProjection =
+    OnlineEngineProjection(
+        view = view?.toEngineView(),
+        legalIntents = legalIntents.map { it.toEngine() },
+        recentEvents = recentEvents.map { it.toEngineEvent() },
+        isHumanTurn = isHumanTurn,
+        isGameOver = isGameOver,
+        winnerSeat = winnerSeat,
+        mySeat = mySeat,
+        connection = connection,
+        lastError = lastError,
+    )

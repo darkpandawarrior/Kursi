@@ -5,7 +5,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -15,14 +14,19 @@ import kotlin.test.assertTrue
  * the returned value types ([SocialOp], [ArcBeat], [ArcState]).
  */
 class StoryArcTest {
-
     // ── helpers ────────────────────────────────────────────────────────────────
 
-    private fun beginAccepted(arc: ArcId, target: Int = 2, name: String = "TargetBot") =
-        StoryArcs.begin(arc, target, name, accepted = true)
+    private fun beginAccepted(
+        arc: ArcId,
+        target: Int = 2,
+        name: String = "TargetBot",
+    ) = StoryArcs.begin(arc, target, name, accepted = true)
 
-    private fun beginRejected(arc: ArcId, target: Int = 2, name: String = "TargetBot") =
-        StoryArcs.begin(arc, target, name, accepted = false)
+    private fun beginRejected(
+        arc: ArcId,
+        target: Int = 2,
+        name: String = "TargetBot",
+    ) = StoryArcs.begin(arc, target, name, accepted = false)
 
     // ── AFWAAH ────────────────────────────────────────────────────────────────
 
@@ -64,8 +68,10 @@ class StoryArcTest {
     @Test
     fun afwaah_begin_agitatesParanoiaOnTarget() {
         val step = beginAccepted(ArcId.AFWAAH)
-        val agitate = step.ops.filterIsInstance<SocialOp.Agitate>()
-            .firstOrNull { it.seat == 2 && it.flaw == CharacterFlaw.PARANOIA }
+        val agitate =
+            step.ops
+                .filterIsInstance<SocialOp.Agitate>()
+                .firstOrNull { it.seat == 2 && it.flaw == CharacterFlaw.PARANOIA }
         assertNotNull(agitate, "AFWAAH.begin must agitate PARANOIA on the target")
         assertTrue(agitate.delta > 0f)
     }
@@ -105,12 +111,13 @@ class StoryArcTest {
         // First begin accepted, then "knife the ally" deflect reply.
         val begun = beginAccepted(ArcId.GATHBANDHAN, target = 3)
         val arcState = begun.nextState!!
-        val input = HumanChatInput(
-            suggestionId = "test.deflect",
-            kind = ChatActionKind.DEFLECT,
-            arc = ArcId.GATHBANDHAN,
-            targetSeat = 3,
-        )
+        val input =
+            HumanChatInput(
+                suggestionId = "test.deflect",
+                kind = ChatActionKind.DEFLECT,
+                arc = ArcId.GATHBANDHAN,
+                targetSeat = 3,
+            )
         val reply = StoryArcs.reply(arcState, input)
         val betray = reply.ops.filterIsInstance<SocialOp.Betray>().firstOrNull()
         assertNotNull(betray, "GATHBANDHAN DEFLECT reply must emit a Betray op")
@@ -124,11 +131,15 @@ class StoryArcTest {
     @Test
     fun sting_begin_agitatesEgoAndGreed() {
         val step = beginAccepted(ArcId.STING, target = 1)
-        val egoAgitate = step.ops.filterIsInstance<SocialOp.Agitate>()
-            .firstOrNull { it.seat == 1 && it.flaw == CharacterFlaw.EGO }
+        val egoAgitate =
+            step.ops
+                .filterIsInstance<SocialOp.Agitate>()
+                .firstOrNull { it.seat == 1 && it.flaw == CharacterFlaw.EGO }
         assertNotNull(egoAgitate, "STING.begin must agitate EGO")
-        val greedAgitate = step.ops.filterIsInstance<SocialOp.Agitate>()
-            .firstOrNull { it.seat == 1 && it.flaw == CharacterFlaw.GREED }
+        val greedAgitate =
+            step.ops
+                .filterIsInstance<SocialOp.Agitate>()
+                .firstOrNull { it.seat == 1 && it.flaw == CharacterFlaw.GREED }
         assertNotNull(greedAgitate, "STING.begin must agitate GREED")
     }
 
@@ -146,8 +157,10 @@ class StoryArcTest {
     @Test
     fun badla_begin_emitsTrustTowardPlayer() {
         val step = beginAccepted(ArcId.BADLA, target = 2)
-        val trust = step.ops.filterIsInstance<SocialOp.Trust>()
-            .firstOrNull { it.observer == 2 && it.target == 0 }
+        val trust =
+            step.ops
+                .filterIsInstance<SocialOp.Trust>()
+                .firstOrNull { it.observer == 2 && it.target == 0 }
         assertNotNull(trust, "BADLA.begin must emit Trust(target→player) to win the bot over")
         assertTrue(trust.delta > 0f)
     }
@@ -158,15 +171,18 @@ class StoryArcTest {
         val begun = beginAccepted(ArcId.BADLA, target = 2)
         val arcState = begun.nextState!!
         // Now player points the grudge at rival seat 3.
-        val input = HumanChatInput(
-            suggestionId = "badla.point.2.3",
-            kind = ChatActionKind.ARC_REPLY,
-            arc = ArcId.BADLA,
-            targetSeat = 3,  // the RIVAL we want the vengeful bot to hit
-        )
+        val input =
+            HumanChatInput(
+                suggestionId = "badla.point.2.3",
+                kind = ChatActionKind.ARC_REPLY,
+                arc = ArcId.BADLA,
+                targetSeat = 3, // the RIVAL we want the vengeful bot to hit
+            )
         val reply = StoryArcs.reply(arcState, input, rivalName = "Rival")
-        val grudge = reply.ops.filterIsInstance<SocialOp.Grudge>()
-            .firstOrNull { it.holder == 2 && it.target == 3 }
+        val grudge =
+            reply.ops
+                .filterIsInstance<SocialOp.Grudge>()
+                .firstOrNull { it.holder == 2 && it.target == 3 }
         assertNotNull(grudge, "BADLA.reply with rival=3 must emit Grudge(holder=2, target=3)")
         assertTrue(grudge.weight > 0, "grudge weight must be positive")
         // Threat on the rival must also tick up.
@@ -177,12 +193,13 @@ class StoryArcTest {
     @Test
     fun badla_reply_missingTargetSeat_isNoOp() {
         val arcState = beginAccepted(ArcId.BADLA, target = 2).nextState!!
-        val input = HumanChatInput(
-            suggestionId = "badla.noop",
-            kind = ChatActionKind.ARC_REPLY,
-            arc = ArcId.BADLA,
-            targetSeat = null,  // no rival picked → should not crash, no grudge emitted
-        )
+        val input =
+            HumanChatInput(
+                suggestionId = "badla.noop",
+                kind = ChatActionKind.ARC_REPLY,
+                arc = ArcId.BADLA,
+                targetSeat = null, // no rival picked → should not crash, no grudge emitted
+            )
         val reply = StoryArcs.reply(arcState, input)
         // Should return the same arc state unchanged with no grudge ops.
         val grudges = reply.ops.filterIsInstance<SocialOp.Grudge>()
@@ -205,7 +222,7 @@ class StoryArcTest {
     fun allArcs_begin_nextStateArcIdMatchesInput() {
         for (arc in ArcId.entries) {
             val step = beginAccepted(arc, target = 2)
-            val next = step.nextState ?: continue  // some declined arcs set ended and may return
+            val next = step.nextState ?: continue // some declined arcs set ended and may return
             assertEquals(arc, next.arc, "nextState.arc must match the input ArcId for $arc")
         }
     }

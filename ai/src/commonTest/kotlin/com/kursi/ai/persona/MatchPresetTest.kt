@@ -13,13 +13,13 @@ import kotlin.test.assertTrue
  *  - the lineup is fully deterministic (same preset → identical roster every call).
  */
 class MatchPresetTest {
-
     @Test
     fun every_preset_deals_the_right_count_of_distinct_personas() {
         for (preset in MatchPreset.ALL) {
             val lineup = preset.lineup()
             assertEquals(
-                preset.playerCount - 1, lineup.size,
+                preset.playerCount - 1,
+                lineup.size,
                 "preset ${preset.id} should deal ${preset.playerCount - 1} opponents",
             )
             val ids = lineup.map { it.id }

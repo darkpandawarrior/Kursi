@@ -177,9 +177,13 @@ class GameSession(
     }
 
     /** Re-point the coach's recommendation away from any teammate-targeting move (TEAM KHEL). */
-    private fun teamAwareAdvice(advice: List<MoveAdvice>, viewer: PlayerId): List<MoveAdvice> {
+    private fun teamAwareAdvice(
+        advice: List<MoveAdvice>,
+        viewer: PlayerId,
+    ): List<MoveAdvice> {
         val mates = state.teammatesOf(viewer).toSet()
         if (mates.isEmpty()) return advice
+
         fun hitsMate(a: MoveAdvice): Boolean {
             val da = a.intent as? Intent.DeclareAction ?: return false
             return Rules.targetOf(da.action)?.let { it in mates } == true
@@ -244,7 +248,10 @@ class GameSession(
     }
 
     /** A move the session deems safe to auto-resolve for the human, plus why. */
-    data class AutoDecision(val intent: Intent, val kind: AutoKind)
+    data class AutoDecision(
+        val intent: Intent,
+        val kind: AutoKind,
+    )
 
     /** Classifies an auto-resolvable decision. */
     enum class AutoKind { ONLY_PASS, SINGLE_LEGAL, FORCED_COUP }
@@ -257,7 +264,10 @@ class GameSession(
         state = initialState(config, seed)
         eventLog.clear()
         humanIntentLog.clear()
-        socialDirector?.let { it.reset(); it.greetTable(state.turnNumber) }
+        socialDirector?.let {
+            it.reset()
+            it.greetTable(state.turnNumber)
+        }
         advanceUntilHumanOrEnd()
         return buildUiState()
     }
@@ -283,11 +293,17 @@ class GameSession(
      *
      * @param chatLog ordered (afterHumanMoves, input) pairs — the director's own logged chat.
      */
-    fun restore(humanIntents: List<Intent>, chatLog: List<Pair<Int, HumanChatInput>>): GameUiState {
+    fun restore(
+        humanIntents: List<Intent>,
+        chatLog: List<Pair<Int, HumanChatInput>>,
+    ): GameUiState {
         state = initialState(config, seed)
         eventLog.clear()
         humanIntentLog.clear()
-        socialDirector?.let { it.reset(); it.greetTable(state.turnNumber) }
+        socialDirector?.let {
+            it.reset()
+            it.greetTable(state.turnNumber)
+        }
         advanceUntilHumanOrEnd()
         drainChat(chatLog, atMove = 0)
         for (intent in humanIntents) {
@@ -303,7 +319,10 @@ class GameSession(
     }
 
     /** Re-apply every logged chat sent at the boundary [atMove] (= human-move index) during replay. */
-    private fun drainChat(chatLog: List<Pair<Int, HumanChatInput>>, atMove: Int) {
+    private fun drainChat(
+        chatLog: List<Pair<Int, HumanChatInput>>,
+        atMove: Int,
+    ) {
         val d = socialDirector ?: return
         chatLog.filter { it.first == atMove }.forEach { (after, input) ->
             d.onHumanChat(input, after, state.turnNumber, redact(state, humanSeat))
@@ -357,7 +376,10 @@ class GameSession(
     fun snapshotState(): GameState = state
 
     /** One increment of game advancement: the resulting view plus the events it produced. */
-    data class AdvanceStep(val ui: GameUiState, val newEvents: List<GameEvent>)
+    data class AdvanceStep(
+        val ui: GameUiState,
+        val newEvents: List<GameEvent>,
+    )
 
     /**
      * Apply the human's [intent] WITHOUT auto-advancing bots, so the caller can pace the bot
@@ -385,8 +407,9 @@ class GameSession(
         val next = whoActsNext(state) ?: return null
         if (next in humanSeats) return null
 
-        val policy = bots[next]
-            ?: error("No policy registered for seat ${next.raw} — seats with policies: ${bots.keys.map { it.raw }}")
+        val policy =
+            bots[next]
+                ?: error("No policy registered for seat ${next.raw} — seats with policies: ${bots.keys.map { it.raw }}")
         val botView = redact(state, next)
         val legal = legalIntents(state, next)
         check(legal.isNotEmpty()) { "engine produced no legal intents for bot ${next.raw} in phase $phase" }
@@ -423,8 +446,9 @@ class GameSession(
             if (next in humanSeats) return
 
             // Bot's turn: fetch the policy and let it decide from its own redacted view.
-            val policy = bots[next]
-                ?: error("No policy registered for seat ${next.raw} — seats with policies: ${bots.keys.map { it.raw }}")
+            val policy =
+                bots[next]
+                    ?: error("No policy registered for seat ${next.raw} — seats with policies: ${bots.keys.map { it.raw }}")
             val botView = redact(state, next)
             val legal = legalIntents(state, next)
             check(legal.isNotEmpty()) { "engine produced no legal intents for bot ${next.raw} in phase $phase" }
@@ -441,11 +465,15 @@ class GameSession(
      * whenever no pressure applies. The director's nudge stream advances in strict bot-step order, so
      * this is deterministic across a fresh run and a replay.
      */
-    private fun nudge(seat: PlayerId, chosen: Intent, choices: List<Intent>, botView: com.kursi.engine.PlayerView): Intent =
-        socialDirector?.nudgeBotIntent(seat.raw, chosen, choices, botView) ?: chosen
+    private fun nudge(
+        seat: PlayerId,
+        chosen: Intent,
+        choices: List<Intent>,
+        botView: com.kursi.engine.PlayerView,
+    ): Intent = socialDirector?.nudgeBotIntent(seat.raw, chosen, choices, botView) ?: chosen
 
-    private fun applyAndRecord(intent: Intent): Pair<GameState, List<GameEvent>> {
-        return when (val outcome = applyIntent(state, intent)) {
+    private fun applyAndRecord(intent: Intent): Pair<GameState, List<GameEvent>> =
+        when (val outcome = applyIntent(state, intent)) {
             is ApplyOutcome.Accepted -> {
                 // Feed the LEARNING COACH live history: every applied event is observed so the
                 // advisor + opponent dossiers reason from what has actually happened this game.
@@ -469,7 +497,6 @@ class GameSession(
             is ApplyOutcome.Rejected ->
                 error("Intent rejected by engine: ${outcome.reason} [$intent]")
         }
-    }
 
     /**
      * Attribute each resolved hit to its aggressor and feed the victim bot's [PersonaPolicy.notifyHit]
@@ -489,17 +516,20 @@ class GameSession(
     private fun routeGrudges(event: GameEvent) {
         when (event) {
             is GameEvent.ActionDeclared -> lastActionActor = event.actor
-            is GameEvent.Challenged     -> lastChallenger = event.challenger
-            is GameEvent.InfluenceLost  -> {
+            is GameEvent.Challenged -> lastChallenger = event.challenger
+            is GameEvent.InfluenceLost -> {
                 val victim = event.player
-                val aggressor = when (event.reason) {
-                    com.kursi.engine.LossReason.ASSASSINATED,
-                    com.kursi.engine.LossReason.COUPED,
-                    com.kursi.engine.LossReason.EMERGENCY_COUPED -> lastActionActor
-                    com.kursi.engine.LossReason.LOST_CHALLENGE,
-                    com.kursi.engine.LossReason.LOST_BLOCK_CHALLENGE -> lastChallenger
-                    com.kursi.engine.LossReason.SABOTAGED -> null  // voluntary; no grudge target
-                }
+                val aggressor =
+                    when (event.reason) {
+                        com.kursi.engine.LossReason.ASSASSINATED,
+                        com.kursi.engine.LossReason.COUPED,
+                        com.kursi.engine.LossReason.EMERGENCY_COUPED,
+                        -> lastActionActor
+                        com.kursi.engine.LossReason.LOST_CHALLENGE,
+                        com.kursi.engine.LossReason.LOST_BLOCK_CHALLENGE,
+                        -> lastChallenger
+                        com.kursi.engine.LossReason.SABOTAGED -> null // voluntary; no grudge target
+                    }
                 // Losing a whole influence is the heaviest hit → weight 2.
                 creditGrudge(victim = victim, aggressor = aggressor, weight = 2)
             }
@@ -518,7 +548,11 @@ class GameSession(
     }
 
     /** Bump [victim]'s grudge against [aggressor], guarding null + self-hit. */
-    private fun creditGrudge(victim: PlayerId, aggressor: PlayerId?, weight: Int) {
+    private fun creditGrudge(
+        victim: PlayerId,
+        aggressor: PlayerId?,
+        weight: Int,
+    ) {
         if (aggressor == null || aggressor == victim) return
         personaBots[victim]?.notifyHit(aggressor, weight)
     }

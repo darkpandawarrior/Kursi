@@ -14,11 +14,15 @@ import com.kursi.engine.*
  *
  * Deterministic given seed; holds its own Rng thread.
  */
-class EasyPolicy(seed: Long) : Policy {
-
+class EasyPolicy(
+    seed: Long,
+) : Policy {
     private var rng = Rng(seed)
 
-    override fun decide(view: PlayerView, legal: List<Intent>): Intent {
+    override fun decide(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent {
         require(legal.isNotEmpty()) { "no legal intents supplied" }
         return when (view.phase) {
             is PhaseView.Turn -> decideTurn(view, legal)
@@ -33,7 +37,10 @@ class EasyPolicy(seed: Long) : Policy {
 
     // ── Turn ──────────────────────────────────────────────────────────────────
 
-    private fun decideTurn(view: PlayerView, legal: List<Intent>): Intent {
+    private fun decideTurn(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent {
         // If only Coup intents are legal (forced coup at >=10 coins), pick weakest target.
         val coupOnly = legal.all { it is Intent.DeclareAction && it.action is Action.Coup }
         if (coupOnly) {
@@ -54,7 +61,8 @@ class EasyPolicy(seed: Long) : Policy {
         val exchange = legal.filter { it is Intent.DeclareAction && it.action == Action.Exchange }
 
         // Easy bot: 60% pick from top-priority tier, 40% pick randomly among all
-        val (roll, r1) = rng.nextInt(100); rng = r1
+        val (roll, r1) = rng.nextInt(100)
+        rng = r1
         if (roll < 60) {
             for (tier in listOf(coup, assassinate, steal, tax, investigate, foreignAid, income)) {
                 if (tier.isNotEmpty()) return preferWeakTarget(tier, view)
@@ -67,27 +75,33 @@ class EasyPolicy(seed: Long) : Policy {
     }
 
     // For a list of targeted intents, pick the one targeting the weakest opponent.
-    private fun preferWeakTarget(intents: List<Intent>, view: PlayerView): Intent {
+    private fun preferWeakTarget(
+        intents: List<Intent>,
+        view: PlayerView,
+    ): Intent {
         val weakTarget = weakestOpponent(view)
         if (weakTarget != null) {
-            val best = intents.firstOrNull { i ->
-                i is Intent.DeclareAction && Rules.targetOf(i.action) == weakTarget
-            }
+            val best =
+                intents.firstOrNull { i ->
+                    i is Intent.DeclareAction && Rules.targetOf(i.action) == weakTarget
+                }
             if (best != null) return best
         }
         return randomFrom(intents)
     }
 
     /** Returns the alive (non-teammate) opponent with fewest face-down cards (lowest influence), or null. */
-    private fun weakestOpponent(view: PlayerView): PlayerId? {
-        return view.targetableOpponents
+    private fun weakestOpponent(view: PlayerView): PlayerId? =
+        view.targetableOpponents
             .minByOrNull { it.faceDownCount }
             ?.id
-    }
 
     // ── Reactions ─────────────────────────────────────────────────────────────
 
-    private fun decideReaction(view: PlayerView, legal: List<Intent>): Intent {
+    private fun decideReaction(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent {
         val phase = view.phase as PhaseView.Reactions
         val hasChallenge = legal.any { it is Intent.Challenge }
         val hasBlock = legal.any { it is Intent.Block }
@@ -106,12 +120,14 @@ class EasyPolicy(seed: Long) : Policy {
             if (remaining <= 0) return legal.first { it is Intent.Challenge }
         }
         // ~5% random challenge noise.
-        val (roll1, r1) = rng.nextInt(100); rng = r1
+        val (roll1, r1) = rng.nextInt(100)
+        rng = r1
         if (hasChallenge && roll1 < 5) return legal.first { it is Intent.Challenge }
 
         // ~15% bluff-block when we're the target and can block.
         if (hasBlock) {
-            val (roll2, r2) = rng.nextInt(100); rng = r2
+            val (roll2, r2) = rng.nextInt(100)
+            rng = r2
             if (roll2 < 15) {
                 val block = legal.filterIsInstance<Intent.Block>()
                 if (block.isNotEmpty()) return randomFrom(block)
@@ -122,11 +138,15 @@ class EasyPolicy(seed: Long) : Policy {
 
     // ── Exchange ──────────────────────────────────────────────────────────────
 
-    private fun decideExchange(view: PlayerView, legal: List<Intent>): Intent {
+    private fun decideExchange(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent {
         if (legal.size == 1) return legal.first()
         // Easy is noisy: ~40% of the time it keeps a random legal set, otherwise it makes the
         // role-optimal keep (resolved via myCards + Exchange.drawn). Good-but-beatable.
-        val (roll, r1) = rng.nextInt(100); rng = r1
+        val (roll, r1) = rng.nextInt(100)
+        rng = r1
         if (roll < 40) return randomFrom(legal)
         return CardChoice.bestExchange(view, legal) ?: legal.first()
     }
@@ -135,7 +155,8 @@ class EasyPolicy(seed: Long) : Policy {
 
     /** Easy bot: coin-flip on whether to force the target to redraw the peeked card. */
     private fun decideInvestigatePeek(legal: List<Intent>): Intent {
-        val (roll, r1) = rng.nextInt(100); rng = r1
+        val (roll, r1) = rng.nextInt(100)
+        rng = r1
         val want = roll < 50
         return legal.firstOrNull { it is Intent.ResolveInvestigate && it.forceRedraw == want }
             ?: legal.first()
@@ -144,13 +165,17 @@ class EasyPolicy(seed: Long) : Policy {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /** remaining[R] = copies of role R not yet permanently face-up. */
-    private fun remaining(view: PlayerView, role: Role): Int {
+    private fun remaining(
+        view: PlayerView,
+        role: Role,
+    ): Int {
         val gone = view.players.sumOf { opp -> opp.faceUpRoles.count { it == role } }
         return view.config.copiesPerRole - gone
     }
 
     private fun randomFrom(list: List<Intent>): Intent {
-        val (i, r) = rng.nextInt(list.size); rng = r
+        val (i, r) = rng.nextInt(list.size)
+        rng = r
         return list[i]
     }
 }

@@ -16,6 +16,9 @@ trim_trailing_whitespace = true
 max_line_length = 160
 # Composable functions use PascalCase — disable the Kotlin function-naming rule globally.
 ktlint_standard_function-naming = disabled
+# Matches detekt's WildcardImport.active=false: Compose + Kursi design-system generate many
+# wildcard imports via IDE, and engine.* call sites intentionally pull in many symbols at once.
+ktlint_standard_no-wildcard-imports = disabled
 
 [*.kts]
 max_line_length = 160

@@ -25,15 +25,17 @@ data class DailyChallenge(
     companion object {
         /** Player-count band the daily rotates through (kept tight so a daily is always finishable). */
         private val PLAYER_CHOICES = intArrayOf(3, 4, 4, 5, 6)
+
         /** Difficulty band the daily rotates through (weighted toward the middle of the ladder). */
-        private val DIFFICULTY_CHOICES = arrayOf(
-            Difficulty.Easy,
-            Difficulty.Medium,
-            Difficulty.Medium,
-            Difficulty.Hard,
-            Difficulty.Hard,
-            Difficulty.Expert,
-        )
+        private val DIFFICULTY_CHOICES =
+            arrayOf(
+                Difficulty.Easy,
+                Difficulty.Medium,
+                Difficulty.Medium,
+                Difficulty.Hard,
+                Difficulty.Hard,
+                Difficulty.Expert,
+            )
 
         /**
          * Derive the fixed daily challenge for [epochDay]. Pure + deterministic: same day → same

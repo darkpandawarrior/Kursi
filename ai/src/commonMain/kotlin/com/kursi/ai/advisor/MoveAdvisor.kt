@@ -43,13 +43,20 @@ class MoveAdvisor(
      * Feed a game event into the belief model. Call after every [applyIntent] so the
      * advisor's understanding of opponents' hands stays current.
      */
-    fun observe(event: GameEvent, turnNumber: Int) = memory.observe(event, turnNumber)
+    fun observe(
+        event: GameEvent,
+        turnNumber: Int,
+    ) = memory.observe(event, turnNumber)
 
     /**
      * Returns the single best [Intent] for [humanId] at this game state.
      * Intended for auto-mode: plays immediately without showing the ranked list.
      */
-    fun bestMove(state: GameState, humanId: PlayerId, legal: List<Intent>): Intent {
+    fun bestMove(
+        state: GameState,
+        humanId: PlayerId,
+        legal: List<Intent>,
+    ): Intent {
         require(legal.isNotEmpty()) { "no legal intents" }
         if (legal.size == 1) return legal.single()
         return advise(state, humanId, legal).firstOrNull { it.recommended }?.intent ?: legal.first()
@@ -62,7 +69,11 @@ class MoveAdvisor(
      * Works for both the action phase (DeclareAction intents) and the reaction phase
      * (Challenge / Block / Pass intents).
      */
-    fun advise(state: GameState, humanId: PlayerId, legal: List<Intent>): List<MoveAdvice> {
+    fun advise(
+        state: GameState,
+        humanId: PlayerId,
+        legal: List<Intent>,
+    ): List<MoveAdvice> {
         require(legal.isNotEmpty()) { "no legal intents" }
         val view = redact(state, humanId)
 
@@ -71,16 +82,18 @@ class MoveAdvisor(
         rng = r1
 
         // Build advice entries (un-ranked first, in same order as legal)
-        val rawAdvices: List<MoveAdvice> = legal.mapIndexed { idx, intent ->
-            val mv = moveValues.getOrNull(idx) ?: MoveValue(intent, 0.5, 0.0)
-            buildAdvice(intent, mv, view, state, humanId, recommended = false)
-        }
+        val rawAdvices: List<MoveAdvice> =
+            legal.mapIndexed { idx, intent ->
+                val mv = moveValues.getOrNull(idx) ?: MoveValue(intent, 0.5, 0.0)
+                buildAdvice(intent, mv, view, state, humanId, recommended = false)
+            }
 
         // Rank: primary = winProb desc, secondary = visitShare desc (most-visited tie-break)
-        val sorted = rawAdvices.sortedWith(
-            compareByDescending<MoveAdvice> { it.winProb }
-                .thenByDescending { moveValues.getOrNull(legal.indexOf(it.intent))?.visitShare ?: 0.0 }
-        )
+        val sorted =
+            rawAdvices.sortedWith(
+                compareByDescending<MoveAdvice> { it.winProb }
+                    .thenByDescending { moveValues.getOrNull(legal.indexOf(it.intent))?.visitShare ?: 0.0 },
+            )
 
         // Mark exactly one as recommended (the top)
         return sorted.mapIndexed { idx, advice -> advice.copy(recommended = idx == 0) }
@@ -92,13 +105,17 @@ class MoveAdvisor(
      * Calls [IsmctsSearch.evaluate] and returns the move values plus the advanced rng.
      * Isolated here so the rng advancement is always paired with the search call.
      */
-    private fun runEvaluate(view: PlayerView, legal: List<Intent>): Pair<List<MoveValue>, Rng> {
-        val values = try {
-            search.evaluate(view, legal, memory, rng, adviceBudget)
-        } catch (t: Throwable) {
-            // Fallback: uniform 0.5 for all moves
-            legal.map { MoveValue(it, 0.5, 1.0 / legal.size) }
-        }
+    private fun runEvaluate(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Pair<List<MoveValue>, Rng> {
+        val values =
+            try {
+                search.evaluate(view, legal, memory, rng, adviceBudget)
+            } catch (t: Throwable) {
+                // Fallback: uniform 0.5 for all moves
+                legal.map { MoveValue(it, 0.5, 1.0 / legal.size) }
+            }
         val (_, r1) = rng.nextLong()
         return values to r1
     }
@@ -119,11 +136,12 @@ class MoveAdvisor(
         val claimedRole: Role? = claimedRoleFor(intent)
 
         // truthful = human actually holds the claimed role; null if no claim
-        val truthful: Boolean? = claimedRole?.let { role ->
-            view.myInfluence.contains(role)
-        }
+        val truthful: Boolean? =
+            claimedRole?.let { role ->
+                view.myInfluence.contains(role)
+            }
 
-        val bluff: Boolean = truthful == false  // null → false, true → false, false → true
+        val bluff: Boolean = truthful == false // null → false, true → false, false → true
 
         val successOdds: Double? = computeSuccessOdds(intent, view, state, humanId, bluff, claimedRole)
 
@@ -150,11 +168,12 @@ class MoveAdvisor(
      * - [Intent.Block] → the blocking role
      * - Everything else (Income, ForeignAid, Coup, Challenge, Pass, ChooseInfluenceToLose, ChooseExchange) → null
      */
-    private fun claimedRoleFor(intent: Intent): Role? = when (intent) {
-        is Intent.DeclareAction -> Rules.claimedRole(intent.action)
-        is Intent.Block -> intent.role
-        else -> null
-    }
+    private fun claimedRoleFor(intent: Intent): Role? =
+        when (intent) {
+            is Intent.DeclareAction -> Rules.claimedRole(intent.action)
+            is Intent.Block -> intent.role
+            else -> null
+        }
 
     // ── successOdds ───────────────────────────────────────────────────────────
 
@@ -179,14 +198,16 @@ class MoveAdvisor(
         // For Challenge: estimate P(claimer is bluffing)
         if (intent is Intent.Challenge) {
             val phase = view.phase
-            val (actorId, roleBeingClaimed) = when (phase) {
-                is PhaseView.Reactions -> when (phase.step) {
-                    ReactionStep.CHALLENGE_ACTION -> phase.actor to phase.claimedRole
-                    ReactionStep.CHALLENGE_BLOCK -> phase.blocker to phase.blockRole
+            val (actorId, roleBeingClaimed) =
+                when (phase) {
+                    is PhaseView.Reactions ->
+                        when (phase.step) {
+                            ReactionStep.CHALLENGE_ACTION -> phase.actor to phase.claimedRole
+                            ReactionStep.CHALLENGE_BLOCK -> phase.blocker to phase.blockRole
+                            else -> return null
+                        }
                     else -> return null
                 }
-                else -> return null
-            }
             if (actorId == null || roleBeingClaimed == null) return null
 
             val actorOppView = view.players.firstOrNull { it.id == actorId } ?: return null
@@ -194,15 +215,16 @@ class MoveAdvisor(
             val myHand = view.myInfluence.count { it == roleBeingClaimed }
             val totalVisible = view.players.sumOf { it.faceUpRoles.size } + view.myFaceUp.size
 
-            val confidence = BluffOdds.estimate(
-                claimedRole = roleBeingClaimed,
-                copiesPerRole = cfg.copiesPerRole,
-                deckSize = cfg.deckSize,
-                eliminatedRolesForClaimedRole = eliminated,
-                myHandContainsClaimedRole = myHand,
-                opponentFaceDownCount = actorOppView.faceDownCount,
-                totalVisibleCards = totalVisible,
-            )
+            val confidence =
+                BluffOdds.estimate(
+                    claimedRole = roleBeingClaimed,
+                    copiesPerRole = cfg.copiesPerRole,
+                    deckSize = cfg.deckSize,
+                    eliminatedRolesForClaimedRole = eliminated,
+                    myHandContainsClaimedRole = myHand,
+                    opponentFaceDownCount = actorOppView.faceDownCount,
+                    totalVisibleCards = totalVisible,
+                )
             // pips 1..5 mapped linearly to P(bluff) ≈ (pips-1)/4
             // More precisely, reconstruct from BluffOdds thresholds:
             // pips=1 → pBluff<0.20, pips=2 → 0.20-0.38, etc.
@@ -225,23 +247,25 @@ class MoveAdvisor(
             val totalVisible = view.players.sumOf { it.faceUpRoles.size } + view.myFaceUp.size
             val myInfluenceCount = view.myInfluence.size.coerceAtLeast(1)
 
-            val confidence = BluffOdds.estimate(
-                claimedRole = claimedRole,
-                copiesPerRole = cfg.copiesPerRole,
-                deckSize = cfg.deckSize,
-                eliminatedRolesForClaimedRole = eliminated,
-                myHandContainsClaimedRole = myHand,
-                opponentFaceDownCount = myInfluenceCount, // k = my influence count (from opponents' PoV)
-                totalVisibleCards = totalVisible,
-            )
+            val confidence =
+                BluffOdds.estimate(
+                    claimedRole = claimedRole,
+                    copiesPerRole = cfg.copiesPerRole,
+                    deckSize = cfg.deckSize,
+                    eliminatedRolesForClaimedRole = eliminated,
+                    myHandContainsClaimedRole = myHand,
+                    opponentFaceDownCount = myInfluenceCount, // k = my influence count (from opponents' PoV)
+                    totalVisibleCards = totalVisible,
+                )
             // P(opponents think I'm bluffing) ≈ midpoint of bucket
-            val pBluffFromOppPov = when (confidence.pips) {
-                1 -> 0.10
-                2 -> 0.29
-                3 -> 0.46
-                4 -> 0.63
-                else -> 0.86
-            }
+            val pBluffFromOppPov =
+                when (confidence.pips) {
+                    1 -> 0.10
+                    2 -> 0.29
+                    3 -> 0.46
+                    4 -> 0.63
+                    else -> 0.86
+                }
             // P(not challenged) ≈ 1 − pBluffFromOppPov (crude but calibrated)
             return (1.0 - pBluffFromOppPov).coerceIn(0.0, 1.0)
         }
@@ -251,31 +275,38 @@ class MoveAdvisor(
 
     // ── Labels ────────────────────────────────────────────────────────────────
 
-    private fun labelFor(intent: Intent, view: PlayerView): String = when (intent) {
-        is Intent.DeclareAction -> when (val a = intent.action) {
-            Action.Income -> "Income (+1)"
-            Action.ForeignAid -> "Foreign Aid (+2)"
-            Action.Tax -> "Tax (NETA, +3)"
-            Action.Exchange -> "Exchange (JUGAADU)"
-            is Action.Coup -> "Coup → ${playerName(a.target, view)}"
-            is Action.Assassinate -> "Assassinate → ${playerName(a.target, view)}"
-            is Action.Steal -> "Steal → ${playerName(a.target, view)}"
-            is Action.Investigate -> "Investigate → ${playerName(a.target, view)} (PATRAKAAR)"
-            Action.BailPe -> "Bail Pe Bahar (restore influence)"
-            Action.Sabotage -> "Bali Khel (sacrifice → coins)"
-            is Action.Hawala -> "Hawala → ${playerName(a.to, view)}"
-            Action.Emergency -> "ADHYADESH (mass-Coup)"
+    private fun labelFor(
+        intent: Intent,
+        view: PlayerView,
+    ): String =
+        when (intent) {
+            is Intent.DeclareAction ->
+                when (val a = intent.action) {
+                    Action.Income -> "Income (+1)"
+                    Action.ForeignAid -> "Foreign Aid (+2)"
+                    Action.Tax -> "Tax (NETA, +3)"
+                    Action.Exchange -> "Exchange (JUGAADU)"
+                    is Action.Coup -> "Coup → ${playerName(a.target, view)}"
+                    is Action.Assassinate -> "Assassinate → ${playerName(a.target, view)}"
+                    is Action.Steal -> "Steal → ${playerName(a.target, view)}"
+                    is Action.Investigate -> "Investigate → ${playerName(a.target, view)} (PATRAKAAR)"
+                    Action.BailPe -> "Bail Pe Bahar (restore influence)"
+                    Action.Sabotage -> "Bali Khel (sacrifice → coins)"
+                    is Action.Hawala -> "Hawala → ${playerName(a.to, view)}"
+                    Action.Emergency -> "ADHYADESH (mass-Coup)"
+                }
+            is Intent.Block -> "Block as ${intent.role.name}"
+            is Intent.Challenge -> "Challenge"
+            is Intent.Pass -> "Pass"
+            is Intent.ChooseInfluenceToLose -> "Lose influence"
+            is Intent.ChooseExchange -> "Keep these cards"
+            is Intent.ResolveInvestigate -> if (intent.forceRedraw) "Force redraw" else "Leave card"
         }
-        is Intent.Block -> "Block as ${intent.role.name}"
-        is Intent.Challenge -> "Challenge"
-        is Intent.Pass -> "Pass"
-        is Intent.ChooseInfluenceToLose -> "Lose influence"
-        is Intent.ChooseExchange -> "Keep these cards"
-        is Intent.ResolveInvestigate -> if (intent.forceRedraw) "Force redraw" else "Leave card"
-    }
 
-    private fun playerName(id: PlayerId, view: PlayerView): String =
-        view.players.firstOrNull { it.id == id }?.let { "Seat ${it.seatIndex}" } ?: "P${id.raw}"
+    private fun playerName(
+        id: PlayerId,
+        view: PlayerView,
+    ): String = view.players.firstOrNull { it.id == id }?.let { "Seat ${it.seatIndex}" } ?: "P${id.raw}"
 
     // ── Rationale ─────────────────────────────────────────────────────────────
 
@@ -292,8 +323,11 @@ class MoveAdvisor(
         if (intent is Intent.Challenge) {
             return if (successOdds != null) {
                 val pct = (successOdds * 100).toInt()
-                if (pct >= 50) "~$pct% chance they're bluffing — challenge is favourable."
-                else "~$pct% chance they're bluffing — challenge is a long shot."
+                if (pct >= 50) {
+                    "~$pct% chance they're bluffing — challenge is favourable."
+                } else {
+                    "~$pct% chance they're bluffing — challenge is a long shot."
+                }
             } else {
                 "Challenge to test their claim."
             }
@@ -313,10 +347,13 @@ class MoveAdvisor(
                     "You hold $claimedRole — this claim is real and safe to make."
                 }
                 bluff -> {
-                    val riskStr = if (successOdds != null) {
-                        val safePct = (successOdds * 100).toInt()
-                        " (~$safePct% chance it won't be challenged)"
-                    } else ""
+                    val riskStr =
+                        if (successOdds != null) {
+                            val safePct = (successOdds * 100).toInt()
+                            " (~$safePct% chance it won't be challenged)"
+                        } else {
+                            ""
+                        }
                     "Bluff: you don't hold $claimedRole; risky if challenged$riskStr."
                 }
                 else -> "Claimed $claimedRole — assess the risk before proceeding."

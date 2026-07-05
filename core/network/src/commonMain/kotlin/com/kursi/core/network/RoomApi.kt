@@ -32,33 +32,31 @@ class RoomApi(
     private val port: Int = DEFAULT_PORT,
     clientFactory: () -> HttpClient = { HttpClient(defaultHttpClientEngine()) },
 ) : AutoCloseable {
-
     private val http: HttpClient = clientFactory()
 
     /** Creates a PRIVATE room of [playerCount] seats and returns its short code to share. */
-    suspend fun createPrivateRoom(playerCount: Int): RoomResult =
-        postForCode("/rooms/$playerCount")
+    suspend fun createPrivateRoom(playerCount: Int): RoomResult = postForCode("/rooms/$playerCount")
 
     /**
      * Joins the public quick-match queue for [playerCount]-seat games: returns the code of a waiting
      * public room (a fresh one if none is open). Two callers asking for the same size land in the same
      * room, so connecting to this code with [OnlineKursiClient.connect] pairs them.
      */
-    suspend fun quickMatch(playerCount: Int): RoomResult =
-        postForCode("/quickmatch/$playerCount")
+    suspend fun quickMatch(playerCount: Int): RoomResult = postForCode("/quickmatch/$playerCount")
 
-    private suspend fun postForCode(path: String): RoomResult = try {
-        val response = http.post("http://$host:$port$path")
-        val body = response.bodyAsText().trim()
-        when {
-            response.status.isSuccess() && body.isNotEmpty() -> RoomResult.Success(body.uppercase())
-            response.status == HttpStatusCode.BadRequest ->
-                RoomResult.Rejected(body.ifEmpty { "Invalid request" })
-            else -> RoomResult.Rejected("Server returned ${response.status.value}")
+    private suspend fun postForCode(path: String): RoomResult =
+        try {
+            val response = http.post("http://$host:$port$path")
+            val body = response.bodyAsText().trim()
+            when {
+                response.status.isSuccess() && body.isNotEmpty() -> RoomResult.Success(body.uppercase())
+                response.status == HttpStatusCode.BadRequest ->
+                    RoomResult.Rejected(body.ifEmpty { "Invalid request" })
+                else -> RoomResult.Rejected("Server returned ${response.status.value}")
+            }
+        } catch (e: Exception) {
+            RoomResult.Unreachable(e.message)
         }
-    } catch (e: Exception) {
-        RoomResult.Unreachable(e.message)
-    }
 
     override fun close() {
         http.close()
@@ -73,11 +71,17 @@ class RoomApi(
 /** The outcome of a room-lifecycle REST call, modelled so the UI can render an honest banner. */
 sealed interface RoomResult {
     /** Got a room code. [code] is uppercased (the server matches case-insensitively). */
-    data class Success(val code: String) : RoomResult
+    data class Success(
+        val code: String,
+    ) : RoomResult
 
     /** The server answered but refused (bad player count, etc.). [reason] is server-supplied. */
-    data class Rejected(val reason: String) : RoomResult
+    data class Rejected(
+        val reason: String,
+    ) : RoomResult
 
     /** The server could not be reached (offline, wrong host/port, refused connection). */
-    data class Unreachable(val cause: String?) : RoomResult
+    data class Unreachable(
+        val cause: String?,
+    ) : RoomResult
 }

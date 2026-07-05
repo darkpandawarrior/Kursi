@@ -51,17 +51,22 @@ data class CompletedMatch(
     fun encode(): String = json.encodeToString(this)
 
     /** The seed + human log distilled back into a [MatchSnapshot] for [ReplaySession] / [GameSession.restore]. */
-    fun toSnapshot(): MatchSnapshot = MatchSnapshot(
-        seed = seed,
-        players = players,
-        difficulty = difficulty,
-        humanLog = humanLog,
-        humanCount = humanCount,
-    )
+    fun toSnapshot(): MatchSnapshot =
+        MatchSnapshot(
+            seed = seed,
+            players = players,
+            difficulty = difficulty,
+            humanLog = humanLog,
+            humanCount = humanCount,
+        )
 
     companion object {
         const val CURRENT_VERSION = 1
-        private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+        private val json =
+            Json {
+                ignoreUnknownKeys = true
+                encodeDefaults = true
+            }
 
         /** Decode a persisted record; returns null on any corruption or version mismatch. */
         fun decode(raw: String?): CompletedMatch? {
@@ -85,17 +90,18 @@ data class CompletedMatch(
             personas: List<SnapPersona> = emptyList(),
             tally: SnapTally = SnapTally(),
             recordedOrdinal: Long = 0L,
-        ): CompletedMatch = CompletedMatch(
-            seed = seed,
-            players = players,
-            difficulty = difficulty.name,
-            humanLog = humanLog.map { it.toSnap() },
-            humanCount = humanCount,
-            winnerSeat = winnerSeat,
-            personas = personas,
-            tally = tally,
-            recordedOrdinal = recordedOrdinal,
-        )
+        ): CompletedMatch =
+            CompletedMatch(
+                seed = seed,
+                players = players,
+                difficulty = difficulty.name,
+                humanLog = humanLog.map { it.toSnap() },
+                humanCount = humanCount,
+                winnerSeat = winnerSeat,
+                personas = personas,
+                tally = tally,
+                recordedOrdinal = recordedOrdinal,
+            )
     }
 }
 

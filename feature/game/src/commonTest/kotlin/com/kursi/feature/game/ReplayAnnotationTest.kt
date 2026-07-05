@@ -17,12 +17,10 @@ import kotlin.test.assertTrue
  * frame carries none. Annotations are deterministic across reconstructions.
  */
 class ReplayAnnotationTest {
-
     private val seed = 4242L
     private val players = 4
 
-    private fun botsFor(): Map<PlayerId, Policy> =
-        (1 until players).associate { seat -> PlayerId(seat) to EasyPolicy(seed * 31L + seat) as Policy }
+    private fun botsFor(): Map<PlayerId, Policy> = (1 until players).associate { seat -> PlayerId(seat) to EasyPolicy(seed * 31L + seat) as Policy }
 
     private fun makeSession(): com.kursi.feature.game.session.GameSession =
         com.kursi.feature.game.session.GameSession(
@@ -47,12 +45,13 @@ class ReplayAnnotationTest {
     fun everyHumanDecisionFrame_carriesAnAnnotation_terminalDoesNot() {
         val (log, winner) = driveLog()
         assertTrue(log.isNotEmpty(), "expected at least one human move")
-        val replay = ReplaySession.build(
-            snapshot = MatchSnapshot.of(seed, players, Difficulty.Medium, log),
-            humanSeats = setOf(PlayerId(0)),
-            bots = botsFor(),
-            winnerSeat = winner,
-        )
+        val replay =
+            ReplaySession.build(
+                snapshot = MatchSnapshot.of(seed, players, Difficulty.Medium, log),
+                humanSeats = setOf(PlayerId(0)),
+                bots = botsFor(),
+                winnerSeat = winner,
+            )
 
         assertTrue(replay.humanDecisionIndices.isNotEmpty(), "expected human decisions to annotate")
 

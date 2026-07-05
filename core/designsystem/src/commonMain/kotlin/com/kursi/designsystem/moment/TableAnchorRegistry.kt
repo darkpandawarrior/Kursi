@@ -3,9 +3,9 @@ package com.kursi.designsystem.moment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -39,9 +39,13 @@ import androidx.compose.ui.layout.onGloballyPositioned
 /** A stable key identifying one measurable table element. */
 sealed interface AnchorKey {
     /** An opponent plate or the human's own seat plate, keyed by SeatId. */
-    data class Seat(val seat: SeatId) : AnchorKey
+    data class Seat(
+        val seat: SeatId,
+    ) : AnchorKey
+
     /** The human player's hand (where their cards rest). */
     object Hand : AnchorKey
+
     /** The central deck / treasury medallion — the table heart. */
     object Treasury : AnchorKey
 }
@@ -62,8 +66,16 @@ class TableAnchorRegistry {
     var overlayBounds: Rect? by mutableStateOf(null)
         private set
 
-    fun report(key: AnchorKey, rect: Rect) { bounds[key] = rect }
-    fun reportOverlay(rect: Rect) { overlayBounds = rect }
+    fun report(
+        key: AnchorKey,
+        rect: Rect,
+    ) {
+        bounds[key] = rect
+    }
+
+    fun reportOverlay(rect: Rect) {
+        overlayBounds = rect
+    }
 
     /** Root-space center of [key], or null if not yet measured. */
     fun rootCenterOf(key: AnchorKey): Offset? = bounds[key]?.center
@@ -74,17 +86,25 @@ class TableAnchorRegistry {
      * been measured yet. Returns null only when the overlay itself is unmeasured (the
      * caller then uses the full proportional fallback).
      */
-    fun measuredAnchors(seatCount: Int, fallback: TableAnchors): TableAnchors? {
+    fun measuredAnchors(
+        seatCount: Int,
+        fallback: TableAnchors,
+    ): TableAnchors? {
         val origin = overlayBounds?.topLeft ?: return null
 
         val seatCenters = HashMap<SeatId, Offset>(seatCount)
         for (seat in 0 until seatCount) {
             val measured = bounds[AnchorKey.Seat(seat)]?.center
-            seatCenters[seat] = if (measured != null) measured - origin
-                                else fallback.seat(seat)
+            seatCenters[seat] =
+                if (measured != null) {
+                    measured - origin
+                } else {
+                    fallback.seat(seat)
+                }
         }
-        val treasury = bounds[AnchorKey.Treasury]?.center?.minus(origin)
-            ?: fallback.treasuryCenter
+        val treasury =
+            bounds[AnchorKey.Treasury]?.center?.minus(origin)
+                ?: fallback.treasuryCenter
         // Off-table entry: rebase the human hand if we have it, else keep fallback edge.
         val handLocal = bounds[AnchorKey.Hand]?.center?.minus(origin)
 

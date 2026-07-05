@@ -1,8 +1,5 @@
 package com.kursi.designsystem.moment
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -29,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kursi.designsystem.BrandTokens
 import com.kursi.designsystem.KursiNeutrals
-import com.kursi.designsystem.KursiSemantics
 import com.kursi.designsystem.KursiType
 import kotlin.math.PI
 import kotlin.math.cos
@@ -64,8 +60,7 @@ data class TableAnchors(
     /** Off-screen entry point for FDI/foreign-incoming moves. Defaults to top-right corner. */
     val offTableEntry: Offset = Offset(2000f, -200f),
 ) {
-    fun seat(id: SeatId): Offset =
-        seatCenters[id] ?: Offset(500f, 500f) // fallback: centre-ish
+    fun seat(id: SeatId): Offset = seatCenters[id] ?: Offset(500f, 500f) // fallback: centre-ish
 }
 
 // ─────────────────────────── 1. Income ───────────────────────────────────────
@@ -152,8 +147,9 @@ internal fun TaxBeat(
     }
 
     repeat(3) { i ->
-        val coinProgress = ((progress - (coinStart + i * coinStep)) / 0.35f)
-            .coerceIn(0f, 1f)
+        val coinProgress =
+            ((progress - (coinStart + i * coinStep)) / 0.35f)
+                .coerceIn(0f, 1f)
         if (coinProgress > 0f) {
             CoinTrail(
                 from = seatCenter,
@@ -223,8 +219,12 @@ internal fun AssassinateBeat(
     val slipProgress = (progress / 0.45f).coerceAtMost(1f)
     TickerSlip(
         glyphText = "SUPARI",
-        effectText = if (m.actorName.isNotEmpty() && m.targetName.isNotEmpty())
-            "${m.actorName} → ${m.targetName}" else "supari",
+        effectText =
+            if (m.actorName.isNotEmpty() && m.targetName.isNotEmpty()) {
+                "${m.actorName} → ${m.targetName}"
+            } else {
+                "supari"
+            },
         tint = m.roleHue,
         progress = slipProgress,
     )
@@ -291,9 +291,10 @@ internal fun ExchangeBeat(
     // Two card flips — front content stays blank (hidden info)
     Box(Modifier.fillMaxSize()) {
         Box(
-            modifier = Modifier
-                .offset { IntOffset((seatCenter.x - 30f).roundToInt(), (seatCenter.y - 20f).roundToInt()) }
-                .wrapContentSize(),
+            modifier =
+                Modifier
+                    .offset { IntOffset((seatCenter.x - 30f).roundToInt(), (seatCenter.y - 20f).roundToInt()) }
+                    .wrapContentSize(),
         ) {
             CardFlip(
                 progress = flip1Progress,
@@ -302,9 +303,10 @@ internal fun ExchangeBeat(
             )
         }
         Box(
-            modifier = Modifier
-                .offset { IntOffset((seatCenter.x + 10f).roundToInt(), (seatCenter.y + 10f).roundToInt()) }
-                .wrapContentSize(),
+            modifier =
+                Modifier
+                    .offset { IntOffset((seatCenter.x + 10f).roundToInt(), (seatCenter.y + 10f).roundToInt()) }
+                    .wrapContentSize(),
         ) {
             CardFlip(
                 progress = flip2Progress,
@@ -333,9 +335,10 @@ internal fun ExchangeBeat(
 @Composable
 private fun CardBlankFace(tint: Color) {
     Box(
-        modifier = Modifier
-            .wrapContentSize()
-            .padding(8.dp),
+        modifier =
+            Modifier
+                .wrapContentSize()
+                .padding(8.dp),
     ) {
         Canvas(Modifier.wrapContentSize()) {
             drawRect(
@@ -367,26 +370,29 @@ internal fun CoupBeat(
     val targetCenter = anchors.seat(m.target)
 
     // Full-screen vignette dim (0→0.20, holds through 0.80)
-    val dimAlpha = when {
-        progress < 0.10f -> progress / 0.10f * 0.55f
-        progress < 0.80f -> 0.55f
-        else -> lerp(0.55f, 0f, (progress - 0.80f) / 0.20f)
-    }
+    val dimAlpha =
+        when {
+            progress < 0.10f -> progress / 0.10f * 0.55f
+            progress < 0.80f -> 0.55f
+            else -> lerp(0.55f, 0f, (progress - 0.80f) / 0.20f)
+        }
     if (dimAlpha > 0f) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = dimAlpha)),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = dimAlpha)),
         )
     }
 
     // Striker glyph "⬡" flicks across frame (0.10→0.45)
     val strikerProgress = ((progress - 0.10f) / 0.35f).coerceIn(0f, 1f)
     if (strikerProgress in 0f..1f) {
-        val strikerPos = Offset(
-            x = lerp(actorCenter.x, targetCenter.x, easeInQuart(strikerProgress)),
-            y = lerp(actorCenter.y, targetCenter.y, easeInQuart(strikerProgress)),
-        )
+        val strikerPos =
+            Offset(
+                x = lerp(actorCenter.x, targetCenter.x, easeInQuart(strikerProgress)),
+                y = lerp(actorCenter.y, targetCenter.y, easeInQuart(strikerProgress)),
+            )
         val strikerAlpha = if (strikerProgress > 0.85f) lerp(1f, 0f, (strikerProgress - 0.85f) / 0.15f) else 1f
         Canvas(Modifier.fillMaxSize()) {
             drawCircle(
@@ -547,10 +553,11 @@ internal fun ChallengeBeat(
         drawPath(
             path = path,
             color = BrandTokens.StampRed.copy(alpha = 0.8f),
-            style = Stroke(
-                width = 2.dp.toPx(),
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)),
-            ),
+            style =
+                Stroke(
+                    width = 2.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)),
+                ),
         )
     }
 
@@ -589,25 +596,27 @@ internal fun RevealBeat(
         Box(contentAlignment = Alignment.Center) {
             Text(
                 text = m.claimedRole,
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (m.truthful) m.roleHue else BrandTokens.StampRed,
-                    textAlign = TextAlign.Center,
-                ),
+                style =
+                    TextStyle(
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (m.truthful) m.roleHue else BrandTokens.StampRed,
+                        textAlign = TextAlign.Center,
+                    ),
             )
         }
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .offset {
-                IntOffset(
-                    (claimantCenter.x - 40.dp.toPx()).roundToInt(),
-                    (claimantCenter.y - 60.dp.toPx()).roundToInt(),
-                )
-            },
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .offset {
+                    IntOffset(
+                        (claimantCenter.x - 40.dp.toPx()).roundToInt(),
+                        (claimantCenter.y - 60.dp.toPx()).roundToInt(),
+                    )
+                },
     ) {
         CardFlip(
             progress = flipProgress,
@@ -621,11 +630,12 @@ internal fun RevealBeat(
     // Verdict stamp (0.65→1.0)
     val stampProgress = ((progress - 0.65f) / 0.35f).coerceIn(0f, 1f)
     if (stampProgress > 0f) {
-        val (stampWord, stampColor) = if (m.truthful) {
-            "SACH!" to m.roleHue
-        } else {
-            "JHOOTH!" to BrandTokens.StampRed
-        }
+        val (stampWord, stampColor) =
+            if (m.truthful) {
+                "SACH!" to m.roleHue
+            } else {
+                "JHOOTH!" to BrandTokens.StampRed
+            }
 
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             RubberStamp(
@@ -653,7 +663,9 @@ internal fun RevealBeat(
                 drawRect(
                     color = Color.Gray.copy(alpha = greyAlpha),
                     topLeft = Offset(claimantCenter.x - 44.dp.toPx(), claimantCenter.y - 62.dp.toPx()),
-                    size = androidx.compose.ui.geometry.Size(88.dp.toPx(), 124.dp.toPx()),
+                    size =
+                        androidx.compose.ui.geometry
+                            .Size(88.dp.toPx(), 124.dp.toPx()),
                 )
             }
         }
@@ -677,14 +689,15 @@ internal fun InfluenceLossBeat(
     // CardFlip (0→0.40): card turns face-up, revealing the lost role
     val flipProgress = (progress / 0.40f).coerceAtMost(1f)
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .offset {
-                IntOffset(
-                    (seatCenter.x - 36.dp.toPx()).roundToInt(),
-                    (seatCenter.y - 52.dp.toPx()).roundToInt(),
-                )
-            },
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .offset {
+                    IntOffset(
+                        (seatCenter.x - 36.dp.toPx()).roundToInt(),
+                        (seatCenter.y - 52.dp.toPx()).roundToInt(),
+                    )
+                },
     ) {
         CardFlip(
             progress = flipProgress,
@@ -692,11 +705,12 @@ internal fun InfluenceLossBeat(
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = m.lostRole,
-                        style = TextStyle(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = m.roleHue,
-                        ),
+                        style =
+                            TextStyle(
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = m.roleHue,
+                            ),
                     )
                 }
             },
@@ -724,7 +738,9 @@ internal fun InfluenceLossBeat(
             drawRect(
                 color = Color.Gray.copy(alpha = greyAlpha),
                 topLeft = Offset(seatCenter.x - 38.dp.toPx(), seatCenter.y - 54.dp.toPx()),
-                size = androidx.compose.ui.geometry.Size(76.dp.toPx(), 108.dp.toPx()),
+                size =
+                    androidx.compose.ui.geometry
+                        .Size(76.dp.toPx(), 108.dp.toPx()),
             )
         }
     }
@@ -758,7 +774,9 @@ internal fun EliminationBeat(
             drawRect(
                 color = Color.Gray.copy(alpha = wipeProgress),
                 topLeft = Offset(seatCenter.x - 80.dp.toPx(), seatCenter.y - 80.dp.toPx()),
-                size = androidx.compose.ui.geometry.Size(160.dp.toPx(), 160.dp.toPx()),
+                size =
+                    androidx.compose.ui.geometry
+                        .Size(160.dp.toPx(), 160.dp.toPx()),
             )
         }
     }
@@ -767,20 +785,24 @@ internal fun EliminationBeat(
     val toastAlpha = ((progress - 0.55f) / 0.45f).coerceIn(0f, 1f)
     if (toastAlpha > 0f) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .offset {
-                    IntOffset(
-                        (seatCenter.x - 80.dp.toPx()).roundToInt(),
-                        (seatCenter.y + 50.dp.toPx()).roundToInt(),
-                    )
-                }
-                .alpha(toastAlpha),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .offset {
+                        IntOffset(
+                            (seatCenter.x - 80.dp.toPx()).roundToInt(),
+                            (seatCenter.y + 50.dp.toPx()).roundToInt(),
+                        )
+                    }.alpha(toastAlpha),
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = if (m.playerName.isNotEmpty()) "${m.playerName} ki KURSI GAYI 🪑"
-                       else "KURSI GAYI\nthand rakh 🪑",
+                text =
+                    if (m.playerName.isNotEmpty()) {
+                        "${m.playerName} ki KURSI GAYI 🪑"
+                    } else {
+                        "KURSI GAYI\nthand rakh 🪑"
+                    },
                 style = KursiType.label_sm.copy(fontSize = 13.sp),
                 color = KursiNeutrals.TextSecondary,
                 textAlign = TextAlign.Center,
@@ -838,15 +860,15 @@ internal fun TurnHandoffBeat(
         }
         if (m.nextName.isNotEmpty()) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .offset {
-                        IntOffset(
-                            (toCenter.x - 60.dp.toPx()).roundToInt(),
-                            (toCenter.y + 28.dp.toPx()).roundToInt(),
-                        )
-                    }
-                    .alpha(rimAlpha),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .offset {
+                            IntOffset(
+                                (toCenter.x - 60.dp.toPx()).roundToInt(),
+                                (toCenter.y + 28.dp.toPx()).roundToInt(),
+                            )
+                        }.alpha(rimAlpha),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -870,10 +892,19 @@ internal fun WinBeat(
     progress: Float,
     anchors: TableAnchors,
 ) {
-    val victoryCenter = Offset(
-        x = anchors.seatCenters.values.map { it.x }.average().toFloat(),
-        y = anchors.seatCenters.values.map { it.y }.average().toFloat(),
-    ).takeIf { it.x.isFinite() } ?: Offset(500f, 400f)
+    val victoryCenter =
+        Offset(
+            x =
+                anchors.seatCenters.values
+                    .map { it.x }
+                    .average()
+                    .toFloat(),
+            y =
+                anchors.seatCenters.values
+                    .map { it.y }
+                    .average()
+                    .toFloat(),
+        ).takeIf { it.x.isFinite() } ?: Offset(500f, 400f)
 
     val victorCenter = anchors.seat(m.actorSeat)
 
@@ -899,7 +930,9 @@ internal fun WinBeat(
                 drawRect(
                     color = BrandTokens.PaperCream.copy(alpha = alpha * 0.8f),
                     topLeft = Offset(x, fallY),
-                    size = androidx.compose.ui.geometry.Size(8.dp.toPx(), 4.dp.toPx()),
+                    size =
+                        androidx.compose.ui.geometry
+                            .Size(8.dp.toPx(), 4.dp.toPx()),
                 )
             }
         }
@@ -923,10 +956,11 @@ internal fun WinBeat(
     val taglineAlpha = ((progress - 0.70f) / 0.30f).coerceIn(0f, 1f)
     if (taglineAlpha > 0f) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .offset { IntOffset(victoryCenter.x.roundToInt(), (victoryCenter.y + 60.dp.toPx()).roundToInt()) }
-                .alpha(taglineAlpha),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .offset { IntOffset(victoryCenter.x.roundToInt(), (victoryCenter.y + 60.dp.toPx()).roundToInt()) }
+                    .alpha(taglineAlpha),
             contentAlignment = Alignment.Center,
         ) {
             Text(

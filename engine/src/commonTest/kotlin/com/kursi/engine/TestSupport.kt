@@ -4,6 +4,7 @@ package com.kursi.engine
 val P = (0..9).map { PlayerId(it) }
 
 fun ApplyOutcome.ok(): GameState = (this as ApplyOutcome.Accepted).state
+
 fun ApplyOutcome.evts(): List<GameEvent> = (this as ApplyOutcome.Accepted).events
 
 fun cfg(n: Int): GameConfig = GameConfig.forPlayers(n)
@@ -24,7 +25,13 @@ fun buildState(
     var id = 0
     for (role in config.activeRoles) repeat(config.copiesPerRole) { cards[CardId(id++)] = role }
     val byRole: Map<Role, MutableList<CardId>> =
-        config.activeRoles.associateWith { r -> cards.filter { it.value == r }.keys.sortedBy { it.raw }.toMutableList() }
+        config.activeRoles.associateWith { r ->
+            cards
+                .filter { it.value == r }
+                .keys
+                .sortedBy { it.raw }
+                .toMutableList()
+        }
 
     val locations = LinkedHashMap<CardId, CardLocation>()
     val players = ArrayList<PlayerState>()

@@ -8,9 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,9 +21,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,9 +34,6 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -47,20 +41,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kursi.engine.Role
 import kotlin.math.PI
-import kotlin.math.sin
 import kotlin.math.cos
+import kotlin.math.sin
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // §8 LICENSE RAJ DECO — "teak-and-brass council chamber" components.
@@ -70,6 +66,7 @@ import kotlin.math.cos
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────── Uniform "inspect" gesture ────────────────────────
+
 /**
  * The one press-and-hold inspect gesture used across the whole table: a TAP fires the
  * element's PRIMARY action, a LONG-PRESS fires [onLongClick] (always "inspect — read the
@@ -108,15 +105,18 @@ fun Modifier.inspectable(
     )
     return this
         .then(
-            if (pressShape != null) Modifier.shadow(
-                elevation = pressShadow,
-                shape = pressShape,
-                ambientColor = BrandTokens.TeakInk,
-                spotColor = Color.Black,
-                clip = false,
-            ) else Modifier
-        )
-        .scale(pressScale)
+            if (pressShape != null) {
+                Modifier.shadow(
+                    elevation = pressShadow,
+                    shape = pressShape,
+                    ambientColor = BrandTokens.TeakInk,
+                    spotColor = Color.Black,
+                    clip = false,
+                )
+            } else {
+                Modifier
+            },
+        ).scale(pressScale)
         .pointerInput(enabled) {
             if (!enabled) return@pointerInput
             detectTapGestures(
@@ -126,8 +126,7 @@ fun Modifier.inspectable(
                     pressed = false
                 },
             )
-        }
-        .combinedClickable(
+        }.combinedClickable(
             enabled = enabled,
             interactionSource = remember { MutableInteractionSource() },
             indication = null,
@@ -205,8 +204,12 @@ private fun DrawScope.drawGuilloche(
                 var x = 0f
                 while (x <= w) {
                     val y = h / 2f + amp * sin(freq * x + phaseOffset)
-                    if (first) { path.moveTo(x, y); first = false }
-                    else path.lineTo(x, y)
+                    if (first) {
+                        path.moveTo(x, y)
+                        first = false
+                    } else {
+                        path.lineTo(x, y)
+                    }
                     x += 1.dp.toPx()
                 }
                 drawPath(path, lineColor, style = Stroke(lineWidth))
@@ -216,12 +219,18 @@ private fun DrawScope.drawGuilloche(
             // Two concentric rectangles with more gap
             val inset1 = 2.dp.toPx()
             val inset2 = 5.dp.toPx()
-            drawRect(lineColor,
-                Offset(inset1, inset1), Size(w - inset1 * 2, h - inset1 * 2),
-                style = Stroke(0.8.dp.toPx()))
-            drawRect(lineColor,
-                Offset(inset2, inset2), Size(w - inset2 * 2, h - inset2 * 2),
-                style = Stroke(0.8.dp.toPx()))
+            drawRect(
+                lineColor,
+                Offset(inset1, inset1),
+                Size(w - inset1 * 2, h - inset1 * 2),
+                style = Stroke(0.8.dp.toPx()),
+            )
+            drawRect(
+                lineColor,
+                Offset(inset2, inset2),
+                Size(w - inset2 * 2, h - inset2 * 2),
+                style = Stroke(0.8.dp.toPx()),
+            )
         }
         RoleFramePattern.Ticked -> {
             // PATRAKAAR — a single ring with radial tick marks along the edge (a press /
@@ -258,24 +267,31 @@ private fun DrawScope.drawGuilloche(
  * Canvas deboss: inner shadow on cream card face to simulate card sitting inside a bezel.
  * Multiplatform-safe — uses drawRect with alpha gradient simulation.
  */
-private fun DrawScope.drawDeboss(shadowColor: Color = Color.Black, alpha: Float = 0.12f) {
+private fun DrawScope.drawDeboss(
+    shadowColor: Color = Color.Black,
+    alpha: Float = 0.12f,
+) {
     val w = size.width
     val h = size.height
     val depth = 6.dp.toPx()
     // Top edge darker (shadow from above)
     drawRect(
-        brush = Brush.verticalGradient(
-            listOf(shadowColor.copy(alpha = alpha), Color.Transparent),
-            startY = 0f, endY = depth,
-        ),
+        brush =
+            Brush.verticalGradient(
+                listOf(shadowColor.copy(alpha = alpha), Color.Transparent),
+                startY = 0f,
+                endY = depth,
+            ),
         size = Size(w, depth),
     )
     // Left edge
     drawRect(
-        brush = Brush.horizontalGradient(
-            listOf(shadowColor.copy(alpha = alpha * 0.6f), Color.Transparent),
-            startX = 0f, endX = depth,
-        ),
+        brush =
+            Brush.horizontalGradient(
+                listOf(shadowColor.copy(alpha = alpha * 0.6f), Color.Transparent),
+                startX = 0f,
+                endX = depth,
+            ),
         size = Size(depth, h),
     )
 }
@@ -289,8 +305,12 @@ private fun DrawScope.drawPaperGrain(color: Color = BrandTokens.CreamInk) {
     val alpha = TextureTokens.paperGrainAlpha
     var x = 0f
     while (x < size.width) {
-        drawLine(color.copy(alpha = alpha), Offset(x, 0f), Offset(x + size.height * 0.3f, size.height),
-            strokeWidth = 0.5.dp.toPx())
+        drawLine(
+            color.copy(alpha = alpha),
+            Offset(x, 0f),
+            Offset(x + size.height * 0.3f, size.height),
+            strokeWidth = 0.5.dp.toPx(),
+        )
         x += step
     }
 }
@@ -342,10 +362,11 @@ private fun Modifier.brassSpecular(): Modifier {
     val progress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(3000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
         label = "brassHighlight",
     )
     return drawBehind {
@@ -355,17 +376,18 @@ private fun Modifier.brassSpecular(): Modifier {
         val bandWidth = w * TextureTokens.brassSpecularWidth
         val startX = -bandWidth + progress * (w + bandWidth)
         drawRect(
-            brush = Brush.horizontalGradient(
-                listOf(
-                    Color.Transparent,
-                    BrandTokens.GoldAntique.copy(alpha = 0.12f),
-                    BrandTokens.GoldAntique.copy(alpha = 0.22f),
-                    BrandTokens.GoldAntique.copy(alpha = 0.12f),
-                    Color.Transparent,
+            brush =
+                Brush.horizontalGradient(
+                    listOf(
+                        Color.Transparent,
+                        BrandTokens.GoldAntique.copy(alpha = 0.12f),
+                        BrandTokens.GoldAntique.copy(alpha = 0.22f),
+                        BrandTokens.GoldAntique.copy(alpha = 0.12f),
+                        Color.Transparent,
+                    ),
+                    startX = startX,
+                    endX = startX + bandWidth,
                 ),
-                startX = startX,
-                endX = startX + bandWidth,
-            ),
             size = size,
         )
     }
@@ -414,63 +436,94 @@ fun RoleCard(
     val iconSize: Dp
     val badgeSize: Dp
     when (size) {
-        CardSize.Large  -> { cardW = 160.dp; cardH = 220.dp; headerPad = 12.dp; iconSize = 44.dp; badgeSize = 28.dp }
-        CardSize.Medium -> { cardW = 120.dp; cardH = 164.dp; headerPad = 8.dp;  iconSize = 32.dp; badgeSize = 22.dp }
-        CardSize.Small  -> { cardW = 64.dp;  cardH = 96.dp;  headerPad = 6.dp;  iconSize = 18.dp; badgeSize = 16.dp }
+        CardSize.Large -> {
+            cardW = 160.dp
+            cardH = 220.dp
+            headerPad = 12.dp
+            iconSize = 44.dp
+            badgeSize = 28.dp
+        }
+        CardSize.Medium -> {
+            cardW = 120.dp
+            cardH = 164.dp
+            headerPad = 8.dp
+            iconSize = 32.dp
+            badgeSize = 22.dp
+        }
+        CardSize.Small -> {
+            cardW = 64.dp
+            cardH = 96.dp
+            headerPad = 6.dp
+            iconSize = 18.dp
+            badgeSize = 16.dp
+        }
     }
 
     // When lost/revealed: mute everything
-    val bezzelColor  = if (lost) Color(0xFF6A6A6A) else BrandTokens.BrassAged
-    val paperColor   = if (lost) Color(0xFF888880).copy(alpha = 0.55f) else BrandTokens.PaperCream
-    val inkColor     = if (lost) Color(0xFF888880) else BrandTokens.CreamInk
-    val enamleColor  = if (lost) Color(0xFF666666) else visual.color
-    val borderWidth  = if (lifted) 2.5.dp else 2.dp
-    val elevation    = if (lifted) 10.dp else if (size == CardSize.Large) 5.dp else 3.dp
+    val bezzelColor = if (lost) Color(0xFF6A6A6A) else BrandTokens.BrassAged
+    val paperColor = if (lost) Color(0xFF888880).copy(alpha = 0.55f) else BrandTokens.PaperCream
+    val inkColor = if (lost) Color(0xFF888880) else BrandTokens.CreamInk
+    val enamleColor = if (lost) Color(0xFF666666) else visual.color
+    val borderWidth = if (lifted) 2.5.dp else 2.dp
+    val elevation =
+        if (lifted) {
+            10.dp
+        } else if (size == CardSize.Large) {
+            5.dp
+        } else {
+            3.dp
+        }
 
     // Outer brass bezel box
     Box(
-        modifier = modifier
-            .size(width = cardW, height = cardH)
-            // Brass bezel: gradient top-to-bottom (gold highlight → brass → dark brass shadow)
-            .clip(Squircle(radius))
-            .background(
-                brush = Brush.verticalGradient(
-                    listOf(
-                        BrandTokens.GoldAntique.copy(alpha = if (lost) 0.3f else 1f),
-                        BrandTokens.BrassAged.copy(alpha   = if (lost) 0.3f else 1f),
-                        BrandTokens.BrassDark.copy(alpha   = if (lost) 0.3f else 1f),
-                    ),
+        modifier =
+            modifier
+                .size(width = cardW, height = cardH)
+                // Brass bezel: gradient top-to-bottom (gold highlight → brass → dark brass shadow)
+                .clip(Squircle(radius))
+                .background(
+                    brush =
+                        Brush.verticalGradient(
+                            listOf(
+                                BrandTokens.GoldAntique.copy(alpha = if (lost) 0.3f else 1f),
+                                BrandTokens.BrassAged.copy(alpha = if (lost) 0.3f else 1f),
+                                BrandTokens.BrassDark.copy(alpha = if (lost) 0.3f else 1f),
+                            ),
+                        ),
+                ).brassSpecular()
+                // Thin inner dark rim inside the brass
+                .border(borderWidth, bezzelColor, Squircle(radius))
+                .then(
+                    if (onLongClick != null) {
+                        Modifier.inspectable(
+                            onClick = onClick ?: {},
+                            onLongClick = onLongClick,
+                            pressShape = Squircle(radius),
+                        )
+                    } else {
+                        Modifier
+                    },
                 ),
-            )
-            .brassSpecular()
-            // Thin inner dark rim inside the brass
-            .border(borderWidth, bezzelColor, Squircle(radius))
-            .then(
-                if (onLongClick != null) Modifier.inspectable(
-                    onClick = onClick ?: {},
-                    onLongClick = onLongClick,
-                    pressShape = Squircle(radius),
-                ) else Modifier
-            ),
     ) {
         // Inner paper inset (2.5dp inset from bezel edges)
         val inset = if (size == CardSize.Small) 2.dp else 3.dp
         Box(
-            modifier = Modifier
-                .padding(inset)
-                .fillMaxSize()
-                .clip(Squircle(KursiRadii.lg))
-                .background(paperColor)
-                .drawBehind {
-                    // Guilloché border pattern for this role
-                    if (!lost && size != CardSize.Small) {
-                        drawGuilloche(visual.framePattern, visual.color)
-                    }
-                    // Deboss inner shadow
-                    drawDeboss()
-                    // Paper grain
-                    if (size == CardSize.Large) drawPaperGrain()
-                },
+            modifier =
+                Modifier
+                    .padding(inset)
+                    .fillMaxSize()
+                    .clip(Squircle(KursiRadii.lg))
+                    .background(paperColor)
+                    .drawBehind {
+                        // Guilloché border pattern for this role
+                        if (!lost && size != CardSize.Small) {
+                            drawGuilloche(visual.framePattern, visual.color)
+                        }
+                        // Deboss inner shadow
+                        drawDeboss()
+                        // Paper grain
+                        if (size == CardSize.Large) drawPaperGrain()
+                    },
         ) {
             if (size == CardSize.Small) {
                 // Compact: just role initial + enamel badge
@@ -480,11 +533,12 @@ fun RoleCard(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(
-                            modifier = Modifier
-                                .size(badgeSize)
-                                .clip(CircleShape)
-                                .background(enamleColor)
-                                .border(1.dp, BrandTokens.BrassAged, CircleShape),
+                            modifier =
+                                Modifier
+                                    .size(badgeSize)
+                                    .clip(CircleShape)
+                                    .background(enamleColor)
+                                    .border(1.dp, BrandTokens.BrassAged, CircleShape),
                             contentAlignment = Alignment.Center,
                         ) {
                             RoleGlyph(
@@ -501,8 +555,11 @@ fun RoleCard(
                             color = inkColor,
                         )
                         if (lost) {
-                            Text("LOST", style = KursiType.caption.copy(fontSize = 6.sp),
-                                color = BrandTokens.Oxblood)
+                            Text(
+                                "LOST",
+                                style = KursiType.caption.copy(fontSize = 6.sp),
+                                color = BrandTokens.Oxblood,
+                            )
                         }
                     }
                 }
@@ -511,227 +568,241 @@ fun RoleCard(
                 // corner (not inline in the header Row) so the role TITLE + flavor subtitle
                 // own the full header width and never get squeezed into "JUGAA…"/"Netaji Vac…".
                 Box(modifier = Modifier.fillMaxSize()) {
-                Column(modifier = Modifier.fillMaxSize()) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // ── Top header: enamel badge left + role name (full width) ──────
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = headerPad, end = headerPad, top = headerPad * 0.7f, bottom = headerPad * 0.7f),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            // Enamel badge roundel — role color inside brass ring
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .size(badgeSize)
+                                        .clip(CircleShape)
+                                        .background(enamleColor)
+                                        .border(
+                                            1.5.dp,
+                                            Brush.radialGradient(
+                                                listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark),
+                                            ),
+                                            CircleShape,
+                                        ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                RoleGlyph(
+                                    role = role,
+                                    tint = KursiNeutrals.Cream,
+                                    deboss = false,
+                                    modifier = Modifier.size(if (size == CardSize.Medium) 13.dp else 15.dp),
+                                )
+                            }
 
-                    // ── Top header: enamel badge left + role name (full width) ──────
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = headerPad, end = headerPad, top = headerPad * 0.7f, bottom = headerPad * 0.7f),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        // Enamel badge roundel — role color inside brass ring
+                            // Reserve a little room on the right for the overlaid LIVE/LOST pill.
+                            // Pill is short; a small reserve keeps the title clear of it while
+                            // leaving the title nearly the full header width.
+                            Column(modifier = Modifier.weight(1f).padding(end = 6.dp)) {
+                                // Role TITLE — length-driven base size so the longest role
+                                // (JUGAADU, 7 chars) fits the header band in full without clipping
+                                // to "JUGAA…". AutoSizeText still shrinks further for longer
+                                // localized names, but the base already fits the known set.
+                                val titleBase =
+                                    when {
+                                        size == CardSize.Medium -> if (role.name.length >= 6) 11.sp else 13.sp
+                                        role.name.length >= 7 -> 11.sp // JUGAADU
+                                        role.name.length >= 5 -> 13.sp // BABU/BHAI/NETA + headroom
+                                        else -> 14.sp
+                                    }
+                                AutoSizeText(
+                                    text = role.name,
+                                    style = KursiType.cardRole.copy(fontSize = titleBase).rozha(),
+                                    color = inkColor,
+                                    maxLines = 1,
+                                    minSize = 6.sp,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                if (size == CardSize.Large) {
+                                    // Flavor SUBTITLE — fit-to-width over up to 2 lines so
+                                    // "Netaji Vachan" / "Babu Filewala" read in full instead of
+                                    // "Netaji Vac…"/"Babu File…".
+                                    AutoSizeText(
+                                        text = visual.characterName,
+                                        style = KursiType.caption.copy(fontSize = 9.sp, lineHeight = 11.sp),
+                                        color = inkColor.copy(alpha = 0.55f),
+                                        maxLines = 2,
+                                        minSize = 7.sp,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                }
+                            }
+                        }
+
+                        // Thin brass rule below header
                         Box(
-                            modifier = Modifier
-                                .size(badgeSize)
-                                .clip(CircleShape)
-                                .background(enamleColor)
-                                .border(1.5.dp,
-                                    Brush.radialGradient(
-                                        listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            listOf(
+                                                BrandTokens.BrassDark.copy(alpha = 0.3f),
+                                                BrandTokens.GoldAntique.copy(alpha = 0.8f),
+                                                BrandTokens.BrassDark.copy(alpha = 0.3f),
+                                            ),
+                                        ),
                                     ),
-                                    CircleShape,
-                                ),
+                        )
+
+                        // ── Centre glyph panel ────────────────────────────────────────
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                                    .background(
+                                        // Very subtle role tint over cream
+                                        visual.color.copy(alpha = if (lost) 0.04f else 0.07f),
+                                    ),
                             contentAlignment = Alignment.Center,
                         ) {
+                            // Bespoke intaglio role mark — engraved into the cream paper.
                             RoleGlyph(
                                 role = role,
-                                tint = KursiNeutrals.Cream,
-                                deboss = false,
-                                modifier = Modifier.size(if (size == CardSize.Medium) 13.dp else 15.dp),
+                                tint =
+                                    if (lost) {
+                                        inkColor.copy(alpha = 0.22f)
+                                    } else {
+                                        visual.color.copy(alpha = 0.62f)
+                                    },
+                                deboss = !lost,
+                                weight = 1.05f,
+                                modifier = Modifier.size(iconSize),
                             )
                         }
 
-                        // Reserve a little room on the right for the overlaid LIVE/LOST pill.
-                        // Pill is short; a small reserve keeps the title clear of it while
-                        // leaving the title nearly the full header width.
-                        Column(modifier = Modifier.weight(1f).padding(end = 6.dp)) {
-                            // Role TITLE — length-driven base size so the longest role
-                            // (JUGAADU, 7 chars) fits the header band in full without clipping
-                            // to "JUGAA…". AutoSizeText still shrinks further for longer
-                            // localized names, but the base already fits the known set.
-                            val titleBase = when {
-                                size == CardSize.Medium -> if (role.name.length >= 6) 11.sp else 13.sp
-                                role.name.length >= 7    -> 11.sp   // JUGAADU
-                                role.name.length >= 5    -> 13.sp   // BABU/BHAI/NETA + headroom
-                                else                     -> 14.sp
-                            }
-                            AutoSizeText(
-                                text = role.name,
-                                style = KursiType.cardRole.copy(fontSize = titleBase).rozha(),
-                                color = inkColor,
-                                maxLines = 1,
-                                minSize = 6.sp,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            if (size == CardSize.Large) {
-                                // Flavor SUBTITLE — fit-to-width over up to 2 lines so
-                                // "Netaji Vachan" / "Babu Filewala" read in full instead of
-                                // "Netaji Vac…"/"Babu File…".
-                                AutoSizeText(
-                                    text = visual.characterName,
-                                    style = KursiType.caption.copy(fontSize = 9.sp, lineHeight = 11.sp),
-                                    color = inkColor.copy(alpha = 0.55f),
+                        // Thin brass rule above power lines
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            listOf(
+                                                BrandTokens.BrassDark.copy(alpha = 0.3f),
+                                                BrandTokens.GoldAntique.copy(alpha = 0.8f),
+                                                BrandTokens.BrassDark.copy(alpha = 0.3f),
+                                            ),
+                                        ),
+                                    ),
+                        )
+
+                        // ── Power lines (certificate small-caps style) ────────────────
+                        Column(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = headerPad, vertical = 6.dp),
+                            verticalArrangement = Arrangement.spacedBy(3.dp),
+                        ) {
+                            if (size == CardSize.Medium) {
+                                // Medium spotlight medallion: the narrow claim band can't hold the
+                                // full "ACTION · Tax +3 Khokhas" and TextAutoSize does NOT reliably
+                                // shrink in the live app (it clipped to "…Tax +3 Kh…"). Use the
+                                // pre-abbreviated deterministic short claim at a FIXED small font,
+                                // wrapped to 2 lines — guaranteed to fit, never clipped.
+                                Text(
+                                    text = visual.claimLineShort,
+                                    style =
+                                        KursiType.body.copy(
+                                            fontSize = 9.sp,
+                                            lineHeight = 11.sp,
+                                            letterSpacing = 0.2.sp,
+                                        ),
+                                    color = if (lost) inkColor.copy(alpha = 0.35f) else inkColor,
                                     maxLines = 2,
+                                    overflow = TextOverflow.Visible,
+                                    softWrap = true,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            } else {
+                                AutoSizeText(
+                                    // The longest power line — BHAI's "Assassinate −3 (target loses
+                                    // influence)". Allow up to 3 lines and a smaller floor so the full
+                                    // catch text reads instead of "…loses influe…".
+                                    text = visual.actionLine,
+                                    style =
+                                        KursiType.body.copy(
+                                            fontSize = 11.sp,
+                                            lineHeight = 13.sp,
+                                            letterSpacing = 0.2.sp,
+                                        ),
+                                    color = if (lost) inkColor.copy(alpha = 0.35f) else inkColor,
+                                    maxLines = 3,
                                     minSize = 7.sp,
                                     modifier = Modifier.fillMaxWidth(),
                                 )
                             }
+                            if (size == CardSize.Medium) {
+                                // Deterministic short block line for the narrow spotlight band —
+                                // "BLOCKS · Foreign Aid" overflows; shorten the prefix to "Blk:" and
+                                // allow a 2-line wrap at a fixed font so it never clips.
+                                val blockShort = visual.blockLine.replace("BLOCKS · ", "Blk: ")
+                                Text(
+                                    text = blockShort,
+                                    style =
+                                        KursiType.body.copy(
+                                            fontSize = 8.5.sp,
+                                            lineHeight = 10.sp,
+                                            letterSpacing = 0.2.sp,
+                                        ),
+                                    color = if (lost) inkColor.copy(alpha = 0.25f) else inkColor.copy(alpha = 0.65f),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Visible,
+                                    softWrap = true,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            } else {
+                                AutoSizeText(
+                                    text = visual.blockLine,
+                                    style =
+                                        KursiType.body.copy(
+                                            fontSize = 10.sp,
+                                            lineHeight = 12.sp,
+                                            letterSpacing = 0.2.sp,
+                                        ),
+                                    color = if (lost) inkColor.copy(alpha = 0.25f) else inkColor.copy(alpha = 0.65f),
+                                    maxLines = 1,
+                                    minSize = 7.sp,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                            // Faint serial number — certificate feel
+                            if (size == CardSize.Large) {
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    text = "No. ${role.ordinal + 1}/${KursiColors.roles.size}",
+                                    style = KursiType.numeric.copy(fontSize = 8.sp),
+                                    color = inkColor.copy(alpha = 0.28f),
+                                    modifier = Modifier.align(Alignment.End),
+                                )
+                            }
                         }
                     }
-
-                    // Thin brass rule below header
+                    // LIVE / LOST pill — overlaid top-end so it never steals title width.
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(
-                                        BrandTokens.BrassDark.copy(alpha = 0.3f),
-                                        BrandTokens.GoldAntique.copy(alpha = 0.8f),
-                                        BrandTokens.BrassDark.copy(alpha = 0.3f),
-                                    ),
-                                ),
-                            ),
-                    )
-
-                    // ── Centre glyph panel ────────────────────────────────────────
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .background(
-                                // Very subtle role tint over cream
-                                visual.color.copy(alpha = if (lost) 0.04f else 0.07f),
-                            ),
-                        contentAlignment = Alignment.Center,
+                        modifier =
+                            Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(horizontal = headerPad, vertical = headerPad * 0.7f),
                     ) {
-                        // Bespoke intaglio role mark — engraved into the cream paper.
-                        RoleGlyph(
-                            role = role,
-                            tint = if (lost)
-                                inkColor.copy(alpha = 0.22f)
-                            else
-                                visual.color.copy(alpha = 0.62f),
-                            deboss = !lost,
-                            weight = 1.05f,
-                            modifier = Modifier.size(iconSize),
-                        )
+                        AlivePill(lost = lost)
                     }
-
-                    // Thin brass rule above power lines
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(
-                                        BrandTokens.BrassDark.copy(alpha = 0.3f),
-                                        BrandTokens.GoldAntique.copy(alpha = 0.8f),
-                                        BrandTokens.BrassDark.copy(alpha = 0.3f),
-                                    ),
-                                ),
-                            ),
-                    )
-
-                    // ── Power lines (certificate small-caps style) ────────────────
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = headerPad, vertical = 6.dp),
-                        verticalArrangement = Arrangement.spacedBy(3.dp),
-                    ) {
-                        if (size == CardSize.Medium) {
-                            // Medium spotlight medallion: the narrow claim band can't hold the
-                            // full "ACTION · Tax +3 Khokhas" and TextAutoSize does NOT reliably
-                            // shrink in the live app (it clipped to "…Tax +3 Kh…"). Use the
-                            // pre-abbreviated deterministic short claim at a FIXED small font,
-                            // wrapped to 2 lines — guaranteed to fit, never clipped.
-                            Text(
-                                text = visual.claimLineShort,
-                                style = KursiType.body.copy(
-                                    fontSize = 9.sp,
-                                    lineHeight = 11.sp,
-                                    letterSpacing = 0.2.sp,
-                                ),
-                                color = if (lost) inkColor.copy(alpha = 0.35f) else inkColor,
-                                maxLines = 2,
-                                overflow = TextOverflow.Visible,
-                                softWrap = true,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        } else {
-                            AutoSizeText(
-                                // The longest power line — BHAI's "Assassinate −3 (target loses
-                                // influence)". Allow up to 3 lines and a smaller floor so the full
-                                // catch text reads instead of "…loses influe…".
-                                text = visual.actionLine,
-                                style = KursiType.body.copy(
-                                    fontSize = 11.sp,
-                                    lineHeight = 13.sp,
-                                    letterSpacing = 0.2.sp,
-                                ),
-                                color = if (lost) inkColor.copy(alpha = 0.35f) else inkColor,
-                                maxLines = 3,
-                                minSize = 7.sp,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        }
-                        if (size == CardSize.Medium) {
-                            // Deterministic short block line for the narrow spotlight band —
-                            // "BLOCKS · Foreign Aid" overflows; shorten the prefix to "Blk:" and
-                            // allow a 2-line wrap at a fixed font so it never clips.
-                            val blockShort = visual.blockLine.replace("BLOCKS · ", "Blk: ")
-                            Text(
-                                text = blockShort,
-                                style = KursiType.body.copy(
-                                    fontSize = 8.5.sp,
-                                    lineHeight = 10.sp,
-                                    letterSpacing = 0.2.sp,
-                                ),
-                                color = if (lost) inkColor.copy(alpha = 0.25f) else inkColor.copy(alpha = 0.65f),
-                                maxLines = 2,
-                                overflow = TextOverflow.Visible,
-                                softWrap = true,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        } else {
-                            AutoSizeText(
-                                text = visual.blockLine,
-                                style = KursiType.body.copy(
-                                    fontSize = 10.sp,
-                                    lineHeight = 12.sp,
-                                    letterSpacing = 0.2.sp,
-                                ),
-                                color = if (lost) inkColor.copy(alpha = 0.25f) else inkColor.copy(alpha = 0.65f),
-                                maxLines = 1,
-                                minSize = 7.sp,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        }
-                        // Faint serial number — certificate feel
-                        if (size == CardSize.Large) {
-                            Spacer(Modifier.height(2.dp))
-                            Text(
-                                text = "No. ${role.ordinal + 1}/${KursiColors.roles.size}",
-                                style = KursiType.numeric.copy(fontSize = 8.sp),
-                                color = inkColor.copy(alpha = 0.28f),
-                                modifier = Modifier.align(Alignment.End),
-                            )
-                        }
-                    }
-                }
-                // LIVE / LOST pill — overlaid top-end so it never steals title width.
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(horizontal = headerPad, vertical = headerPad * 0.7f),
-                ) {
-                    AlivePill(lost = lost)
-                }
                 }
             }
         }
@@ -741,14 +812,15 @@ fun RoleCard(
 @Composable
 private fun AlivePill(lost: Boolean) {
     val label = if (lost) "LOST" else "LIVE"
-    val bg    = if (lost) BrandTokens.Oxblood.copy(alpha = 0.85f) else BrandTokens.BrassDark.copy(alpha = 0.85f)
+    val bg = if (lost) BrandTokens.Oxblood.copy(alpha = 0.85f) else BrandTokens.BrassDark.copy(alpha = 0.85f)
     val textColor = if (lost) KursiNeutrals.Cream else BrandTokens.GoldAntique
     Box(
-        modifier = Modifier
-            .clip(Squircle(KursiRadii.xs))
-            .background(bg)
-            .border(0.5.dp, BrandTokens.BrassAged.copy(alpha = 0.6f), Squircle(KursiRadii.xs))
-            .padding(horizontal = 5.dp, vertical = 2.dp),
+        modifier =
+            Modifier
+                .clip(Squircle(KursiRadii.xs))
+                .background(bg)
+                .border(0.5.dp, BrandTokens.BrassAged.copy(alpha = 0.6f), Squircle(KursiRadii.xs))
+                .padding(horizontal = 5.dp, vertical = 2.dp),
     ) {
         Text(
             text = label,
@@ -762,6 +834,7 @@ private fun AlivePill(lost: Boolean) {
 // ─────────────────────────── ChipState (§4 opponent chip state ring) ──────────
 
 // ─────────────────────────── AutoSizeText (fit-to-width) ─────────────────────
+
 /**
  * Single-line text that shrinks to fit its width instead of clipping or ellipsizing.
  * Used for labels that must show their real text in full — opponent persona names,
@@ -783,29 +856,31 @@ fun AutoSizeText(
     BasicText(
         text = text,
         modifier = modifier,
-        style = style.merge(
-            TextStyle(
-                color = color,
-                textAlign = textAlign ?: TextAlign.Unspecified,
+        style =
+            style.merge(
+                TextStyle(
+                    color = color,
+                    textAlign = textAlign ?: TextAlign.Unspecified,
+                ),
             ),
-        ),
         maxLines = maxLines,
         overflow = TextOverflow.Ellipsis,
-        autoSize = TextAutoSize.StepBased(
-            minFontSize = minSize,
-            maxFontSize = style.fontSize.takeIf { it != TextUnit.Unspecified } ?: 16.sp,
-            stepSize = 0.5.sp,
-        ),
+        autoSize =
+            TextAutoSize.StepBased(
+                minFontSize = minSize,
+                maxFontSize = style.fontSize.takeIf { it != TextUnit.Unspecified } ?: 16.sp,
+                stepSize = 0.5.sp,
+            ),
     )
 }
 
 /** State ring signals for an opponent chip — spec §4. */
 enum class ChipState {
     Idle,
-    Acting,       // their turn — thick gold glow
-    Responding,   // can respond — amber pulsing ring
-    ValidTarget,  // green reticle glow + slight scale
-    Eliminated,   // 42% dim, "OUT"
+    Acting, // their turn — thick gold glow
+    Responding, // can respond — amber pulsing ring
+    ValidTarget, // green reticle glow + slight scale
+    Eliminated, // 42% dim, "OUT"
 }
 
 // ─────────────────────────── OpponentPlate (Step 1) ──────────────────────────
@@ -825,13 +900,13 @@ enum class ChipState {
 fun OpponentPlate(
     name: String,
     seatColor: Color,
-    roleColor: Color?,        // null if unknown (face-down)
-    role: Role?,              // null if unknown (face-down) — drives the bespoke crest glyph
+    roleColor: Color?, // null if unknown (face-down)
+    role: Role?, // null if unknown (face-down) — drives the bespoke crest glyph
     coins: Int,
-    influenceAlive: Int,      // 0..2 — alive (filled ◆)
-    influenceLost: Int,       // 0..2 — lost (hollow ◇)
-    claim: String?,           // e.g. "⚖ claims NETA" or null — the LIVE/pending claim
-    lastAction: String?,      // e.g. "↳ FDI +2" or null
+    influenceAlive: Int, // 0..2 — alive (filled ◆)
+    influenceLost: Int, // 0..2 — lost (hollow ◇)
+    claim: String?, // e.g. "⚖ claims NETA" or null — the LIVE/pending claim
+    lastAction: String?, // e.g. "↳ FDI +2" or null
     state: ChipState,
     modifier: Modifier = Modifier,
     /**
@@ -896,18 +971,20 @@ fun OpponentPlate(
     }
 
     // Ring color + width from state
-    val ringColor: Color = when (state) {
-        ChipState.Acting      -> brassColor.copy(alpha = pulseAlpha)
-        ChipState.Responding  -> verdigris
-        ChipState.ValidTarget -> alertRed
-        ChipState.Eliminated  -> brassDim.copy(alpha = 0.4f)
-        ChipState.Idle        -> brassColor.copy(alpha = 0.55f)
-    }
-    val ringWidth: androidx.compose.ui.unit.Dp = when (state) {
-        ChipState.Acting, ChipState.ValidTarget -> KursiDimens.stroke_ring_active
-        ChipState.Responding                     -> KursiDimens.stroke_ring_active
-        else                                     -> KursiDimens.stroke_ring_idle
-    }
+    val ringColor: Color =
+        when (state) {
+            ChipState.Acting -> brassColor.copy(alpha = pulseAlpha)
+            ChipState.Responding -> verdigris
+            ChipState.ValidTarget -> alertRed
+            ChipState.Eliminated -> brassDim.copy(alpha = 0.4f)
+            ChipState.Idle -> brassColor.copy(alpha = 0.55f)
+        }
+    val ringWidth: androidx.compose.ui.unit.Dp =
+        when (state) {
+            ChipState.Acting, ChipState.ValidTarget -> KursiDimens.stroke_ring_active
+            ChipState.Responding -> KursiDimens.stroke_ring_active
+            else -> KursiDimens.stroke_ring_idle
+        }
 
     // Responsive metrics: height + crest track the plate width so dense tables
     // (10p) stay compact without cramping, and sparse tables (2p) feel generous.
@@ -922,11 +999,12 @@ fun OpponentPlate(
 
     // ── P2 active-actor spotlight: the acting seat lifts + scales + warm rim glow.
     val acting = state == ChipState.Acting
-    val targetScale = when {
-        acting -> 1.045f
-        state == ChipState.ValidTarget -> 1.025f
-        else -> 1f
-    }
+    val targetScale =
+        when {
+            acting -> 1.045f
+            state == ChipState.ValidTarget -> 1.025f
+            else -> 1f
+        }
     val animScale by animateFloatAsState(targetScale, tween(220), label = "plateScale")
     // Non-focal seats recede (P2: exactly one focal point).
     val recede = !acting && state != ChipState.ValidTarget && state != ChipState.Responding && !eliminated
@@ -936,7 +1014,14 @@ fun OpponentPlate(
     // (paired with the deeper lifted shadow below) so it stacks ABOVE its neighbours
     // instead of merely scaling in place. The lift settles smoothly as turns pass.
     val liftY by animateFloatAsState(
-        targetValue = if (acting) -5f else if (state == ChipState.Responding) -2.5f else 0f,
+        targetValue =
+            if (acting) {
+                -5f
+            } else if (state == ChipState.Responding) {
+                -2.5f
+            } else {
+                0f
+            },
         animationSpec = tween(240),
         label = "plateLiftY",
     )
@@ -944,45 +1029,48 @@ fun OpponentPlate(
     val plateShape = Squircle(KursiDimens.r_md)
 
     Box(
-        modifier = modifier
-            .graphicsLayer {
-                translationY = liftY * density
-            }
-            .scale(animScale)
-            // P3 depth: layered contact shadow, lifted when this seat is acting.
-            .tableDepth(plateShape, elevation = 5.dp, lifted = acting)
-            // Acting seats get a premium holographic rim-light: a soft brass bloom plus
-            // a thin brass↔cyan glint travelling the bezel (RETRO-FUTURIST §2). The
-            // role hue tints it when known, else aged brass.
-            .then(
-                if (acting) Modifier.holoRimLight(
-                    accent = (roleColor ?: brassColor),
-                    phase = holoPhase,
-                    cornerRadius = KursiDimens.r_md,
-                    intensity = 0.55f + 0.45f * pulseAlpha,
-                ) else Modifier
-            )
-            .size(width = plateWidth, height = plateHeight)
-            .clip(plateShape)
-            // Brass-tinted enamel ground with a subtle vertical sheen (lit top).
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFF1E1812),
-                        enamelBase,
-                        BrandTokens.TeakInk,
+        modifier =
+            modifier
+                .graphicsLayer {
+                    translationY = liftY * density
+                }.scale(animScale)
+                // P3 depth: layered contact shadow, lifted when this seat is acting.
+                .tableDepth(plateShape, elevation = 5.dp, lifted = acting)
+                // Acting seats get a premium holographic rim-light: a soft brass bloom plus
+                // a thin brass↔cyan glint travelling the bezel (RETRO-FUTURIST §2). The
+                // role hue tints it when known, else aged brass.
+                .then(
+                    if (acting) {
+                        Modifier.holoRimLight(
+                            accent = (roleColor ?: brassColor),
+                            phase = holoPhase,
+                            cornerRadius = KursiDimens.r_md,
+                            intensity = 0.55f + 0.45f * pulseAlpha,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ).size(width = plateWidth, height = plateHeight)
+                .clip(plateShape)
+                // Brass-tinted enamel ground with a subtle vertical sheen (lit top).
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFF1E1812),
+                            enamelBase,
+                            BrandTokens.TeakInk,
+                        ),
                     ),
-                ),
-            )
-            .border(ringWidth, ringColor, plateShape)
-            .embossEdge(KursiDimens.r_md)
-            .inspectable(onClick = onClick, onLongClick = onLongClick, enabled = !eliminated, pressShape = plateShape),
+                ).border(ringWidth, ringColor, plateShape)
+                .embossEdge(KursiDimens.r_md)
+                .inspectable(onClick = onClick, onLongClick = onLongClick, enabled = !eliminated, pressShape = plateShape),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs)
-                .alpha(plateAlpha * contentDim),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs)
+                    .alpha(plateAlpha * contentDim),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             // ── Row 1: crest + name + coins + influence pips ──────────
@@ -994,11 +1082,12 @@ fun OpponentPlate(
                 // Crest medallion — scales with plate width
                 val crestColor = roleColor ?: seatColor
                 Box(
-                    modifier = Modifier
-                        .size(crestSize)
-                        .clip(CircleShape)
-                        .background(crestColor.copy(alpha = 0.85f))
-                        .border(KursiDimens.stroke_hairline, brassColor.copy(alpha = 0.6f), CircleShape),
+                    modifier =
+                        Modifier
+                            .size(crestSize)
+                            .clip(CircleShape)
+                            .background(crestColor.copy(alpha = 0.85f))
+                            .border(KursiDimens.stroke_hairline, brassColor.copy(alpha = 0.6f), CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     if (eliminated) {
@@ -1048,20 +1137,22 @@ fun OpponentPlate(
                     val aliveCount = (totalSlots - lostCount).coerceAtLeast(0)
                     repeat(aliveCount) {
                         Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(brassColor.copy(alpha = 0.85f))
-                                .border(0.5.dp, BrandTokens.GoldAntique.copy(alpha = 0.6f), CircleShape),
+                            modifier =
+                                Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(brassColor.copy(alpha = 0.85f))
+                                    .border(0.5.dp, BrandTokens.GoldAntique.copy(alpha = 0.6f), CircleShape),
                         )
                     }
                     repeat(lostCount) {
                         Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color.Transparent)
-                                .border(1.dp, brassDim.copy(alpha = 0.5f), CircleShape),
+                            modifier =
+                                Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.Transparent)
+                                    .border(1.dp, brassDim.copy(alpha = 0.5f), CircleShape),
                         )
                     }
                 }
@@ -1084,42 +1175,51 @@ fun OpponentPlate(
                 val claimText = standingText ?: "— no claim yet —"
                 // Caught-bluffing tints the slot oxblood; a live/standing claim reads brass
                 // (verdigris while this seat is mid-reaction). Empty stays dim.
-                val claimColor = when {
-                    !slotFilled        -> brassDim
-                    claimCaught        -> BrandTokens.StampRed
-                    hasLiveClaim && state == ChipState.Responding -> verdigris
-                    else               -> brassColor
-                }
-                val slotBg = when {
-                    !slotFilled  -> enamelBase
-                    claimCaught  -> BrandTokens.Oxblood.copy(alpha = 0.18f)
-                    hasLiveClaim -> brassColor.copy(alpha = 0.16f)
-                    else         -> brassColor.copy(alpha = 0.07f)
-                }
-                val slotBorder = when {
-                    !slotFilled  -> brassDim.copy(alpha = 0.2f)
-                    claimCaught  -> BrandTokens.StampRed.copy(alpha = 0.5f)
-                    hasLiveClaim -> brassColor.copy(alpha = 0.55f)
-                    else         -> brassColor.copy(alpha = 0.3f)
-                }
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(Squircle(KursiDimens.r_sm))
-                        .background(slotBg)
-                        .border(KursiDimens.stroke_hairline, slotBorder, Squircle(KursiDimens.r_sm))
-                        .padding(horizontal = 4.dp, vertical = 2.dp),
-                ) {
-                    val suffix = when {
-                        hasLiveClaim && state == ChipState.Responding -> " ?"
-                        claimCaught  -> " ✗"
-                        claimProven  -> " ✓"
-                        else         -> ""
+                val claimColor =
+                    when {
+                        !slotFilled -> brassDim
+                        claimCaught -> BrandTokens.StampRed
+                        hasLiveClaim && state == ChipState.Responding -> verdigris
+                        else -> brassColor
                     }
+                val slotBg =
+                    when {
+                        !slotFilled -> enamelBase
+                        claimCaught -> BrandTokens.Oxblood.copy(alpha = 0.18f)
+                        hasLiveClaim -> brassColor.copy(alpha = 0.16f)
+                        else -> brassColor.copy(alpha = 0.07f)
+                    }
+                val slotBorder =
+                    when {
+                        !slotFilled -> brassDim.copy(alpha = 0.2f)
+                        claimCaught -> BrandTokens.StampRed.copy(alpha = 0.5f)
+                        hasLiveClaim -> brassColor.copy(alpha = 0.55f)
+                        else -> brassColor.copy(alpha = 0.3f)
+                    }
+                Box(
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .clip(Squircle(KursiDimens.r_sm))
+                            .background(slotBg)
+                            .border(KursiDimens.stroke_hairline, slotBorder, Squircle(KursiDimens.r_sm))
+                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                ) {
+                    val suffix =
+                        when {
+                            hasLiveClaim && state == ChipState.Responding -> " ?"
+                            claimCaught -> " ✗"
+                            claimProven -> " ✓"
+                            else -> ""
+                        }
                     Text(
                         text = "$claimText$suffix",
-                        style = if (slotFilled) KursiType.label_micro.copy(fontStyle = FontStyle.Normal)
-                                else KursiType.label_micro.copy(fontStyle = FontStyle.Italic),
+                        style =
+                            if (slotFilled) {
+                                KursiType.label_micro.copy(fontStyle = FontStyle.Normal)
+                            } else {
+                                KursiType.label_micro.copy(fontStyle = FontStyle.Italic)
+                            },
                         color = claimColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -1147,11 +1247,12 @@ fun OpponentPlate(
                     SuspicionChip(pips = suspicionPips, label = suspicionLabel)
                 }
                 Text(
-                    text = when {
-                        eliminated -> "eliminated — no longer in play"
-                        state == ChipState.ValidTarget -> "▸ tap to target · hold for dossier"
-                        else -> "▸ hold for dossier"
-                    },
+                    text =
+                        when {
+                            eliminated -> "eliminated — no longer in play"
+                            state == ChipState.ValidTarget -> "▸ tap to target · hold for dossier"
+                            else -> "▸ hold for dossier"
+                        },
                     style = KursiType.label_micro,
                     color = brassDim.copy(alpha = 0.45f),
                     maxLines = 1,
@@ -1165,6 +1266,7 @@ fun OpponentPlate(
 }
 
 // ─────────────────────────── SuspicionChip (§ odds read) ─────────────────────
+
 /**
  * Compact brass odds chip showing a 1..5 suspicion read on an opponent's standing
  * claim. Mirrors the Informatics `OddsChip` brass-on-teak styling (pip row + label)
@@ -1174,28 +1276,34 @@ fun OpponentPlate(
  * [label] short human read, e.g. "coin-flip", "long shot".
  */
 @Composable
-fun SuspicionChip(pips: Int, label: String) {
+fun SuspicionChip(
+    pips: Int,
+    label: String,
+) {
     val clamped = pips.coerceIn(1, 5)
-    val pipColor = when (clamped) {
-        1, 2 -> KursiSemantics.Success
-        3 -> BrandTokens.PendingAmber
-        else -> KursiSemantics.Danger
-    }
+    val pipColor =
+        when (clamped) {
+            1, 2 -> KursiSemantics.Success
+            3 -> BrandTokens.PendingAmber
+            else -> KursiSemantics.Danger
+        }
     Row(
-        modifier = Modifier
-            .clip(Squircle(KursiRadii.sm))
-            .background(BrandTokens.TeakDark.copy(alpha = 0.90f))
-            .border(KursiDimens.stroke_hairline, BrandTokens.BrassAged.copy(alpha = 0.5f), Squircle(KursiRadii.sm))
-            .padding(horizontal = 4.dp, vertical = 1.dp),
+        modifier =
+            Modifier
+                .clip(Squircle(KursiRadii.sm))
+                .background(BrandTokens.TeakDark.copy(alpha = 0.90f))
+                .border(KursiDimens.stroke_hairline, BrandTokens.BrassAged.copy(alpha = 0.5f), Squircle(KursiRadii.sm))
+                .padding(horizontal = 4.dp, vertical = 1.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         repeat(5) { idx ->
             Box(
-                modifier = Modifier
-                    .size(5.dp)
-                    .clip(CircleShape)
-                    .background(if (idx < clamped) pipColor else KursiNeutrals.TextDisabled),
+                modifier =
+                    Modifier
+                        .size(5.dp)
+                        .clip(CircleShape)
+                        .background(if (idx < clamped) pipColor else KursiNeutrals.TextDisabled),
             )
         }
         Spacer(Modifier.width(2.dp))
@@ -1210,7 +1318,10 @@ fun SuspicionChip(pips: Int, label: String) {
 }
 
 /** Middle-ellipsis helper: if [text] exceeds [maxLen] chars, renders "first…last". */
-private fun middleEllipsis(text: String, maxLen: Int): String {
+private fun middleEllipsis(
+    text: String,
+    maxLen: Int,
+): String {
     if (text.length <= maxLen) return text
     val half = (maxLen - 1) / 2
     return text.take(half) + "…" + text.takeLast(half)
@@ -1229,15 +1340,16 @@ fun SeatAvatar(
     size: Dp = 36.dp,
 ) {
     Box(
-        modifier = modifier
-            .size(size)
-            .clip(Squircle(KursiRadii.md))
-            .background(
-                brush = Brush.radialGradient(
-                    listOf(BrandTokens.GoldAntique, color, BrandTokens.BrassDark),
-                ),
-            )
-            .border(1.dp, BrandTokens.BrassAged, Squircle(KursiRadii.md)),
+        modifier =
+            modifier
+                .size(size)
+                .clip(Squircle(KursiRadii.md))
+                .background(
+                    brush =
+                        Brush.radialGradient(
+                            listOf(BrandTokens.GoldAntique, color, BrandTokens.BrassDark),
+                        ),
+                ).border(1.dp, BrandTokens.BrassAged, Squircle(KursiRadii.md)),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -1262,38 +1374,40 @@ fun CoinPill(
     alpha: Float = 1f,
 ) {
     Row(
-        modifier = modifier
-            .clip(Squircle(KursiRadii.sm))
-            .background(
-                brush = Brush.horizontalGradient(
-                    listOf(
-                        BrandTokens.BrassDark.copy(alpha = 0.7f * alpha),
-                        BrandTokens.BrassAged.copy(alpha = 0.85f * alpha),
-                        BrandTokens.BrassDark.copy(alpha = 0.7f * alpha),
+        modifier =
+            modifier
+                .clip(Squircle(KursiRadii.sm))
+                .background(
+                    brush =
+                        Brush.horizontalGradient(
+                            listOf(
+                                BrandTokens.BrassDark.copy(alpha = 0.7f * alpha),
+                                BrandTokens.BrassAged.copy(alpha = 0.85f * alpha),
+                                BrandTokens.BrassDark.copy(alpha = 0.7f * alpha),
+                            ),
+                        ),
+                ).border(
+                    1.dp,
+                    Brush.horizontalGradient(
+                        listOf(BrandTokens.GoldAntique.copy(alpha = alpha), BrandTokens.BrassDark.copy(alpha = alpha)),
                     ),
-                ),
-            )
-            .border(1.dp,
-                Brush.horizontalGradient(
-                    listOf(BrandTokens.GoldAntique.copy(alpha = alpha), BrandTokens.BrassDark.copy(alpha = alpha)),
-                ),
-                Squircle(KursiRadii.sm),
-            )
-            .padding(horizontal = 6.dp, vertical = 3.dp),
+                    Squircle(KursiRadii.sm),
+                ).padding(horizontal = 6.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         // Brass coin roundel emblem
         Box(
-            modifier = Modifier
-                .size(12.dp)
-                .clip(CircleShape)
-                .background(
-                    brush = Brush.radialGradient(
-                        listOf(BrandTokens.GoldAntique.copy(alpha = alpha), BrandTokens.BrassDark.copy(alpha = alpha)),
-                    ),
-                )
-                .border(0.8.dp, BrandTokens.BrassDark.copy(alpha = alpha), CircleShape),
+            modifier =
+                Modifier
+                    .size(12.dp)
+                    .clip(CircleShape)
+                    .background(
+                        brush =
+                            Brush.radialGradient(
+                                listOf(BrandTokens.GoldAntique.copy(alpha = alpha), BrandTokens.BrassDark.copy(alpha = alpha)),
+                            ),
+                    ).border(0.8.dp, BrandTokens.BrassDark.copy(alpha = alpha), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -1331,21 +1445,23 @@ fun InfluencePips(
     ) {
         repeat(alive) {
             Box(
-                modifier = Modifier
-                    .size(9.dp)
-                    .clip(CircleShape)
-                    .background(BrandTokens.BrassAged.copy(alpha = 0.8f * alpha))
-                    .border(0.5.dp, BrandTokens.GoldAntique.copy(alpha = 0.6f * alpha), CircleShape),
+                modifier =
+                    Modifier
+                        .size(9.dp)
+                        .clip(CircleShape)
+                        .background(BrandTokens.BrassAged.copy(alpha = 0.8f * alpha))
+                        .border(0.5.dp, BrandTokens.GoldAntique.copy(alpha = 0.6f * alpha), CircleShape),
             )
         }
         lost.forEach { role ->
             val roleColor = KursiColors.forRole(role).color
             Box(
-                modifier = Modifier
-                    .size(9.dp)
-                    .clip(CircleShape)
-                    .background(roleColor.copy(alpha = 0.60f * alpha))
-                    .border(0.5.dp, BrandTokens.BrassDark.copy(alpha = 0.4f * alpha), CircleShape),
+                modifier =
+                    Modifier
+                        .size(9.dp)
+                        .clip(CircleShape)
+                        .background(roleColor.copy(alpha = 0.60f * alpha))
+                        .border(0.5.dp, BrandTokens.BrassDark.copy(alpha = 0.4f * alpha), CircleShape),
             )
         }
     }
@@ -1366,16 +1482,17 @@ fun ClaimChip(
 ) {
     val label = if (verified) text else "$text?"
     Box(
-        modifier = modifier
-            .clip(Squircle(KursiRadii.sm))
-            .background(color.copy(alpha = 0.20f))
-            .border(0.8.dp,
-                Brush.horizontalGradient(
-                    listOf(BrandTokens.BrassAged.copy(alpha = 0.7f), color.copy(alpha = 0.6f)),
-                ),
-                Squircle(KursiRadii.sm),
-            )
-            .padding(horizontal = 7.dp, vertical = 2.dp),
+        modifier =
+            modifier
+                .clip(Squircle(KursiRadii.sm))
+                .background(color.copy(alpha = 0.20f))
+                .border(
+                    0.8.dp,
+                    Brush.horizontalGradient(
+                        listOf(BrandTokens.BrassAged.copy(alpha = 0.7f), color.copy(alpha = 0.6f)),
+                    ),
+                    Squircle(KursiRadii.sm),
+                ).padding(horizontal = 7.dp, vertical = 2.dp),
     ) {
         Text(
             text = label,
@@ -1405,26 +1522,32 @@ fun KursiActionButton(
     onClick: () -> Unit = {},
 ) {
     val radius = KursiRadii.xl
-    val bg = when {
-        !enabled       -> BrandTokens.TeakDark
-        roleAccent != null -> roleAccent.copy(alpha = 0.14f)
-        else           -> BrandTokens.TeakMid
-    }
-    val borderBrush = when {
-        !enabled       -> Brush.horizontalGradient(listOf(BrandTokens.BrassDark.copy(alpha = 0.4f), BrandTokens.BrassDark.copy(alpha = 0.4f)))
-        roleAccent != null -> Brush.horizontalGradient(listOf(roleAccent, BrandTokens.BrassAged.copy(alpha = 0.7f)))
-        else           -> Brush.horizontalGradient(listOf(BrandTokens.GoldAntique.copy(alpha = 0.9f), BrandTokens.BrassAged.copy(alpha = 0.7f), BrandTokens.BrassDark.copy(alpha = 0.5f)))
-    }
+    val bg =
+        when {
+            !enabled -> BrandTokens.TeakDark
+            roleAccent != null -> roleAccent.copy(alpha = 0.14f)
+            else -> BrandTokens.TeakMid
+        }
+    val borderBrush =
+        when {
+            !enabled -> Brush.horizontalGradient(listOf(BrandTokens.BrassDark.copy(alpha = 0.4f), BrandTokens.BrassDark.copy(alpha = 0.4f)))
+            roleAccent != null -> Brush.horizontalGradient(listOf(roleAccent, BrandTokens.BrassAged.copy(alpha = 0.7f)))
+            else ->
+                Brush.horizontalGradient(
+                    listOf(BrandTokens.GoldAntique.copy(alpha = 0.9f), BrandTokens.BrassAged.copy(alpha = 0.7f), BrandTokens.BrassDark.copy(alpha = 0.5f)),
+                )
+        }
     val contentAlpha = if (enabled) 1f else 0.40f
 
     Box(
-        modifier = modifier
-            .clip(Squircle(radius))
-            .background(bg)
-            .border(1.5.dp, borderBrush, Squircle(radius))
-            .then(if (enabled) Modifier.brassSpecular() else Modifier)
-            .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+        modifier =
+            modifier
+                .clip(Squircle(radius))
+                .background(bg)
+                .border(1.5.dp, borderBrush, Squircle(radius))
+                .then(if (enabled) Modifier.brassSpecular() else Modifier)
+                .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
+                .padding(horizontal = 16.dp, vertical = 10.dp),
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Row(
@@ -1478,33 +1601,36 @@ fun StatusSpine(
     trailingTimer: String? = null,
     modifier: Modifier = Modifier,
 ) {
-    val accentColor: Color = when (tone) {
-        SpineTone.Info    -> BrandTokens.BrassAged
-        SpineTone.Pending -> BrandTokens.PendingAmber
-        SpineTone.Danger  -> BrandTokens.StampRed
-        SpineTone.Gold    -> BrandTokens.GoldAntique
-    }
-    val bgBrush = Brush.verticalGradient(
-        listOf(
-            BrandTokens.BrassDark.copy(alpha = 0.85f),
-            BrandTokens.BrassAged.copy(alpha = 0.90f),
-            BrandTokens.BrassDark.copy(alpha = 0.85f),
-        ),
-    )
+    val accentColor: Color =
+        when (tone) {
+            SpineTone.Info -> BrandTokens.BrassAged
+            SpineTone.Pending -> BrandTokens.PendingAmber
+            SpineTone.Danger -> BrandTokens.StampRed
+            SpineTone.Gold -> BrandTokens.GoldAntique
+        }
+    val bgBrush =
+        Brush.verticalGradient(
+            listOf(
+                BrandTokens.BrassDark.copy(alpha = 0.85f),
+                BrandTokens.BrassAged.copy(alpha = 0.90f),
+                BrandTokens.BrassDark.copy(alpha = 0.85f),
+            ),
+        )
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(Squircle(KursiRadii.lg))
-            .background(bgBrush)
-            .brassSpecular()
-            .border(1.5.dp,
-                Brush.horizontalGradient(
-                    listOf(accentColor.copy(alpha = 0.8f), BrandTokens.GoldAntique.copy(alpha = 0.5f), accentColor.copy(alpha = 0.8f)),
-                ),
-                Squircle(KursiRadii.lg),
-            )
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(Squircle(KursiRadii.lg))
+                .background(bgBrush)
+                .brassSpecular()
+                .border(
+                    1.5.dp,
+                    Brush.horizontalGradient(
+                        listOf(accentColor.copy(alpha = 0.8f), BrandTokens.GoldAntique.copy(alpha = 0.5f), accentColor.copy(alpha = 0.8f)),
+                    ),
+                    Squircle(KursiRadii.lg),
+                ).padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -1548,23 +1674,25 @@ fun OutcomeTag(
     kind: OutcomeKind,
     modifier: Modifier = Modifier,
 ) {
-    val (label, color) = when (kind) {
-        OutcomeKind.Neutral       -> "OK"      to KursiNeutrals.TextMuted
-        OutcomeKind.Success       -> "TRUE"    to KursiSemantics.Success
-        OutcomeKind.ChallengeFail -> "PROVED"  to KursiSemantics.Block
-        OutcomeKind.BluffCaught   -> "BLUFF"   to KursiSemantics.Danger
-        OutcomeKind.Block         -> "BLOCKED" to KursiSemantics.Pending
-        OutcomeKind.Eliminated    -> "OUT"     to KursiSemantics.Danger
-    }
+    val (label, color) =
+        when (kind) {
+            OutcomeKind.Neutral -> "OK" to KursiNeutrals.TextMuted
+            OutcomeKind.Success -> "TRUE" to KursiSemantics.Success
+            OutcomeKind.ChallengeFail -> "PROVED" to KursiSemantics.Block
+            OutcomeKind.BluffCaught -> "BLUFF" to KursiSemantics.Danger
+            OutcomeKind.Block -> "BLOCKED" to KursiSemantics.Pending
+            OutcomeKind.Eliminated -> "OUT" to KursiSemantics.Danger
+        }
     Box(
-        modifier = modifier
-            .clip(Squircle(KursiRadii.sm))
-            .background(color.copy(alpha = 0.15f))
-            .border(0.5.dp,
-                Brush.horizontalGradient(listOf(BrandTokens.BrassAged.copy(alpha = 0.5f), color.copy(alpha = 0.5f))),
-                Squircle(KursiRadii.sm),
-            )
-            .padding(horizontal = 5.dp, vertical = 2.dp),
+        modifier =
+            modifier
+                .clip(Squircle(KursiRadii.sm))
+                .background(color.copy(alpha = 0.15f))
+                .border(
+                    0.5.dp,
+                    Brush.horizontalGradient(listOf(BrandTokens.BrassAged.copy(alpha = 0.5f), color.copy(alpha = 0.5f))),
+                    Squircle(KursiRadii.sm),
+                ).padding(horizontal = 5.dp, vertical = 2.dp),
     ) {
         Text(
             text = label,
@@ -1588,22 +1716,25 @@ fun CountdownBar(
 ) {
     val color = if (fraction < 0.25f) BrandTokens.StampRed else BrandTokens.PendingAmber
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(5.dp)
-            .clip(Squircle(KursiRadii.xs))
-            .background(BrandTokens.TeakDark),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(5.dp)
+                .clip(Squircle(KursiRadii.xs))
+                .background(BrandTokens.TeakDark),
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth(fraction.coerceIn(0f, 1f))
-                .fillMaxHeight()
-                .clip(Squircle(KursiRadii.xs))
-                .background(
-                    brush = Brush.horizontalGradient(
-                        listOf(color, color.copy(alpha = 0.7f)),
+            modifier =
+                Modifier
+                    .fillMaxWidth(fraction.coerceIn(0f, 1f))
+                    .fillMaxHeight()
+                    .clip(Squircle(KursiRadii.xs))
+                    .background(
+                        brush =
+                            Brush.horizontalGradient(
+                                listOf(color, color.copy(alpha = 0.7f)),
+                            ),
                     ),
-                ),
         )
     }
 }
@@ -1621,46 +1752,49 @@ fun FeltTableBackground(
     content: @Composable () -> Unit = {},
 ) {
     Box(
-        modifier = modifier
-            .clip(Squircle(KursiRadii.xxl))
-            .background(
-                brush = Brush.radialGradient(
-                    // Warm teak: slightly lighter at centre, darker at edges
-                    colors = listOf(
-                        BrandTokens.TeakMid,
-                        BrandTokens.TeakDark,
+        modifier =
+            modifier
+                .clip(Squircle(KursiRadii.xxl))
+                .background(
+                    brush =
+                        Brush.radialGradient(
+                            // Warm teak: slightly lighter at centre, darker at edges
+                            colors =
+                                listOf(
+                                    BrandTokens.TeakMid,
+                                    BrandTokens.TeakDark,
+                                ),
+                        ),
+                ).drawBehind {
+                    // Ghosted chair emblem
+                    drawChairEmblem()
+                    // Faint engraved hatch on teak panels
+                    val hatchAlpha = TextureTokens.teakHatchAlpha
+                    val step = 18.dp.toPx()
+                    var x = 0f
+                    while (x < size.width) {
+                        drawLine(
+                            BrandTokens.GoldAntique.copy(alpha = hatchAlpha),
+                            Offset(x, 0f),
+                            Offset(x, size.height),
+                            strokeWidth = 0.5.dp.toPx(),
+                        )
+                        x += step
+                    }
+                }.border(
+                    2.dp,
+                    // Brass inlay border: gradient to simulate engraved edge
+                    Brush.sweepGradient(
+                        listOf(
+                            BrandTokens.GoldAntique,
+                            BrandTokens.BrassAged,
+                            BrandTokens.BrassDark,
+                            BrandTokens.BrassAged,
+                            BrandTokens.GoldAntique,
+                        ),
                     ),
+                    Squircle(KursiRadii.xxl),
                 ),
-            )
-            .drawBehind {
-                // Ghosted chair emblem
-                drawChairEmblem()
-                // Faint engraved hatch on teak panels
-                val hatchAlpha = TextureTokens.teakHatchAlpha
-                val step = 18.dp.toPx()
-                var x = 0f
-                while (x < size.width) {
-                    drawLine(
-                        BrandTokens.GoldAntique.copy(alpha = hatchAlpha),
-                        Offset(x, 0f), Offset(x, size.height),
-                        strokeWidth = 0.5.dp.toPx(),
-                    )
-                    x += step
-                }
-            }
-            .border(2.dp,
-                // Brass inlay border: gradient to simulate engraved edge
-                Brush.sweepGradient(
-                    listOf(
-                        BrandTokens.GoldAntique,
-                        BrandTokens.BrassAged,
-                        BrandTokens.BrassDark,
-                        BrandTokens.BrassAged,
-                        BrandTokens.GoldAntique,
-                    ),
-                ),
-                Squircle(KursiRadii.xxl),
-            ),
         contentAlignment = Alignment.Center,
     ) {
         content()
@@ -1687,18 +1821,19 @@ fun CardFace(
     } else {
         // Card back — brass-engraved chair seal
         Box(
-            modifier = modifier
-                .size(width = 64.dp, height = 96.dp)
-                .clip(Squircle(KursiRadii.md))
-                .background(
-                    brush = Brush.verticalGradient(
-                        listOf(BrandTokens.BrassAged, BrandTokens.BrassDark),
-                    ),
-                )
-                .border(1.5.dp, BrandTokens.GoldAntique, Squircle(KursiRadii.md))
-                .drawBehind {
-                    drawChairEmblem(BrandTokens.TeakDark)
-                },
+            modifier =
+                modifier
+                    .size(width = 64.dp, height = 96.dp)
+                    .clip(Squircle(KursiRadii.md))
+                    .background(
+                        brush =
+                            Brush.verticalGradient(
+                                listOf(BrandTokens.BrassAged, BrandTokens.BrassDark),
+                            ),
+                    ).border(1.5.dp, BrandTokens.GoldAntique, Squircle(KursiRadii.md))
+                    .drawBehind {
+                        drawChairEmblem(BrandTokens.TeakDark)
+                    },
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -1719,15 +1854,16 @@ fun ActionBar(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(Squircle(KursiRadii.lg))
-            .background(BrandTokens.TeakMid)
-            .border(1.dp,
-                Brush.horizontalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark)),
-                Squircle(KursiRadii.lg),
-            )
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(Squircle(KursiRadii.lg))
+                .background(BrandTokens.TeakMid)
+                .border(
+                    1.dp,
+                    Brush.horizontalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark)),
+                    Squircle(KursiRadii.lg),
+                ).padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1793,36 +1929,43 @@ fun Modifier.embossEdge(
     highlight: Color = BrandTokens.GoldAntique.copy(alpha = 0.55f),
     shadow: Color = BrandTokens.TeakInk.copy(alpha = 0.65f),
     strokeWidth: Dp = 1.2.dp,
-): Modifier = this.drawWithContent {
-    drawContent()
-    val r = cornerRadius.toPx()
-    val sw = strokeWidth.toPx()
-    val inset = sw / 2f
-    // Top + left = lit highlight
-    drawRoundRect(
-        brush = Brush.linearGradient(
-            colors = listOf(highlight, highlight.copy(alpha = 0f)),
-            start = Offset(0f, 0f),
-            end = Offset(size.width * 0.7f, size.height * 0.7f),
-        ),
-        topLeft = Offset(inset, inset),
-        size = Size(size.width - sw, size.height - sw),
-        cornerRadius = androidx.compose.ui.geometry.CornerRadius(r, r),
-        style = Stroke(width = sw),
-    )
-    // Bottom + right = shadow
-    drawRoundRect(
-        brush = Brush.linearGradient(
-            colors = listOf(shadow.copy(alpha = 0f), shadow),
-            start = Offset(size.width * 0.3f, size.height * 0.3f),
-            end = Offset(size.width, size.height),
-        ),
-        topLeft = Offset(inset, inset),
-        size = Size(size.width - sw, size.height - sw),
-        cornerRadius = androidx.compose.ui.geometry.CornerRadius(r, r),
-        style = Stroke(width = sw),
-    )
-}
+): Modifier =
+    this.drawWithContent {
+        drawContent()
+        val r = cornerRadius.toPx()
+        val sw = strokeWidth.toPx()
+        val inset = sw / 2f
+        // Top + left = lit highlight
+        drawRoundRect(
+            brush =
+                Brush.linearGradient(
+                    colors = listOf(highlight, highlight.copy(alpha = 0f)),
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width * 0.7f, size.height * 0.7f),
+                ),
+            topLeft = Offset(inset, inset),
+            size = Size(size.width - sw, size.height - sw),
+            cornerRadius =
+                androidx.compose.ui.geometry
+                    .CornerRadius(r, r),
+            style = Stroke(width = sw),
+        )
+        // Bottom + right = shadow
+        drawRoundRect(
+            brush =
+                Brush.linearGradient(
+                    colors = listOf(shadow.copy(alpha = 0f), shadow),
+                    start = Offset(size.width * 0.3f, size.height * 0.3f),
+                    end = Offset(size.width, size.height),
+                ),
+            topLeft = Offset(inset, inset),
+            size = Size(size.width - sw, size.height - sw),
+            cornerRadius =
+                androidx.compose.ui.geometry
+                    .CornerRadius(r, r),
+            style = Stroke(width = sw),
+        )
+    }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  M4 §2 — RETRO-FUTURIST LIVE ACCENTS
@@ -1854,50 +1997,60 @@ fun Modifier.holoRimLight(
     phase: Float,
     cornerRadius: Dp,
     intensity: Float = 1f,
-): Modifier = this.drawBehind {
-    val r = cornerRadius.toPx()
-    val cr = androidx.compose.ui.geometry.CornerRadius(r, r)
-    // 1. Outer bloom — a halo bleeding past the element edge.
-    val bloom = (10.dp.toPx())
-    drawRoundRect(
-        brush = Brush.radialGradient(
-            listOf(
-                accent.copy(alpha = 0.34f * intensity),
-                accent.copy(alpha = 0.10f * intensity),
-                Color.Transparent,
-            ),
-            center = Offset(size.width / 2f, size.height / 2f),
-            radius = size.maxDimension * 0.62f,
-        ),
-        topLeft = Offset(-bloom, -bloom),
-        size = Size(size.width + bloom * 2, size.height + bloom * 2),
-        cornerRadius = androidx.compose.ui.geometry.CornerRadius(r + bloom, r + bloom),
-    )
-    // 2. Holographic hairline — a brass→accent→cyan sweep along the rim. A sweep
-    // gradient rotated by phase gives the "glint travelling around the bezel" read.
-    val holo = Brush.sweepGradient(
-        colors = listOf(
-            BrandTokens.GoldAntique.copy(alpha = 0.85f * intensity),
-            accent.copy(alpha = 0.9f * intensity),
-            Color(0xFF7FE3D6).copy(alpha = 0.7f * intensity), // cool holographic cyan
-            BrandTokens.GoldAntique.copy(alpha = 0.85f * intensity),
-            accent.copy(alpha = 0.9f * intensity),
-        ),
-        center = Offset(
-            size.width * (0.5f + 0.5f * cosUnit(phase)),
-            size.height * (0.5f + 0.5f * sinUnit(phase)),
-        ),
-    )
-    drawRoundRect(
-        brush = holo,
-        topLeft = Offset.Zero,
-        size = size,
-        cornerRadius = cr,
-        style = Stroke(width = 1.4.dp.toPx()),
-    )
-}
+): Modifier =
+    this.drawBehind {
+        val r = cornerRadius.toPx()
+        val cr =
+            androidx.compose.ui.geometry
+                .CornerRadius(r, r)
+        // 1. Outer bloom — a halo bleeding past the element edge.
+        val bloom = (10.dp.toPx())
+        drawRoundRect(
+            brush =
+                Brush.radialGradient(
+                    listOf(
+                        accent.copy(alpha = 0.34f * intensity),
+                        accent.copy(alpha = 0.10f * intensity),
+                        Color.Transparent,
+                    ),
+                    center = Offset(size.width / 2f, size.height / 2f),
+                    radius = size.maxDimension * 0.62f,
+                ),
+            topLeft = Offset(-bloom, -bloom),
+            size = Size(size.width + bloom * 2, size.height + bloom * 2),
+            cornerRadius =
+                androidx.compose.ui.geometry
+                    .CornerRadius(r + bloom, r + bloom),
+        )
+        // 2. Holographic hairline — a brass→accent→cyan sweep along the rim. A sweep
+        // gradient rotated by phase gives the "glint travelling around the bezel" read.
+        val holo =
+            Brush.sweepGradient(
+                colors =
+                    listOf(
+                        BrandTokens.GoldAntique.copy(alpha = 0.85f * intensity),
+                        accent.copy(alpha = 0.9f * intensity),
+                        Color(0xFF7FE3D6).copy(alpha = 0.7f * intensity), // cool holographic cyan
+                        BrandTokens.GoldAntique.copy(alpha = 0.85f * intensity),
+                        accent.copy(alpha = 0.9f * intensity),
+                    ),
+                center =
+                    Offset(
+                        size.width * (0.5f + 0.5f * cosUnit(phase)),
+                        size.height * (0.5f + 0.5f * sinUnit(phase)),
+                    ),
+            )
+        drawRoundRect(
+            brush = holo,
+            topLeft = Offset.Zero,
+            size = size,
+            cornerRadius = cr,
+            style = Stroke(width = 1.4.dp.toPx()),
+        )
+    }
 
 private fun cosUnit(t: Float): Float = cos(t * 2f * PI.toFloat())
+
 private fun sinUnit(t: Float): Float = sin(t * 2f * PI.toFloat())
 
 /**
@@ -1949,9 +2102,7 @@ fun DrawScope.drawScanlineSheen(
  *
  * @param radius corner radius of the card + frame.
  */
-fun Modifier.decoPopoverPaper(
-    radius: Dp = KursiRadii.md,
-): Modifier {
+fun Modifier.decoPopoverPaper(radius: Dp = KursiRadii.md): Modifier {
     val shape = Squircle(radius)
     return this
         // 1. Teak contact shadow — the document rests on the table.
@@ -1983,8 +2134,12 @@ fun Modifier.decoPopoverPaper(
             val grain = BrandTokens.CreamInk.copy(alpha = 0.05f)
             var gx = -size.height
             while (gx < size.width) {
-                drawLine(grain, Offset(gx, 0f), Offset(gx + size.height * 0.32f, size.height),
-                    strokeWidth = 0.5.dp.toPx())
+                drawLine(
+                    grain,
+                    Offset(gx, 0f),
+                    Offset(gx + size.height * 0.32f, size.height),
+                    strokeWidth = 0.5.dp.toPx(),
+                )
                 gx += step
             }
             // Debossed inner brass-hairline rule, inset from the paper edge.
@@ -1994,7 +2149,9 @@ fun Modifier.decoPopoverPaper(
                 color = BrandTokens.BrassDark.copy(alpha = 0.30f),
                 topLeft = Offset(inset, inset),
                 size = Size(size.width - inset * 2, size.height - inset * 2),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(rr, rr),
+                cornerRadius =
+                    androidx.compose.ui.geometry
+                        .CornerRadius(rr, rr),
                 style = Stroke(width = 0.75.dp.toPx()),
             )
             // Top inner highlight on the rule for the embossed read.
@@ -2002,7 +2159,9 @@ fun Modifier.decoPopoverPaper(
                 color = BrandTokens.PaperCream.copy(alpha = 0.6f),
                 topLeft = Offset(inset, inset - 0.75.dp.toPx()),
                 size = Size(size.width - inset * 2, size.height - inset * 2),
-                cornerRadius = androidx.compose.ui.geometry.CornerRadius(rr, rr),
+                cornerRadius =
+                    androidx.compose.ui.geometry
+                        .CornerRadius(rr, rr),
                 style = Stroke(width = 0.5.dp.toPx()),
             )
         }
@@ -2023,33 +2182,43 @@ fun WaxSeal(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier
-            .size(size)
-            .drawBehind {
-                val c = Offset(this.size.width / 2f, this.size.height / 2f)
-                val r = this.size.minDimension / 2f
-                // Soft drop under the wax blob.
-                drawCircle(BrandTokens.TeakInk.copy(alpha = 0.45f), r, c.copy(y = c.y + 1.5.dp.toPx()))
-                // Wax body — domed red wax with a lit top edge.
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        listOf(Color(0xFFE0464B), color, BrandTokens.Oxblood),
-                        center = c.copy(y = c.y - r * 0.32f),
-                        radius = r * 1.25f,
-                    ),
-                    radius = r, center = c,
-                )
-                // Irregular wax skirt — three small lobes for a hand-pressed feel.
-                for (i in 0 until 8) {
-                    val a = (i / 8f) * 2f * PI.toFloat()
-                    val lobeR = r * (0.92f + 0.10f * sin(a * 3f))
-                    drawCircle(color.copy(alpha = 0.85f), r * 0.18f,
-                        Offset(c.x + lobeR * cos(a), c.y + lobeR * sin(a)))
-                }
-                // Brass rim.
-                drawCircle(BrandTokens.GoldAntique.copy(alpha = 0.8f), r * 0.86f, c,
-                    style = Stroke(0.8.dp.toPx()))
-            },
+        modifier =
+            modifier
+                .size(size)
+                .drawBehind {
+                    val c = Offset(this.size.width / 2f, this.size.height / 2f)
+                    val r = this.size.minDimension / 2f
+                    // Soft drop under the wax blob.
+                    drawCircle(BrandTokens.TeakInk.copy(alpha = 0.45f), r, c.copy(y = c.y + 1.5.dp.toPx()))
+                    // Wax body — domed red wax with a lit top edge.
+                    drawCircle(
+                        brush =
+                            Brush.radialGradient(
+                                listOf(Color(0xFFE0464B), color, BrandTokens.Oxblood),
+                                center = c.copy(y = c.y - r * 0.32f),
+                                radius = r * 1.25f,
+                            ),
+                        radius = r,
+                        center = c,
+                    )
+                    // Irregular wax skirt — three small lobes for a hand-pressed feel.
+                    for (i in 0 until 8) {
+                        val a = (i / 8f) * 2f * PI.toFloat()
+                        val lobeR = r * (0.92f + 0.10f * sin(a * 3f))
+                        drawCircle(
+                            color.copy(alpha = 0.85f),
+                            r * 0.18f,
+                            Offset(c.x + lobeR * cos(a), c.y + lobeR * sin(a)),
+                        )
+                    }
+                    // Brass rim.
+                    drawCircle(
+                        BrandTokens.GoldAntique.copy(alpha = 0.8f),
+                        r * 0.86f,
+                        c,
+                        style = Stroke(0.8.dp.toPx()),
+                    )
+                },
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -2075,26 +2244,30 @@ fun DrawScope.drawTableVignette(
     val maxR = maxOf(size.width, size.height) * 0.85f
     // Warm centre lift
     drawRect(
-        brush = Brush.radialGradient(
-            colors = listOf(
-                BrandTokens.GoldAntique.copy(alpha = centerWarmth),
-                Color.Transparent,
+        brush =
+            Brush.radialGradient(
+                colors =
+                    listOf(
+                        BrandTokens.GoldAntique.copy(alpha = centerWarmth),
+                        Color.Transparent,
+                    ),
+                center = Offset(cx, cy),
+                radius = maxR * 0.55f,
             ),
-            center = Offset(cx, cy),
-            radius = maxR * 0.55f,
-        ),
     )
     // Shadowed rim
     drawRect(
-        brush = Brush.radialGradient(
-            colors = listOf(
-                Color.Transparent,
-                Color.Transparent,
-                BrandTokens.TeakInk.copy(alpha = rimDarkness),
+        brush =
+            Brush.radialGradient(
+                colors =
+                    listOf(
+                        Color.Transparent,
+                        Color.Transparent,
+                        BrandTokens.TeakInk.copy(alpha = rimDarkness),
+                    ),
+                center = Offset(cx, cy),
+                radius = maxR,
             ),
-            center = Offset(cx, cy),
-            radius = maxR,
-        ),
     )
 }
 
@@ -2133,7 +2306,12 @@ private fun DrawScope.drawGuillocheRosette(
         val r = mid + amp * sin(petals * ang)
         val x = cx + r * cos(ang)
         val y = cy + r * sin(ang)
-        if (first) { path.moveTo(x, y); first = false } else path.lineTo(x, y)
+        if (first) {
+            path.moveTo(x, y)
+            first = false
+        } else {
+            path.lineTo(x, y)
+        }
     }
     drawPath(path, c, style = Stroke(0.7.dp.toPx()))
     // Inner counter-rosette (offset phase) for the interference look
@@ -2145,7 +2323,12 @@ private fun DrawScope.drawGuillocheRosette(
         val r = mid + amp * 0.6f * sin(petals * ang + PI.toFloat() / 2f)
         val x = cx + r * cos(ang)
         val y = cy + r * sin(ang)
-        if (first) { path2.moveTo(x, y); first = false } else path2.lineTo(x, y)
+        if (first) {
+            path2.moveTo(x, y)
+            first = false
+        } else {
+            path2.lineTo(x, y)
+        }
     }
     drawPath(path2, c.copy(alpha = alpha * 0.7f), style = Stroke(0.6.dp.toPx()))
 }
@@ -2188,100 +2371,116 @@ fun BrassMedallion(
         label = "domeTiltY",
     )
     Box(
-        modifier = modifier
-            .then(
-                if (onLongClick != null) Modifier.inspectable(onClick = {}, onLongClick = onLongClick, pressShape = CircleShape)
-                else Modifier
-            )
-            .size(diameter)
-            .graphicsLayer {
-                rotationX = domeTiltX
-                rotationY = domeTiltY
-                cameraDistance = 16f * density
-            }
-            // Deep contact shadow so the medallion sits proud of the felt
-            .shadow(
-                elevation = 22.dp,
-                shape = CircleShape,
-                ambientColor = Color.Black.copy(alpha = 0.6f),
-                spotColor = BrandTokens.TeakInk,
-                clip = false,
-            )
-            .clip(CircleShape)
-            // Brass body — radial sheen, lit upper-left
-            .background(
-                Brush.radialGradient(
-                    colors = listOf(
-                        BrandTokens.GoldAntique,
-                        BrandTokens.BrassAged,
-                        BrandTokens.BrassDark,
-                        Color(0xFF5E481B),
-                    ),
-                    center = Offset(0.36f * dPx, 0.30f * dPx),
-                    radius = dPx * 0.95f,
-                ),
-            )
-            .brassSpecular()
-            // Outer engine-turned bezel + debossed well
-            .drawBehind {
-                // Outer raised brass bezel rings
-                val cx = size.width / 2f
-                val cy = size.height / 2f
-                val rr = minOf(size.width, size.height) / 2f
-                drawCircle(
-                    BrandTokens.GoldAntique.copy(alpha = 0.85f), rr - 2.dp.toPx(),
-                    Offset(cx, cy), style = Stroke(2.5.dp.toPx()),
-                )
-                drawCircle(
-                    BrandTokens.TeakInk.copy(alpha = 0.5f), rr - 6.dp.toPx(),
-                    Offset(cx, cy), style = Stroke(1.5.dp.toPx()),
-                )
-                // Debossed inner well: dark recessed disc with guilloché
-                drawCircle(
+        modifier =
+            modifier
+                .then(
+                    if (onLongClick != null) {
+                        Modifier.inspectable(onClick = {}, onLongClick = onLongClick, pressShape = CircleShape)
+                    } else {
+                        Modifier
+                    },
+                ).size(diameter)
+                .graphicsLayer {
+                    rotationX = domeTiltX
+                    rotationY = domeTiltY
+                    cameraDistance = 16f * density
+                }
+                // Deep contact shadow so the medallion sits proud of the felt
+                .shadow(
+                    elevation = 22.dp,
+                    shape = CircleShape,
+                    ambientColor = Color.Black.copy(alpha = 0.6f),
+                    spotColor = BrandTokens.TeakInk,
+                    clip = false,
+                ).clip(CircleShape)
+                // Brass body — radial sheen, lit upper-left
+                .background(
                     Brush.radialGradient(
-                        listOf(
-                            BrandTokens.TeakInk.copy(alpha = 0.45f),
-                            BrandTokens.BrassDark.copy(alpha = 0.10f),
-                        ),
-                        center = Offset(cx, cy),
-                        radius = rr * 0.72f,
+                        colors =
+                            listOf(
+                                BrandTokens.GoldAntique,
+                                BrandTokens.BrassAged,
+                                BrandTokens.BrassDark,
+                                Color(0xFF5E481B),
+                            ),
+                        center = Offset(0.36f * dPx, 0.30f * dPx),
+                        radius = dPx * 0.95f,
                     ),
-                    rr * 0.72f, Offset(cx, cy),
-                )
-                drawGuillocheRosette(BrandTokens.GoldAntique, petals = 30, alpha = 0.16f)
-                // Inner brass rim of the well
-                drawCircle(
-                    BrandTokens.GoldAntique.copy(alpha = 0.5f), rr * 0.72f,
-                    Offset(cx, cy), style = Stroke(1.5.dp.toPx()),
-                )
-            }
-            .border(2.dp, Brush.sweepGradient(
-                listOf(
-                    BrandTokens.GoldAntique, BrandTokens.BrassDark,
-                    BrandTokens.GoldAntique, BrandTokens.BrassDark, BrandTokens.GoldAntique,
-                ),
-            ), CircleShape)
-            // DEPTH3D — domed specular: a soft hot-spot that slides with the parallax tilt,
-            // so the coin's crown reads as a curved, struck surface catching a moving light.
-            .drawBehind {
-                val rr = minOf(size.width, size.height) / 2f
-                // The highlight drifts opposite to the tilt — light source feels fixed.
-                val hx = size.width / 2f - domeTiltY / 4f * rr
-                val hy = size.height * 0.30f - domeTiltX / 4f * rr
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        listOf(
-                            BrandTokens.GoldAntique.copy(alpha = 0.42f),
-                            Color.White.copy(alpha = 0.10f),
-                            Color.Transparent,
+                ).brassSpecular()
+                // Outer engine-turned bezel + debossed well
+                .drawBehind {
+                    // Outer raised brass bezel rings
+                    val cx = size.width / 2f
+                    val cy = size.height / 2f
+                    val rr = minOf(size.width, size.height) / 2f
+                    drawCircle(
+                        BrandTokens.GoldAntique.copy(alpha = 0.85f),
+                        rr - 2.dp.toPx(),
+                        Offset(cx, cy),
+                        style = Stroke(2.5.dp.toPx()),
+                    )
+                    drawCircle(
+                        BrandTokens.TeakInk.copy(alpha = 0.5f),
+                        rr - 6.dp.toPx(),
+                        Offset(cx, cy),
+                        style = Stroke(1.5.dp.toPx()),
+                    )
+                    // Debossed inner well: dark recessed disc with guilloché
+                    drawCircle(
+                        Brush.radialGradient(
+                            listOf(
+                                BrandTokens.TeakInk.copy(alpha = 0.45f),
+                                BrandTokens.BrassDark.copy(alpha = 0.10f),
+                            ),
+                            center = Offset(cx, cy),
+                            radius = rr * 0.72f,
                         ),
-                        center = Offset(hx, hy),
+                        rr * 0.72f,
+                        Offset(cx, cy),
+                    )
+                    drawGuillocheRosette(BrandTokens.GoldAntique, petals = 30, alpha = 0.16f)
+                    // Inner brass rim of the well
+                    drawCircle(
+                        BrandTokens.GoldAntique.copy(alpha = 0.5f),
+                        rr * 0.72f,
+                        Offset(cx, cy),
+                        style = Stroke(1.5.dp.toPx()),
+                    )
+                }.border(
+                    2.dp,
+                    Brush.sweepGradient(
+                        listOf(
+                            BrandTokens.GoldAntique,
+                            BrandTokens.BrassDark,
+                            BrandTokens.GoldAntique,
+                            BrandTokens.BrassDark,
+                            BrandTokens.GoldAntique,
+                        ),
+                    ),
+                    CircleShape,
+                )
+                // DEPTH3D — domed specular: a soft hot-spot that slides with the parallax tilt,
+                // so the coin's crown reads as a curved, struck surface catching a moving light.
+                .drawBehind {
+                    val rr = minOf(size.width, size.height) / 2f
+                    // The highlight drifts opposite to the tilt — light source feels fixed.
+                    val hx = size.width / 2f - domeTiltY / 4f * rr
+                    val hy = size.height * 0.30f - domeTiltX / 4f * rr
+                    drawCircle(
+                        brush =
+                            Brush.radialGradient(
+                                listOf(
+                                    BrandTokens.GoldAntique.copy(alpha = 0.42f),
+                                    Color.White.copy(alpha = 0.10f),
+                                    Color.Transparent,
+                                ),
+                                center = Offset(hx, hy),
+                                radius = rr * 0.62f,
+                            ),
                         radius = rr * 0.62f,
-                    ),
-                    radius = rr * 0.62f,
-                    center = Offset(hx, hy),
-                )
-            },
+                        center = Offset(hx, hy),
+                    )
+                },
         contentAlignment = Alignment.Center,
     ) {
         Column(
@@ -2295,9 +2494,11 @@ fun BrassMedallion(
                 color = BrandTokens.GoldAntique.copy(alpha = 0.92f),
             )
             Box(
-                modifier = Modifier
-                    .width(46.dp * scale).height(1.dp)
-                    .background(BrandTokens.GoldAntique.copy(alpha = 0.4f)),
+                modifier =
+                    Modifier
+                        .width(46.dp * scale)
+                        .height(1.dp)
+                        .background(BrandTokens.GoldAntique.copy(alpha = 0.4f)),
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -2330,32 +2531,32 @@ private fun CardStackToken(count: Int) {
             repeat(2) { i ->
                 val off = (2 - i)
                 Box(
-                    modifier = Modifier
-                        .size(width = 44.dp, height = 64.dp)
-                        .offset { IntOffset(off * 3, off * -3) }
-                        .shadow(3.dp, Squircle(KursiRadii.sm), clip = false)
-                        .clip(Squircle(KursiRadii.sm))
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(BrandTokens.BrassDark, Color(0xFF5E481B)),
-                            ),
-                        )
-                        .border(1.dp, BrandTokens.BrassDark, Squircle(KursiRadii.sm)),
+                    modifier =
+                        Modifier
+                            .size(width = 44.dp, height = 64.dp)
+                            .offset { IntOffset(off * 3, off * -3) }
+                            .shadow(3.dp, Squircle(KursiRadii.sm), clip = false)
+                            .clip(Squircle(KursiRadii.sm))
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(BrandTokens.BrassDark, Color(0xFF5E481B)),
+                                ),
+                            ).border(1.dp, BrandTokens.BrassDark, Squircle(KursiRadii.sm)),
                 )
             }
             // top card — engraved chair seal
             Box(
-                modifier = Modifier
-                    .size(width = 44.dp, height = 64.dp)
-                    .shadow(5.dp, Squircle(KursiRadii.sm), clip = false)
-                    .clip(Squircle(KursiRadii.sm))
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark),
-                        ),
-                    )
-                    .drawBehind { drawChairEmblem(BrandTokens.TeakDark) }
-                    .border(1.2.dp, BrandTokens.GoldAntique, Squircle(KursiRadii.sm)),
+                modifier =
+                    Modifier
+                        .size(width = 44.dp, height = 64.dp)
+                        .shadow(5.dp, Squircle(KursiRadii.sm), clip = false)
+                        .clip(Squircle(KursiRadii.sm))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark),
+                            ),
+                        ).drawBehind { drawChairEmblem(BrandTokens.TeakDark) }
+                        .border(1.2.dp, BrandTokens.GoldAntique, Squircle(KursiRadii.sm)),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -2390,35 +2591,39 @@ private fun CoinStackToken(coins: Int) {
             val layers = 4
             repeat(layers) { i ->
                 Box(
-                    modifier = Modifier
-                        .offset { IntOffset(0, (-(i) * 9.5f * density).toInt()) }
-                        .size(width = coinW, height = coinH)
-                        .shadow(2.dp, CircleShape, clip = false)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark),
-                            ),
-                        )
-                        .border(0.8.dp, BrandTokens.BrassDark, CircleShape),
+                    modifier =
+                        Modifier
+                            .offset { IntOffset(0, (-(i) * 9.5f * density).toInt()) }
+                            .size(width = coinW, height = coinH)
+                            .shadow(2.dp, CircleShape, clip = false)
+                            .clip(CircleShape)
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark),
+                                ),
+                            ).border(0.8.dp, BrandTokens.BrassDark, CircleShape),
                 )
             }
             // crown coin face on top with the count
             Box(
-                modifier = Modifier
-                    .offset { IntOffset(0, (-(layers) * 9.5f * density).toInt()) }
-                    .size(48.dp)
-                    .shadow(4.dp, CircleShape, clip = false)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.radialGradient(
-                            listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark),
-                            center = Offset(0.35f * 48f, 0.30f * 48f),
+                modifier =
+                    Modifier
+                        .offset { IntOffset(0, (-(layers) * 9.5f * density).toInt()) }
+                        .size(48.dp)
+                        .shadow(4.dp, CircleShape, clip = false)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark),
+                                center = Offset(0.35f * 48f, 0.30f * 48f),
+                            ),
+                        ).border(
+                            1.4.dp,
+                            Brush.sweepGradient(
+                                listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark, BrandTokens.GoldAntique),
+                            ),
+                            CircleShape,
                         ),
-                    )
-                    .border(1.4.dp, Brush.sweepGradient(
-                        listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark, BrandTokens.GoldAntique),
-                    ), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(

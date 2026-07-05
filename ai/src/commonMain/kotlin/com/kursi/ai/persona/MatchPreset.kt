@@ -27,36 +27,40 @@ data class MatchPreset(
      * the in-game table always match. The human (seat 0) is not included.
      */
     fun lineup(): List<BotPersona> =
-        PersonaAssigner.assign(
-            seatCount = playerCount - 1,
-            difficulty = difficulty,
-            seed = seed,
-        ).map { it.first }
+        PersonaAssigner
+            .assign(
+                seatCount = playerCount - 1,
+                difficulty = difficulty,
+                seed = seed,
+            ).map { it.first }
 
     companion object {
         /** "Classic Cabinet" — a balanced 4-player mixed cabinet on the Permanent Babu (Medium) tier. */
-        val CLASSIC_CABINET = MatchPreset(
-            id = "classic_cabinet",
-            playerCount = 4,
-            difficulty = BotDifficulty.MEDIUM,
-            seed = 1947L, // Independence-year wink; deals a varied, non-degenerate 3-bot cabinet.
-        )
+        val CLASSIC_CABINET =
+            MatchPreset(
+                id = "classic_cabinet",
+                playerCount = 4,
+                difficulty = BotDifficulty.MEDIUM,
+                seed = 1947L, // Independence-year wink; deals a varied, non-degenerate 3-bot cabinet.
+            )
 
         /** "The Snake Pit" — sharp, aggressive opponents on the Section Officer (Hard) tier. */
-        val SNAKE_PIT = MatchPreset(
-            id = "snake_pit",
-            playerCount = 4,
-            difficulty = BotDifficulty.HARD,
-            seed = 1975L, // Emergency-year wink; a knife-edge table that smells a lie.
-        )
+        val SNAKE_PIT =
+            MatchPreset(
+                id = "snake_pit",
+                playerCount = 4,
+                difficulty = BotDifficulty.HARD,
+                seed = 1975L, // Emergency-year wink; a knife-edge table that smells a lie.
+            )
 
         /** "Chaos · 10" — the full ten-seat mehfil; every persona in the room on Medium. */
-        val CHAOS_TEN = MatchPreset(
-            id = "chaos_ten",
-            playerCount = 10,
-            difficulty = BotDifficulty.MEDIUM,
-            seed = 1991L, // Liberalisation-year wink; the whole bazaar at one table.
-        )
+        val CHAOS_TEN =
+            MatchPreset(
+                id = "chaos_ten",
+                playerCount = 10,
+                difficulty = BotDifficulty.MEDIUM,
+                seed = 1991L, // Liberalisation-year wink; the whole bazaar at one table.
+            )
 
         /** All named presets, in display order. */
         val ALL: List<MatchPreset> = listOf(CLASSIC_CABINET, SNAKE_PIT, CHAOS_TEN)

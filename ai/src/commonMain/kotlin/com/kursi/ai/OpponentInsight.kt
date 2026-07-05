@@ -59,25 +59,31 @@ data class OpponentInsight(
          * coach's [memory]. The memory must have been fed ONLY public game events — do not pass a
          * memory that has peeked at hidden state. Returns null if [opponentId] is not in the view.
          */
-        fun from(view: PlayerView, memory: BotMemory, opponentId: PlayerId): OpponentInsight? {
+        fun from(
+            view: PlayerView,
+            memory: BotMemory,
+            opponentId: PlayerId,
+        ): OpponentInsight? {
             val opp = view.players.firstOrNull { it.id == opponentId } ?: return null
             val belief = memory.beliefFor(opponentId)
 
             val posterior = beliefModel.posterior(view, opponentId, belief)
-            val pHolds = Role.entries.associateWith { role ->
-                beliefModel.pHolds(view, opponentId, belief, role)
-            }
+            val pHolds =
+                Role.entries.associateWith { role ->
+                    beliefModel.pHolds(view, opponentId, belief, role)
+                }
 
             // Tally per-role claim history from the public claim log.
-            val claimStats = Role.entries.map { role ->
-                val forRole = memory.claimHistory.filter { it.claimant == opponentId && it.role == role }
-                RoleClaimStat(
-                    role = role,
-                    claims = forRole.size,
-                    proven = forRole.count { it.challenged && it.survived == true },
-                    caughtBluffing = forRole.count { it.challenged && it.survived == false },
-                )
-            }
+            val claimStats =
+                Role.entries.map { role ->
+                    val forRole = memory.claimHistory.filter { it.claimant == opponentId && it.role == role }
+                    RoleClaimStat(
+                        role = role,
+                        claims = forRole.size,
+                        proven = forRole.count { it.challenged && it.survived == true },
+                        caughtBluffing = forRole.count { it.challenged && it.survived == false },
+                    )
+                }
 
             return OpponentInsight(
                 opponentId = opponentId,
