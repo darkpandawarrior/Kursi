@@ -1,0 +1,31 @@
+language: en-US
+early_access: false
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!**/build/**"
+    - "!gradle/wrapper/**"
+    - "!**/*.png"
+  path_instructions:
+    - path: "**/*.kt"
+      instructions: >
+        Kotlin Multiplatform Compose Multiplatform card game (Android + iOS + JVM
+        Desktop + Wasm). Flag expect/actual mismatches, code in commonMain that
+        depends on a platform-specific API, and non-deterministic game-state logic
+        (e.g. unseeded randomness) that would desync online multiplayer.
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  learnings:
+    scope: auto
