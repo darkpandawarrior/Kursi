@@ -16,25 +16,30 @@ jobs:
   deploy:
     name: Build & deploy AAB
     runs-on: ubuntu-latest
-    if: ${{ !!secrets.INDUS_API_KEY }}
     env:
+      HAS_SECRET: ${{ secrets.INDUS_API_KEY != '' }}
       GRADLE_OPTS: "-Dorg.gradle.daemon=false"
     steps:
       - uses: actions/checkout@v4
+        if: env.HAS_SECRET == 'true'
 
       - name: Set up JDK 17
+        if: env.HAS_SECRET == 'true'
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
       - name: Setup Gradle
+        if: env.HAS_SECRET == 'true'
         uses: gradle/actions/setup-gradle@v4
 
       - run: chmod +x ./gradlew
+        if: env.HAS_SECRET == 'true'
 
       # Materialize signing secrets from base64 repo secrets (placeholders until configured).
       - name: Materialize signing secrets
+        if: env.HAS_SECRET == 'true'
         run: |
           set -euo pipefail
           mkdir -p secrets
@@ -54,9 +59,11 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Build release AAB (Gms — the full-feature build; noGms is F-Droid-only)
+        if: env.HAS_SECRET == 'true'
         run: ./gradlew :cmp-android:bundleGmsRelease
 
       - name: Deploy to Indus Appstore
+        if: env.HAS_SECRET == 'true'
         uses: PhonePe/Indus-Flows@v1
         with:
           app_bundle_path: 'cmp-android/build/outputs/bundle/gmsRelease/cmp-android-gms-release.aab'

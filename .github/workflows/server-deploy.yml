@@ -23,14 +23,20 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: ${{ !!secrets.FLY_API_TOKEN }}
+    # Job-level `if:` can't reference the secrets context directly (GitHub Actions rejects it at
+    # parse time: "Unrecognized named-value: 'secrets'") - gate each step instead via this env var.
+    env:
+      HAS_SECRET: ${{ secrets.FLY_API_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
+        if: env.HAS_SECRET == 'true'
 
       - name: Set up flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
+        if: env.HAS_SECRET == 'true'
 
       - name: Deploy
+        if: env.HAS_SECRET == 'true'
         run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
