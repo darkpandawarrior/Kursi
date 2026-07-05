@@ -1,6 +1,5 @@
 package com.kursi.shared.nav
 
-import com.kursi.feature.game.Difficulty
 import kotlinx.serialization.Serializable
 
 /**
@@ -10,7 +9,6 @@ import kotlinx.serialization.Serializable
  * §2 nav model from kursi-plan/docs/17_app_plan.md
  */
 sealed interface Route {
-
     /** S0 — Brass-door splash: reads hasSeenPrimer, routes to Primer or Home. */
     @Serializable
     data object Boot : Route
@@ -29,7 +27,9 @@ sealed interface Route {
      * [fromSettings] true = shows back button instead of skip link.
      */
     @Serializable
-    data class ProfileSetup(val fromSettings: Boolean = false) : Route
+    data class ProfileSetup(
+        val fromSettings: Boolean = false,
+    ) : Route
 
     /** S7 — NIYAM GAZETTE: rules / who-beats-whom leaf overlay. */
     @Serializable
@@ -98,7 +98,8 @@ sealed interface Route {
     data class Game(
         val seed: Long,
         val players: Int,
-        val difficulty: String, // Difficulty.name — serializable as String
+        /** Difficulty.name — serializable as String. */
+        val difficulty: String,
         /** M5 pass-and-play: number of hot-seat humans (1 = vs-AI). */
         val humanCount: Int = 1,
         /**
@@ -136,7 +137,9 @@ sealed interface Route {
 
     /** S5 — Results / Faisla: reads a serialized MatchSummary, not the live VM. */
     @Serializable
-    data class Results(val matchId: String) : Route
+    data class Results(
+        val matchId: String,
+    ) : Route
 
     /**
      * M6c REVIEW — replay a recorded finished match on the real in-game table with a scrubber +
@@ -145,7 +148,9 @@ sealed interface Route {
      * recorded match is resolved (and the deterministic replay reconstructed) inside the screen.
      */
     @Serializable
-    data class Review(val matchIndex: Int = 0) : Route
+    data class Review(
+        val matchIndex: Int = 0,
+    ) : Route
 
     /**
      * M6d STANDINGS — local leaderboard: ranked ELO + rank tier + rating history spark-line, best

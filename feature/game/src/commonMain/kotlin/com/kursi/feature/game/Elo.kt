@@ -13,7 +13,6 @@ import kotlin.math.roundToInt
  * magnitude scales with how surprising the result was (the standard ELO expected-score curve).
  */
 object Elo {
-
     /** K-factor — the maximum single-game swing magnitude. A moderate value for a casual ladder. */
     const val K = 32.0
 
@@ -22,17 +21,20 @@ object Elo {
      * Grandmaster, spanning the rank ladder so beating a Grandmaster table climbs you fast while
      * beating an Easy table barely moves you (and losing to it stings).
      */
-    fun opponentRating(difficulty: Difficulty): Int = when (difficulty) {
-        Difficulty.Easy        -> 850
-        Difficulty.Medium      -> 1050
-        Difficulty.Hard        -> 1300
-        Difficulty.Expert      -> 1600
-        Difficulty.Grandmaster -> 1900
-    }
+    fun opponentRating(difficulty: Difficulty): Int =
+        when (difficulty) {
+            Difficulty.Easy -> 850
+            Difficulty.Medium -> 1050
+            Difficulty.Hard -> 1300
+            Difficulty.Expert -> 1600
+            Difficulty.Grandmaster -> 1900
+        }
 
     /** Expected score for [rating] against [opponent] — the logistic ELO curve, in (0,1). */
-    fun expectedScore(rating: Int, opponent: Int): Double =
-        1.0 / (1.0 + 10.0.pow((opponent - rating) / 400.0))
+    fun expectedScore(
+        rating: Int,
+        opponent: Int,
+    ): Double = 1.0 / (1.0 + 10.0.pow((opponent - rating) / 400.0))
 
     /**
      * One ELO step. Returns the NEW rating after a game vs an opponent of [opponentRating], where
@@ -40,21 +42,29 @@ object Elo {
      * least +1 and a loss rounds down by at least -1, so the update is STRICTLY monotonic in the
      * result regardless of rounding (a key invariant the ladder tests lock down).
      */
-    fun step(rating: Int, opponentRating: Int, won: Boolean): Int {
+    fun step(
+        rating: Int,
+        opponentRating: Int,
+        won: Boolean,
+    ): Int {
         val expected = expectedScore(rating, opponentRating)
         val actual = if (won) 1.0 else 0.0
         val rawDelta = K * (actual - expected)
-        val delta = if (won) {
-            // A win never decreases the rating: at least +1, even vs a far-weaker table.
-            rawDelta.roundToInt().coerceAtLeast(1)
-        } else {
-            // A loss never increases the rating: at most -1, even vs a far-stronger table.
-            rawDelta.roundToInt().coerceAtMost(-1)
-        }
+        val delta =
+            if (won) {
+                // A win never decreases the rating: at least +1, even vs a far-weaker table.
+                rawDelta.roundToInt().coerceAtLeast(1)
+            } else {
+                // A loss never increases the rating: at most -1, even vs a far-stronger table.
+                rawDelta.roundToInt().coerceAtMost(-1)
+            }
         return (rating + delta).coerceIn(0, 4000)
     }
 
     /** Convenience: the new rating after a finished game on a table of [difficulty]. */
-    fun stepForGame(rating: Int, difficulty: Difficulty, won: Boolean): Int =
-        step(rating, opponentRating(difficulty), won)
+    fun stepForGame(
+        rating: Int,
+        difficulty: Difficulty,
+        won: Boolean,
+    ): Int = step(rating, opponentRating(difficulty), won)
 }

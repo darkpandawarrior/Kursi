@@ -16,25 +16,21 @@ import com.kursi.engine.Intent
 data class MoveAdvice(
     /** The intent this entry describes. */
     val intent: Intent,
-
     /**
      * Short human-readable label for the move, e.g.
      * "Tax (NETA)", "Block as VAKIL", "Challenge", "Pass".
      */
     val label: String,
-
     /**
      * Estimated win-probability for the human if they play this move, in [0, 1].
      * Derived from ISMCTS mean reward (visit-weighted rollout + static eval).
      */
     val winProb: Double,
-
     /**
      * True for exactly one entry in a [List<MoveAdvice>]: the single highest-ranked move
      * (ties broken by visit share). This is the move auto-mode will play.
      */
     val recommended: Boolean,
-
     /**
      * Whether the human actually holds the role this move claims.
      *  - Non-null for [Intent.DeclareAction] of a role-action (Tax/Assassinate/Steal/Exchange)
@@ -43,13 +39,11 @@ data class MoveAdvice(
      *    ChooseInfluenceToLose, ChooseExchange).
      */
     val truthful: Boolean?,
-
     /**
      * True when this move claims a role the human does NOT hold (i.e. a bluff).
      * Always false when [truthful] is null or true.
      */
     val bluff: Boolean,
-
     /**
      * Contextual odds for high-stakes decisions:
      *  - For [Intent.Challenge]: P(opponent is bluffing) — challenge is +EV when this is high.
@@ -58,7 +52,6 @@ data class MoveAdvice(
      *  - Null for all other moves.
      */
     val successOdds: Double?,
-
     /**
      * One short, neutral-toned sentence that explains the move.
      *

@@ -12,7 +12,6 @@ package com.kursi.feature.game
  * Free-for-all is represented by a null map (no teams) — never call this for a 1-team request.
  */
 object TeamAssignment {
-
     /** Default and only currently-surfaced team count: two factions (Sat Paksh vs Vipaksh). */
     const val DEFAULT_TEAM_COUNT = 2
 
@@ -21,7 +20,10 @@ object TeamAssignment {
      * null when [teamCount] < 2 (free-for-all) or when the split would leave a team empty (e.g. more teams
      * than seats), so the caller falls back to classic play rather than building an invalid config.
      */
-    fun build(playerCount: Int, teamCount: Int = DEFAULT_TEAM_COUNT): Map<Int, Int>? {
+    fun build(
+        playerCount: Int,
+        teamCount: Int = DEFAULT_TEAM_COUNT,
+    ): Map<Int, Int>? {
         if (teamCount < 2) return null
         if (playerCount < teamCount) return null // can't fill every team
         val map = (0 until playerCount).associateWith { it % teamCount }
@@ -30,5 +32,8 @@ object TeamAssignment {
     }
 
     /** Team id of [seat] under an alternating [teamCount]-way split. */
-    fun teamOfSeat(seat: Int, teamCount: Int = DEFAULT_TEAM_COUNT): Int = seat % teamCount
+    fun teamOfSeat(
+        seat: Int,
+        teamCount: Int = DEFAULT_TEAM_COUNT,
+    ): Int = seat % teamCount
 }

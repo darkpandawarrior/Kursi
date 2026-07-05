@@ -7,7 +7,10 @@ package com.kursi.engine
  * RNG can be replayed exactly. Every draw returns the value AND the advanced Rng — nothing mutates.
  * Integer-only math, identical on every Kotlin target (JVM today; wasmJs/native later).
  */
-data class RngState(val seed: Long, val step: Long)
+data class RngState(
+    val seed: Long,
+    val step: Long,
+)
 
 private const val GOLDEN: Long = -0x61c8864680b583ebL // 0x9E3779B97F4A7C15
 
@@ -18,7 +21,9 @@ private fun mix(z0: Long): Long {
     return z xor (z ushr 31)
 }
 
-data class Rng(val state: RngState) {
+data class Rng(
+    val state: RngState,
+) {
     constructor(seed: Long) : this(RngState(seed, 0L))
 
     fun nextLong(): Pair<Long, Rng> {

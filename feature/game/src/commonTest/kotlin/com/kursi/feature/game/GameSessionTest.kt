@@ -14,7 +14,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class GameSessionTest {
-
     // ─────────────────────────── helpers ───────────────────────────
 
     /**
@@ -28,11 +27,12 @@ class GameSessionTest {
     ): GameSession {
         val config = GameConfig.forPlayers(playerCount)
         val human = PlayerId(humanSeat)
-        val bots = (0 until playerCount)
-            .filter { it != humanSeat }
-            .associate { seat ->
-                PlayerId(seat) to EasyPolicy(seed * 31L + seat) as Policy
-            }
+        val bots =
+            (0 until playerCount)
+                .filter { it != humanSeat }
+                .associate { seat ->
+                    PlayerId(seat) to EasyPolicy(seed * 31L + seat) as Policy
+                }
         return GameSession(config = config, seed = seed, humanSeat = human, bots = bots)
     }
 
@@ -40,7 +40,10 @@ class GameSessionTest {
      * Drives a [GameSession] to completion by feeding the human seat a bot policy each time
      * it is the human's turn.  Returns the final [GameUiState].
      */
-    private fun driveToEnd(session: GameSession, humanSeed: Long = 99L): GameUiState {
+    private fun driveToEnd(
+        session: GameSession,
+        humanSeed: Long = 99L,
+    ): GameUiState {
         val humanPolicy = EasyPolicy(humanSeed)
         var ui = session.start()
         while (!ui.isGameOver) {
@@ -148,7 +151,7 @@ class GameSessionTest {
                 // (they can't have ALL roles face-up and still have faceDownCount > 0).
                 assertTrue(
                     opp.faceUpRoles.size < ui.view.config.influencePerPlayer || opp.faceDownCount == 0,
-                    "Opponent ${opp.id.raw} has ${opp.faceDownCount} hidden cards but faceUpRoles reports all influence as revealed — redaction broken"
+                    "Opponent ${opp.id.raw} has ${opp.faceDownCount} hidden cards but faceUpRoles reports all influence as revealed — redaction broken",
                 )
             }
         }

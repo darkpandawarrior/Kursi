@@ -7,22 +7,17 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import kotlinx.coroutines.launch
+import androidx.compose.ui.unit.dp
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ActionMomentOverlay.kt — the single overlay composable + FIFO queue host.
@@ -102,8 +97,7 @@ fun rememberMomentHost(): MomentHost = remember { MomentHost() }
  * Most moments use a simple tween; heroes use a keyframes-like tween with
  * the same durationMs baked in from the sealed type.
  */
-private fun momentSpec(m: KursiMoment) =
-    tween<Float>(durationMillis = m.durationMs, easing = androidx.compose.animation.core.LinearEasing)
+private fun momentSpec(m: KursiMoment) = tween<Float>(durationMillis = m.durationMs, easing = androidx.compose.animation.core.LinearEasing)
 
 // ─────────────────────────── Static variant ──────────────────────────────────
 
@@ -137,38 +131,41 @@ private fun StaticMomentFrame(
 }
 
 /** Maps a moment to a ticker-slip glyph + effect label. */
-private fun momentToSlipContent(m: KursiMoment): Pair<String, String> = when (m) {
-    is KursiMoment.Income       -> "INC"  to "+1"
-    is KursiMoment.ForeignAid   -> "FDI"  to "+2"
-    is KursiMoment.Tax          -> "TAX"  to "+3"
-    is KursiMoment.Steal        -> "STL"  to "steal 2"
-    is KursiMoment.Assassinate  -> "SUP"  to "supari"
-    is KursiMoment.Exchange     -> "EXC"  to "exchange"
-    is KursiMoment.Coup         -> "KHL"  to "KHELA!"
-    is KursiMoment.Block        -> "BLK"  to "blocked"
-    is KursiMoment.Challenge    -> "CHK"  to "challenge!"
-    is KursiMoment.Reveal       -> "REV"  to if ((m as KursiMoment.Reveal).truthful) "SACH" else "JHOOTH"
-    is KursiMoment.InfluenceLoss-> "EXP"  to "EXPOSED"
-    is KursiMoment.Elimination  -> "OUT"  to "KURSI GAYI"
-    is KursiMoment.TurnHandoff  -> "→"    to "seat ${(m as KursiMoment.TurnHandoff).nextSeat}"
-    is KursiMoment.Win          -> "WIN"  to "Kursi aapki!"
-}
+private fun momentToSlipContent(m: KursiMoment): Pair<String, String> =
+    when (m) {
+        is KursiMoment.Income -> "INC" to "+1"
+        is KursiMoment.ForeignAid -> "FDI" to "+2"
+        is KursiMoment.Tax -> "TAX" to "+3"
+        is KursiMoment.Steal -> "STL" to "steal 2"
+        is KursiMoment.Assassinate -> "SUP" to "supari"
+        is KursiMoment.Exchange -> "EXC" to "exchange"
+        is KursiMoment.Coup -> "KHL" to "KHELA!"
+        is KursiMoment.Block -> "BLK" to "blocked"
+        is KursiMoment.Challenge -> "CHK" to "challenge!"
+        is KursiMoment.Reveal -> "REV" to if ((m as KursiMoment.Reveal).truthful) "SACH" else "JHOOTH"
+        is KursiMoment.InfluenceLoss -> "EXP" to "EXPOSED"
+        is KursiMoment.Elimination -> "OUT" to "KURSI GAYI"
+        is KursiMoment.TurnHandoff -> "→" to "seat ${(m as KursiMoment.TurnHandoff).nextSeat}"
+        is KursiMoment.Win -> "WIN" to "Kursi aapki!"
+    }
 
 /** Returns the tint color for a moment's ticker slip and static variant. */
-private fun momentTint(m: KursiMoment): androidx.compose.ui.graphics.Color = when (m) {
-    is KursiMoment.Tax          -> (m as KursiMoment.Tax).roleHue
-    is KursiMoment.Steal        -> (m as KursiMoment.Steal).roleHue
-    is KursiMoment.Assassinate  -> (m as KursiMoment.Assassinate).roleHue
-    is KursiMoment.Exchange     -> (m as KursiMoment.Exchange).roleHue
-    is KursiMoment.Block        -> (m as KursiMoment.Block).roleHue
-    is KursiMoment.Reveal       -> (m as KursiMoment.Reveal).roleHue
-    is KursiMoment.InfluenceLoss-> (m as KursiMoment.InfluenceLoss).roleHue
-    is KursiMoment.Coup,
-    is KursiMoment.Elimination,
-    is KursiMoment.Win          -> com.kursi.designsystem.BrandTokens.GoldAntique
-    is KursiMoment.Challenge    -> com.kursi.designsystem.BrandTokens.StampRed
-    else                        -> com.kursi.designsystem.BrandTokens.BrassAged
-}
+private fun momentTint(m: KursiMoment): androidx.compose.ui.graphics.Color =
+    when (m) {
+        is KursiMoment.Tax -> (m as KursiMoment.Tax).roleHue
+        is KursiMoment.Steal -> (m as KursiMoment.Steal).roleHue
+        is KursiMoment.Assassinate -> (m as KursiMoment.Assassinate).roleHue
+        is KursiMoment.Exchange -> (m as KursiMoment.Exchange).roleHue
+        is KursiMoment.Block -> (m as KursiMoment.Block).roleHue
+        is KursiMoment.Reveal -> (m as KursiMoment.Reveal).roleHue
+        is KursiMoment.InfluenceLoss -> (m as KursiMoment.InfluenceLoss).roleHue
+        is KursiMoment.Coup,
+        is KursiMoment.Elimination,
+        is KursiMoment.Win,
+        -> com.kursi.designsystem.BrandTokens.GoldAntique
+        is KursiMoment.Challenge -> com.kursi.designsystem.BrandTokens.StampRed
+        else -> com.kursi.designsystem.BrandTokens.BrassAged
+    }
 
 // ─────────────────────────── ActionMomentOverlay ─────────────────────────────
 
@@ -221,11 +218,12 @@ fun ActionMomentOverlay(
         }
 
         LaunchedEffect(m) {
-            val spec = if (reducedMotion) {
-                tween<Float>(120, easing = androidx.compose.animation.core.LinearEasing)
-            } else {
-                momentSpec(m)
-            }
+            val spec =
+                if (reducedMotion) {
+                    tween<Float>(120, easing = androidx.compose.animation.core.LinearEasing)
+                } else {
+                    momentSpec(m)
+                }
             progress.animateTo(1f, spec)
             // Pop head, notify caller
             if (host.queue.isNotEmpty()) host.queue.removeAt(0)
@@ -242,11 +240,12 @@ fun ActionMomentOverlay(
         }
 
         Box(
-            modifier = modifier
-                .fillMaxSize()
-                .pointerInput(m) {
-                    detectTapGestures { skipped = true }
-                },
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .pointerInput(m) {
+                        detectTapGestures { skipped = true }
+                    },
         ) {
             if (reducedMotion) {
                 // Reduced motion: crossfade to static end-frame (120ms)
@@ -278,19 +277,19 @@ private fun MomentBeatContent(
     anchors: TableAnchors,
 ) {
     when (m) {
-        is KursiMoment.Income       -> IncomeBeat(m, progress, anchors)
-        is KursiMoment.ForeignAid   -> ForeignAidBeat(m, progress, anchors)
-        is KursiMoment.Tax          -> TaxBeat(m, progress, anchors)
-        is KursiMoment.Steal        -> StealBeat(m, progress, anchors)
-        is KursiMoment.Assassinate  -> AssassinateBeat(m, progress, anchors)
-        is KursiMoment.Exchange     -> ExchangeBeat(m, progress, anchors)
-        is KursiMoment.Coup         -> CoupBeat(m, progress, anchors)
-        is KursiMoment.Block        -> BlockBeat(m, progress, anchors)
-        is KursiMoment.Challenge    -> ChallengeBeat(m, progress, anchors)
-        is KursiMoment.Reveal       -> RevealBeat(m, progress, anchors)
-        is KursiMoment.InfluenceLoss-> InfluenceLossBeat(m, progress, anchors)
-        is KursiMoment.Elimination  -> EliminationBeat(m, progress, anchors)
-        is KursiMoment.TurnHandoff  -> TurnHandoffBeat(m, progress, anchors)
-        is KursiMoment.Win          -> WinBeat(m, progress, anchors)
+        is KursiMoment.Income -> IncomeBeat(m, progress, anchors)
+        is KursiMoment.ForeignAid -> ForeignAidBeat(m, progress, anchors)
+        is KursiMoment.Tax -> TaxBeat(m, progress, anchors)
+        is KursiMoment.Steal -> StealBeat(m, progress, anchors)
+        is KursiMoment.Assassinate -> AssassinateBeat(m, progress, anchors)
+        is KursiMoment.Exchange -> ExchangeBeat(m, progress, anchors)
+        is KursiMoment.Coup -> CoupBeat(m, progress, anchors)
+        is KursiMoment.Block -> BlockBeat(m, progress, anchors)
+        is KursiMoment.Challenge -> ChallengeBeat(m, progress, anchors)
+        is KursiMoment.Reveal -> RevealBeat(m, progress, anchors)
+        is KursiMoment.InfluenceLoss -> InfluenceLossBeat(m, progress, anchors)
+        is KursiMoment.Elimination -> EliminationBeat(m, progress, anchors)
+        is KursiMoment.TurnHandoff -> TurnHandoffBeat(m, progress, anchors)
+        is KursiMoment.Win -> WinBeat(m, progress, anchors)
     }
 }

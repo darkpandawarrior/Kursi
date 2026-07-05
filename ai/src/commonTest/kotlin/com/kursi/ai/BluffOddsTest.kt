@@ -6,7 +6,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BluffOddsTest {
-
     private fun estimate(
         role: Role = Role.NETA,
         copiesPerRole: Int = 3,

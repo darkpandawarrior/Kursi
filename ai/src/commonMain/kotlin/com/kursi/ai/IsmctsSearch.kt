@@ -33,7 +33,10 @@ val ADVICE_BUDGET = SearchBudget(maxMillis = 350L, maxIterations = 3000, rollout
  *
  * Capped to keep big-table rollouts bounded (cost per ply is higher at 10p).
  */
-fun effectiveRolloutHorizon(base: Int, seatCount: Int): Int {
+fun effectiveRolloutHorizon(
+    base: Int,
+    seatCount: Int,
+): Int {
     val scaled = base * seatCount / 2
     return scaled.coerceIn(base, base * 6)
 }
@@ -47,7 +50,9 @@ data class MoveValue(
     val visitShare: Double,
 )
 
-private class Node(val intent: Intent?) {
+private class Node(
+    val intent: Intent?,
+) {
     var visits: Int = 0
     var totalReward: Double = 0.0
     var availability: Int = 0
@@ -75,10 +80,15 @@ class IsmctsSearch(
      */
     private val exploitGain: Double = 1.0,
 ) {
-    private val C = 0.7
+    private val ucbExplorationConstant = 0.7
     private var rolloutRng = Rng(rolloutSeed)
 
-    fun chooseIntent(view: PlayerView, legal: List<Intent>, memory: BotMemory, rng: Rng): Intent {
+    fun chooseIntent(
+        view: PlayerView,
+        legal: List<Intent>,
+        memory: BotMemory,
+        rng: Rng,
+    ): Intent {
         if (legal.size == 1) return legal.single()
         val root = runSearch(view, legal, memory, rng)
 
@@ -87,10 +97,12 @@ class IsmctsSearch(
         }
 
         // Robust child: most visited
-        val bestKey = root.children.entries
-            .filter { it.value.visits > 0 }
-            .maxByOrNull { it.value.visits }?.key
-            ?: return legal.first()
+        val bestKey =
+            root.children.entries
+                .filter { it.value.visits > 0 }
+                .maxByOrNull { it.value.visits }
+                ?.key
+                ?: return legal.first()
         return legal.firstOrNull { it.key() == bestKey } ?: legal.first()
     }
 
@@ -116,7 +128,10 @@ class IsmctsSearch(
         val savedBudget = budget
         val root = runSearch(view, legal, memory, rng, overrideBudget = adviceBudget)
 
-        val totalVisits = root.children.values.sumOf { it.visits }.coerceAtLeast(1)
+        val totalVisits =
+            root.children.values
+                .sumOf { it.visits }
+                .coerceAtLeast(1)
 
         return legal.map { intent ->
             val node = root.children[intent.key()]
@@ -157,11 +172,14 @@ class IsmctsSearch(
         while (iterations < overrideBudget.maxIterations &&
             timeMark.elapsedNow().inWholeMilliseconds < overrideBudget.maxMillis
         ) {
-            val (detState, r1) = try {
-                determinizer.sample(view, memory, r)
-            } catch (e: Exception) {
-                val (_, r2) = r.nextLong(); r = r2; continue
-            }
+            val (detState, r1) =
+                try {
+                    determinizer.sample(view, memory, r)
+                } catch (e: Exception) {
+                    val (_, r2) = r.nextLong()
+                    r = r2
+                    continue
+                }
             r = r1
             try {
                 iterate(root, detState, view.viewer, style)
@@ -174,7 +192,12 @@ class IsmctsSearch(
         return root
     }
 
-    private fun iterate(root: Node, initState: GameState, viewer: PlayerId, style: StyleContext) {
+    private fun iterate(
+        root: Node,
+        initState: GameState,
+        viewer: PlayerId,
+        style: StyleContext,
+    ) {
         val path = mutableListOf<Node>()
         var currentNode = root
         var currentState = initState
@@ -191,10 +214,11 @@ class IsmctsSearch(
             }
 
             // Find unvisited legal children
-            val unvisited = legalNow.filter {
-                val child = currentNode.children[it.key()]
-                child == null || child.visits == 0
-            }
+            val unvisited =
+                legalNow.filter {
+                    val child = currentNode.children[it.key()]
+                    child == null || child.visits == 0
+                }
 
             val chosenIntent: Intent
             if (unvisited.isNotEmpty()) {
@@ -203,7 +227,7 @@ class IsmctsSearch(
             } else {
                 // Select via UCB1
                 chosenIntent = legalNow.maxByOrNull { intent ->
-                    currentNode.children[intent.key()]?.ucb(C) ?: Double.MAX_VALUE
+                    currentNode.children[intent.key()]?.ucb(ucbExplorationConstant) ?: Double.MAX_VALUE
                 } ?: legalNow.first()
             }
 
@@ -234,7 +258,11 @@ class IsmctsSearch(
         }
     }
 
-    private fun rollout(state: GameState, viewer: PlayerId, style: StyleContext): Double {
+    private fun rollout(
+        state: GameState,
+        viewer: PlayerId,
+        style: StyleContext,
+    ): Double {
         if (state.phase is Phase.GameOver) {
             return if ((state.phase as Phase.GameOver).winner == viewer) 1.0 else 0.0
         }
@@ -249,7 +277,12 @@ class IsmctsSearch(
             val (seed, r1) = rolloutRng.nextLong()
             rolloutRng = r1
             val hp = HardPolicy(seed)
-            val intent = try { hp.decide(rolloutView, legalNow) } catch (e: Exception) { legalNow.first() }
+            val intent =
+                try {
+                    hp.decide(rolloutView, legalNow)
+                } catch (e: Exception) {
+                    legalNow.first()
+                }
             when (val o = applyIntent(currentState, intent)) {
                 is ApplyOutcome.Accepted -> currentState = o.state
                 is ApplyOutcome.Rejected -> break
@@ -259,7 +292,11 @@ class IsmctsSearch(
         return staticEval(currentState, viewer, style)
     }
 
-    private fun staticEval(state: GameState, viewer: PlayerId, style: StyleContext): Double {
+    private fun staticEval(
+        state: GameState,
+        viewer: PlayerId,
+        style: StyleContext,
+    ): Double {
         if (state.phase is Phase.GameOver) {
             return if ((state.phase as Phase.GameOver).winner == viewer) 1.0 else 0.0
         }
@@ -296,25 +333,26 @@ class IsmctsSearch(
         //   - My own exposure is subtracted: keeping my roles hidden is worth defending.
         // The term is mapped into [0,1] (0.5 = symmetric information) and given a modest weight so it
         // tie-breaks/colours the material evaluation without overriding a clearly winning material line.
-        val infoTerm: Double = run {
-            if (opponents.isEmpty()) return@run 0.5
-            val oppExposure = opponents.map { exposureOf(state, it.id) }.average()
-            val myExposure = exposureOf(state, viewer)
-            // ── challengeRate-weighted concealment ────────────────────────────────
-            // My hidden (face-down) cards are an information edge — but only as durable as my claims.
-            // At a trigger-happy table (high mean challengeRate) my concealed roles are likely to be
-            // *forced* into the open by challenges, so the value of "being less exposed than my
-            // opponents" is discounted: hidden info I can't keep hidden isn't worth a full unit.
-            // At a passive table the asymmetry is worth its full weight. concealValue scales the part
-            // of the asymmetry that comes from MY low exposure (myExposure < oppExposure). When the
-            // table never challenges (rate→0) this is 1.0 → unchanged from before; as the mean rate
-            // climbs it shrinks toward CONCEAL_FLOOR, never inverting the sign.
-            val concealValue = style.concealValue
-            val rawAsym = (oppExposure - myExposure)
-            // Discount only the favourable (positive) portion driven by my concealment.
-            val adjAsym = if (rawAsym > 0.0) rawAsym * concealValue else rawAsym
-            0.5 + 0.5 * adjAsym.coerceIn(-1.0, 1.0)
-        }
+        val infoTerm: Double =
+            run {
+                if (opponents.isEmpty()) return@run 0.5
+                val oppExposure = opponents.map { exposureOf(state, it.id) }.average()
+                val myExposure = exposureOf(state, viewer)
+                // ── challengeRate-weighted concealment ────────────────────────────────
+                // My hidden (face-down) cards are an information edge — but only as durable as my claims.
+                // At a trigger-happy table (high mean challengeRate) my concealed roles are likely to be
+                // *forced* into the open by challenges, so the value of "being less exposed than my
+                // opponents" is discounted: hidden info I can't keep hidden isn't worth a full unit.
+                // At a passive table the asymmetry is worth its full weight. concealValue scales the part
+                // of the asymmetry that comes from MY low exposure (myExposure < oppExposure). When the
+                // table never challenges (rate→0) this is 1.0 → unchanged from before; as the mean rate
+                // climbs it shrinks toward CONCEAL_FLOOR, never inverting the sign.
+                val concealValue = style.concealValue
+                val rawAsym = (oppExposure - myExposure)
+                // Discount only the favourable (positive) portion driven by my concealment.
+                val adjAsym = if (rawAsym > 0.0) rawAsym * concealValue else rawAsym
+                0.5 + 0.5 * adjAsym.coerceIn(-1.0, 1.0)
+            }
 
         // Weights: material still dominates (influence 0.74, coins 0.18), information adds a modest
         // 0.08 — enough to make the bot value forcing reveals / protecting its own cards as a tie-break
@@ -327,7 +365,10 @@ class IsmctsSearch(
      * 0.0 = fully hidden (both influence cards face-down), 1.0 = everything they ever held is face-up
      * (i.e. eliminated/fully exposed). Higher = less role-uncertainty for an observer.
      */
-    private fun exposureOf(state: GameState, pid: PlayerId): Double {
+    private fun exposureOf(
+        state: GameState,
+        pid: PlayerId,
+    ): Double {
         val faceUp = state.faceUpCards(pid).size
         val faceDown = state.faceDownInfluence(pid).size
         val total = faceUp + faceDown
@@ -354,25 +395,34 @@ internal class StyleContext private constructor(
     fun threatWeight(id: PlayerId): Double = threatWeights[id] ?: 1.0
 
     companion object {
-        private const val NEUTRAL_AGGR = 0.50      // StyleEstimate.aggression prior
+        private const val NEUTRAL_AGGR = 0.50 // StyleEstimate.aggression prior
         private const val NEUTRAL_CHALLENGE = 0.30 // StyleEstimate.challengeRate prior
-        private const val AGGR_GAIN = 0.8          // ±0.4 swing in threat weight across the aggression range
-        private const val CONCEAL_FLOOR = 0.4      // most we discount concealment at a fully trigger-happy table
+        private const val AGGR_GAIN = 0.8 // ±0.4 swing in threat weight across the aggression range
+        private const val CONCEAL_FLOOR = 0.4 // most we discount concealment at a fully trigger-happy table
         private const val CONCEAL_GAIN = 1.0
 
-        fun from(view: PlayerView, memory: BotMemory, exploitGain: Double = 1.0): StyleContext {
+        fun from(
+            view: PlayerView,
+            memory: BotMemory,
+            exploitGain: Double = 1.0,
+        ): StyleContext {
             val g = exploitGain.coerceIn(1.0, 4.0)
             val opponents = view.players.filter { it.id != view.viewer }
-            val weights = opponents.associate { opp ->
-                val aggr = memory.beliefs[opp.id]?.style?.aggression ?: NEUTRAL_AGGR
-                // weight = 1 + (gain·exploitGain)·(aggr − neutral); coerced positive so it never flips
-                // material sign. A higher exploitGain (GRANDMASTER) widens the swing so an above-neutral
-                // attacker's material counts for much more — the search races harder to neutralise them.
-                opp.id to (1.0 + AGGR_GAIN * g * (aggr - NEUTRAL_AGGR)).coerceIn(0.4, 1.8)
-            }
+            val weights =
+                opponents.associate { opp ->
+                    val aggr = memory.beliefs[opp.id]?.style?.aggression ?: NEUTRAL_AGGR
+                    // weight = 1 + (gain·exploitGain)·(aggr − neutral); coerced positive so it never flips
+                    // material sign. A higher exploitGain (GRANDMASTER) widens the swing so an above-neutral
+                    // attacker's material counts for much more — the search races harder to neutralise them.
+                    opp.id to (1.0 + AGGR_GAIN * g * (aggr - NEUTRAL_AGGR)).coerceIn(0.4, 1.8)
+                }
             // Table-level challenge pressure = mean of opponents' challengeRate (neutral when unread).
-            val meanChallenge = if (opponents.isEmpty()) NEUTRAL_CHALLENGE else
-                opponents.map { memory.beliefs[it.id]?.style?.challengeRate ?: NEUTRAL_CHALLENGE }.average()
+            val meanChallenge =
+                if (opponents.isEmpty()) {
+                    NEUTRAL_CHALLENGE
+                } else {
+                    opponents.map { memory.beliefs[it.id]?.style?.challengeRate ?: NEUTRAL_CHALLENGE }.average()
+                }
             // Above-neutral challenge pressure discounts concealment toward CONCEAL_FLOOR; at/below
             // neutral it stays 1.0 (we don't reward a passive table beyond full value). exploitGain
             // sharpens the discount so a trigger-happy table is read as even more dangerous to bluff into.

@@ -29,6 +29,7 @@
     <ID>LongMethod:GameViewModel.kt:GameViewModel$private fun startGame</ID>
     <ID>LongMethod:KursiVoice.kt:KursiVoice$private fun englishPersonaBark: String</ID>
     <ID>LongMethod:KursiVoice.kt:KursiVoice$private fun hinglishPersonaBark: String</ID>
+    <ID>LongMethod:StoryArc.kt:StoryArcs$fun begin: ArcStep</ID>
     <ID>LoopWithTooManyJumpStatements:GameSession.kt:GameSession$for</ID>
     <ID>LoopWithTooManyJumpStatements:GameViewModel.kt:GameViewModel$while</ID>
     <ID>LoopWithTooManyJumpStatements:ReplaySession.kt:ReplaySession.Companion$for</ID>
@@ -36,6 +37,13 @@
     <ID>MagicNumber:DailyChallenge.kt:DailyChallenge.Companion$27</ID>
     <ID>MagicNumber:DailyChallenge.kt:DailyChallenge.Companion$30</ID>
     <ID>MagicNumber:DailyChallenge.kt:DailyChallenge.Companion$31</ID>
+    <ID>MagicNumber:Elo.kt:Elo$1050</ID>
+    <ID>MagicNumber:Elo.kt:Elo$1300</ID>
+    <ID>MagicNumber:Elo.kt:Elo$1600</ID>
+    <ID>MagicNumber:Elo.kt:Elo$1900</ID>
+    <ID>MagicNumber:Elo.kt:Elo$400.0</ID>
+    <ID>MagicNumber:Elo.kt:Elo$4000</ID>
+    <ID>MagicNumber:Elo.kt:Elo$850</ID>
     <ID>MagicNumber:GameScreen.kt:0.16f</ID>
     <ID>MagicNumber:GameScreen.kt:0.32f</ID>
     <ID>MagicNumber:GameUiState.kt:GameUiState$12</ID>
@@ -47,13 +55,6 @@
     <ID>MagicNumber:GameViewModel.kt:GameViewModel$4800L</ID>
     <ID>MagicNumber:GameViewModel.kt:GameViewModel$6000L</ID>
     <ID>MagicNumber:GameViewModel.kt:GameViewModel$800L</ID>
-    <ID>MagicNumber:Ranked.kt:Elo$1050</ID>
-    <ID>MagicNumber:Ranked.kt:Elo$1300</ID>
-    <ID>MagicNumber:Ranked.kt:Elo$1600</ID>
-    <ID>MagicNumber:Ranked.kt:Elo$1900</ID>
-    <ID>MagicNumber:Ranked.kt:Elo$400.0</ID>
-    <ID>MagicNumber:Ranked.kt:Elo$4000</ID>
-    <ID>MagicNumber:Ranked.kt:Elo$850</ID>
     <ID>MagicNumber:SocialDirector.kt:SocialDirector$0.12f</ID>
     <ID>MagicNumber:SocialDirector.kt:SocialDirector$0.15f</ID>
     <ID>MagicNumber:SocialDirector.kt:SocialDirector$0.2f</ID>
@@ -75,7 +76,6 @@
     <ID>MagicNumber:StoryArc.kt:StoryArcs$0.5f</ID>
     <ID>MagicNumber:StoryArc.kt:StoryArcs$0.6f</ID>
     <ID>MatchingDeclarationName:GameMoments.kt:SeatIdResolver</ID>
-    <ID>MatchingDeclarationName:Ranked.kt:Elo</ID>
     <ID>ReturnCount:GameScreen.kt:fun deriveGamePhase: GamePhase</ID>
     <ID>ReturnCount:GameSession.kt:GameSession$fun autoDecision: AutoDecision?</ID>
     <ID>ReturnCount:GameViewModel.kt:GameViewModel$private fun submitIntent</ID>

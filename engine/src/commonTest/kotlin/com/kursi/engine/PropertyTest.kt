@@ -7,12 +7,16 @@ import kotlin.test.fail
 
 /** §6.2 — properties P1..P9 over fuzzed games driven by [RandomLegalPolicy]. */
 class PropertyTest {
-
-    private fun policies(config: GameConfig, seed: Long): Map<PlayerId, Policy> =
-        (0 until config.seatCount).associate { PlayerId(it) to RandomLegalPolicy(seed * 131 + it) }
+    private fun policies(
+        config: GameConfig,
+        seed: Long,
+    ): Map<PlayerId, Policy> = (0 until config.seatCount).associate { PlayerId(it) to RandomLegalPolicy(seed * 131 + it) }
 
     /** Plays a fuzzed game, recording every intent and checking invariants after every transition. */
-    private fun recordGame(config: GameConfig, seed: Long): Pair<GameState, List<Intent>> {
+    private fun recordGame(
+        config: GameConfig,
+        seed: Long,
+    ): Pair<GameState, List<Intent>> {
         var state = initialState(config, seed)
         checkInvariants(state)
         val pol = policies(config, seed)
@@ -26,7 +30,7 @@ class PropertyTest {
             val intent = pol.getValue(who).decide(redact(state, who), legal)
             intents.add(intent)
             state = (applyIntent(state, intent) as ApplyOutcome.Accepted).state
-            checkInvariants(state)   // P1/P2/P3: invariants hold after every reduce
+            checkInvariants(state) // P1/P2/P3: invariants hold after every reduce
         }
         return state to intents
     }
@@ -65,8 +69,11 @@ class PropertyTest {
             for (seat in 0 until n) {
                 val viewer = PlayerId(seat)
                 val view = redact(state, viewer)
-                assertEquals(state.faceDownInfluence(viewer).map { state.cards.getValue(it) }.sortedBy { it.ordinal },
-                    view.myInfluence, "viewer must see exactly their own hidden roles")
+                assertEquals(
+                    state.faceDownInfluence(viewer).map { state.cards.getValue(it) }.sortedBy { it.ordinal },
+                    view.myInfluence,
+                    "viewer must see exactly their own hidden roles",
+                )
                 // OpponentView carries no hidden-role field at all — leak is impossible by construction.
                 assertEquals(n, view.players.size)
                 assertTrue(view.players.all { it.faceDownCount in 0..2 })
@@ -87,8 +94,11 @@ class PropertyTest {
         val deckCard = s.deckCards.first { s.cards.getValue(it) != otherRole }
         val deckRole = s.cards.getValue(deckCard)
         val swapped = s.copy(cards = s.cards + mapOf(otherCard to deckRole, deckCard to otherRole))
-        assertEquals(redact(s, viewer), redact(swapped, viewer),
-            "viewer's projection must not depend on another player's hidden card identity")
+        assertEquals(
+            redact(s, viewer),
+            redact(swapped, viewer),
+            "viewer's projection must not depend on another player's hidden card identity",
+        )
     }
 
     @Test

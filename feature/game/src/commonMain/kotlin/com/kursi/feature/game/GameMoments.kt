@@ -50,9 +50,12 @@ import kotlin.math.sin
  * `view.players` is seat-ordered, so the list index is the canonical seat slot used by
  * the proportional anchor ellipse below.
  */
-internal class SeatIdResolver(private val playerIdToIndex: Map<PlayerId, Int>) {
+internal class SeatIdResolver(
+    private val playerIdToIndex: Map<PlayerId, Int>,
+) {
     /** Index of [id] in view.players, or -1 if unknown (eliminated/redacted). */
     fun seatOf(id: PlayerId): SeatId = playerIdToIndex[id] ?: -1
+
     val seatCount: Int get() = playerIdToIndex.size
 }
 
@@ -68,15 +71,16 @@ internal fun rememberSeatIdResolver(state: GameUiState): SeatIdResolver {
 // ─────────────────────────── Role hue lookup ─────────────────────────────────
 
 /** Role → Okabe-Ito hue from the single :core:designsystem source of truth. */
-internal fun roleHueOf(role: Role?): Color = when (role) {
-    Role.NETA      -> KursiRoleHues.Neta
-    Role.BHAI      -> KursiRoleHues.Bhai
-    Role.BABU      -> KursiRoleHues.Babu
-    Role.JUGAADU   -> KursiRoleHues.Jugaadu
-    Role.VAKIL     -> KursiRoleHues.Vakil
-    Role.PATRAKAAR -> KursiRoleHues.Patrakaar
-    null           -> KursiRoleHues.Neta // safe default; only used where a hue is structurally required
-}
+internal fun roleHueOf(role: Role?): Color =
+    when (role) {
+        Role.NETA -> KursiRoleHues.Neta
+        Role.BHAI -> KursiRoleHues.Bhai
+        Role.BABU -> KursiRoleHues.Babu
+        Role.JUGAADU -> KursiRoleHues.Jugaadu
+        Role.VAKIL -> KursiRoleHues.Vakil
+        Role.PATRAKAAR -> KursiRoleHues.Patrakaar
+        null -> KursiRoleHues.Neta // safe default; only used where a hue is structurally required
+    }
 
 // ─────────────────────────── Event → Moment mapping ──────────────────────────
 
@@ -96,125 +100,144 @@ internal fun mapEventToMoment(
 ): KursiMoment? {
     // Helper: display name for a PlayerId (bot persona name, or player's display name for the human seat).
     fun nameOf(id: PlayerId): String =
-        if (id == state.view.viewer) humanDisplayName
-        else state.opponentPersonas[id]?.name ?: "?"
+        if (id == state.view.viewer) {
+            humanDisplayName
+        } else {
+            state.opponentPersonas[id]?.name ?: "?"
+        }
 
     return when (event) {
+        is GameEvent.ActionDeclared ->
+            when (val a = event.action) {
+                Action.Income ->
+                    KursiMoment.Income(
+                        actorSeat = resolve.seatOf(event.actor),
+                        actorName = nameOf(event.actor),
+                    )
+                Action.ForeignAid ->
+                    KursiMoment.ForeignAid(
+                        actorSeat = resolve.seatOf(event.actor),
+                        actorName = nameOf(event.actor),
+                    )
+                Action.Tax ->
+                    KursiMoment.Tax(
+                        actorSeat = resolve.seatOf(event.actor),
+                        roleHue = roleHueOf(Role.NETA),
+                        actorName = nameOf(event.actor),
+                    )
+                Action.Exchange ->
+                    KursiMoment.Exchange(
+                        actorSeat = resolve.seatOf(event.actor),
+                        roleHue = roleHueOf(Role.JUGAADU),
+                        actorName = nameOf(event.actor),
+                    )
+                is Action.Steal ->
+                    KursiMoment.Steal(
+                        actorSeat = resolve.seatOf(event.actor),
+                        victim = resolve.seatOf(a.target),
+                        roleHue = roleHueOf(Role.BABU),
+                        actorName = nameOf(event.actor),
+                        victimName = nameOf(a.target),
+                    )
+                is Action.Assassinate ->
+                    KursiMoment.Assassinate(
+                        actorSeat = resolve.seatOf(event.actor),
+                        target = resolve.seatOf(a.target),
+                        roleHue = roleHueOf(Role.BHAI),
+                        actorName = nameOf(event.actor),
+                        targetName = nameOf(a.target),
+                    )
+                is Action.Coup ->
+                    KursiMoment.Coup(
+                        actorSeat = resolve.seatOf(event.actor),
+                        target = resolve.seatOf(a.target),
+                        actorName = nameOf(event.actor),
+                        targetName = nameOf(a.target),
+                    )
+                // Jaanch (Investigate) has no bespoke table-theatre overlay of its own — the private
+                // peek is a secrecy-bounded fact, narrated in the log/recap via KursiVoice rather than
+                // shown as a public moment. Fold it into the neighbouring beat (no standalone moment).
+                is Action.Investigate -> null
+                // Variant actions — no distinct table-theatre overlay (folded into log narration).
+                Action.BailPe, Action.Sabotage, is Action.Hawala, Action.Emergency -> null
+            }
 
-    is GameEvent.ActionDeclared -> when (val a = event.action) {
-        Action.Income      -> KursiMoment.Income(
-            actorSeat  = resolve.seatOf(event.actor),
-            actorName  = nameOf(event.actor),
-        )
-        Action.ForeignAid  -> KursiMoment.ForeignAid(
-            actorSeat  = resolve.seatOf(event.actor),
-            actorName  = nameOf(event.actor),
-        )
-        Action.Tax         -> KursiMoment.Tax(
-            actorSeat  = resolve.seatOf(event.actor),
-            roleHue    = roleHueOf(Role.NETA),
-            actorName  = nameOf(event.actor),
-        )
-        Action.Exchange    -> KursiMoment.Exchange(
-            actorSeat  = resolve.seatOf(event.actor),
-            roleHue    = roleHueOf(Role.JUGAADU),
-            actorName  = nameOf(event.actor),
-        )
-        is Action.Steal    -> KursiMoment.Steal(
-            actorSeat  = resolve.seatOf(event.actor),
-            victim     = resolve.seatOf(a.target),
-            roleHue    = roleHueOf(Role.BABU),
-            actorName  = nameOf(event.actor),
-            victimName = nameOf(a.target),
-        )
-        is Action.Assassinate -> KursiMoment.Assassinate(
-            actorSeat  = resolve.seatOf(event.actor),
-            target     = resolve.seatOf(a.target),
-            roleHue    = roleHueOf(Role.BHAI),
-            actorName  = nameOf(event.actor),
-            targetName = nameOf(a.target),
-        )
-        is Action.Coup     -> KursiMoment.Coup(
-            actorSeat  = resolve.seatOf(event.actor),
-            target     = resolve.seatOf(a.target),
-            actorName  = nameOf(event.actor),
-            targetName = nameOf(a.target),
-        )
-        // Jaanch (Investigate) has no bespoke table-theatre overlay of its own — the private
-        // peek is a secrecy-bounded fact, narrated in the log/recap via KursiVoice rather than
-        // shown as a public moment. Fold it into the neighbouring beat (no standalone moment).
-        is Action.Investigate -> null
-        // Variant actions — no distinct table-theatre overlay (folded into log narration).
-        Action.BailPe, Action.Sabotage, is Action.Hawala, Action.Emergency -> null
-    }
+        is GameEvent.Blocked ->
+            KursiMoment.Block(
+                actorSeat = resolve.seatOf(event.blocker),
+                blockedSeat = resolve.seatOf(blockedActorOf(event.action) ?: event.blocker),
+                roleHue = roleHueOf(event.role),
+                blockerName = nameOf(event.blocker),
+                blockedName = blockedActorOf(event.action)?.let { nameOf(it) } ?: "",
+            )
 
-    is GameEvent.Blocked -> KursiMoment.Block(
-        actorSeat   = resolve.seatOf(event.blocker),
-        blockedSeat = resolve.seatOf(blockedActorOf(event.action) ?: event.blocker),
-        roleHue     = roleHueOf(event.role),
-        blockerName = nameOf(event.blocker),
-        blockedName = blockedActorOf(event.action)?.let { nameOf(it) } ?: "",
-    )
+        is GameEvent.Challenged ->
+            KursiMoment.Challenge(
+                actorSeat = resolve.seatOf(event.challenger),
+                claimant = resolve.seatOf(event.target),
+                challengerName = nameOf(event.challenger),
+                claimantName = nameOf(event.target),
+            )
 
-    is GameEvent.Challenged -> KursiMoment.Challenge(
-        actorSeat      = resolve.seatOf(event.challenger),
-        claimant       = resolve.seatOf(event.target),
-        challengerName = nameOf(event.challenger),
-        claimantName   = nameOf(event.target),
-    )
+        is GameEvent.ChallengeRevealed ->
+            KursiMoment.Reveal(
+                actorSeat = resolve.seatOf(event.player),
+                claimant = resolve.seatOf(event.player),
+                claimedRole = event.role.name,
+                truthful = event.hadRole,
+                roleHue = roleHueOf(event.role),
+                playerName = nameOf(event.player),
+            )
 
-    is GameEvent.ChallengeRevealed -> KursiMoment.Reveal(
-        actorSeat   = resolve.seatOf(event.player),
-        claimant    = resolve.seatOf(event.player),
-        claimedRole = event.role.name,
-        truthful    = event.hadRole,
-        roleHue     = roleHueOf(event.role),
-        playerName  = nameOf(event.player),
-    )
+        is GameEvent.InfluenceLost ->
+            KursiMoment.InfluenceLoss(
+                actorSeat = resolve.seatOf(event.player),
+                lostRole = event.role.name,
+                roleHue = roleHueOf(event.role),
+                playerName = nameOf(event.player),
+            )
 
-    is GameEvent.InfluenceLost -> KursiMoment.InfluenceLoss(
-        actorSeat  = resolve.seatOf(event.player),
-        lostRole   = event.role.name,
-        roleHue    = roleHueOf(event.role),
-        playerName = nameOf(event.player),
-    )
+        is GameEvent.PlayerEliminated ->
+            KursiMoment.Elimination(
+                actorSeat = resolve.seatOf(event.player),
+                playerName = nameOf(event.player),
+            )
 
-    is GameEvent.PlayerEliminated -> KursiMoment.Elimination(
-        actorSeat  = resolve.seatOf(event.player),
-        playerName = nameOf(event.player),
-    )
-
-    is GameEvent.TurnAdvanced -> KursiMoment.TurnHandoff(
-        actorSeat = event.toSeat,
-        nextSeat  = event.toSeat,
-        nextName  = state.view.players.firstOrNull { it.seatIndex == event.toSeat }
+        is GameEvent.TurnAdvanced ->
+            KursiMoment.TurnHandoff(
+                actorSeat = event.toSeat,
+                nextSeat = event.toSeat,
+                nextName =
+                    state.view.players
+                        .firstOrNull { it.seatIndex == event.toSeat }
                         ?.let { p -> if (p.id == state.view.viewer) "Aap" else state.opponentPersonas[p.id]?.name ?: "" }
                         ?: "",
-    )
+            )
 
-    is GameEvent.GameEnded -> KursiMoment.Win(
-        actorSeat  = resolve.seatOf(event.winner),
-        winnerName = nameOf(event.winner),
-    )
+        is GameEvent.GameEnded ->
+            KursiMoment.Win(
+                actorSeat = resolve.seatOf(event.winner),
+                winnerName = nameOf(event.winner),
+            )
 
-    // Events with no standalone moment — their effect is folded into a neighbouring beat.
-    // Investigated / InvestigateRedraw are secrecy-bounded (the peeked role is never public),
-    // so they get no public overlay — only log/recap narration via KursiVoice.
-    is GameEvent.ActionResolved,
-    is GameEvent.ActionNegated,
-    is GameEvent.CoinsChanged,
-    is GameEvent.CoinsTransferred,
-    is GameEvent.CardReplaced,
-    is GameEvent.Exchanged,
-    is GameEvent.Investigated,
-    is GameEvent.InvestigateRedraw,
-    // Variant events — narrated in the log; no table-theatre overlay.
-    is GameEvent.InfluenceRestored,
-    is GameEvent.CoinsGifted,
-    is GameEvent.EmergencyDeclared,
-    is GameEvent.KhazanaWon,
-    is GameEvent.DarjaReached,
-    -> null
+        // Events with no standalone moment — their effect is folded into a neighbouring beat.
+        // Investigated / InvestigateRedraw are secrecy-bounded (the peeked role is never public),
+        // so they get no public overlay — only log/recap narration via KursiVoice.
+        is GameEvent.ActionResolved,
+        is GameEvent.ActionNegated,
+        is GameEvent.CoinsChanged,
+        is GameEvent.CoinsTransferred,
+        is GameEvent.CardReplaced,
+        is GameEvent.Exchanged,
+        is GameEvent.Investigated,
+        is GameEvent.InvestigateRedraw,
+        // Variant events — narrated in the log; no table-theatre overlay.
+        is GameEvent.InfluenceRestored,
+        is GameEvent.CoinsGifted,
+        is GameEvent.EmergencyDeclared,
+        is GameEvent.KhazanaWon,
+        is GameEvent.DarjaReached,
+        -> null
     }
 }
 
@@ -281,9 +304,10 @@ internal fun BoxScope.GameMomentLayer(
     val host = remember { MomentHost() }
     val resolver = rememberSeatIdResolver(state)
     // Proportional ellipse is now only the FALLBACK used before real measurement lands.
-    val fallback = remember(widthPx, heightPx, resolver.seatCount) {
-        proportionalAnchors(widthPx, heightPx, resolver.seatCount)
-    }
+    val fallback =
+        remember(widthPx, heightPx, resolver.seatCount) {
+            proportionalAnchors(widthPx, heightPx, resolver.seatCount)
+        }
     // MEASURED geometry: every opponent plate, the human hand and the treasury medallion
     // report their on-screen bounds into this registry (via Modifier.reportAnchor). We
     // rebase those into the overlay's local space so coin-trails / stamps / turn-handoffs

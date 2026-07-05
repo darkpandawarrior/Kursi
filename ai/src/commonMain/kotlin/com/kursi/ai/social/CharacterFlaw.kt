@@ -39,7 +39,6 @@ enum class CharacterFlaw {
  * which manipulations (flattery / rumour / bait / grudge-redirect) actually land on a given bot.
  */
 object FlawModel {
-
     /** A flaw counts as "present" once its susceptibility clears this bar. The dominant flaw is always present. */
     const val PRESENT_THRESHOLD = 0.50f
 
@@ -47,19 +46,24 @@ object FlawModel {
      * How exploitable [profile] is via [flaw], in `[0,1]`. Higher = the manipulation lands harder /
      * more reliably. Continuous so the director can scale the nudge probability by the read.
      */
-    fun susceptibility(profile: PersonalityProfile, flaw: CharacterFlaw): Float = with(profile) {
-        val leader = if (targetingBias == TargetingBias.LEADER) 1f else 0f
-        val weakHunter = if (targetingBias == TargetingBias.WEAKEST) 1f else 0f
-        val raw = when (flaw) {
-            CharacterFlaw.EGO       -> 0.55f * bluffRate + 0.45f * (economicAggression * leader)
-            CharacterFlaw.PARANOIA  -> 0.80f * challengeAggression + 0.20f * (1f - bluffRate)
-            CharacterFlaw.GREED     -> 0.50f * economicAggression + 0.30f * risk + 0.20f * weakHunter
-            CharacterFlaw.VENGEANCE -> vindictiveness
-            CharacterFlaw.ZEAL      -> 0.55f * (1f - bluffRate) + 0.45f * challengeAggression
-            CharacterFlaw.IMPULSE   -> 1f - predictability
+    fun susceptibility(
+        profile: PersonalityProfile,
+        flaw: CharacterFlaw,
+    ): Float =
+        with(profile) {
+            val leader = if (targetingBias == TargetingBias.LEADER) 1f else 0f
+            val weakHunter = if (targetingBias == TargetingBias.WEAKEST) 1f else 0f
+            val raw =
+                when (flaw) {
+                    CharacterFlaw.EGO -> 0.55f * bluffRate + 0.45f * (economicAggression * leader)
+                    CharacterFlaw.PARANOIA -> 0.80f * challengeAggression + 0.20f * (1f - bluffRate)
+                    CharacterFlaw.GREED -> 0.50f * economicAggression + 0.30f * risk + 0.20f * weakHunter
+                    CharacterFlaw.VENGEANCE -> vindictiveness
+                    CharacterFlaw.ZEAL -> 0.55f * (1f - bluffRate) + 0.45f * challengeAggression
+                    CharacterFlaw.IMPULSE -> 1f - predictability
+                }
+            raw.coerceIn(0f, 1f)
         }
-        raw.coerceIn(0f, 1f)
-    }
 
     /** Every flaw [profile] exposes (susceptibility ≥ [PRESENT_THRESHOLD]); always includes [dominantFlaw]. */
     fun flawsOf(profile: PersonalityProfile): Set<CharacterFlaw> {
@@ -69,6 +73,5 @@ object FlawModel {
     }
 
     /** The single most-exploitable flaw — the one a manipulator should aim for first. */
-    fun dominantFlaw(profile: PersonalityProfile): CharacterFlaw =
-        CharacterFlaw.entries.maxByOrNull { susceptibility(profile, it) } ?: CharacterFlaw.IMPULSE
+    fun dominantFlaw(profile: PersonalityProfile): CharacterFlaw = CharacterFlaw.entries.maxByOrNull { susceptibility(profile, it) } ?: CharacterFlaw.IMPULSE
 }

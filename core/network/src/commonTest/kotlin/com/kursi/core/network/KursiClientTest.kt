@@ -1,7 +1,6 @@
 package com.kursi.core.network
 
 import com.kursi.engine.Action
-import com.kursi.engine.GameConfig
 import com.kursi.engine.Intent
 import com.kursi.engine.PlayerId
 import com.kursi.protocol.wire.ClientMessage
@@ -9,13 +8,11 @@ import com.kursi.protocol.wire.KursiJson
 import com.kursi.protocol.wire.ServerMessage
 import com.kursi.protocol.wire.WireGameConfig
 import com.kursi.protocol.wire.WireOpponentView
+import com.kursi.protocol.wire.WireOwnCard
 import com.kursi.protocol.wire.WirePhaseView
 import com.kursi.protocol.wire.WirePlayerView
-import com.kursi.protocol.wire.WireOwnCard
 import com.kursi.protocol.wire.WireRole
 import com.kursi.protocol.wire.toWire
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.encodeToString
@@ -33,51 +30,54 @@ import kotlin.test.assertTrue
  * plus the [OnlineGameSession] mapping logic — no live server required.
  */
 class KursiClientTest {
-
     // ─────────────────────────── helpers ───────────────────────────
 
-    private fun sampleWireConfig() = WireGameConfig(
-        seatCount = 2,
-        copiesPerRole = 3,
-        roleCount = 5,
-        influencePerPlayer = 2,
-        startingCoins = 2,
-        coupCost = 7,
-        assassinateCost = 3,
-        taxAmount = 3,
-        foreignAidAmount = 2,
-        stealAmount = 2,
-        incomeAmount = 1,
-        exchangeDrawCount = 2,
-        forcedCoupThreshold = 10,
-        coinSupply = 50,
-    )
+    private fun sampleWireConfig() =
+        WireGameConfig(
+            seatCount = 2,
+            copiesPerRole = 3,
+            roleCount = 5,
+            influencePerPlayer = 2,
+            startingCoins = 2,
+            coupCost = 7,
+            assassinateCost = 3,
+            taxAmount = 3,
+            foreignAidAmount = 2,
+            stealAmount = 2,
+            incomeAmount = 1,
+            exchangeDrawCount = 2,
+            forcedCoupThreshold = 10,
+            coinSupply = 50,
+        )
 
-    private fun samplePlayerView(viewer: Int = 0) = WirePlayerView(
-        viewer = viewer,
-        config = sampleWireConfig(),
-        treasury = 30,
-        deckCount = 10,
-        turnNumber = 1,
-        myCoins = 2,
-        myInfluence = listOf(WireRole.NETA, WireRole.BHAI),
-        myFaceUp = emptyList(),
-        myCards = listOf(
-            WireOwnCard(id = 0, role = WireRole.NETA, faceUp = false),
-            WireOwnCard(id = 1, role = WireRole.BHAI, faceUp = false),
-        ),
-        players = listOf(
-            WireOpponentView(
-                id = viewer,
-                seatIndex = viewer,
-                coins = 2,
-                faceUpRoles = emptyList(),
-                faceDownCount = 2,
-                eliminated = false,
-            )
-        ),
-        phase = WirePhaseView.Turn(actor = viewer),
-    )
+    private fun samplePlayerView(viewer: Int = 0) =
+        WirePlayerView(
+            viewer = viewer,
+            config = sampleWireConfig(),
+            treasury = 30,
+            deckCount = 10,
+            turnNumber = 1,
+            myCoins = 2,
+            myInfluence = listOf(WireRole.NETA, WireRole.BHAI),
+            myFaceUp = emptyList(),
+            myCards =
+                listOf(
+                    WireOwnCard(id = 0, role = WireRole.NETA, faceUp = false),
+                    WireOwnCard(id = 1, role = WireRole.BHAI, faceUp = false),
+                ),
+            players =
+                listOf(
+                    WireOpponentView(
+                        id = viewer,
+                        seatIndex = viewer,
+                        coins = 2,
+                        faceUpRoles = emptyList(),
+                        faceDownCount = 2,
+                        eliminated = false,
+                    ),
+                ),
+            phase = WirePhaseView.Turn(actor = viewer),
+        )
 
     // ─────────────────────────── encode/decode round-trips ───────────────────────────
 
@@ -92,15 +92,17 @@ class KursiClientTest {
 
     @Test
     fun clientMessage_submitIntent_roundTrip() {
-        val intent = com.kursi.protocol.wire.WireIntent.DeclareAction(
-            actor = 0,
-            action = com.kursi.protocol.wire.WireAction.Tax,
-        )
-        val original: ClientMessage = ClientMessage.SubmitIntent(
-            matchId = "ABCD",
-            seq = 1L,
-            intent = intent,
-        )
+        val intent =
+            com.kursi.protocol.wire.WireIntent.DeclareAction(
+                actor = 0,
+                action = com.kursi.protocol.wire.WireAction.Tax,
+            )
+        val original: ClientMessage =
+            ClientMessage.SubmitIntent(
+                matchId = "ABCD",
+                seq = 1L,
+                intent = intent,
+            )
         val json = KursiJson.encodeToString<ClientMessage>(original)
         val decoded: ClientMessage = KursiJson.decodeFromString(json)
         assertEquals(original, decoded)
@@ -119,11 +121,12 @@ class KursiClientTest {
     @Test
     fun serverMessage_stateUpdate_roundTrip() {
         val view = samplePlayerView(viewer = 0)
-        val original: ServerMessage = ServerMessage.StateUpdate(
-            matchId = "ABCD",
-            seq = 1L,
-            view = view,
-        )
+        val original: ServerMessage =
+            ServerMessage.StateUpdate(
+                matchId = "ABCD",
+                seq = 1L,
+                view = view,
+            )
         val json = KursiJson.encodeToString<ServerMessage>(original)
         val decoded: ServerMessage = KursiJson.decodeFromString(json)
         assertEquals(original, decoded)
@@ -133,12 +136,13 @@ class KursiClientTest {
 
     @Test
     fun serverMessage_roomJoined_roundTrip() {
-        val original: ServerMessage = ServerMessage.RoomJoined(
-            matchId = "ABCD",
-            seq = 0L,
-            seat = 1,
-            playerCount = 2,
-        )
+        val original: ServerMessage =
+            ServerMessage.RoomJoined(
+                matchId = "ABCD",
+                seq = 0L,
+                seat = 1,
+                playerCount = 2,
+            )
         val json = KursiJson.encodeToString<ServerMessage>(original)
         val decoded: ServerMessage = KursiJson.decodeFromString(json)
         assertEquals(original, decoded)
@@ -147,12 +151,13 @@ class KursiClientTest {
 
     @Test
     fun serverMessage_error_roundTrip() {
-        val original: ServerMessage = ServerMessage.Error(
-            matchId = "ABCD",
-            seq = 0L,
-            clientSeq = 3L,
-            reason = "Out of turn",
-        )
+        val original: ServerMessage =
+            ServerMessage.Error(
+                matchId = "ABCD",
+                seq = 0L,
+                clientSeq = 3L,
+                reason = "Out of turn",
+            )
         val json = KursiJson.encodeToString<ServerMessage>(original)
         val decoded: ServerMessage = KursiJson.decodeFromString(json)
         assertEquals(original, decoded)
@@ -160,11 +165,12 @@ class KursiClientTest {
 
     @Test
     fun serverMessage_gameOver_roundTrip() {
-        val original: ServerMessage = ServerMessage.GameOver(
-            matchId = "ABCD",
-            seq = 42L,
-            winnerSeat = 1,
-        )
+        val original: ServerMessage =
+            ServerMessage.GameOver(
+                matchId = "ABCD",
+                seq = 42L,
+                winnerSeat = 1,
+            )
         val json = KursiJson.encodeToString<ServerMessage>(original)
         val decoded: ServerMessage = KursiJson.decodeFromString(json)
         assertEquals(original, decoded)
@@ -194,131 +200,147 @@ class KursiClientTest {
     // ─────────────────────────── OnlineGameSession state mapping ───────────────────────────
 
     @Test
-    fun onlineGameSession_stateUpdate_updatesPlayerView() = runTest {
-        val view = samplePlayerView(viewer = 0)
-        val stateUpdate = ServerMessage.StateUpdate(matchId = "ABCD", seq = 1L, view = view)
+    fun onlineGameSession_stateUpdate_updatesPlayerView() =
+        runTest {
+            val view = samplePlayerView(viewer = 0)
+            val stateUpdate = ServerMessage.StateUpdate(matchId = "ABCD", seq = 1L, view = view)
 
-        // Build a fake session that emits one StateUpdate then completes
-        val fakeSession = KursiSession(
-            incoming = flowOf(stateUpdate),
-            outgoing = kotlinx.coroutines.channels.Channel(),
-        )
+            // Build a fake session that emits one StateUpdate then completes
+            val fakeSession =
+                KursiSession(
+                    incoming = flowOf(stateUpdate),
+                    outgoing = kotlinx.coroutines.channels.Channel(),
+                )
 
-        val gameSession = OnlineGameSession(
-            session = fakeSession,
-            scope = this,
-            mySeat = 0,
-        )
+            val gameSession =
+                OnlineGameSession(
+                    session = fakeSession,
+                    scope = this,
+                    mySeat = 0,
+                )
 
-        // Before start: playerView is null
-        assertNull(gameSession.playerView.value)
+            // Before start: playerView is null
+            assertNull(gameSession.playerView.value)
 
-        val job = gameSession.start()
-        job.join()
+            val job = gameSession.start()
+            job.join()
 
-        // After StateUpdate is processed: playerView reflects the view
-        val receivedView = gameSession.playerView.value
-        assertNotNull(receivedView)
-        assertEquals(0, receivedView.viewer)
-        assertEquals(2, receivedView.myCoins)
-        assertEquals(listOf(WireRole.NETA, WireRole.BHAI), receivedView.myInfluence)
-    }
-
-    @Test
-    fun onlineGameSession_roomJoined_updatesRoomJoined() = runTest {
-        val roomJoined = ServerMessage.RoomJoined(matchId = "ABCD", seq = 0L, seat = 0, playerCount = 2)
-
-        val fakeSession = KursiSession(
-            incoming = flowOf(roomJoined),
-            outgoing = kotlinx.coroutines.channels.Channel(),
-        )
-
-        val gameSession = OnlineGameSession(
-            session = fakeSession,
-            scope = this,
-            mySeat = 0,
-        )
-
-        val job = gameSession.start()
-        job.join()
-
-        val result = gameSession.roomJoined.value
-        assertNotNull(result)
-        assertEquals(0, result.seat)
-        assertEquals(2, result.playerCount)
-    }
+            // After StateUpdate is processed: playerView reflects the view
+            val receivedView = gameSession.playerView.value
+            assertNotNull(receivedView)
+            assertEquals(0, receivedView.viewer)
+            assertEquals(2, receivedView.myCoins)
+            assertEquals(listOf(WireRole.NETA, WireRole.BHAI), receivedView.myInfluence)
+        }
 
     @Test
-    fun onlineGameSession_gameOver_updatesGameOver() = runTest {
-        val gameOver = ServerMessage.GameOver(matchId = "ABCD", seq = 99L, winnerSeat = 1)
+    fun onlineGameSession_roomJoined_updatesRoomJoined() =
+        runTest {
+            val roomJoined = ServerMessage.RoomJoined(matchId = "ABCD", seq = 0L, seat = 0, playerCount = 2)
 
-        val fakeSession = KursiSession(
-            incoming = flowOf(gameOver),
-            outgoing = kotlinx.coroutines.channels.Channel(),
-        )
+            val fakeSession =
+                KursiSession(
+                    incoming = flowOf(roomJoined),
+                    outgoing = kotlinx.coroutines.channels.Channel(),
+                )
 
-        val gameSession = OnlineGameSession(
-            session = fakeSession,
-            scope = this,
-            mySeat = 0,
-        )
+            val gameSession =
+                OnlineGameSession(
+                    session = fakeSession,
+                    scope = this,
+                    mySeat = 0,
+                )
 
-        val job = gameSession.start()
-        job.join()
+            val job = gameSession.start()
+            job.join()
 
-        val result = gameSession.gameOver.value
-        assertNotNull(result)
-        assertEquals(1, result.winnerSeat)
-    }
-
-    @Test
-    fun onlineGameSession_error_updatesLastError() = runTest {
-        val error = ServerMessage.Error(matchId = "ABCD", seq = 0L, clientSeq = 1L, reason = "Illegal move")
-
-        val fakeSession = KursiSession(
-            incoming = flowOf(error),
-            outgoing = kotlinx.coroutines.channels.Channel(),
-        )
-
-        val gameSession = OnlineGameSession(
-            session = fakeSession,
-            scope = this,
-            mySeat = 0,
-        )
-
-        val job = gameSession.start()
-        job.join()
-
-        val result = gameSession.lastError.value
-        assertNotNull(result)
-        assertEquals("Illegal move", result.reason)
-    }
+            val result = gameSession.roomJoined.value
+            assertNotNull(result)
+            assertEquals(0, result.seat)
+            assertEquals(2, result.playerCount)
+        }
 
     @Test
-    fun onlineGameSession_multipleUpdates_playerViewReflectsLatest() = runTest {
-        val view1 = samplePlayerView(viewer = 0).copy(myCoins = 3)
-        val view2 = samplePlayerView(viewer = 0).copy(myCoins = 5)
+    fun onlineGameSession_gameOver_updatesGameOver() =
+        runTest {
+            val gameOver = ServerMessage.GameOver(matchId = "ABCD", seq = 99L, winnerSeat = 1)
 
-        val fakeSession = KursiSession(
-            incoming = flowOf(
-                ServerMessage.StateUpdate(matchId = "ABCD", seq = 1L, view = view1),
-                ServerMessage.StateUpdate(matchId = "ABCD", seq = 2L, view = view2),
-            ),
-            outgoing = kotlinx.coroutines.channels.Channel(),
-        )
+            val fakeSession =
+                KursiSession(
+                    incoming = flowOf(gameOver),
+                    outgoing = kotlinx.coroutines.channels.Channel(),
+                )
 
-        val gameSession = OnlineGameSession(
-            session = fakeSession,
-            scope = this,
-            mySeat = 0,
-        )
+            val gameSession =
+                OnlineGameSession(
+                    session = fakeSession,
+                    scope = this,
+                    mySeat = 0,
+                )
 
-        val job = gameSession.start()
-        job.join()
+            val job = gameSession.start()
+            job.join()
 
-        // Only the latest StateUpdate should be visible
-        assertEquals(5, gameSession.playerView.value?.myCoins)
-    }
+            val result = gameSession.gameOver.value
+            assertNotNull(result)
+            assertEquals(1, result.winnerSeat)
+        }
+
+    @Test
+    fun onlineGameSession_error_updatesLastError() =
+        runTest {
+            val error = ServerMessage.Error(matchId = "ABCD", seq = 0L, clientSeq = 1L, reason = "Illegal move")
+
+            val fakeSession =
+                KursiSession(
+                    incoming = flowOf(error),
+                    outgoing = kotlinx.coroutines.channels.Channel(),
+                )
+
+            val gameSession =
+                OnlineGameSession(
+                    session = fakeSession,
+                    scope = this,
+                    mySeat = 0,
+                )
+
+            val job = gameSession.start()
+            job.join()
+
+            val result = gameSession.lastError.value
+            assertNotNull(result)
+            assertEquals("Illegal move", result.reason)
+        }
+
+    @Test
+    fun onlineGameSession_multipleUpdates_playerViewReflectsLatest() =
+        runTest {
+            val view1 = samplePlayerView(viewer = 0).copy(myCoins = 3)
+            val view2 = samplePlayerView(viewer = 0).copy(myCoins = 5)
+
+            val fakeSession =
+                KursiSession(
+                    incoming =
+                        flowOf(
+                            ServerMessage.StateUpdate(matchId = "ABCD", seq = 1L, view = view1),
+                            ServerMessage.StateUpdate(matchId = "ABCD", seq = 2L, view = view2),
+                        ),
+                    outgoing = kotlinx.coroutines.channels.Channel(),
+                )
+
+            val gameSession =
+                OnlineGameSession(
+                    session = fakeSession,
+                    scope = this,
+                    mySeat = 0,
+                )
+
+            val job = gameSession.start()
+            job.join()
+
+            // Only the latest StateUpdate should be visible
+            assertEquals(5, gameSession.playerView.value?.myCoins)
+        }
 
     // ─────────────────────────── schema-version field ───────────────────────────
 
@@ -340,7 +362,8 @@ class KursiClientTest {
     @Test
     fun wirePlayerView_unknownField_isIgnoredByDecoder() {
         // Simulate a newer server adding an unknown field
-        val jsonWithExtra = """
+        val jsonWithExtra =
+            """
             {
               "viewer": 0,
               "config": {
@@ -359,7 +382,7 @@ class KursiClientTest {
               "schemaVersion": 99,
               "futureField": "ignored"
             }
-        """.trimIndent()
+            """.trimIndent()
         // Should not throw — ignoreUnknownKeys = true
         val decoded = KursiJson.decodeFromString<WirePlayerView>(jsonWithExtra)
         assertEquals(0, decoded.viewer)

@@ -17,7 +17,6 @@ import kotlin.time.TimeSource
  *   6. Runs within budget — no crash, on action and reaction states
  */
 class MoveAdvisorTest {
-
     // ─────────────────────────────────────────────────────────────────────────
     // Local test-state builder (mirrors engine/commonTest's buildState)
     // ─────────────────────────────────────────────────────────────────────────
@@ -40,7 +39,11 @@ class MoveAdvisorTest {
         for (role in Role.entries) repeat(config.copiesPerRole) { cards[CardId(id++)] = role }
         val byRole: Map<Role, MutableList<CardId>> =
             Role.entries.associateWith { r ->
-                cards.filter { it.value == r }.keys.sortedBy { it.raw }.toMutableList()
+                cards
+                    .filter { it.value == r }
+                    .keys
+                    .sortedBy { it.raw }
+                    .toMutableList()
             }
 
         val locations = LinkedHashMap<CardId, CardLocation>()
@@ -92,12 +95,13 @@ class MoveAdvisorTest {
     ): GameState {
         // Bot (seat 1) is active, so build the state with seat 1 to act first
         val cfg = GameConfig.forPlayers(2)
-        val initial = buildState(
-            cfg,
-            listOf(humanHand, botHand),
-            listOf(humanCoins, botCoins),
-            phase = Phase.AwaitingAction(1),  // bot's turn
-        )
+        val initial =
+            buildState(
+                cfg,
+                listOf(humanHand, botHand),
+                listOf(humanCoins, botCoins),
+                phase = Phase.AwaitingAction(1), // bot's turn
+            )
         // Apply bot's chosen action to enter the reaction phase
         val outcome = applyIntent(initial, Intent.DeclareAction(PlayerId(1), botAction))
         return (outcome as ApplyOutcome.Accepted).state
@@ -119,12 +123,13 @@ class MoveAdvisorTest {
         botCoins: Int = 3,
     ): GameState {
         val cfg = GameConfig.forPlayers(2)
-        val initial = buildState(
-            cfg,
-            listOf(humanHand, botHand),
-            listOf(humanCoins, botCoins),
-            phase = Phase.AwaitingAction(1),
-        )
+        val initial =
+            buildState(
+                cfg,
+                listOf(humanHand, botHand),
+                listOf(humanCoins, botCoins),
+                phase = Phase.AwaitingAction(1),
+            )
         // Bot declares action
         val afterDeclaration = (applyIntent(initial, Intent.DeclareAction(botId, botAction)) as ApplyOutcome.Accepted).state
 
@@ -166,11 +171,12 @@ class MoveAdvisorTest {
     @Test
     fun bestMove_returnsLegalIntent_reactionChallengePhase() {
         // Bot declares Tax (claims NETA), human can Challenge or Pass
-        val state = reactionState(
-            humanHand = listOf(Role.VAKIL, Role.BABU),
-            botHand = listOf(Role.BHAI, Role.JUGAADU), // bot does NOT hold NETA → bluff
-            botAction = Action.Tax,
-        )
+        val state =
+            reactionState(
+                humanHand = listOf(Role.VAKIL, Role.BABU),
+                botHand = listOf(Role.BHAI, Role.JUGAADU), // bot does NOT hold NETA → bluff
+                botAction = Action.Tax,
+            )
         val legal = legalIntents(state, humanId)
         assertTrue(legal.isNotEmpty(), "human should have reactions to bot's Tax")
 
@@ -219,12 +225,13 @@ class MoveAdvisorTest {
     @Test
     fun advise_coversAllLegalIntents_reactionPhase() {
         // Bot declares Steal targeting human
-        val state = reactionState(
-            humanHand = listOf(Role.BABU, Role.VAKIL),
-            botHand = listOf(Role.BABU, Role.NETA),
-            botAction = Action.Steal(humanId),
-            botCoins = 2,
-        )
+        val state =
+            reactionState(
+                humanHand = listOf(Role.BABU, Role.VAKIL),
+                botHand = listOf(Role.BABU, Role.NETA),
+                botAction = Action.Steal(humanId),
+                botCoins = 2,
+            )
         val legal = legalIntents(state, humanId)
         assertTrue(legal.isNotEmpty(), "human should have reactions to Steal")
 
@@ -249,7 +256,7 @@ class MoveAdvisorTest {
         for (i in 0 until advices.size - 1) {
             assertTrue(
                 advices[i].winProb >= advices[i + 1].winProb,
-                "advices not ranked best-first at index $i: ${advices[i].winProb} < ${advices[i + 1].winProb}"
+                "advices not ranked best-first at index $i: ${advices[i].winProb} < ${advices[i + 1].winProb}",
             )
         }
     }
@@ -263,8 +270,10 @@ class MoveAdvisorTest {
         // Human holds NETA → Tax is truthful
         val state = twoPlayerState(listOf(Role.NETA, Role.VAKIL), listOf(Role.BHAI, Role.BABU))
         val legal = legalIntents(state, humanId)
-        val taxIntent = legal.filterIsInstance<Intent.DeclareAction>()
-            .firstOrNull { it.action == Action.Tax }
+        val taxIntent =
+            legal
+                .filterIsInstance<Intent.DeclareAction>()
+                .firstOrNull { it.action == Action.Tax }
         assertNotNull(taxIntent, "Tax must be a legal option")
 
         val advisor = MoveAdvisor(seed = 77L, adviceBudget = testBudget)
@@ -279,15 +288,18 @@ class MoveAdvisorTest {
     fun truthful_block_whenHoldingBlockingRole() {
         // Human holds VAKIL; bot assassinates → human can block truthfully as VAKIL.
         // Use blockReactionState to advance past the CHALLENGE_ACTION window to the BLOCK step.
-        val state = blockReactionState(
-            humanHand = listOf(Role.VAKIL, Role.NETA),
-            botHand = listOf(Role.BHAI, Role.BABU),
-            botAction = Action.Assassinate(humanId),
-            botCoins = 3,
-        )
+        val state =
+            blockReactionState(
+                humanHand = listOf(Role.VAKIL, Role.NETA),
+                botHand = listOf(Role.BHAI, Role.BABU),
+                botAction = Action.Assassinate(humanId),
+                botCoins = 3,
+            )
         val legal = legalIntents(state, humanId)
-        val blockVakil = legal.filterIsInstance<Intent.Block>()
-            .firstOrNull { it.role == Role.VAKIL }
+        val blockVakil =
+            legal
+                .filterIsInstance<Intent.Block>()
+                .firstOrNull { it.role == Role.VAKIL }
         assertNotNull(blockVakil, "Block(VAKIL) must be legal at BLOCK step when bot assassinates")
 
         val advisor = MoveAdvisor(seed = 88L, adviceBudget = testBudget)
@@ -307,8 +319,10 @@ class MoveAdvisorTest {
         // Human does NOT hold NETA → Tax is a bluff
         val state = twoPlayerState(listOf(Role.BHAI, Role.VAKIL), listOf(Role.NETA, Role.BABU))
         val legal = legalIntents(state, humanId)
-        val taxIntent = legal.filterIsInstance<Intent.DeclareAction>()
-            .firstOrNull { it.action == Action.Tax }
+        val taxIntent =
+            legal
+                .filterIsInstance<Intent.DeclareAction>()
+                .firstOrNull { it.action == Action.Tax }
         assertNotNull(taxIntent, "Tax must be legal (bluffing allowed)")
 
         val advisor = MoveAdvisor(seed = 101L, adviceBudget = testBudget)
@@ -323,15 +337,18 @@ class MoveAdvisorTest {
     fun bluff_block_whenNotHoldingBlockingRole() {
         // Human does NOT hold VAKIL but can bluff-block an assassination.
         // Use blockReactionState to advance past the CHALLENGE_ACTION window to the BLOCK step.
-        val state = blockReactionState(
-            humanHand = listOf(Role.NETA, Role.BABU),   // no VAKIL
-            botHand = listOf(Role.BHAI, Role.JUGAADU),
-            botAction = Action.Assassinate(humanId),
-            botCoins = 3,
-        )
+        val state =
+            blockReactionState(
+                humanHand = listOf(Role.NETA, Role.BABU), // no VAKIL
+                botHand = listOf(Role.BHAI, Role.JUGAADU),
+                botAction = Action.Assassinate(humanId),
+                botCoins = 3,
+            )
         val legal = legalIntents(state, humanId)
-        val blockVakil = legal.filterIsInstance<Intent.Block>()
-            .firstOrNull { it.role == Role.VAKIL }
+        val blockVakil =
+            legal
+                .filterIsInstance<Intent.Block>()
+                .firstOrNull { it.role == Role.VAKIL }
         assertNotNull(blockVakil, "Block(VAKIL) must be legal at BLOCK step even without holding VAKIL")
 
         val advisor = MoveAdvisor(seed = 202L, adviceBudget = testBudget)
@@ -358,16 +375,18 @@ class MoveAdvisorTest {
         // Holding 1 NETA means 1 fewer unseen NETA in the pool, making the bot's claim harder to justify.
         // So stateA challenge odds > stateB challenge odds.
 
-        val stateA = reactionState(
-            humanHand = listOf(Role.NETA, Role.VAKIL),  // human holds NETA → fewer unseen NETA
-            botHand = listOf(Role.BHAI, Role.BABU),     // bot claims NETA via Tax (bluffing)
-            botAction = Action.Tax,
-        )
-        val stateB = reactionState(
-            humanHand = listOf(Role.VAKIL, Role.BABU),  // human holds no NETA → more unseen NETA
-            botHand = listOf(Role.BHAI, Role.JUGAADU),  // bot claims NETA via Tax (bluffing)
-            botAction = Action.Tax,
-        )
+        val stateA =
+            reactionState(
+                humanHand = listOf(Role.NETA, Role.VAKIL), // human holds NETA → fewer unseen NETA
+                botHand = listOf(Role.BHAI, Role.BABU), // bot claims NETA via Tax (bluffing)
+                botAction = Action.Tax,
+            )
+        val stateB =
+            reactionState(
+                humanHand = listOf(Role.VAKIL, Role.BABU), // human holds no NETA → more unseen NETA
+                botHand = listOf(Role.BHAI, Role.JUGAADU), // bot claims NETA via Tax (bluffing)
+                botAction = Action.Tax,
+            )
 
         val advisor = MoveAdvisor(seed = 303L, adviceBudget = testBudget)
 
@@ -387,17 +406,18 @@ class MoveAdvisorTest {
         assertTrue(
             challengeA.successOdds!! >= challengeB.successOdds!!,
             "Challenge odds should be >= when fewer unseen NETA exist: " +
-                "stateA=${challengeA.successOdds} vs stateB=${challengeB.successOdds}"
+                "stateA=${challengeA.successOdds} vs stateB=${challengeB.successOdds}",
         )
     }
 
     @Test
     fun challengeOdds_inRange_0_to_1() {
-        val state = reactionState(
-            humanHand = listOf(Role.VAKIL, Role.BABU),
-            botHand = listOf(Role.BHAI, Role.JUGAADU),
-            botAction = Action.Tax,
-        )
+        val state =
+            reactionState(
+                humanHand = listOf(Role.VAKIL, Role.BABU),
+                botHand = listOf(Role.BHAI, Role.JUGAADU),
+                botAction = Action.Tax,
+            )
         val legal = legalIntents(state, humanId)
         val advisor = MoveAdvisor(seed = 404L, adviceBudget = testBudget)
         val advices = advisor.advise(state, humanId, legal)
@@ -424,20 +444,23 @@ class MoveAdvisorTest {
         val elapsed = mark.elapsedNow().inWholeMilliseconds
 
         // Should never throw; should finish well within 2x budget
-        assertTrue(elapsed < budget.maxMillis * 2 + 500L,
-            "advise took ${elapsed}ms which seems over budget ${budget.maxMillis}ms")
+        assertTrue(
+            elapsed < budget.maxMillis * 2 + 500L,
+            "advise took ${elapsed}ms which seems over budget ${budget.maxMillis}ms",
+        )
         assertEquals(legal.size, advices.size)
     }
 
     @Test
     fun advise_completesWithinBudget_reactionPhase() {
         val budget = SearchBudget(maxMillis = 600L, maxIterations = 400, rolloutHorizon = 6)
-        val state = reactionState(
-            humanHand = listOf(Role.VAKIL, Role.NETA),
-            botHand = listOf(Role.BHAI, Role.JUGAADU),
-            botAction = Action.Assassinate(humanId),
-            botCoins = 3,
-        )
+        val state =
+            reactionState(
+                humanHand = listOf(Role.VAKIL, Role.NETA),
+                botHand = listOf(Role.BHAI, Role.JUGAADU),
+                botAction = Action.Assassinate(humanId),
+                botCoins = 3,
+            )
         val legal = legalIntents(state, humanId)
         assertTrue(legal.isNotEmpty())
 
@@ -459,16 +482,18 @@ class MoveAdvisorTest {
         val advisor = MoveAdvisor(seed = 700L, adviceBudget = testBudget)
         val advices = advisor.advise(state, humanId, legal)
 
-        val incomeAdvice = advices.firstOrNull {
-            it.intent is Intent.DeclareAction && (it.intent as Intent.DeclareAction).action == Action.Income
-        }
+        val incomeAdvice =
+            advices.firstOrNull {
+                it.intent is Intent.DeclareAction && (it.intent as Intent.DeclareAction).action == Action.Income
+            }
         assertNotNull(incomeAdvice, "Income must be in advices")
         assertNull(incomeAdvice.truthful, "Income makes no role claim — truthful must be null")
         assertFalse(incomeAdvice.bluff, "Income is not a bluff")
 
-        val faAdvice = advices.firstOrNull {
-            it.intent is Intent.DeclareAction && (it.intent as Intent.DeclareAction).action == Action.ForeignAid
-        }
+        val faAdvice =
+            advices.firstOrNull {
+                it.intent is Intent.DeclareAction && (it.intent as Intent.DeclareAction).action == Action.ForeignAid
+            }
         assertNotNull(faAdvice, "ForeignAid must be in advices")
         assertNull(faAdvice.truthful, "ForeignAid makes no role claim — truthful must be null")
         assertFalse(faAdvice.bluff, "ForeignAid is not a bluff")
@@ -500,9 +525,10 @@ class MoveAdvisorTest {
         val advisor = MoveAdvisor(seed = 800L, adviceBudget = testBudget)
         val advices = advisor.advise(state, humanId, legal)
 
-        val taxAdvice = advices.firstOrNull {
-            it.intent is Intent.DeclareAction && (it.intent as Intent.DeclareAction).action == Action.Tax
-        }
+        val taxAdvice =
+            advices.firstOrNull {
+                it.intent is Intent.DeclareAction && (it.intent as Intent.DeclareAction).action == Action.Tax
+            }
         assertNotNull(taxAdvice)
         assertTrue(taxAdvice.bluff, "Tax without NETA is a bluff")
         val odds = taxAdvice.successOdds

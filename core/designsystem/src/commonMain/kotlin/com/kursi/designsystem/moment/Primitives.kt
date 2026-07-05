@@ -1,7 +1,5 @@
 package com.kursi.designsystem.moment
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,7 +7,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -46,11 +43,16 @@ import kotlin.math.sin
 // ─────────────────────────── Easing helpers ──────────────────────────────────
 
 /** Linear interpolation. */
-internal fun lerp(a: Float, b: Float, t: Float): Float = a + (b - a) * t.coerceIn(0f, 1f)
+internal fun lerp(
+    a: Float,
+    b: Float,
+    t: Float,
+): Float = a + (b - a) * t.coerceIn(0f, 1f)
 
 /** EaseOutCubic — smooth deceleration. */
 internal fun easeOutCubic(t: Float): Float {
-    val c = t - 1f; return 1f + c * c * c
+    val c = t - 1f
+    return 1f + c * c * c
 }
 
 /** EaseInQuart — sharp initial acceleration. */
@@ -90,11 +92,12 @@ fun RubberStamp(
     modifier: Modifier = Modifier,
 ) {
     // ── Scale per phase ──
-    val scale = when {
-        progress < 0.55f -> lerp(1.8f, 1.0f, easeInQuart(progress / 0.55f))
-        progress < 0.78f -> lerp(1.0f, 0.92f, (progress - 0.55f) / 0.23f)
-        else             -> lerp(0.92f, 1.0f, easeOutBack((progress - 0.78f) / 0.22f))
-    }
+    val scale =
+        when {
+            progress < 0.55f -> lerp(1.8f, 1.0f, easeInQuart(progress / 0.55f))
+            progress < 0.78f -> lerp(1.0f, 0.92f, (progress - 0.55f) / 0.23f)
+            else -> lerp(0.92f, 1.0f, easeOutBack((progress - 0.78f) / 0.22f))
+        }
     // ── Alpha ramps up over the first 40% then stays full ──
     val alpha = (progress / 0.40f).coerceAtMost(1f)
     // ── Rotation straightens as it lands ──
@@ -103,42 +106,45 @@ fun RubberStamp(
     val inkBleed = if (progress > 0.78f) (progress - 0.78f) / 0.22f else 0f
 
     Box(
-        modifier = modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                rotationZ = rot
-                this.alpha = alpha
-                // 1px channel-offset simulated via a tiny translationX on the shadow layer
-                // (pure graphicsLayer, no AGSL)
-                translationX = if (inkBleed > 0f) inkBleed * 1.5f else 0f
-            },
+        modifier =
+            modifier
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    rotationZ = rot
+                    this.alpha = alpha
+                    // 1px channel-offset simulated via a tiny translationX on the shadow layer
+                    // (pure graphicsLayer, no AGSL)
+                    translationX = if (inkBleed > 0f) inkBleed * 1.5f else 0f
+                },
         contentAlignment = Alignment.Center,
     ) {
         // Shadow layer (ink-bleed ghost) — slightly offset, lower alpha
         if (inkBleed > 0.1f) {
             Text(
                 text = glyphText,
-                style = TextStyle(
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Black,
-                    color = tint.copy(alpha = alpha * inkBleed * 0.25f),
-                    textAlign = TextAlign.Center,
-                    letterSpacing = 2.sp,
-                ),
+                style =
+                    TextStyle(
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Black,
+                        color = tint.copy(alpha = alpha * inkBleed * 0.25f),
+                        textAlign = TextAlign.Center,
+                        letterSpacing = 2.sp,
+                    ),
                 modifier = Modifier.offset { IntOffset((-2f * inkBleed).roundToInt(), 0) },
             )
         }
         // Primary stamp word
         Text(
             text = glyphText,
-            style = TextStyle(
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Black,
-                color = tint.copy(alpha = alpha),
-                textAlign = TextAlign.Center,
-                letterSpacing = 2.sp,
-            ),
+            style =
+                TextStyle(
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Black,
+                    color = tint.copy(alpha = alpha),
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 2.sp,
+                ),
         )
     }
 
@@ -211,21 +217,23 @@ fun CoinTrail(
     val easedT = easeOutCubic(progress.coerceIn(0f, 1f))
 
     // Arc midpoint is lifted above the straight line (control point for quadratic)
-    val mid = Offset(
-        x = lerp(from.x, to.x, 0.5f),
-        y = lerp(from.y, to.y, 0.5f) - 60f, // arc height in px
-    )
+    val mid =
+        Offset(
+            x = lerp(from.x, to.x, 0.5f),
+            y = lerp(from.y, to.y, 0.5f) - 60f, // arc height in px
+        )
 
     // Quadratic Bézier position
     val coinX = quadBezier(from.x, mid.x, to.x, easedT)
     val coinY = quadBezier(from.y, mid.y, to.y, easedT)
 
     // Trail alpha: fade in early, full during flight, fade out last 10%
-    val alpha = when {
-        progress < 0.15f -> progress / 0.15f
-        progress > 0.90f -> (1f - progress) / 0.10f
-        else -> 1f
-    }
+    val alpha =
+        when {
+            progress < 0.15f -> progress / 0.15f
+            progress > 0.90f -> (1f - progress) / 0.10f
+            else -> 1f
+        }
 
     // Counter "+N" only visible on arrival (last 20%)
     val counterAlpha = if (progress > 0.80f) (progress - 0.80f) / 0.20f else 0f
@@ -249,27 +257,35 @@ fun CoinTrail(
     // Counter label (rendered via Text so it benefits from font subsystem)
     if (counterAlpha > 0f) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .alpha(counterAlpha),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .alpha(counterAlpha),
         ) {
             Text(
                 text = "+$count",
-                style = TextStyle(
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = BrandTokens.GoldAntique,
-                ),
-                modifier = Modifier.offset {
-                    IntOffset(to.x.roundToInt(), (to.y - 30f).roundToInt())
-                },
+                style =
+                    TextStyle(
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrandTokens.GoldAntique,
+                    ),
+                modifier =
+                    Modifier.offset {
+                        IntOffset(to.x.roundToInt(), (to.y - 30f).roundToInt())
+                    },
             )
         }
     }
 }
 
 /** Quadratic Bézier scalar. */
-private fun quadBezier(p0: Float, p1: Float, p2: Float, t: Float): Float {
+private fun quadBezier(
+    p0: Float,
+    p1: Float,
+    p2: Float,
+    t: Float,
+): Float {
     val mt = 1f - t
     return mt * mt * p0 + 2f * mt * t * p1 + t * t * p2
 }
@@ -293,37 +309,41 @@ fun CardFlip(
     val faceUp = easedProgress >= 0.5f
 
     // rotationY: 0° → −90° (face-down side goes away) → 0° (face-up arrives)
-    val rotY = if (!faceUp) {
-        lerp(0f, -90f, easedProgress / 0.5f)
-    } else {
-        lerp(90f, 0f, (easedProgress - 0.5f) / 0.5f)
-    }
+    val rotY =
+        if (!faceUp) {
+            lerp(0f, -90f, easedProgress / 0.5f)
+        } else {
+            lerp(90f, 0f, (easedProgress - 0.5f) / 0.5f)
+        }
 
     // Riso channel-offset: fires during reveal window (0.45–0.65)
-    val risoShimmer = when {
-        progress < 0.45f -> 0f
-        progress < 0.65f -> (progress - 0.45f) / 0.20f
-        progress < 0.80f -> 1f - (progress - 0.65f) / 0.15f
-        else -> 0f
-    }
+    val risoShimmer =
+        when {
+            progress < 0.45f -> 0f
+            progress < 0.65f -> (progress - 0.45f) / 0.20f
+            progress < 0.80f -> 1f - (progress - 0.65f) / 0.15f
+            else -> 0f
+        }
     val channelOffset = (risoShimmer * 3f).roundToInt() // 0..3 px
 
     Box(
-        modifier = modifier
-            .graphicsLayer {
-                rotationY = rotY
-                cameraDistance = 8f * density // prevents extreme perspective distortion
-            },
+        modifier =
+            modifier
+                .graphicsLayer {
+                    rotationY = rotY
+                    cameraDistance = 8f * density // prevents extreme perspective distortion
+                },
         contentAlignment = Alignment.Center,
     ) {
         if (faceUp) {
             // Front face — counter-rotate text so it isn't mirrored
             Box(
-                modifier = Modifier.graphicsLayer {
-                    // Text is already correct because rotationY already flipped it back to 0°
-                    // The channel offset: draw a ghost copy shifted by channelOffset pixels
-                    translationX = channelOffset.toFloat()
-                },
+                modifier =
+                    Modifier.graphicsLayer {
+                        // Text is already correct because rotationY already flipped it back to 0°
+                        // The channel offset: draw a ghost copy shifted by channelOffset pixels
+                        translationX = channelOffset.toFloat()
+                    },
                 contentAlignment = Alignment.Center,
             ) {
                 frontContent()
@@ -380,14 +400,18 @@ fun ChairTip(
     // Phase A (0–0.40): tip to 45° with anticipation hold at peak
     // Phase B (0.40–0.70): continue tipping to 90°
     // Phase C (0.70–1.00): full 110° + drift down off-screen
-    val rotZ = when {
-        progress < 0.40f -> lerp(0f, 45f, easeOutCubic(progress / 0.40f))
-        progress < 0.70f -> lerp(45f, 90f, (progress - 0.40f) / 0.30f)
-        else -> lerp(90f, 110f, (progress - 0.70f) / 0.30f)
-    }
-    val dropY = if (progress > 0.55f) {
-        lerp(0f, 120f, easeInQuart((progress - 0.55f) / 0.45f))
-    } else 0f
+    val rotZ =
+        when {
+            progress < 0.40f -> lerp(0f, 45f, easeOutCubic(progress / 0.40f))
+            progress < 0.70f -> lerp(45f, 90f, (progress - 0.40f) / 0.30f)
+            else -> lerp(90f, 110f, (progress - 0.70f) / 0.30f)
+        }
+    val dropY =
+        if (progress > 0.55f) {
+            lerp(0f, 120f, easeInQuart((progress - 0.55f) / 0.45f))
+        } else {
+            0f
+        }
 
     val alpha = if (progress > 0.80f) lerp(1f, 0f, (progress - 0.80f) / 0.20f) else 1f
 
@@ -406,7 +430,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawChairGlyph(colo
     val w = 40.dp.toPx()
     val h = 48.dp.toPx()
     val sw = 3.dp.toPx()
-    val cx = 0f; val cy = 0f
+    val cx = 0f
+    val cy = 0f
 
     // Back rest (top arc)
     drawArc(
@@ -415,7 +440,9 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawChairGlyph(colo
         sweepAngle = 180f,
         useCenter = false,
         topLeft = Offset(cx - w * 0.4f, cy - h * 0.5f),
-        size = androidx.compose.ui.geometry.Size(w * 0.8f, h * 0.35f),
+        size =
+            androidx.compose.ui.geometry
+                .Size(w * 0.8f, h * 0.35f),
         style = Stroke(sw),
     )
     // Seat beam
@@ -464,32 +491,37 @@ fun TickerSlip(
     val slideOffsetX = lerp(200f, 0f, slideT)
 
     Box(
-        modifier = modifier
-            .offset { IntOffset(slideOffsetX.roundToInt(), 0) }
-            .alpha(alpha),
+        modifier =
+            modifier
+                .offset { IntOffset(slideOffsetX.roundToInt(), 0) }
+                .alpha(alpha),
     ) {
         Canvas(modifier = Modifier.size(width = 180.dp, height = 40.dp)) {
-            val w = size.width; val h = size.height
+            val w = size.width
+            val h = size.height
 
             // Paper body — cream slip
-            val paperPath = Path().apply {
-                moveTo(12.dp.toPx(), 0f)
-                // Torn left edge (jagged)
-                lineTo(8.dp.toPx(), 4.dp.toPx())
-                lineTo(11.dp.toPx(), 8.dp.toPx())
-                lineTo(7.dp.toPx(), 12.dp.toPx())
-                lineTo(10.dp.toPx(), h)
-                lineTo(w, h)
-                lineTo(w, 0f)
-                close()
-            }
+            val paperPath =
+                Path().apply {
+                    moveTo(12.dp.toPx(), 0f)
+                    // Torn left edge (jagged)
+                    lineTo(8.dp.toPx(), 4.dp.toPx())
+                    lineTo(11.dp.toPx(), 8.dp.toPx())
+                    lineTo(7.dp.toPx(), 12.dp.toPx())
+                    lineTo(10.dp.toPx(), h)
+                    lineTo(w, h)
+                    lineTo(w, 0f)
+                    close()
+                }
             drawPath(paperPath, BrandTokens.PaperCream.copy(alpha = 0.90f))
 
             // Role-hue tint strip on left edge
             drawRect(
                 color = tint.copy(alpha = 0.5f),
                 topLeft = Offset(0f, 0f),
-                size = androidx.compose.ui.geometry.Size(6.dp.toPx(), h),
+                size =
+                    androidx.compose.ui.geometry
+                        .Size(6.dp.toPx(), h),
             )
 
             // Bottom border hairline
@@ -503,36 +535,40 @@ fun TickerSlip(
 
         // Text layer — glyph + effect overlaid on the slip
         androidx.compose.foundation.layout.Row(
-            modifier = Modifier
-                .size(width = 180.dp, height = 40.dp)
-                .offset { IntOffset(14.dp.roundToPx(), 0) },
+            modifier =
+                Modifier
+                    .size(width = 180.dp, height = 40.dp)
+                    .offset { IntOffset(14.dp.roundToPx(), 0) },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // Stamped glyph (small, rotated ~−4°)
             Box(
-                modifier = Modifier
-                    .size(32.dp, 32.dp)
-                    .graphicsLayer { rotationZ = -4f },
+                modifier =
+                    Modifier
+                        .size(32.dp, 32.dp)
+                        .graphicsLayer { rotationZ = -4f },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = glyphText,
-                    style = TextStyle(
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Black,
-                        color = tint,
-                        letterSpacing = 0.5.sp,
-                    ),
+                    style =
+                        TextStyle(
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            color = tint,
+                            letterSpacing = 0.5.sp,
+                        ),
                     textAlign = TextAlign.Center,
                 )
             }
             Text(
                 text = effectText,
-                style = TextStyle(
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = BrandTokens.CreamInk,
-                ),
+                style =
+                    TextStyle(
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = BrandTokens.CreamInk,
+                    ),
                 maxLines = 1,
             )
         }

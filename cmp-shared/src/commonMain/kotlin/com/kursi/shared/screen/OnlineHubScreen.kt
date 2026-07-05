@@ -21,24 +21,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kursi.core.network.ConnectionState
 import com.kursi.core.network.LanHost
 import com.kursi.designsystem.*
 import com.kursi.feature.game.HubPhase
-import com.kursi.feature.game.LobbyKind
 import com.kursi.feature.game.LobbyState
 import com.kursi.feature.game.OnlineHubUiState
 import com.kursi.shared.strings.LocalKursiStrings
@@ -74,6 +72,7 @@ fun OnlineHubScreen(
     var playerCount by remember { mutableIntStateOf(4) }
 
     fun parsedHost(): String = serverField.substringBefore(':').trim().ifEmpty { "localhost" }
+
     fun parsedPort(): Int = serverField.substringAfter(':', "").trim().toIntOrNull() ?: 8080
 
     Box(modifier = modifier.fillMaxSize().background(BrandTokens.TeakInk)) {
@@ -92,11 +91,12 @@ fun OnlineHubScreen(
 
             val scroll = rememberScrollState()
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(scroll)
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(scroll)
+                        .padding(horizontal = 24.dp, vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Column(
@@ -134,11 +134,12 @@ fun OnlineHubScreen(
                             onValueChange = { playerCount = it.toInt() },
                             valueRange = 2f..10f,
                             steps = 7,
-                            colors = SliderDefaults.colors(
-                                thumbColor = BrandTokens.GoldAntique,
-                                activeTrackColor = BrandTokens.BrassAged,
-                                inactiveTrackColor = BrandTokens.BrassDark.copy(alpha = 0.4f),
-                            ),
+                            colors =
+                                SliderDefaults.colors(
+                                    thumbColor = BrandTokens.GoldAntique,
+                                    activeTrackColor = BrandTokens.BrassAged,
+                                    inactiveTrackColor = BrandTokens.BrassDark.copy(alpha = 0.4f),
+                                ),
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -221,20 +222,23 @@ private fun WaitingRoom(
     modifier: Modifier = Modifier,
 ) {
     val s = LocalKursiStrings.current
-    val statusText = when {
-        lobby.isLost -> s.onlineLobbyLost
-        lobby.isWaiting -> s.onlineLobbyWaiting
-        else -> s.onlineLobbyConnecting
-    }
-    val statusColor = when {
-        lobby.isLost -> BrandTokens.StampRed
-        lobby.isWaiting -> KursiSemantics.Success
-        else -> BrandTokens.PendingAmber
-    }
+    val statusText =
+        when {
+            lobby.isLost -> s.onlineLobbyLost
+            lobby.isWaiting -> s.onlineLobbyWaiting
+            else -> s.onlineLobbyConnecting
+        }
+    val statusColor =
+        when {
+            lobby.isLost -> BrandTokens.StampRed
+            lobby.isWaiting -> KursiSemantics.Success
+            else -> BrandTokens.PendingAmber
+        }
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(24.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
@@ -253,10 +257,11 @@ private fun WaitingRoom(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.semantics {
-                    liveRegion = LiveRegionMode.Polite
-                    contentDescription = statusText
-                },
+                modifier =
+                    Modifier.semantics {
+                        liveRegion = LiveRegionMode.Polite
+                        contentDescription = statusText
+                    },
             ) {
                 Box(Modifier.size(12.dp).clip(CircleShape).background(statusColor))
                 Text(statusText, style = KursiType.title.copy(fontSize = 14.sp), color = KursiNeutrals.TextPrimary)
@@ -264,17 +269,17 @@ private fun WaitingRoom(
 
             // Share-code plaque (only meaningful when hosting / quick-match — still legible otherwise).
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(BrandTokens.BrassDark.copy(alpha = 0.5f), BrandTokens.TeakDark.copy(alpha = 0.7f)),
-                        ),
-                    )
-                    .border(1.5.dp, BrandTokens.GoldAntique.copy(alpha = 0.55f), RoundedCornerShape(14.dp))
-                    .padding(20.dp)
-                    .semantics { contentDescription = "${s.onlineLobbyShareLabel}: ${lobby.code}" },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(BrandTokens.BrassDark.copy(alpha = 0.5f), BrandTokens.TeakDark.copy(alpha = 0.7f)),
+                            ),
+                        ).border(1.5.dp, BrandTokens.GoldAntique.copy(alpha = 0.55f), RoundedCornerShape(14.dp))
+                        .padding(20.dp)
+                        .semantics { contentDescription = "${s.onlineLobbyShareLabel}: ${lobby.code}" },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -319,12 +324,15 @@ private fun WaitingRoom(
             Spacer(Modifier.height(6.dp))
 
             Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .border(1.dp, BrandTokens.StampRed.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
-                    .clickable(onClick = onLeave)
-                    .semantics { role = androidx.compose.ui.semantics.Role.Button; contentDescription = s.onlineLobbyLeave }
-                    .padding(horizontal = 18.dp, vertical = 10.dp),
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .border(1.dp, BrandTokens.StampRed.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                        .clickable(onClick = onLeave)
+                        .semantics {
+                            role = androidx.compose.ui.semantics.Role.Button
+                            contentDescription = s.onlineLobbyLeave
+                        }.padding(horizontal = 18.dp, vertical = 10.dp),
             ) {
                 Text(s.onlineLobbyLeave, style = KursiType.title.copy(fontSize = 13.sp), color = BrandTokens.StampRed)
             }
@@ -333,7 +341,11 @@ private fun WaitingRoom(
 }
 
 @Composable
-private fun SeatChips(joined: Int, total: Int, mySeat: Int?) {
+private fun SeatChips(
+    joined: Int,
+    total: Int,
+    mySeat: Int?,
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -344,25 +356,31 @@ private fun SeatChips(joined: Int, total: Int, mySeat: Int?) {
             val filled = i < joined
             val isMe = mySeat == i
             Box(
-                modifier = Modifier
-                    .size(30.dp)
-                    .clip(CircleShape)
-                    .background(
-                        when {
-                            isMe -> BrandTokens.GoldAntique.copy(alpha = 0.85f)
-                            filled -> BrandTokens.BrassAged.copy(alpha = 0.6f)
-                            else -> BrandTokens.TeakDark
-                        },
-                    )
-                    .border(
-                        1.dp,
-                        if (filled || isMe) BrandTokens.GoldAntique.copy(alpha = 0.7f) else BrandTokens.BrassDark.copy(alpha = 0.4f),
-                        CircleShape,
-                    ),
+                modifier =
+                    Modifier
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when {
+                                isMe -> BrandTokens.GoldAntique.copy(alpha = 0.85f)
+                                filled -> BrandTokens.BrassAged.copy(alpha = 0.6f)
+                                else -> BrandTokens.TeakDark
+                            },
+                        ).border(
+                            1.dp,
+                            if (filled || isMe) BrandTokens.GoldAntique.copy(alpha = 0.7f) else BrandTokens.BrassDark.copy(alpha = 0.4f),
+                            CircleShape,
+                        ),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    if (isMe) "AAP" else if (filled) "✓" else "${i + 1}",
+                    if (isMe) {
+                        "AAP"
+                    } else if (filled) {
+                        "✓"
+                    } else {
+                        "${i + 1}"
+                    },
                     style = KursiType.caption.copy(fontSize = if (isMe) 7.sp else 10.sp, fontWeight = FontWeight.Bold),
                     color = if (filled || isMe) BrandTokens.TeakDark else KursiNeutrals.TextMuted,
                 )
@@ -414,24 +432,33 @@ private fun LanBrowseCard(
 }
 
 @Composable
-private fun LanHostRow(host: LanHost, onJoin: () -> Unit) {
+private fun LanHostRow(
+    host: LanHost,
+    onJoin: () -> Unit,
+) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(BrandTokens.BrassAged.copy(alpha = 0.10f))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-            .clickable(onClick = onJoin)
-            .semantics(mergeDescendants = true) {
-                role = androidx.compose.ui.semantics.Role.Button
-                contentDescription = "${host.name}, ${host.host} port ${host.port}, room ${host.roomCode}"
-            }
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(BrandTokens.BrassAged.copy(alpha = 0.10f))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                .clickable(onClick = onJoin)
+                .semantics(mergeDescendants = true) {
+                    role = androidx.compose.ui.semantics.Role.Button
+                    contentDescription = "${host.name}, ${host.host} port ${host.port}, room ${host.roomCode}"
+                }.padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("📡", style = KursiType.title.copy(fontSize = 14.sp))
             Column(Modifier.weight(1f)) {
-                Text(host.name, style = KursiType.name.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    host.name,
+                    style = KursiType.name.copy(fontSize = 13.sp),
+                    color = KursiNeutrals.TextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 Text(
                     "${host.host}:${host.port} · ${host.roomCode}",
                     style = KursiType.caption.copy(fontSize = 9.sp),
@@ -448,14 +475,18 @@ private fun LanHostRow(host: LanHost, onJoin: () -> Unit) {
 // ─────────────────────────── Shared primitives ───────────────────────────
 
 @Composable
-private fun OnlineHeader(title: String, onBack: () -> Unit) {
+private fun OnlineHeader(
+    title: String,
+    onBack: () -> Unit,
+) {
     val s = LocalKursiStrings.current
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(BrandTokens.TeakDark)
-            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(BrandTokens.TeakDark)
+                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
+                .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -471,14 +502,19 @@ private fun OnlineHeader(title: String, onBack: () -> Unit) {
 }
 
 @Composable
-private fun SectionCard(label: String, sublabel: String, content: @Composable ColumnScope.() -> Unit) {
+private fun SectionCard(
+    label: String,
+    sublabel: String,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(BrandTokens.PaperCream.copy(alpha = 0.06f))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(BrandTokens.PaperCream.copy(alpha = 0.06f))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(label, style = KursiType.label.copy(fontSize = 11.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold), color = BrandTokens.BrassAged)
@@ -501,18 +537,20 @@ private fun BrassField(
     capitalize: Boolean = false,
     monospace: Boolean = false,
 ) {
-    val textStyle = (if (monospace) KursiType.numeric else KursiType.body).copy(
-        fontSize = if (monospace) 18.sp else 14.sp,
-        color = KursiNeutrals.TextPrimary,
-        letterSpacing = if (monospace) 4.sp else 0.sp,
-    )
+    val textStyle =
+        (if (monospace) KursiType.numeric else KursiType.body).copy(
+            fontSize = if (monospace) 18.sp else 14.sp,
+            color = KursiNeutrals.TextPrimary,
+            letterSpacing = if (monospace) 4.sp else 0.sp,
+        )
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(BrandTokens.TeakInk.copy(alpha = 0.6f))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(BrandTokens.TeakInk.copy(alpha = 0.6f))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         BasicTextField(
             value = value,
@@ -520,14 +558,20 @@ private fun BrassField(
             singleLine = singleLine,
             textStyle = textStyle,
             cursorBrush = SolidColor(BrandTokens.GoldAntique),
-            keyboardOptions = KeyboardOptions(
-                capitalization = if (capitalize) KeyboardCapitalization.Characters else KeyboardCapitalization.None,
-                imeAction = ImeAction.Done,
-            ),
+            keyboardOptions =
+                KeyboardOptions(
+                    capitalization = if (capitalize) KeyboardCapitalization.Characters else KeyboardCapitalization.None,
+                    imeAction = ImeAction.Done,
+                ),
             modifier = Modifier.fillMaxWidth(),
             decorationBox = { inner ->
                 if (value.isEmpty()) {
-                    Text(placeholder, style = textStyle.copy(color = KursiNeutrals.TextMuted, letterSpacing = 0.sp), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        placeholder,
+                        style = textStyle.copy(color = KursiNeutrals.TextMuted, letterSpacing = 0.sp),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
                 inner()
             },
@@ -545,48 +589,71 @@ private fun HubModeChit(
     onClick: () -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (hero) BrandTokens.BrassAged else Color(0xFF1E1610))
-            .border(if (hero) 1.5.dp else 1.dp, if (hero) BrandTokens.GoldAntique else BrandTokens.BrassAged.copy(alpha = 0.7f), RoundedCornerShape(10.dp))
-            .clickable(enabled = enabled, onClick = onClick)
-            .alpha(if (enabled) 1f else 0.5f)
-            .semantics(mergeDescendants = true) {
-                role = androidx.compose.ui.semantics.Role.Button
-                contentDescription = "$label. $sublabel"
-            }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(if (hero) BrandTokens.BrassAged else Color(0xFF1E1610))
+                .border(if (hero) 1.5.dp else 1.dp, if (hero) BrandTokens.GoldAntique else BrandTokens.BrassAged.copy(alpha = 0.7f), RoundedCornerShape(10.dp))
+                .clickable(enabled = enabled, onClick = onClick)
+                .alpha(if (enabled) 1f else 0.5f)
+                .semantics(mergeDescendants = true) {
+                    role = androidx.compose.ui.semantics.Role.Button
+                    contentDescription = "$label. $sublabel"
+                }.padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.weight(1f)) {
-                Text(label, style = KursiType.title.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold), color = if (hero) BrandTokens.TeakDark else KursiNeutrals.TextPrimary)
-                Text(sublabel, style = KursiType.caption.copy(fontSize = 10.sp), color = if (hero) BrandTokens.BrassDark else KursiNeutrals.TextMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    label,
+                    style = KursiType.title.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold),
+                    color = if (hero) BrandTokens.TeakDark else KursiNeutrals.TextPrimary,
+                )
+                Text(
+                    sublabel,
+                    style = KursiType.caption.copy(fontSize = 10.sp),
+                    color = if (hero) BrandTokens.BrassDark else KursiNeutrals.TextMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
             Box(
-                modifier = Modifier
-                    .padding(start = 12.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(if (hero) BrandTokens.StampRed.copy(alpha = 0.9f) else BrandTokens.BrassAged.copy(alpha = 0.2f))
-                    .border(1.dp, if (hero) BrandTokens.Oxblood else BrandTokens.GoldAntique.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                modifier =
+                    Modifier
+                        .padding(start = 12.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(if (hero) BrandTokens.StampRed.copy(alpha = 0.9f) else BrandTokens.BrassAged.copy(alpha = 0.2f))
+                        .border(1.dp, if (hero) BrandTokens.Oxblood else BrandTokens.GoldAntique.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
-                Text(stamp, style = KursiType.caption.copy(fontSize = 8.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold), color = if (hero) KursiNeutrals.Cream else BrandTokens.GoldAntique)
+                Text(
+                    stamp,
+                    style = KursiType.caption.copy(fontSize = 8.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold),
+                    color = if (hero) KursiNeutrals.Cream else BrandTokens.GoldAntique,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun SmallStamp(label: String, enabled: Boolean, onClick: () -> Unit, fillWidth: Boolean = false) {
-    val mod = (if (fillWidth) Modifier.fillMaxWidth() else Modifier)
-        .clip(RoundedCornerShape(8.dp))
-        .background(BrandTokens.BrassAged.copy(alpha = if (enabled) 0.3f else 0.12f))
-        .border(1.dp, if (enabled) BrandTokens.GoldAntique.copy(alpha = 0.7f) else BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-        .clickable(enabled = enabled, onClick = onClick)
-        .alpha(if (enabled) 1f else 0.5f)
-        .semantics { role = androidx.compose.ui.semantics.Role.Button; contentDescription = label }
-        .padding(horizontal = 18.dp, vertical = 12.dp)
+private fun SmallStamp(
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    fillWidth: Boolean = false,
+) {
+    val mod =
+        (if (fillWidth) Modifier.fillMaxWidth() else Modifier)
+            .clip(RoundedCornerShape(8.dp))
+            .background(BrandTokens.BrassAged.copy(alpha = if (enabled) 0.3f else 0.12f))
+            .border(1.dp, if (enabled) BrandTokens.GoldAntique.copy(alpha = 0.7f) else BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+            .clickable(enabled = enabled, onClick = onClick)
+            .alpha(if (enabled) 1f else 0.5f)
+            .semantics {
+                role = androidx.compose.ui.semantics.Role.Button
+                contentDescription = label
+            }.padding(horizontal = 18.dp, vertical = 12.dp)
     Box(mod, contentAlignment = Alignment.Center) {
         Text(label, style = KursiType.title.copy(fontSize = 13.sp), color = BrandTokens.GoldAntique, textAlign = TextAlign.Center)
     }
@@ -595,16 +662,16 @@ private fun SmallStamp(label: String, enabled: Boolean, onClick: () -> Unit, fil
 @Composable
 private fun ErrorBanner(message: String) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(BrandTokens.StampRed.copy(alpha = 0.12f))
-            .border(1.dp, BrandTokens.StampRed.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-            .semantics {
-                liveRegion = LiveRegionMode.Assertive
-                contentDescription = message
-            }
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(BrandTokens.StampRed.copy(alpha = 0.12f))
+                .border(1.dp, BrandTokens.StampRed.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                .semantics {
+                    liveRegion = LiveRegionMode.Assertive
+                    contentDescription = message
+                }.padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
         Text(message, style = KursiType.body.copy(fontSize = 12.sp), color = BrandTokens.StampRed)
     }
@@ -613,13 +680,16 @@ private fun ErrorBanner(message: String) {
 @Composable
 private fun WorkingBanner(message: String) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(BrandTokens.PendingAmber.copy(alpha = 0.10f))
-            .border(1.dp, BrandTokens.PendingAmber.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-            .semantics { liveRegion = LiveRegionMode.Polite; contentDescription = message }
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(BrandTokens.PendingAmber.copy(alpha = 0.10f))
+                .border(1.dp, BrandTokens.PendingAmber.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                .semantics {
+                    liveRegion = LiveRegionMode.Polite
+                    contentDescription = message
+                }.padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
         Text(message, style = KursiType.body.copy(fontSize = 12.sp, fontStyle = FontStyle.Italic), color = BrandTokens.PendingAmber)
     }

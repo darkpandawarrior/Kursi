@@ -74,14 +74,15 @@ fun WirePlayerView.legalIntents(): List<WireIntent> {
 }
 
 /** True when it is currently [WirePlayerView.viewer]'s turn to provide input in the current phase. */
-fun WirePlayerView.isMyTurn(): Boolean = when (val ph = phase) {
-    is WirePhaseView.Turn -> ph.actor == viewer
-    is WirePhaseView.Reactions -> ph.toRespond == viewer
-    is WirePhaseView.InfluenceLoss -> ph.loser == viewer
-    is WirePhaseView.Exchange -> ph.actor == viewer
-    is WirePhaseView.InvestigatePeek -> ph.examiner == viewer
-    is WirePhaseView.Over -> false
-}
+fun WirePlayerView.isMyTurn(): Boolean =
+    when (val ph = phase) {
+        is WirePhaseView.Turn -> ph.actor == viewer
+        is WirePhaseView.Reactions -> ph.toRespond == viewer
+        is WirePhaseView.InfluenceLoss -> ph.loser == viewer
+        is WirePhaseView.Exchange -> ph.actor == viewer
+        is WirePhaseView.InvestigatePeek -> ph.examiner == viewer
+        is WirePhaseView.Over -> false
+    }
 
 /**
  * The legal turn [WireAction]s for the viewer when it is their [WirePhaseView.Turn] — mirrors
@@ -115,19 +116,25 @@ private fun WirePlayerView.legalActions(): List<WireAction> {
 }
 
 /** Roles that may block [action], expressed in wire form (delegates to the engine rule table). */
-private fun rolesThatBlock(action: WireAction): List<WireRole> =
-    Rules.rolesThatBlock(action.toEngine()).map { it.toWire() }
+private fun rolesThatBlock(action: WireAction): List<WireRole> = Rules.rolesThatBlock(action.toEngine()).map { it.toWire() }
 
 /**
  * All [k]-element subsets of [items], preserving input order within each subset.
  * Mirrors the engine's `combinations` used for [com.kursi.engine.Intent.ChooseExchange] enumeration.
  */
-private fun <T> combinations(items: List<T>, k: Int): List<List<T>> {
+private fun <T> combinations(
+    items: List<T>,
+    k: Int,
+): List<List<T>> {
     if (k < 0 || k > items.size) return emptyList()
     if (k == 0) return listOf(emptyList())
     if (k == items.size) return listOf(items.toList())
     val result = ArrayList<List<T>>()
-    fun recurse(start: Int, current: MutableList<T>) {
+
+    fun recurse(
+        start: Int,
+        current: MutableList<T>,
+    ) {
         if (current.size == k) {
             result.add(current.toList())
             return

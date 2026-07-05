@@ -21,37 +21,39 @@ import com.kursi.core.feedback.defaultSoundPlayer
  * The SFX cue for a moment. Coins for economic actions, a heavy thud for losses/steals,
  * the win sting for victory, and a rubber-stamp slam for everything claim/reveal-shaped.
  */
-internal fun KursiMoment.soundKey(): SoundKey = when (this) {
-    is KursiMoment.Income,
-    is KursiMoment.ForeignAid,
-    is KursiMoment.Tax,
-    -> SoundKey.Coin
+internal fun KursiMoment.soundKey(): SoundKey =
+    when (this) {
+        is KursiMoment.Income,
+        is KursiMoment.ForeignAid,
+        is KursiMoment.Tax,
+        -> SoundKey.Coin
 
-    is KursiMoment.Steal,
-    is KursiMoment.Assassinate,
-    is KursiMoment.InfluenceLoss,
-    is KursiMoment.Coup,
-    is KursiMoment.Elimination,
-    -> SoundKey.Thud
+        is KursiMoment.Steal,
+        is KursiMoment.Assassinate,
+        is KursiMoment.InfluenceLoss,
+        is KursiMoment.Coup,
+        is KursiMoment.Elimination,
+        -> SoundKey.Thud
 
-    is KursiMoment.Win -> SoundKey.Win
+        is KursiMoment.Win -> SoundKey.Win
 
-    is KursiMoment.Exchange,
-    is KursiMoment.Block,
-    is KursiMoment.Challenge,
-    is KursiMoment.Reveal,
-    is KursiMoment.TurnHandoff,
-    -> SoundKey.Stamp
-}
+        is KursiMoment.Exchange,
+        is KursiMoment.Block,
+        is KursiMoment.Challenge,
+        is KursiMoment.Reveal,
+        is KursiMoment.TurnHandoff,
+        -> SoundKey.Stamp
+    }
 
 /** Translate the moment-layer [HapticBeat] taxonomy into the device [HapticPattern]. */
-internal fun HapticBeat.toPattern(): HapticPattern = when (this) {
-    HapticBeat.None -> HapticPattern.None
-    HapticBeat.Tick -> HapticPattern.Tick
-    HapticBeat.Thud -> HapticPattern.Thud
-    HapticBeat.DoubleBuzz -> HapticPattern.DoubleBuzz
-    HapticBeat.HeavyLong -> HapticPattern.HeavyLong
-}
+internal fun HapticBeat.toPattern(): HapticPattern =
+    when (this) {
+        HapticBeat.None -> HapticPattern.None
+        HapticBeat.Tick -> HapticPattern.Tick
+        HapticBeat.Thud -> HapticPattern.Thud
+        HapticBeat.DoubleBuzz -> HapticPattern.DoubleBuzz
+        HapticBeat.HeavyLong -> HapticPattern.HeavyLong
+    }
 
 /**
  * Remembers a platform [SoundPlayer] for the lifetime of the composition and releases its

@@ -10,7 +10,6 @@ import kotlin.test.assertTrue
  * Secrecy is the hard requirement: nothing here may leak an opponent's hidden card identity.
  */
 class RedactOwnCardsTest {
-
     // (a) A viewer sees its OWN card roles via myCards, matching the underlying hand exactly.
     @Test
     fun myCards_resolves_the_viewers_own_cards_to_roles() {
@@ -24,18 +23,27 @@ class RedactOwnCardsTest {
                 val expected =
                     state.faceDownInfluence(viewer).map { OwnCard(it, state.cards.getValue(it), faceUp = false) } +
                         state.faceUpCards(viewer).map { OwnCard(it, state.cards.getValue(it), faceUp = true) }
-                assertEquals(expected.toSet(), view.myCards.toSet(),
-                    "myCards must resolve exactly the viewer's own cards (seat $seat, n=$n)")
+                assertEquals(
+                    expected.toSet(),
+                    view.myCards.toSet(),
+                    "myCards must resolve exactly the viewer's own cards (seat $seat, n=$n)",
+                )
 
                 // Consistency with the canonical role-only lists.
                 assertEquals(
                     view.myInfluence.sortedBy { it.ordinal },
-                    view.myCards.filter { !it.faceUp }.map { it.role }.sortedBy { it.ordinal },
+                    view.myCards
+                        .filter { !it.faceUp }
+                        .map { it.role }
+                        .sortedBy { it.ordinal },
                     "face-down roles in myCards must agree with myInfluence",
                 )
                 assertEquals(
                     view.myFaceUp.sortedBy { it.ordinal },
-                    view.myCards.filter { it.faceUp }.map { it.role }.sortedBy { it.ordinal },
+                    view.myCards
+                        .filter { it.faceUp }
+                        .map { it.role }
+                        .sortedBy { it.ordinal },
                     "face-up roles in myCards must agree with myFaceUp",
                 )
             }
@@ -56,8 +64,10 @@ class RedactOwnCardsTest {
             for (other in 0 until n) {
                 if (other == seat) continue
                 val opponentHidden = state.faceDownInfluence(PlayerId(other)).toSet()
-                assertTrue(opponentHidden.none { it in mine },
-                    "viewer $seat must not see opponent $other's hidden cards via myCards")
+                assertTrue(
+                    opponentHidden.none { it in mine },
+                    "viewer $seat must not see opponent $other's hidden cards via myCards",
+                )
             }
             // Positive: all of the viewer's own face-down cards ARE present.
             assertTrue(state.faceDownInfluence(viewer).all { it in mine })
@@ -76,8 +86,11 @@ class RedactOwnCardsTest {
         val deckCard = s.deckCards.first { s.cards.getValue(it) != otherRole }
         val deckRole = s.cards.getValue(deckCard)
         val swapped = s.copy(cards = s.cards + mapOf(otherCard to deckRole, deckCard to otherRole))
-        assertEquals(redact(s, viewer).myCards, redact(swapped, viewer).myCards,
-            "viewer's myCards must not depend on an opponent's hidden card identity")
+        assertEquals(
+            redact(s, viewer).myCards,
+            redact(swapped, viewer).myCards,
+            "viewer's myCards must not depend on an opponent's hidden card identity",
+        )
     }
 
     // Helper: drive a fresh game until PlayerId(0) is the actor in AwaitingExchange (declares Exchange/Setting).
@@ -122,8 +135,10 @@ class RedactOwnCardsTest {
             val otherPhase = otherView.phase
             assertTrue(otherPhase is PhaseView.Exchange)
             assertEquals(actor, otherPhase.actor, "the actor's identity is public")
-            assertTrue(otherPhase.drawn.isEmpty(),
-                "viewer $seat must NOT see the actor's drawn cards")
+            assertTrue(
+                otherPhase.drawn.isEmpty(),
+                "viewer $seat must NOT see the actor's drawn cards",
+            )
         }
     }
 
@@ -136,8 +151,10 @@ class RedactOwnCardsTest {
         for (seat in 0 until state.config.seatCount) {
             if (PlayerId(seat) == ex.actor) continue
             val view = redact(state, PlayerId(seat))
-            assertTrue(view.myCards.none { it.id in drawnIds },
-                "viewer $seat must not see the actor's drawn cards via myCards")
+            assertTrue(
+                view.myCards.none { it.id in drawnIds },
+                "viewer $seat must not see the actor's drawn cards via myCards",
+            )
             val phase = view.phase as PhaseView.Exchange
             assertTrue(phase.drawn.none { it.id in drawnIds })
         }

@@ -5,7 +5,6 @@ import com.kursi.ai.advisor.MoveAdvice
 import com.kursi.engine.GameEvent
 import com.kursi.engine.Intent
 import com.kursi.engine.PlayerId
-import com.kursi.engine.PhaseView
 import com.kursi.engine.PlayerView
 import com.kursi.feature.game.narrative.ArcId
 import com.kursi.feature.game.narrative.ChatMessage
@@ -109,28 +108,30 @@ data class GameUiState(
     val lifetimeCoins: Map<PlayerId, Int> = emptyMap(),
 ) {
     /** The PUBLIC-info dossier for [id], or null if none has been computed yet. */
-    fun insightFor(id: PlayerId): OpponentInsight? =
-        opponentInsights.firstOrNull { it.opponentId == id }
+    fun insightFor(id: PlayerId): OpponentInsight? = opponentInsights.firstOrNull { it.opponentId == id }
 
     /** KHAZANA RAJ — Darja (corruption level) for [id] based on lifetime coins (0=none, 4=Sarkar). */
     fun darjaLevelFor(id: PlayerId): Int {
         val coins = (lifetimeCoins[id] ?: 0)
         return when {
-            coins >= 20 -> 4  // Sarkar
-            coins >= 16 -> 3  // Mantri
-            coins >= 12 -> 2  // Sahib
-            coins >= 8  -> 1  // Mukhiya
-            else        -> 0
+            coins >= 20 -> 4 // Sarkar
+            coins >= 16 -> 3 // Mantri
+            coins >= 12 -> 2 // Sahib
+            coins >= 8 -> 1 // Mukhiya
+            else -> 0
         }
     }
 
     /** KHAZANA RAJ — progress fraction [0.0..1.0] toward [GameConfig.khazanaTarget] for [id]. */
-    fun khazanaProgressFor(id: PlayerId, target: Int): Float =
-        if (target <= 0) 0f else ((lifetimeCoins[id] ?: 0).toFloat() / target).coerceIn(0f, 1f)
+    fun khazanaProgressFor(
+        id: PlayerId,
+        target: Int,
+    ): Float = if (target <= 0) 0f else ((lifetimeCoins[id] ?: 0).toFloat() / target).coerceIn(0f, 1f)
 
     companion object {
         /** Maximum number of events kept in [recentEvents]. */
         const val MAX_EVENTS = 30
+
         /** Darja level names (index = level 0-4). */
         val DARJA_NAMES = listOf("—", "Mukhiya", "Sahib", "Mantri", "Sarkar")
     }

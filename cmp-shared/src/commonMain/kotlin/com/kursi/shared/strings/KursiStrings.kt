@@ -7,7 +7,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
  * Two flavors: Hinglish (branded default) and English.
  */
 sealed class KursiStrings {
-
     // ── Common ────────────────────────────────────────────────────────────
     abstract val back: String
 
@@ -33,12 +32,15 @@ sealed class KursiStrings {
     abstract val setupFormBadge: String
     abstract val setupModeLabel: String
     abstract val setupModeSublabel: String
+
     abstract fun setupPlayerSublabel(count: Int): String
+
     abstract val setupPlayerSectionLabel: String
     abstract val setupDifficultyLabel: String
     abstract val setupDifficultySublabel: String
     abstract val setupCta: String
     abstract val setupCtaSub: String
+
     // Mode chip labels
     abstract val modeAILabel: String
     abstract val modeAISub: String
@@ -52,11 +54,18 @@ sealed class KursiStrings {
     abstract val modeLanSub: String
     abstract val modePendingBadge: String
     abstract val modeComingSoonBadge: String
+
     /** M7 — badge on the now-functional online modes ("ONLINE →"). */
     abstract val modeOnlineBadge: String
+
     // M5 pass-and-play human-count picker
     abstract val setupHumanCountLabel: String
-    abstract fun setupHumanCountSublabel(humans: Int, players: Int): String
+
+    abstract fun setupHumanCountSublabel(
+        humans: Int,
+        players: Int,
+    ): String
+
     // Difficulty tab nameplates + voice lines
     abstract val diffEasyName: String
     abstract val diffEasyVoice: String
@@ -97,32 +106,45 @@ sealed class KursiStrings {
     abstract val resultsHome: String
 
     // ── M6b Decision-Quality dossier (Career) + Results recap ─────────────
+
     /** Section header for the decision-quality dossier on the Career screen. */
     abstract val dqHeader: String
+
     /** Label: % of moves matching the advisor's best. */
     abstract val dqAccuracyLabel: String
+
     /** Label: average win-probability bled per decision. */
     abstract val dqEvLostLabel: String
+
     /** Label: challenge discipline (% of challenges that were +EV). */
     abstract val dqChallengeLabel: String
+
     /** Label: bluff success (% of bluffs that survived uncaught). */
     abstract val dqBluffLabel: String
+
     /** Sub-line under the grade stamp, e.g. "N faisle taule gaye" / "graded over N decisions". */
     abstract fun dqSampleSub(decisions: Int): String
+
     /** In-voice grade names (bilingual). */
     abstract val dqGradeSharp: String
     abstract val dqGradeSteady: String
     abstract val dqGradeReckless: String
     abstract val dqGradeUnrated: String
+
     /** Short flavour line under each grade. */
     abstract val dqGradeSharpSub: String
     abstract val dqGradeSteadySub: String
     abstract val dqGradeRecklessSub: String
     abstract val dqGradeUnratedSub: String
+
     /** Results recap row label for the per-game decision summary. */
     abstract val resultsRecapDecision: String
+
     /** Per-game decision summary value, e.g. "72% best · 4% bled". */
-    abstract fun resultsDecisionValue(accuracyPct: Int, evLostPct: Int): String
+    abstract fun resultsDecisionValue(
+        accuracyPct: Int,
+        evLostPct: Int,
+    ): String
 
     // ── SettingsScreen ────────────────────────────────────────────────────
     abstract val settingsTitle: String
@@ -134,7 +156,9 @@ sealed class KursiStrings {
     abstract val settingsMotionSub: String
     abstract val settingsDefaultsSection: String
     abstract val settingsDefaultDiffLabel: String
+
     abstract fun settingsDefaultPlayersLabel(n: Int): String
+
     abstract val settingsLearningSection: String
     abstract val settingsReplayPrimerLabel: String
     abstract val settingsReplayPrimerSub: String
@@ -165,6 +189,7 @@ sealed class KursiStrings {
     // ── M5 ONBOARD — Interactive Tutorial (Pehli Hazri) ───────────────────────
     abstract val homeCtaTutorial: String
     abstract val homeCtaTutorialSub: String
+
     /** First-run offer dialog shown after the primer. */
     abstract val tutorialOfferTitle: String
     abstract val tutorialOfferBody: String
@@ -172,49 +197,67 @@ sealed class KursiStrings {
     abstract val tutorialOfferDecline: String
     abstract val tutorialHeader: String
     abstract val tutorialBadge: String
-    abstract val tutorialStepLabel: String   // e.g. "BEAT" / "PEHLU"
-    abstract val tutorialCoachTag: String     // narrator nameplate, e.g. "SALAHKAAR"
+    abstract val tutorialStepLabel: String // e.g. "BEAT" / "PEHLU"
+    abstract val tutorialCoachTag: String // narrator nameplate, e.g. "SALAHKAAR"
     abstract val tutorialNext: String
     abstract val tutorialBack: String
     abstract val tutorialSkip: String
     abstract val tutorialFinish: String
-    abstract val tutorialDoIt: String         // the action-prompt CTA on the bluff beat
+    abstract val tutorialDoIt: String // the action-prompt CTA on the bluff beat
+
     /** 8 scripted teaching beats: title + body. Bilingual, deadpan sarkari voice. */
-    abstract val tut1Title: String;  abstract val tut1Body: String
-    abstract val tut2Title: String;  abstract val tut2Body: String
-    abstract val tut3Title: String;  abstract val tut3Body: String
-    abstract val tut4Title: String;  abstract val tut4Body: String
-    abstract val tut5Title: String;  abstract val tut5Body: String   // YOU act (Ghotala)
-    abstract val tut6Title: String;  abstract val tut6Body: String   // rival challenges
-    abstract val tut7Title: String;  abstract val tut7Body: String   // reveal — JHOOTH (bluff caught)
-    abstract val tut8Title: String;  abstract val tut8Body: String   // graduation
+    abstract val tut1Title: String
+    abstract val tut1Body: String
+    abstract val tut2Title: String
+    abstract val tut2Body: String
+    abstract val tut3Title: String
+    abstract val tut3Body: String
+    abstract val tut4Title: String
+    abstract val tut4Body: String
+    abstract val tut5Title: String
+    abstract val tut5Body: String // YOU act (Ghotala)
+    abstract val tut6Title: String
+    abstract val tut6Body: String // rival challenges
+    abstract val tut7Title: String
+    abstract val tut7Body: String // reveal — JHOOTH (bluff caught)
+    abstract val tut8Title: String
+    abstract val tut8Body: String // graduation
 
     // ── M5 ONBOARD — Setup presets / quick-match ──────────────────────────────
     abstract val setupQuickMatchLabel: String
     abstract val setupQuickMatchSub: String
     abstract val setupPresetSectionLabel: String
     abstract val setupPresetSectionSub: String
-    abstract val presetCabinetName: String;  abstract val presetCabinetSub: String
-    abstract val presetSnakePitName: String; abstract val presetSnakePitSub: String
-    abstract val presetChaosName: String;    abstract val presetChaosSub: String
-    abstract val setupPresetRequisition: String  // tiny corner stamp on each preset card
+    abstract val presetCabinetName: String
+    abstract val presetCabinetSub: String
+    abstract val presetSnakePitName: String
+    abstract val presetSnakePitSub: String
+    abstract val presetChaosName: String
+    abstract val presetChaosSub: String
+    abstract val setupPresetRequisition: String // tiny corner stamp on each preset card
 
     // ── M6e GAUNTLET — escalating promotion ladder (Tarakki ki Seedhi) ─────────
     abstract val homeCtaGauntlet: String
     abstract val homeCtaGauntletSub: String
+
     /** Home strip when a ladder run is in progress: "Rung X of Y · <nameplate>". */
-    abstract fun gauntletStripLabel(cleared: Int, total: Int): String
+    abstract fun gauntletStripLabel(
+        cleared: Int,
+        total: Int,
+    ): String
+
     abstract val gauntletHeader: String
     abstract val gauntletBadge: String
-    abstract val gauntletTagline: String          // screen sub / mission statement
-    abstract val gauntletStartCta: String         // play the current target rung
+    abstract val gauntletTagline: String // screen sub / mission statement
+    abstract val gauntletStartCta: String // play the current target rung
     abstract val gauntletStartCtaSub: String
-    abstract val gauntletReplayCta: String        // re-run an already-cleared rung
-    abstract val gauntletLockedTag: String        // a rung not yet reachable
-    abstract val gauntletClearedTag: String       // a beaten rung
-    abstract val gauntletCurrentTag: String       // the active target rung
-    abstract val gauntletConqueredTitle: String   // whole ladder beaten
+    abstract val gauntletReplayCta: String // re-run an already-cleared rung
+    abstract val gauntletLockedTag: String // a rung not yet reachable
+    abstract val gauntletClearedTag: String // a beaten rung
+    abstract val gauntletCurrentTag: String // the active target rung
+    abstract val gauntletConqueredTitle: String // whole ladder beaten
     abstract val gauntletConqueredBody: String
+
     /** Rung nameplates (5 sarkari posts), 0-based by ladder index. */
     abstract val gauntletRung0Name: String
     abstract val gauntletRung1Name: String
@@ -225,34 +268,45 @@ sealed class KursiStrings {
     // ── M6e SPECTATOR / TAMASHA — watch-only demo game ────────────────────────
     abstract val homeCtaSpectate: String
     abstract val homeCtaSpectateSub: String
-    abstract val spectatorBanner: String          // in-game banner: "TAMASHA — watch only"
+    abstract val spectatorBanner: String // in-game banner: "TAMASHA — watch only"
 
     // ── M6e TEAM KHEL — the teams variant ──────────────────────────────────────
-    abstract val setupTeamLabel: String           // toggle section label
+    abstract val setupTeamLabel: String // toggle section label
     abstract val setupTeamSublabel: String
-    abstract val setupTeamToggleOn: String        // "TEAM KHEL · ON"
-    abstract val setupTeamToggleOff: String       // classic free-for-all
+    abstract val setupTeamToggleOn: String // "TEAM KHEL · ON"
+    abstract val setupTeamToggleOff: String // classic free-for-all
+
     /** Team names by team id (0/1). Shown on plates + lobby. */
     abstract val teamNameA: String
     abstract val teamNameB: String
-    abstract val lobbyTeamHeader: String          // lobby team-roster section header
-    abstract fun teamBadge(teamId: Int): String   // tiny plate badge text per team
+    abstract val lobbyTeamHeader: String // lobby team-roster section header
+
+    abstract fun teamBadge(teamId: Int): String // tiny plate badge text per team
 
     // ── M6c REVIEW — replay scrubber + advisor annotations (teach-by-review) ───
-    abstract val reviewHeader: String                    // screen title
-    abstract val reviewBadge: String                     // corner stamp
+    abstract val reviewHeader: String // screen title
+    abstract val reviewBadge: String // corner stamp
+
     /** Results / Career CTA into Review. */
     abstract val reviewCta: String
     abstract val reviewCtaSub: String
+
     /** Recent-matches list section (Career) header + sub. */
     abstract val reviewRecentHeader: String
     abstract val reviewRecentSub: String
     abstract val reviewRecentEmpty: String
+
     /** One recent-match row caption, e.g. "4 khiladi · Hard · 12 chaal". */
-    abstract fun reviewMatchCaption(players: Int, difficulty: String, moves: Int): String
+    abstract fun reviewMatchCaption(
+        players: Int,
+        difficulty: String,
+        moves: Int,
+    ): String
+
     /** Win / loss tag on a recent-match row. */
     abstract val reviewMatchWon: String
     abstract val reviewMatchLost: String
+
     /** Scrubber transport labels (a11y + tooltips). */
     abstract val reviewPlay: String
     abstract val reviewPause: String
@@ -260,31 +314,44 @@ sealed class KursiStrings {
     abstract val reviewStepForward: String
     abstract val reviewPrevDecision: String
     abstract val reviewNextDecision: String
+
     /** Step counter, e.g. "Padaav 3 / 11" / "Step 3 / 11". */
-    abstract fun reviewStepCounter(current: Int, total: Int): String
+    abstract fun reviewStepCounter(
+        current: Int,
+        total: Int,
+    ): String
+
     /** Timeline section label. */
     abstract val reviewTimeline: String
+
     /** Terminal (game-over) frame caption in the scrubber. */
     abstract val reviewTerminal: String
+
     /** Annotation panel header + sub. */
     abstract val reviewAdvisorHeader: String
     abstract val reviewAdvisorSub: String
+
     /** Annotation rows: what you played vs the recommended best. */
     abstract val reviewPlayedLabel: String
     abstract val reviewBestLabel: String
     abstract val reviewEvGapLabel: String
+
     /** EV-gap value, e.g. "−6% jeet ki sambhavna" / "−6% win chance". */
     abstract fun reviewEvGapValue(pct: Int): String
-    abstract val reviewMatchedBest: String               // shown when the gap is zero
+
+    abstract val reviewMatchedBest: String // shown when the gap is zero
+
     /** Verdict badge words (bilingual). */
     abstract val reviewVerdictSharp: String
     abstract val reviewVerdictFine: String
     abstract val reviewVerdictLoose: String
     abstract val reviewVerdictCostly: String
+
     /** Back-to-results / back affordance label on Review. */
     abstract val reviewBack: String
 
     // ── M6d RANKED ELO ladder + sarkari rank tiers ────────────────────────
+
     /** Bilingual sarkari rank-tier names, in ladder order (Clerk → Cabinet Secretary). */
     abstract val rankClerk: String
     abstract val rankSectionOfficer: String
@@ -293,26 +360,38 @@ sealed class KursiStrings {
     abstract val rankJointSecretary: String
     abstract val rankSecretary: String
     abstract val rankCabinetSecretary: String
+
     /** Compact Home ranked-strip leading tag (e.g. "DARJA" / "RANK"). */
     abstract val rankedStripTag: String
+
     /** "rating" caption word (e.g. "ank" / "rating"). */
     abstract val rankedRatingWord: String
+
     /** Sub on the ranked strip before any ranked game (provisional). */
     abstract val rankedProvisional: String
+
     /** "to next rank" hint, e.g. "Secretary tak 40 ank" / "40 to Secretary". */
-    abstract fun rankedToNext(points: Int, nextRank: String): String
+    abstract fun rankedToNext(
+        points: Int,
+        nextRank: String,
+    ): String
+
     /** Top-tier hint when already Cabinet Secretary. */
     abstract val rankedTopTier: String
 
     // ── M6d DAILY CHALLENGE (Aaj ki Chunauti) ─────────────────────────────
     abstract val dailyCta: String
     abstract val dailyCtaSub: String
+
     /** Sub shown once today's daily is already done. */
     abstract val dailyDoneSub: String
+
     /** Streak caption, e.g. "🔥 5 din ki laga" / "🔥 5-day streak". */
     abstract fun dailyStreakLabel(streak: Int): String
+
     /** Badge shown on the daily entry when today is still open. */
     abstract val dailyOpenBadge: String
+
     /** Badge shown when today's daily is completed. */
     abstract val dailyDoneBadge: String
 
@@ -332,8 +411,10 @@ sealed class KursiStrings {
     abstract val leaderboardBestStreakLabel: String
     abstract val leaderboardDailyWinsLabel: String
     abstract val leaderboardEmpty: String
+
     /** Footer noting server standings are pending (the M7 seam). */
     abstract val leaderboardServerPending: String
+
     /** M7 — the live online-standings header shown when the hub is connected to a server. */
     abstract val leaderboardOnlineSection: String
     abstract val leaderboardOnlineConnectedSub: String
@@ -346,6 +427,7 @@ sealed class KursiStrings {
     abstract val storyTagline: String
     abstract val storyFreeLabel: String
     abstract val storyStartCta: String
+
     // ── Setup new toggles (Darbar / Anarchy / Draft) ───────────────────────
     abstract val setupDarbarLabel: String
     abstract val setupDarbarSub: String
@@ -374,6 +456,7 @@ sealed class KursiStrings {
     abstract val onlineLanEmpty: String
     abstract val onlinePlayersLabel: String
     abstract val onlineWorking: String
+
     // Lobby / waiting room
     abstract val onlineLobbyHeader: String
     abstract val onlineLobbyShareLabel: String
@@ -381,8 +464,13 @@ sealed class KursiStrings {
     abstract val onlineLobbyWaiting: String
     abstract val onlineLobbyLost: String
     abstract val onlineLobbyLeave: String
+
     abstract fun onlineLobbySeated(seat: Int): String
-    abstract fun onlineLobbyRoster(joined: Int, total: Int): String
+
+    abstract fun onlineLobbyRoster(
+        joined: Int,
+        total: Int,
+    ): String
 
     // ─────────────────────────────────────────────────────────────────────
     object Hinglish : KursiStrings() {
@@ -407,7 +495,9 @@ sealed class KursiStrings {
         override val setupFormBadge = "FORM 1-A THROUGH 1-C"
         override val setupModeLabel = "FORM 1-A: SAMPARK KA TARIKA"
         override val setupModeSublabel = "How will you govern today?"
-        override fun setupPlayerSublabel(count: Int) = "Aaj ${count} kursiyaan: aap + ${count - 1} babu."
+
+        override fun setupPlayerSublabel(count: Int) = "Aaj $count kursiyaan: aap + ${count - 1} babu."
+
         override val setupPlayerSectionLabel = "FORM 1-B: KITNE LOG MEZ PAR"
         override val setupDifficultyLabel = "FORM 1-C: BABU KA TAJURBA"
         override val setupDifficultySublabel = "Choose your adversaries' calibre."
@@ -427,8 +517,12 @@ sealed class KursiStrings {
         override val modePendingBadge = "MUHAR PENDING"
         override val modeComingSoonBadge = "JALD AANE WAALA"
         override val setupHumanCountLabel = "KITNE INSAAN?"
-        override fun setupHumanCountSublabel(humans: Int, players: Int) =
-            "$humans insaan baari-baari, baaki ${players - humans} ko computer sambhaalega."
+
+        override fun setupHumanCountSublabel(
+            humans: Int,
+            players: Int,
+        ) = "$humans insaan baari-baari, baaki ${players - humans} ko computer sambhaalega."
+
         override val diffEasyName = "NAYA BHARTI"
         override val diffEasyVoice = "Abhi training mein hai. Form bhar deta hai, bina padhe."
         override val diffMediumName = "PERMANENT BABU"
@@ -471,7 +565,9 @@ sealed class KursiStrings {
         override val dqEvLostLabel = "Mauka gawaaya"
         override val dqChallengeLabel = "Lalkaar sahi"
         override val dqBluffLabel = "Jhooth chala"
+
         override fun dqSampleSub(decisions: Int) = "$decisions faisle taule gaye"
+
         override val dqGradeSharp = "TEZ BABU"
         override val dqGradeSteady = "PAKKA HAATH"
         override val dqGradeReckless = "BEPARWAH"
@@ -481,8 +577,11 @@ sealed class KursiStrings {
         override val dqGradeRecklessSub = "Behtar chaalein chhoot rahi hain."
         override val dqGradeUnratedSub = "Aur khelo — phir grade lagega."
         override val resultsRecapDecision = "Is khel mein faisle"
-        override fun resultsDecisionValue(accuracyPct: Int, evLostPct: Int) =
-            "$accuracyPct% sahi · $evLostPct% gawaaya"
+
+        override fun resultsDecisionValue(
+            accuracyPct: Int,
+            evLostPct: Int,
+        ) = "$accuracyPct% sahi · $evLostPct% gawaaya"
 
         override val settingsTitle = "DAFTARI — Settings"
         override val settingsSoundSection = "AAWAZ — Sound"
@@ -493,7 +592,9 @@ sealed class KursiStrings {
         override val settingsMotionSub = "Reduced motion — disables stamp animations"
         override val settingsDefaultsSection = "KHEL — Defaults"
         override val settingsDefaultDiffLabel = "Default Difficulty"
+
         override fun settingsDefaultPlayersLabel(n: Int) = "Default Players: $n"
+
         override val settingsLearningSection = "SEEKH — Learning"
         override val settingsReplayPrimerLabel = "PRIMER DOBARA DIKHAO"
         override val settingsReplayPrimerSub = "Replay the first-run onboarding"
@@ -501,7 +602,9 @@ sealed class KursiStrings {
         override val settingsRulesSub = "Full rules and who-beats-whom matrix"
         override val settingsAboutSection = "BAARE MEIN — About"
         override val settingsAboutTitle = "Kursi — a satirical bluffing game"
-        override val settingsAboutDisclaimer = "\"Saare paatra kaalpanik hain — All characters are fictional. Any resemblance to actual babus, netas, or inspectors is purely coincidental and deeply regrettable.\""
+        override val settingsAboutDisclaimer =
+            "\"Saare paatra kaalpanik hain — All characters are fictional. Any resemblance to actual babus, netas, or " +
+                "inspectors is purely coincidental and deeply regrettable.\""
         override val settingsAboutFooter = "Pradhan Kaaryalay · Est. whenever convenient."
         override val settingsLanguageSection = "BHASHA — Language"
         override val settingsLangHinglish = "HINGLISH"
@@ -523,7 +626,9 @@ sealed class KursiStrings {
         override val homeCtaTutorial = "PEHLI HAZRI"
         override val homeCtaTutorialSub = "Tutorial — seekhiye karke, ek hi baari mein"
         override val tutorialOfferTitle = "Pehli Hazri darj karein?"
-        override val tutorialOfferBody = "Nayi naukri, nayi kursi. Ek chhoti training baari — Salahkaar saath chalega, ek jhooth pakda jaayega. Dekh ke seekhiye."
+        override val tutorialOfferBody =
+            "Nayi naukri, nayi kursi. Ek chhoti training baari — Salahkaar saath chalega, ek jhooth pakda jaayega. Dekh ke " +
+                "seekhiye."
         override val tutorialOfferAccept = "HAAN, SIKHAO"
         override val tutorialOfferDecline = "Nahi, seedha khel"
         override val tutorialHeader = "PEHLI HAZRI — Training Baari"
@@ -548,7 +653,9 @@ sealed class KursiStrings {
         override val tut6Title = "Babu Filewala ne Challenge Kiya!"
         override val tut6Body = "\"Tumhare paas NETA hai? Dikhao.\" Challenge ka matlab: card khol ke saabit karo. Jhooth pakda gaya toh card jaayega."
         override val tut7Title = "JHOOTH! Card Khul Gaya"
-        override val tut7Body = "Aapke paas NETA tha hi nahi — bluff rangey haath pakda gaya. Ek certificate kurbaan. Yahi hai khel ka dil: daava, challenge, faisla."
+        override val tut7Body =
+            "Aapke paas NETA tha hi nahi — bluff rangey haath pakda gaya. Ek certificate kurbaan. Yahi hai khel ka dil: daava, challenge, " +
+                "faisla."
         override val tut8Title = "Hazri Poori, Sarkar"
         override val tut8Body = "Ab aap niyam jaante hain. Bluff karo, jhooth pakdo, kursi pe baith jao. Asli daftar intezaar mein hai."
 
@@ -568,7 +675,12 @@ sealed class KursiStrings {
         // ── M6e GAUNTLET ──
         override val homeCtaGauntlet = "TARAKKI KI SEEDHI"
         override val homeCtaGauntletSub = "Gauntlet — ek-ek karke har tier ko harao, promotion lo"
-        override fun gauntletStripLabel(cleared: Int, total: Int) = "Seedhi: $cleared / $total paaydaan paar"
+
+        override fun gauntletStripLabel(
+            cleared: Int,
+            total: Int,
+        ) = "Seedhi: $cleared / $total paaydaan paar"
+
         override val gauntletHeader = "TARAKKI KI SEEDHI"
         override val gauntletBadge = "PADONNATI FILE"
         override val gauntletTagline = "Probationer se Cabinet tak. Har paaydaan jeeto, agli kursi paao."
@@ -599,6 +711,7 @@ sealed class KursiStrings {
         override val teamNameA = "SAT PAKSH"
         override val teamNameB = "VIPAKSH"
         override val lobbyTeamHeader = "DHADE — kaun kiske saath"
+
         override fun teamBadge(teamId: Int) = if (teamId == 0) "SAT" else "VIP"
 
         // M6c REVIEW
@@ -609,8 +722,13 @@ sealed class KursiStrings {
         override val reviewRecentHeader = "PICHHLE KHEL"
         override val reviewRecentSub = "Daftar mein darj — kisi bhi file ko dobara kholo"
         override val reviewRecentEmpty = "Abhi koi file band nahi hui. Ek khel khatam karo, phir yahaan milega."
-        override fun reviewMatchCaption(players: Int, difficulty: String, moves: Int) =
-            "$players khiladi · $difficulty · $moves chaal"
+
+        override fun reviewMatchCaption(
+            players: Int,
+            difficulty: String,
+            moves: Int,
+        ) = "$players khiladi · $difficulty · $moves chaal"
+
         override val reviewMatchWon = "JEET"
         override val reviewMatchLost = "HAAR"
         override val reviewPlay = "Chalao"
@@ -619,7 +737,12 @@ sealed class KursiStrings {
         override val reviewStepForward = "Ek chaal aage"
         override val reviewPrevDecision = "Pichhla faisla"
         override val reviewNextDecision = "Agla faisla"
-        override fun reviewStepCounter(current: Int, total: Int) = "Padaav $current / $total"
+
+        override fun reviewStepCounter(
+            current: Int,
+            total: Int,
+        ) = "Padaav $current / $total"
+
         override val reviewTimeline = "CHAAL-PATTI"
         override val reviewTerminal = "FAISLA — khel khatam"
         override val reviewAdvisorHeader = "SALAHKAAR KI RAAY"
@@ -627,7 +750,9 @@ sealed class KursiStrings {
         override val reviewPlayedLabel = "Aapne khela"
         override val reviewBestLabel = "Behtar chaal"
         override val reviewEvGapLabel = "Faasla"
+
         override fun reviewEvGapValue(pct: Int) = "−$pct% jeet ki sambhavna"
+
         override val reviewMatchedBest = "Behtareen chaal — Salahkaar bhi yahi khelta."
         override val reviewVerdictSharp = "TEZ"
         override val reviewVerdictFine = "THEEK"
@@ -646,14 +771,21 @@ sealed class KursiStrings {
         override val rankedStripTag = "DARJA"
         override val rankedRatingWord = "ank"
         override val rankedProvisional = "Pehli ranked baazi khelo — darja tay hoga."
-        override fun rankedToNext(points: Int, nextRank: String) = "$nextRank tak $points ank"
+
+        override fun rankedToNext(
+            points: Int,
+            nextRank: String,
+        ) = "$nextRank tak $points ank"
+
         override val rankedTopTier = "Sabse oonchi kursi — Cabinet Secretary."
 
         // ── M6d DAILY CHALLENGE (Hinglish) ──
         override val dailyCta = "AAJ KI CHUNAUTI"
         override val dailyCtaSub = "Daily challenge — sabke liye ek hi mez, ek hi seed"
         override val dailyDoneSub = "Aaj ki chunauti poori — kal phir aana"
+
         override fun dailyStreakLabel(streak: Int) = "🔥 $streak din ki laga"
+
         override val dailyOpenBadge = "AAJ KHULA"
         override val dailyDoneBadge = "DARJ ✓"
 
@@ -702,9 +834,13 @@ sealed class KursiStrings {
         override val onlineLobbyWaiting = "Khiladiyon ka intezaar…"
         override val onlineLobbyLost = "Rabta toot gaya."
         override val onlineLobbyLeave = "KAMRA CHHODO"
+
         override fun onlineLobbySeated(seat: Int) = "Aapki kursi #${seat + 1} pakki."
-        override fun onlineLobbyRoster(joined: Int, total: Int) =
-            if (total > 0) "$joined / $total baith gaye" else "$joined baith gaye"
+
+        override fun onlineLobbyRoster(
+            joined: Int,
+            total: Int,
+        ) = if (total > 0) "$joined / $total baith gaye" else "$joined baith gaye"
 
         // ── Story / Narrative mode (Hinglish) ──
         override val homeCtaStory = "KISSA — DARBAR MODE"
@@ -745,7 +881,9 @@ sealed class KursiStrings {
         override val setupFormBadge = "FORM 1-A THROUGH 1-C"
         override val setupModeLabel = "MODE"
         override val setupModeSublabel = "How will you govern today?"
-        override fun setupPlayerSublabel(count: Int) = "Today: ${count} seats — you + ${count - 1} opponents."
+
+        override fun setupPlayerSublabel(count: Int) = "Today: $count seats — you + ${count - 1} opponents."
+
         override val setupPlayerSectionLabel = "PLAYERS AT THE TABLE"
         override val setupDifficultyLabel = "OPPONENT DIFFICULTY"
         override val setupDifficultySublabel = "Choose your adversaries' calibre."
@@ -765,8 +903,12 @@ sealed class KursiStrings {
         override val modePendingBadge = "PENDING"
         override val modeComingSoonBadge = "COMING SOON"
         override val setupHumanCountLabel = "HOW MANY HUMANS?"
-        override fun setupHumanCountSublabel(humans: Int, players: Int) =
-            "$humans humans take turns; the computer plays the other ${players - humans}."
+
+        override fun setupHumanCountSublabel(
+            humans: Int,
+            players: Int,
+        ) = "$humans humans take turns; the computer plays the other ${players - humans}."
+
         override val diffEasyName = "EASY"
         override val diffEasyVoice = "Still in training. Fills forms, doesn't read them."
         override val diffMediumName = "MEDIUM"
@@ -809,7 +951,9 @@ sealed class KursiStrings {
         override val dqEvLostLabel = "Win-prob bled"
         override val dqChallengeLabel = "Challenge accuracy"
         override val dqBluffLabel = "Bluff success"
+
         override fun dqSampleSub(decisions: Int) = "graded over $decisions decisions"
+
         override val dqGradeSharp = "SHARP BABU"
         override val dqGradeSteady = "STEADY HAND"
         override val dqGradeReckless = "RECKLESS"
@@ -819,8 +963,11 @@ sealed class KursiStrings {
         override val dqGradeRecklessSub = "Missing a lot of best moves."
         override val dqGradeUnratedSub = "Play more — a grade will land."
         override val resultsRecapDecision = "This game's decisions"
-        override fun resultsDecisionValue(accuracyPct: Int, evLostPct: Int) =
-            "$accuracyPct% best · $evLostPct% bled"
+
+        override fun resultsDecisionValue(
+            accuracyPct: Int,
+            evLostPct: Int,
+        ) = "$accuracyPct% best · $evLostPct% bled"
 
         override val settingsTitle = "SETTINGS"
         override val settingsSoundSection = "SOUND"
@@ -831,7 +978,9 @@ sealed class KursiStrings {
         override val settingsMotionSub = "Reduced motion — disables stamp animations"
         override val settingsDefaultsSection = "DEFAULTS"
         override val settingsDefaultDiffLabel = "Default Difficulty"
+
         override fun settingsDefaultPlayersLabel(n: Int) = "Default Players: $n"
+
         override val settingsLearningSection = "LEARNING"
         override val settingsReplayPrimerLabel = "REPLAY TUTORIAL"
         override val settingsReplayPrimerSub = "Replay the first-run onboarding"
@@ -839,7 +988,9 @@ sealed class KursiStrings {
         override val settingsRulesSub = "Full rules and who-beats-whom matrix"
         override val settingsAboutSection = "ABOUT"
         override val settingsAboutTitle = "Kursi — a satirical bluffing game"
-        override val settingsAboutDisclaimer = "\"All characters are fictional. Any resemblance to actual bureaucrats, politicians, or inspectors is purely coincidental and deeply regrettable.\""
+        override val settingsAboutDisclaimer =
+            "\"All characters are fictional. Any resemblance to actual bureaucrats, politicians, or inspectors is purely " +
+                "coincidental and deeply regrettable.\""
         override val settingsAboutFooter = "The Principal Office · Est. whenever convenient."
         override val settingsLanguageSection = "LANGUAGE"
         override val settingsLangHinglish = "HINGLISH"
@@ -861,7 +1012,9 @@ sealed class KursiStrings {
         override val homeCtaTutorial = "FIRST DAY"
         override val homeCtaTutorialSub = "Tutorial — learn by doing, in one short round"
         override val tutorialOfferTitle = "Take your first day?"
-        override val tutorialOfferBody = "New job, new chair. A short training round — the Advisor walks beside you, and one bluff gets caught. Learn by watching."
+        override val tutorialOfferBody =
+            "New job, new chair. A short training round — the Advisor walks beside you, and one bluff gets caught. Learn by " +
+                "watching."
         override val tutorialOfferAccept = "YES, TEACH ME"
         override val tutorialOfferDecline = "No, straight to play"
         override val tutorialHeader = "FIRST DAY — Training Round"
@@ -886,7 +1039,9 @@ sealed class KursiStrings {
         override val tut6Title = "Babu Filewala Challenges!"
         override val tut6Body = "\"You hold NETA? Prove it.\" A challenge means: reveal the card. If you were lying, you lose it."
         override val tut7Title = "BLUFF! The Card Is Revealed"
-        override val tut7Body = "You never held NETA — the bluff is caught red-handed. One certificate sacrificed. This is the heart of the game: claim, challenge, verdict."
+        override val tut7Body =
+            "You never held NETA — the bluff is caught red-handed. One certificate sacrificed. This is the heart of the game: claim, " +
+                "challenge, verdict."
         override val tut8Title = "First Day Done, Sarkar"
         override val tut8Body = "Now you know the rules. Bluff, catch liars, take the chair. The real office is waiting."
 
@@ -906,7 +1061,12 @@ sealed class KursiStrings {
         // ── M6e GAUNTLET ──
         override val homeCtaGauntlet = "THE PROMOTION LADDER"
         override val homeCtaGauntletSub = "Gauntlet — beat each tier in turn, earn your promotion"
-        override fun gauntletStripLabel(cleared: Int, total: Int) = "Ladder: $cleared / $total rungs cleared"
+
+        override fun gauntletStripLabel(
+            cleared: Int,
+            total: Int,
+        ) = "Ladder: $cleared / $total rungs cleared"
+
         override val gauntletHeader = "THE PROMOTION LADDER"
         override val gauntletBadge = "PROMOTION FILE"
         override val gauntletTagline = "From Probationer to Cabinet. Beat each rung to earn the next chair."
@@ -937,6 +1097,7 @@ sealed class KursiStrings {
         override val teamNameA = "THE PARTY"
         override val teamNameB = "THE OPPOSITION"
         override val lobbyTeamHeader = "SIDES — who's with whom"
+
         override fun teamBadge(teamId: Int) = if (teamId == 0) "PTY" else "OPP"
 
         // M6c REVIEW
@@ -947,8 +1108,13 @@ sealed class KursiStrings {
         override val reviewRecentHeader = "RECENT MATCHES"
         override val reviewRecentSub = "On file — reopen any game"
         override val reviewRecentEmpty = "No file closed yet. Finish a game and it lands here."
-        override fun reviewMatchCaption(players: Int, difficulty: String, moves: Int) =
-            "$players players · $difficulty · $moves moves"
+
+        override fun reviewMatchCaption(
+            players: Int,
+            difficulty: String,
+            moves: Int,
+        ) = "$players players · $difficulty · $moves moves"
+
         override val reviewMatchWon = "WON"
         override val reviewMatchLost = "LOST"
         override val reviewPlay = "Play"
@@ -957,7 +1123,12 @@ sealed class KursiStrings {
         override val reviewStepForward = "Step forward"
         override val reviewPrevDecision = "Previous decision"
         override val reviewNextDecision = "Next decision"
-        override fun reviewStepCounter(current: Int, total: Int) = "Step $current / $total"
+
+        override fun reviewStepCounter(
+            current: Int,
+            total: Int,
+        ) = "Step $current / $total"
+
         override val reviewTimeline = "TIMELINE"
         override val reviewTerminal = "VERDICT — game over"
         override val reviewAdvisorHeader = "ADVISOR'S READ"
@@ -965,7 +1136,9 @@ sealed class KursiStrings {
         override val reviewPlayedLabel = "You played"
         override val reviewBestLabel = "Best move"
         override val reviewEvGapLabel = "Gap"
+
         override fun reviewEvGapValue(pct: Int) = "−$pct% win chance"
+
         override val reviewMatchedBest = "Best move — the Advisor would have played this too."
         override val reviewVerdictSharp = "SHARP"
         override val reviewVerdictFine = "FINE"
@@ -984,14 +1157,21 @@ sealed class KursiStrings {
         override val rankedStripTag = "RANK"
         override val rankedRatingWord = "rating"
         override val rankedProvisional = "Play your first ranked game — your rank will be set."
-        override fun rankedToNext(points: Int, nextRank: String) = "$points to $nextRank"
+
+        override fun rankedToNext(
+            points: Int,
+            nextRank: String,
+        ) = "$points to $nextRank"
+
         override val rankedTopTier = "Top of the ladder — Cabinet Secretary."
 
         // ── M6d DAILY CHALLENGE (English) ──
         override val dailyCta = "TODAY'S CHALLENGE"
         override val dailyCtaSub = "Daily challenge — one table, one seed, for everyone"
         override val dailyDoneSub = "Today's challenge done — come back tomorrow"
+
         override fun dailyStreakLabel(streak: Int) = "🔥 $streak-day streak"
+
         override val dailyOpenBadge = "OPEN TODAY"
         override val dailyDoneBadge = "DONE ✓"
 
@@ -1040,9 +1220,13 @@ sealed class KursiStrings {
         override val onlineLobbyWaiting = "Waiting for players…"
         override val onlineLobbyLost = "Connection lost."
         override val onlineLobbyLeave = "LEAVE ROOM"
+
         override fun onlineLobbySeated(seat: Int) = "Your chair #${seat + 1} is confirmed."
-        override fun onlineLobbyRoster(joined: Int, total: Int) =
-            if (total > 0) "$joined / $total seated" else "$joined seated"
+
+        override fun onlineLobbyRoster(
+            joined: Int,
+            total: Int,
+        ) = if (total > 0) "$joined / $total seated" else "$joined seated"
 
         // ── Story / Narrative mode (English) ──
         override val homeCtaStory = "STORY MODE — DARBAR"
@@ -1063,14 +1247,15 @@ sealed class KursiStrings {
 }
 
 /** Bilingual sarkari rank-tier name for a [SarkariRank], in the active language. */
-fun KursiStrings.rankName(rank: com.kursi.core.prefs.SarkariRank): String = when (rank) {
-    com.kursi.core.prefs.SarkariRank.CLERK -> rankClerk
-    com.kursi.core.prefs.SarkariRank.SECTION_OFFICER -> rankSectionOfficer
-    com.kursi.core.prefs.SarkariRank.UNDER_SECRETARY -> rankUnderSecretary
-    com.kursi.core.prefs.SarkariRank.DEPUTY_SECRETARY -> rankDeputySecretary
-    com.kursi.core.prefs.SarkariRank.JOINT_SECRETARY -> rankJointSecretary
-    com.kursi.core.prefs.SarkariRank.SECRETARY -> rankSecretary
-    com.kursi.core.prefs.SarkariRank.CABINET_SECRETARY -> rankCabinetSecretary
-}
+fun KursiStrings.rankName(rank: com.kursi.core.prefs.SarkariRank): String =
+    when (rank) {
+        com.kursi.core.prefs.SarkariRank.CLERK -> rankClerk
+        com.kursi.core.prefs.SarkariRank.SECTION_OFFICER -> rankSectionOfficer
+        com.kursi.core.prefs.SarkariRank.UNDER_SECRETARY -> rankUnderSecretary
+        com.kursi.core.prefs.SarkariRank.DEPUTY_SECRETARY -> rankDeputySecretary
+        com.kursi.core.prefs.SarkariRank.JOINT_SECRETARY -> rankJointSecretary
+        com.kursi.core.prefs.SarkariRank.SECRETARY -> rankSecretary
+        com.kursi.core.prefs.SarkariRank.CABINET_SECRETARY -> rankCabinetSecretary
+    }
 
 val LocalKursiStrings = staticCompositionLocalOf<KursiStrings> { KursiStrings.Hinglish }

@@ -27,8 +27,7 @@ import kotlin.test.assertTrue
  * sequence ⇒ same GameState), not from the chat feed content.
  */
 class NarrativeResumeTest {
-
-    private val seed    = 7777L
+    private val seed = 7777L
     private val players = 4
 
     // ── Minimal SeatInfo fixtures ─────────────────────────────────────────────
@@ -38,28 +37,30 @@ class NarrativeResumeTest {
      * with lightweight inline [PersonalityProfile]s (not the full roster personas).
      */
     private fun buildSeatInfos(): List<SeatInfo> {
-        val botProfile = PersonalityProfile(
-            bluffRate           = 0.30f,
-            challengeAggression = 0.40f,
-            economicAggression  = 0.50f,
-            targetingBias       = TargetingBias.LEADER,
-            risk                = 0.50f,
-            vindictiveness      = 0.40f,
-            predictability      = 0.60f,
-        )
+        val botProfile =
+            PersonalityProfile(
+                bluffRate = 0.30f,
+                challengeAggression = 0.40f,
+                economicAggression = 0.50f,
+                targetingBias = TargetingBias.LEADER,
+                risk = 0.50f,
+                vindictiveness = 0.40f,
+                predictability = 0.60f,
+            )
         return listOf(
-            SeatInfo(0, "Aap",       personaId = null,             profile = null,       isHuman = true),
-            SeatInfo(1, "Bhai Teja", personaId = "bhai_teja",      profile = botProfile, isHuman = false),
-            SeatInfo(2, "Babu",      personaId = "babu_filewala",  profile = botProfile.copy(economicAggression = 0.20f), isHuman = false),
-            SeatInfo(3, "Jugaadu",   personaId = "jugaadu_chhotu", profile = botProfile.copy(predictability = 0.20f),     isHuman = false),
+            SeatInfo(0, "Aap", personaId = null, profile = null, isHuman = true),
+            SeatInfo(1, "Bhai Teja", personaId = "bhai_teja", profile = botProfile, isHuman = false),
+            SeatInfo(2, "Babu", personaId = "babu_filewala", profile = botProfile.copy(economicAggression = 0.20f), isHuman = false),
+            SeatInfo(3, "Jugaadu", personaId = "jugaadu_chhotu", profile = botProfile.copy(predictability = 0.20f), isHuman = false),
         )
     }
 
-    private fun makeDirector() = SocialDirector(
-        seed    = seed,
-        seats   = buildSeatInfos(),
-        humanSeat = 0,
-    )
+    private fun makeDirector() =
+        SocialDirector(
+            seed = seed,
+            seats = buildSeatInfos(),
+            humanSeat = 0,
+        )
 
     private fun makeBots(): Map<PlayerId, Policy> =
         (1 until players).associate { seat ->
@@ -70,10 +71,10 @@ class NarrativeResumeTest {
     private fun makeSession(): GameSession {
         val config = GameConfig.forPlayers(players)
         return GameSession(
-            config         = config,
-            seed           = seed,
-            humanSeat      = PlayerId(0),
-            bots           = makeBots(),
+            config = config,
+            seed = seed,
+            humanSeat = PlayerId(0),
+            bots = makeBots(),
             socialDirector = makeDirector(),
         )
     }
@@ -84,7 +85,10 @@ class NarrativeResumeTest {
      * Drive [session] forward by up to [humanMoves] human-submitted moves using a deterministic
      * [EasyPolicy]. Returns when the human has acted [humanMoves] times or the game ends.
      */
-    private fun drivePartway(session: GameSession, humanMoves: Int): GameSession {
+    private fun drivePartway(
+        session: GameSession,
+        humanMoves: Int,
+    ): GameSession {
         val humanPolicy = EasyPolicy(99L)
         var ui = session.start()
         var moves = 0
@@ -107,21 +111,23 @@ class NarrativeResumeTest {
         // After move 0 (before the player's first move), start an AFWAAH arc against seat 1.
         // The suggestion id and targetSeat are free-form; the session / director use them
         // to evolve the social fabric and log the entry for replay.
-        val afwaahStart = HumanChatInput(
-            suggestionId = "start.afwaah.1",
-            kind         = ChatActionKind.ARC_START,
-            arc          = ArcId.AFWAAH,
-            targetSeat   = 1,
-        )
+        val afwaahStart =
+            HumanChatInput(
+                suggestionId = "start.afwaah.1",
+                kind = ChatActionKind.ARC_START,
+                arc = ArcId.AFWAAH,
+                targetSeat = 1,
+            )
         session.applyHumanChat(afwaahStart)
 
         // After the chat entry is logged, also send a TAUNT targeting seat 2.
-        val taunt = HumanChatInput(
-            suggestionId = "talk.taunt.2",
-            kind         = ChatActionKind.TAUNT,
-            arc          = null,
-            targetSeat   = 2,
-        )
+        val taunt =
+            HumanChatInput(
+                suggestionId = "talk.taunt.2",
+                kind = ChatActionKind.TAUNT,
+                arc = null,
+                targetSeat = 2,
+            )
         session.applyHumanChat(taunt)
     }
 
@@ -149,11 +155,13 @@ class NarrativeResumeTest {
         }
 
         val originalState = original.snapshotState()
-        val humanLog      = original.humanActionLog()
-        val chatLog       = original.chatLog()
+        val humanLog = original.humanActionLog()
+        val chatLog = original.chatLog()
 
-        assertTrue(chatLog.isNotEmpty(),
-            "chat log must be non-empty after two injected chat inputs")
+        assertTrue(
+            chatLog.isNotEmpty(),
+            "chat log must be non-empty after two injected chat inputs",
+        )
         // We may have made zero human moves if the game ended instantly on bots, but typically > 0.
         // (seed 7777 / 4 players always lets the human act first so this should be > 0.)
 
@@ -163,19 +171,25 @@ class NarrativeResumeTest {
         val resumedState = resumed.snapshotState()
 
         // Bit-for-bit identical — this is the contract.
-        assertEquals(originalState, resumedState,
-            "narrative restore() must reproduce the original GameState bit-for-bit")
+        assertEquals(
+            originalState,
+            resumedState,
+            "narrative restore() must reproduce the original GameState bit-for-bit",
+        )
     }
 
     @Test
     fun narrativeResume_emptyLogs_restoresToFreshStart() {
-        val fresh   = makeSession()
+        val fresh = makeSession()
         val startState = fresh.start().let { fresh.snapshotState() }
 
         val resumed = makeSession()
         resumed.restore(emptyList(), emptyList())
-        assertEquals(startState, resumed.snapshotState(),
-            "restoring with empty logs must yield the same state as a plain start()")
+        assertEquals(
+            startState,
+            resumed.snapshotState(),
+            "restoring with empty logs must yield the same state as a plain start()",
+        )
     }
 
     @Test
@@ -185,10 +199,13 @@ class NarrativeResumeTest {
         val session = makeSession()
         var ui = session.start()
 
-        val chat0 = HumanChatInput(
-            suggestionId = "start.afwaah.1",
-            kind = ChatActionKind.ARC_START, arc = ArcId.AFWAAH, targetSeat = 1,
-        )
+        val chat0 =
+            HumanChatInput(
+                suggestionId = "start.afwaah.1",
+                kind = ChatActionKind.ARC_START,
+                arc = ArcId.AFWAAH,
+                targetSeat = 1,
+            )
         session.applyHumanChat(chat0)
 
         // Drive one human move.
@@ -197,17 +214,23 @@ class NarrativeResumeTest {
             ui = session.submitHuman(humanPolicy.decide(ui.view, ui.legalIntents))
         }
 
-        val chat1 = HumanChatInput(
-            suggestionId = "talk.taunt.2",
-            kind = ChatActionKind.TAUNT, arc = null, targetSeat = 2,
-        )
+        val chat1 =
+            HumanChatInput(
+                suggestionId = "talk.taunt.2",
+                kind = ChatActionKind.TAUNT,
+                arc = null,
+                targetSeat = 2,
+            )
         session.applyHumanChat(chat1)
 
         val log = session.chatLog()
         assertTrue(log.isNotEmpty(), "chat log must be non-empty")
         val first = log.first()
-        assertEquals(0, first.first,
-            "first chat (sent before any human move) must be tagged afterHumanMoves=0")
+        assertEquals(
+            0,
+            first.first,
+            "first chat (sent before any human move) must be tagged afterHumanMoves=0",
+        )
     }
 
     @Test
@@ -219,14 +242,20 @@ class NarrativeResumeTest {
         session.applyHumanChat(
             HumanChatInput(
                 suggestionId = "start.afwaah.1",
-                kind = ChatActionKind.ARC_START, arc = ArcId.AFWAAH, targetSeat = 1,
-            )
+                kind = ChatActionKind.ARC_START,
+                arc = ArcId.AFWAAH,
+                targetSeat = 1,
+            ),
         )
         val state = session.currentUiState()
-        assertTrue(state.chatFeed.isNotEmpty(),
-            "chat feed must be non-empty after an AFWAAH arc start")
+        assertTrue(
+            state.chatFeed.isNotEmpty(),
+            "chat feed must be non-empty after an AFWAAH arc start",
+        )
         // At least the player beat + narrator beat from AFWAAH.begin.
-        assertTrue(state.chatFeed.size >= 2,
-            "AFWAAH.begin emits at least 2 beats (player + narrator); got ${state.chatFeed.size}")
+        assertTrue(
+            state.chatFeed.size >= 2,
+            "AFWAAH.begin emits at least 2 beats (player + narrator); got ${state.chatFeed.size}",
+        )
     }
 }

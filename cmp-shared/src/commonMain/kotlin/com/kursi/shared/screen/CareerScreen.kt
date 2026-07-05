@@ -15,11 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -54,7 +54,9 @@ fun CareerScreen(
     /** M6c — open the Review screen on the recent-match at this index (most-recent = 0). */
     onReview: (index: Int) -> Unit = {},
     /** M6d — ranked ELO standing surfaced as a compact rank strip; taps through to the leaderboard. */
-    ranked: com.kursi.core.prefs.RankedStanding = com.kursi.core.prefs.RankedStanding(),
+    ranked: com.kursi.core.prefs.RankedStanding =
+        com.kursi.core.prefs
+            .RankedStanding(),
     /** M6d — open the local leaderboard / standings screen. */
     onLeaderboard: () -> Unit = {},
 ) {
@@ -63,25 +65,26 @@ fun CareerScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             // Header with back
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BrandTokens.TeakDark)
-                    .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(BrandTokens.TeakDark)
+                        .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Box(
-                    modifier = Modifier
-                        .defaultMinSize(minHeight = 52.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                        .semantics(mergeDescendants = true) {
-                            role = Role.Button
-                            contentDescription = "Back to home"
-                        }
-                        .clickable(onClick = onBack)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    modifier =
+                        Modifier
+                            .defaultMinSize(minHeight = 52.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                            .semantics(mergeDescendants = true) {
+                                role = Role.Button
+                                contentDescription = "Back to home"
+                            }.clickable(onClick = onBack)
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
                 ) {
                     Text("‹ DAFTAR", style = KursiType.title.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary)
                 }
@@ -95,11 +98,12 @@ fun CareerScreen(
             }
 
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(scroll)
-                    .padding(24.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(scroll)
+                        .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
@@ -131,13 +135,14 @@ fun CareerScreen(
 @Composable
 private fun CareerEmpty() {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(BrandTokens.PaperCream.copy(alpha = 0.05f))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
-            .padding(28.dp)
-            .semantics { contentDescription = "No career record yet. Play a game to open your file." },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(BrandTokens.PaperCream.copy(alpha = 0.05f))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                .padding(28.dp)
+                .semantics { contentDescription = "No career record yet. Play a game to open your file." },
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -156,27 +161,30 @@ private fun CareerEmpty() {
 private fun CareerHeadline(ledger: StatsLedger) {
     val winPct = (ledger.winRate * 100).roundToInt()
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(
-                Brush.verticalGradient(
-                    listOf(BrandTokens.BrassDark.copy(alpha = 0.5f), BrandTokens.TeakDark.copy(alpha = 0.7f)),
-                ),
-            )
-            .border(1.5.dp, BrandTokens.GoldAntique.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
-            .padding(20.dp)
-            // Announced as a unit by a screen reader: the headline career line.
-            .semantics {
-                contentDescription =
-                    "${ledger.wins} wins from ${ledger.games} games, $winPct percent win rate."
-            },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(BrandTokens.BrassDark.copy(alpha = 0.5f), BrandTokens.TeakDark.copy(alpha = 0.7f)),
+                    ),
+                ).border(1.5.dp, BrandTokens.GoldAntique.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
+                .padding(20.dp)
+                // Announced as a unit by a screen reader: the headline career line.
+                .semantics {
+                    contentDescription =
+                        "${ledger.wins} wins from ${ledger.games} games, $winPct percent win rate."
+                },
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
             Box(
-                modifier = Modifier.size(72.dp).clip(CircleShape)
-                    .border(2.dp, BrandTokens.GoldAntique, CircleShape),
+                modifier =
+                    Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .border(2.dp, BrandTokens.GoldAntique, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text("$winPct%", style = KursiType.display.copy(fontSize = 20.sp), color = BrandTokens.GoldAntique)
@@ -205,14 +213,20 @@ private fun CareerStatGrid(ledger: StatsLedger) {
 }
 
 @Composable
-private fun StatCell(label: String, value: String, a11y: String, modifier: Modifier = Modifier) {
+private fun StatCell(
+    label: String,
+    value: String,
+    a11y: String,
+    modifier: Modifier = Modifier,
+) {
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(BrandTokens.PaperCream.copy(alpha = 0.05f))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-            .padding(16.dp)
-            .semantics { contentDescription = "$value $a11y" },
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(BrandTokens.PaperCream.copy(alpha = 0.05f))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                .padding(16.dp)
+                .semantics { contentDescription = "$value $a11y" },
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -234,19 +248,21 @@ private fun DecisionDossier(dl: DecisionLedger) {
     val s = LocalKursiStrings.current
     val grade = dl.grade
     val (gradeName, gradeSub) = gradeStrings(grade, s)
-    val gradeColor = when (grade) {
-        DecisionGrade.SHARP -> KursiSemantics.Success
-        DecisionGrade.STEADY -> BrandTokens.GoldAntique
-        DecisionGrade.RECKLESS -> BrandTokens.StampRed
-        DecisionGrade.UNRATED -> BrandTokens.BrassAged
-    }
+    val gradeColor =
+        when (grade) {
+            DecisionGrade.SHARP -> KursiSemantics.Success
+            DecisionGrade.STEADY -> BrandTokens.GoldAntique
+            DecisionGrade.RECKLESS -> BrandTokens.StampRed
+            DecisionGrade.UNRATED -> BrandTokens.BrassAged
+        }
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
@@ -256,22 +272,24 @@ private fun DecisionDossier(dl: DecisionLedger) {
         )
         // Grade stamp row
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics {
-                    contentDescription =
-                        "Grade $gradeName. ${dl.accuracyPct} percent of moves matched the best move, " +
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .semantics {
+                        contentDescription =
+                            "Grade $gradeName. ${dl.accuracyPct} percent of moves matched the best move, " +
                             "over ${dl.decisions} decisions."
-                },
+                    },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .border(1.5.dp, gradeColor.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
-                    .background(gradeColor.copy(alpha = 0.12f))
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .border(1.5.dp, gradeColor.copy(alpha = 0.7f), RoundedCornerShape(6.dp))
+                        .background(gradeColor.copy(alpha = 0.12f))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
             ) {
                 Text(
                     gradeName,
@@ -307,12 +325,16 @@ private fun DecisionDossier(dl: DecisionLedger) {
 }
 
 /** Resolve the bilingual grade name + flavour sub-line for [grade]. */
-private fun gradeStrings(grade: DecisionGrade, s: KursiStrings): Pair<String, String> = when (grade) {
-    DecisionGrade.SHARP -> s.dqGradeSharp to s.dqGradeSharpSub
-    DecisionGrade.STEADY -> s.dqGradeSteady to s.dqGradeSteadySub
-    DecisionGrade.RECKLESS -> s.dqGradeReckless to s.dqGradeRecklessSub
-    DecisionGrade.UNRATED -> s.dqGradeUnrated to s.dqGradeUnratedSub
-}
+private fun gradeStrings(
+    grade: DecisionGrade,
+    s: KursiStrings,
+): Pair<String, String> =
+    when (grade) {
+        DecisionGrade.SHARP -> s.dqGradeSharp to s.dqGradeSharpSub
+        DecisionGrade.STEADY -> s.dqGradeSteady to s.dqGradeSteadySub
+        DecisionGrade.RECKLESS -> s.dqGradeReckless to s.dqGradeRecklessSub
+        DecisionGrade.UNRATED -> s.dqGradeUnrated to s.dqGradeUnratedSub
+    }
 
 @Composable
 private fun CareerH2H(ledger: StatsLedger) {
@@ -320,12 +342,13 @@ private fun CareerH2H(ledger: StatsLedger) {
     // Order rivals by games faced (most-encountered first), resolving display names from the roster.
     val rows = ledger.headToHead.entries.sortedByDescending { it.value.played }
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
@@ -338,24 +361,31 @@ private fun CareerH2H(ledger: StatsLedger) {
 }
 
 @Composable
-private fun H2HRow(personaId: String, record: PersonaRecord) {
+private fun H2HRow(
+    personaId: String,
+    record: PersonaRecord,
+) {
     val persona = PersonaRoster.ALL.firstOrNull { it.id == personaId }
     val name = persona?.name ?: personaId.replace("_", " ").replaceFirstChar { it.uppercase() }
     val color = persona?.seatColorArgb?.let { Color(it) } ?: BrandTokens.BrassAged
     val pct = if (record.played == 0) 0 else (record.wins * 100 / record.played)
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .semantics {
-                contentDescription = "$name: faced ${record.played} times, won ${record.wins}, $pct percent."
-            },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .semantics {
+                    contentDescription = "$name: faced ${record.played} times, won ${record.wins}, $pct percent."
+                },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Box(
-            modifier = Modifier.size(24.dp).clip(CircleShape)
-                .background(color.copy(alpha = 0.4f))
-                .border(1.dp, color, CircleShape),
+            modifier =
+                Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .background(color.copy(alpha = 0.4f))
+                    .border(1.dp, color, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Text(persona?.monogram ?: "?", style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.Cream)
@@ -389,20 +419,24 @@ fun CareerStrip(
     if (ledger.games == 0) return
     val winPct = (ledger.winRate * 100).roundToInt()
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(BrandTokens.TeakDark.copy(alpha = 0.7f))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.45f), RoundedCornerShape(10.dp))
-            .clickable(onClick = onOpen)
-            .semantics(mergeDescendants = true) {
-                liveRegion = LiveRegionMode.Polite
-                contentDescription =
-                    "Career: ${ledger.wins} wins from ${ledger.games} games, $winPct percent. Tap to open the register."
-            }
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(BrandTokens.TeakDark.copy(alpha = 0.7f))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.45f), RoundedCornerShape(10.dp))
+                .clickable(onClick = onOpen)
+                .semantics(mergeDescendants = true) {
+                    liveRegion = LiveRegionMode.Polite
+                    contentDescription =
+                        "Career: ${ledger.wins} wins from ${ledger.games} games, $winPct percent. Tap to open the register."
+                }.padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("ROZNAMCHA", style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold), color = BrandTokens.BrassAged)
+            Text(
+                "ROZNAMCHA",
+                style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold),
+                color = BrandTokens.BrassAged,
+            )
             Text(
                 "${ledger.wins}W · ${ledger.losses}L · $winPct%",
                 style = KursiType.numeric.copy(fontSize = 13.sp),

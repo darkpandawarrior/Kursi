@@ -3,7 +3,6 @@ package com.kursi.core.feedback
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFormat
-import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Build
 import android.os.VibrationEffect
@@ -45,7 +44,12 @@ object FeedbackAndroid {
 
 private const val SAMPLE_RATE = 44_100
 
-private fun renderTone(freqHz: Double, durMs: Int, decay: Double, amplitude: Double = 0.45): ShortArray {
+private fun renderTone(
+    freqHz: Double,
+    durMs: Int,
+    decay: Double,
+    amplitude: Double = 0.45,
+): ShortArray {
     val n = (SAMPLE_RATE.toLong() * durMs / 1000L).toInt().coerceAtLeast(1)
     val out = ShortArray(n)
     for (i in 0 until n) {
@@ -58,11 +62,12 @@ private fun renderTone(freqHz: Double, durMs: Int, decay: Double, amplitude: Dou
 }
 
 private fun renderWinSting(): ShortArray {
-    val notes = listOf(
-        renderTone(523.25, 110, 9.0, 0.4),
-        renderTone(659.25, 110, 9.0, 0.4),
-        renderTone(783.99, 220, 7.0, 0.45),
-    )
+    val notes =
+        listOf(
+            renderTone(523.25, 110, 9.0, 0.4),
+            renderTone(659.25, 110, 9.0, 0.4),
+            renderTone(783.99, 220, 7.0, 0.45),
+        )
     val out = ShortArray(notes.sumOf { it.size })
     var pos = 0
     for (n in notes) {
@@ -73,13 +78,13 @@ private fun renderWinSting(): ShortArray {
 }
 
 private class AndroidSoundPlayer : SoundPlayer {
-
-    private val samples: Map<SoundKey, ShortArray> = mapOf(
-        SoundKey.Stamp to renderTone(196.0, 120, 26.0, 0.5),
-        SoundKey.Coin to renderTone(1320.0, 90, 28.0, 0.35),
-        SoundKey.Thud to renderTone(110.0, 160, 14.0, 0.55),
-        SoundKey.Win to renderWinSting(),
-    )
+    private val samples: Map<SoundKey, ShortArray> =
+        mapOf(
+            SoundKey.Stamp to renderTone(196.0, 120, 26.0, 0.5),
+            SoundKey.Coin to renderTone(1320.0, 90, 28.0, 0.35),
+            SoundKey.Thud to renderTone(110.0, 160, 14.0, 0.55),
+            SoundKey.Win to renderWinSting(),
+        )
 
     @Volatile private var released = false
 
@@ -100,23 +105,25 @@ private class AndroidSoundPlayer : SoundPlayer {
         thread(isDaemon = true, name = "kursi-sfx-${key.name}") {
             runCatching {
                 val bytes = pcm.size * 2
-                val track = AudioTrack.Builder()
-                    .setAudioAttributes(
-                        AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_GAME)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                            .build(),
-                    )
-                    .setAudioFormat(
-                        AudioFormat.Builder()
-                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                            .setSampleRate(SAMPLE_RATE)
-                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                            .build(),
-                    )
-                    .setBufferSizeInBytes(bytes.coerceAtLeast(512))
-                    .setTransferMode(AudioTrack.MODE_STATIC)
-                    .build()
+                val track =
+                    AudioTrack
+                        .Builder()
+                        .setAudioAttributes(
+                            AudioAttributes
+                                .Builder()
+                                .setUsage(AudioAttributes.USAGE_GAME)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                .build(),
+                        ).setAudioFormat(
+                            AudioFormat
+                                .Builder()
+                                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                                .setSampleRate(SAMPLE_RATE)
+                                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                                .build(),
+                        ).setBufferSizeInBytes(bytes.coerceAtLeast(512))
+                        .setTransferMode(AudioTrack.MODE_STATIC)
+                        .build()
                 track.write(pcm, 0, pcm.size)
                 track.play()
                 // Hold briefly so STATIC playback finishes before release.
@@ -134,24 +141,26 @@ private class AndroidSoundPlayer : SoundPlayer {
         if (!v.hasVibrator()) return
         runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val effect = when (pattern) {
-                    HapticPattern.Tick -> VibrationEffect.createOneShot(18, 90)
-                    HapticPattern.Thud -> VibrationEffect.createOneShot(45, 180)
-                    HapticPattern.DoubleBuzz ->
-                        VibrationEffect.createWaveform(longArrayOf(0, 30, 60, 30), -1)
-                    HapticPattern.HeavyLong ->
-                        VibrationEffect.createOneShot(120, VibrationEffect.DEFAULT_AMPLITUDE)
-                    HapticPattern.None -> return
-                }
+                val effect =
+                    when (pattern) {
+                        HapticPattern.Tick -> VibrationEffect.createOneShot(18, 90)
+                        HapticPattern.Thud -> VibrationEffect.createOneShot(45, 180)
+                        HapticPattern.DoubleBuzz ->
+                            VibrationEffect.createWaveform(longArrayOf(0, 30, 60, 30), -1)
+                        HapticPattern.HeavyLong ->
+                            VibrationEffect.createOneShot(120, VibrationEffect.DEFAULT_AMPLITUDE)
+                        HapticPattern.None -> return
+                    }
                 v.vibrate(effect)
             } else {
-                val ms = when (pattern) {
-                    HapticPattern.Tick -> 18L
-                    HapticPattern.Thud -> 45L
-                    HapticPattern.DoubleBuzz -> 90L
-                    HapticPattern.HeavyLong -> 120L
-                    HapticPattern.None -> 0L
-                }
+                val ms =
+                    when (pattern) {
+                        HapticPattern.Tick -> 18L
+                        HapticPattern.Thud -> 45L
+                        HapticPattern.DoubleBuzz -> 90L
+                        HapticPattern.HeavyLong -> 120L
+                        HapticPattern.None -> 0L
+                    }
                 if (ms > 0) v.vibrate(ms)
             }
         }

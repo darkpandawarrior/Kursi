@@ -1,14 +1,14 @@
 package com.kursi.designsystem.moment
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -57,20 +57,20 @@ internal fun MomentStaticFrame(
     anchors: TableAnchors,
 ) {
     when (moment) {
-        is KursiMoment.Income       -> CoinFrame(anchors.seat(moment.actorSeat), "+1", "DEHAADI", BrandTokens.BrassAged, count = 1)
-        is KursiMoment.ForeignAid   -> CoinFrame(anchors.seat(moment.actorSeat), "+2", "FDI", BrandTokens.BrassAged, count = 2)
-        is KursiMoment.Tax          -> StampFrame(anchors.seat(moment.actorSeat), "GHOTALA", moment.roleHue, caption = "+3 · claims NETA")
-        is KursiMoment.Steal        -> StealFrame(anchors, moment)
-        is KursiMoment.Assassinate  -> StampFrame(anchors.seat(moment.target), "SUPARI", moment.roleHue, caption = "−3 · target hit")
-        is KursiMoment.Exchange     -> StampFrame(anchors.seat(moment.actorSeat), "SETTING", moment.roleHue, caption = "cards swapped")
-        is KursiMoment.Coup         -> CrestFrame(anchors.seat(moment.target), word = "KHELA", caption = "−7 · chair toppled", tint = BrandTokens.GoldAntique)
-        is KursiMoment.Block        -> StampFrame(anchors.seat(moment.actorSeat), "ROKA!", moment.roleHue, caption = "action blocked")
-        is KursiMoment.Challenge    -> ChallengeFrame(anchors, moment)
-        is KursiMoment.Reveal       -> VerdictFrame(anchors.seat(moment.claimant), moment)
-        is KursiMoment.InfluenceLoss-> StampFrame(anchors.seat(moment.actorSeat), "EXPOSED", BrandTokens.StampRed, caption = "card lost", rotationDeg = -12f)
-        is KursiMoment.Elimination  -> TippedChairFrame(anchors.seat(moment.actorSeat))
-        is KursiMoment.TurnHandoff  -> HandoffFrame(anchors, moment)
-        is KursiMoment.Win          -> CrestFrame(centerOf(anchors), word = "KURSI", caption = "Kursi aapki!", tint = BrandTokens.GoldAntique, big = true)
+        is KursiMoment.Income -> CoinFrame(anchors.seat(moment.actorSeat), "+1", "DEHAADI", BrandTokens.BrassAged, count = 1)
+        is KursiMoment.ForeignAid -> CoinFrame(anchors.seat(moment.actorSeat), "+2", "FDI", BrandTokens.BrassAged, count = 2)
+        is KursiMoment.Tax -> StampFrame(anchors.seat(moment.actorSeat), "GHOTALA", moment.roleHue, caption = "+3 · claims NETA")
+        is KursiMoment.Steal -> StealFrame(anchors, moment)
+        is KursiMoment.Assassinate -> StampFrame(anchors.seat(moment.target), "SUPARI", moment.roleHue, caption = "−3 · target hit")
+        is KursiMoment.Exchange -> StampFrame(anchors.seat(moment.actorSeat), "SETTING", moment.roleHue, caption = "cards swapped")
+        is KursiMoment.Coup -> CrestFrame(anchors.seat(moment.target), word = "KHELA", caption = "−7 · chair toppled", tint = BrandTokens.GoldAntique)
+        is KursiMoment.Block -> StampFrame(anchors.seat(moment.actorSeat), "ROKA!", moment.roleHue, caption = "action blocked")
+        is KursiMoment.Challenge -> ChallengeFrame(anchors, moment)
+        is KursiMoment.Reveal -> VerdictFrame(anchors.seat(moment.claimant), moment)
+        is KursiMoment.InfluenceLoss -> StampFrame(anchors.seat(moment.actorSeat), "EXPOSED", BrandTokens.StampRed, caption = "card lost", rotationDeg = -12f)
+        is KursiMoment.Elimination -> TippedChairFrame(anchors.seat(moment.actorSeat))
+        is KursiMoment.TurnHandoff -> HandoffFrame(anchors, moment)
+        is KursiMoment.Win -> CrestFrame(centerOf(anchors), word = "KURSI", caption = "Kursi aapki!", tint = BrandTokens.GoldAntique, big = true)
     }
 }
 
@@ -86,24 +86,30 @@ private fun centerOf(anchors: TableAnchors): Offset {
 
 /** A small cream caption pill placed just below [center] so the beat reads in words. */
 @Composable
-private fun CaptionPill(center: Offset, text: String, tint: Color, yPadDp: Float = 36f) {
+private fun CaptionPill(
+    center: Offset,
+    text: String,
+    tint: Color,
+    yPadDp: Float = 36f,
+) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .offset { IntOffset(0, 0) },
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .offset { IntOffset(0, 0) },
     ) {
         Box(
-            modifier = Modifier
-                .offset {
-                    IntOffset(
-                        (center.x - 70.dp.toPx()).roundToInt(),
-                        (center.y + yPadDp.dp.toPx()).roundToInt(),
-                    )
-                }
-                .clip(CircleShape)
-                .background(BrandTokens.TeakDark.copy(alpha = 0.9f))
-                .border(1.dp, tint.copy(alpha = 0.6f), CircleShape)
-                .padding(horizontal = 12.dp, vertical = 4.dp),
+            modifier =
+                Modifier
+                    .offset {
+                        IntOffset(
+                            (center.x - 70.dp.toPx()).roundToInt(),
+                            (center.y + yPadDp.dp.toPx()).roundToInt(),
+                        )
+                    }.clip(CircleShape)
+                    .background(BrandTokens.TeakDark.copy(alpha = 0.9f))
+                    .border(1.dp, tint.copy(alpha = 0.6f), CircleShape)
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
         ) {
             Text(
                 text = text,
@@ -133,22 +139,24 @@ private fun StampFrame(
     // Anchor the stamp word centred on the seat. We offset by half its rough text width
     // so it sits over the seat rather than starting at it.
     Box(
-        modifier = Modifier.fillMaxSize().offset {
-            IntOffset(
-                (seatCenter.x - (word.length * 11).dp.toPx() / 2f).roundToInt(),
-                (seatCenter.y - 22.dp.toPx()).roundToInt(),
-            )
-        },
+        modifier =
+            Modifier.fillMaxSize().offset {
+                IntOffset(
+                    (seatCenter.x - (word.length * 11).dp.toPx() / 2f).roundToInt(),
+                    (seatCenter.y - 22.dp.toPx()).roundToInt(),
+                )
+            },
     ) {
         Text(
             text = word,
-            style = TextStyle(
-                fontSize = 40.sp,
-                fontWeight = FontWeight.Black,
-                color = tint,
-                textAlign = TextAlign.Center,
-                letterSpacing = 2.sp,
-            ),
+            style =
+                TextStyle(
+                    fontSize = 40.sp,
+                    fontWeight = FontWeight.Black,
+                    color = tint,
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 2.sp,
+                ),
             modifier = Modifier.rotateStatic(rotationDeg),
         )
     }
@@ -156,8 +164,7 @@ private fun StampFrame(
 }
 
 // A tiny helper so the stamp word can carry a static tilt (no animation).
-private fun Modifier.rotateStatic(deg: Float): Modifier =
-    if (deg == 0f) this else this.then(Modifier.graphicsLayer { rotationZ = deg })
+private fun Modifier.rotateStatic(deg: Float): Modifier = if (deg == 0f) this else this.then(Modifier.graphicsLayer { rotationZ = deg })
 
 // ─────────────────────────── Coin-row frame ──────────────────────────────────
 
@@ -166,7 +173,13 @@ private fun Modifier.rotateStatic(deg: Float): Modifier =
  * delta — the economic beat made still. No arc, just the settled coins.
  */
 @Composable
-private fun CoinFrame(seatCenter: Offset, delta: String, caption: String, tint: Color, count: Int) {
+private fun CoinFrame(
+    seatCenter: Offset,
+    delta: String,
+    caption: String,
+    tint: Color,
+    count: Int,
+) {
     Canvas(Modifier.fillMaxSize()) {
         val r = 11.dp.toPx()
         val gap = 26.dp.toPx()
@@ -179,9 +192,10 @@ private fun CoinFrame(seatCenter: Offset, delta: String, caption: String, tint: 
     }
     // +N badge above the coins.
     Box(
-        modifier = Modifier.fillMaxSize().offset {
-            IntOffset((seatCenter.x - 14.dp.toPx()).roundToInt(), (seatCenter.y - 44.dp.toPx()).roundToInt())
-        },
+        modifier =
+            Modifier.fillMaxSize().offset {
+                IntOffset((seatCenter.x - 14.dp.toPx()).roundToInt(), (seatCenter.y - 44.dp.toPx()).roundToInt())
+            },
     ) {
         Text(
             text = delta,
@@ -198,7 +212,10 @@ private fun CoinFrame(seatCenter: Offset, delta: String, caption: String, tint: 
  * actor, frozen at landing — the coins sit on the actor's side.
  */
 @Composable
-private fun StealFrame(anchors: TableAnchors, m: KursiMoment.Steal) {
+private fun StealFrame(
+    anchors: TableAnchors,
+    m: KursiMoment.Steal,
+) {
     val victim = anchors.seat(m.victim)
     val actor = anchors.seat(m.actorSeat)
     Canvas(Modifier.fillMaxSize()) {
@@ -219,9 +236,10 @@ private fun StealFrame(anchors: TableAnchors, m: KursiMoment.Steal) {
     }
     // VASOOLI stamp on victim
     Box(
-        modifier = Modifier.fillMaxSize().offset {
-            IntOffset((victim.x - 60.dp.toPx()).roundToInt(), (victim.y - 16.dp.toPx()).roundToInt())
-        },
+        modifier =
+            Modifier.fillMaxSize().offset {
+                IntOffset((victim.x - 60.dp.toPx()).roundToInt(), (victim.y - 16.dp.toPx()).roundToInt())
+            },
     ) {
         Text(
             text = "VASOOLI",
@@ -239,37 +257,55 @@ private fun StealFrame(anchors: TableAnchors, m: KursiMoment.Steal) {
  * desaturated card behind.
  */
 @Composable
-private fun VerdictFrame(seatCenter: Offset, m: KursiMoment.Reveal) {
+private fun VerdictFrame(
+    seatCenter: Offset,
+    m: KursiMoment.Reveal,
+) {
     val (word, color) = if (m.truthful) "SACH!" to m.roleHue else "JHOOTH!" to BrandTokens.StampRed
     // The revealed card — cream face with the role name, greyed when a bluff.
     Box(
-        modifier = Modifier.fillMaxSize().offset {
-            IntOffset((seatCenter.x - 38.dp.toPx()).roundToInt(), (seatCenter.y - 54.dp.toPx()).roundToInt())
-        },
+        modifier =
+            Modifier.fillMaxSize().offset {
+                IntOffset((seatCenter.x - 38.dp.toPx()).roundToInt(), (seatCenter.y - 54.dp.toPx()).roundToInt())
+            },
     ) {
         Box(
-            modifier = Modifier
-                .size(76.dp, 108.dp)
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
-                .background(if (m.truthful) BrandTokens.PaperCream else BrandTokens.PaperCream.copy(alpha = 0.55f))
-                .border(1.5.dp, color.copy(alpha = 0.8f), androidx.compose.foundation.shape.RoundedCornerShape(8.dp)),
+            modifier =
+                Modifier
+                    .size(76.dp, 108.dp)
+                    .clip(
+                        androidx.compose.foundation.shape
+                            .RoundedCornerShape(8.dp),
+                    ).background(if (m.truthful) BrandTokens.PaperCream else BrandTokens.PaperCream.copy(alpha = 0.55f))
+                    .border(
+                        1.5.dp,
+                        color.copy(alpha = 0.8f),
+                        androidx.compose.foundation.shape
+                            .RoundedCornerShape(8.dp),
+                    ),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = m.claimedRole,
-                style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (m.truthful) m.roleHue else BrandTokens.CreamInk.copy(alpha = 0.6f)),
+                style =
+                    TextStyle(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (m.truthful) m.roleHue else BrandTokens.CreamInk.copy(alpha = 0.6f),
+                    ),
                 textAlign = TextAlign.Center,
             )
         }
     }
     // The verdict stamp, diagonal for a caught bluff.
     Box(
-        modifier = Modifier.fillMaxSize().offset {
-            IntOffset(
-                (seatCenter.x - (word.length * 12).dp.toPx() / 2f).roundToInt(),
-                (seatCenter.y - 20.dp.toPx()).roundToInt(),
-            )
-        },
+        modifier =
+            Modifier.fillMaxSize().offset {
+                IntOffset(
+                    (seatCenter.x - (word.length * 12).dp.toPx() / 2f).roundToInt(),
+                    (seatCenter.y - 20.dp.toPx()).roundToInt(),
+                )
+            },
     ) {
         Text(
             text = word,
@@ -292,7 +328,10 @@ private fun VerdictFrame(seatCenter: Offset, m: KursiMoment.Reveal) {
  * "?" seal at the claimant, no outcome yet.
  */
 @Composable
-private fun ChallengeFrame(anchors: TableAnchors, m: KursiMoment.Challenge) {
+private fun ChallengeFrame(
+    anchors: TableAnchors,
+    m: KursiMoment.Challenge,
+) {
     val from = anchors.seat(m.actorSeat)
     val to = anchors.seat(m.claimant)
     Canvas(Modifier.fillMaxSize()) {
@@ -310,9 +349,10 @@ private fun ChallengeFrame(anchors: TableAnchors, m: KursiMoment.Challenge) {
         )
     }
     Box(
-        modifier = Modifier.fillMaxSize().offset {
-            IntOffset((to.x - 7.dp.toPx()).roundToInt(), (to.y - 18.dp.toPx()).roundToInt())
-        },
+        modifier =
+            Modifier.fillMaxSize().offset {
+                IntOffset((to.x - 7.dp.toPx()).roundToInt(), (to.y - 18.dp.toPx()).roundToInt())
+            },
     ) {
         Text("?", style = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Black, color = BrandTokens.PendingAmber))
     }
@@ -350,8 +390,13 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawStaticChair(col
     val h = 48.dp.toPx()
     val sw = 3.dp.toPx()
     drawArc(
-        color = color, startAngle = 180f, sweepAngle = 180f, useCenter = false,
-        topLeft = Offset(-w * 0.4f, -h * 0.5f), size = Size(w * 0.8f, h * 0.35f), style = Stroke(sw),
+        color = color,
+        startAngle = 180f,
+        sweepAngle = 180f,
+        useCenter = false,
+        topLeft = Offset(-w * 0.4f, -h * 0.5f),
+        size = Size(w * 0.8f, h * 0.35f),
+        style = Stroke(sw),
     )
     drawLine(color, Offset(-w * 0.4f, 0f), Offset(w * 0.4f, 0f), sw)
     drawLine(color, Offset(-w * 0.3f, 0f), Offset(-w * 0.3f, h * 0.45f), sw)
@@ -366,7 +411,10 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawStaticChair(col
  * destination rim lit. The quietest frame.
  */
 @Composable
-private fun HandoffFrame(anchors: TableAnchors, m: KursiMoment.TurnHandoff) {
+private fun HandoffFrame(
+    anchors: TableAnchors,
+    m: KursiMoment.TurnHandoff,
+) {
     val from = anchors.seat(m.actorSeat)
     val to = anchors.seat(m.nextSeat)
     Canvas(Modifier.fillMaxSize()) {
@@ -383,7 +431,13 @@ private fun HandoffFrame(anchors: TableAnchors, m: KursiMoment.TurnHandoff) {
  * a gold ring, with the celebratory/decisive caption. [big] enlarges for the win.
  */
 @Composable
-private fun CrestFrame(center: Offset, word: String, caption: String, tint: Color, big: Boolean = false) {
+private fun CrestFrame(
+    center: Offset,
+    word: String,
+    caption: String,
+    tint: Color,
+    big: Boolean = false,
+) {
     val ringR = if (big) 64f else 46f
     Canvas(Modifier.fillMaxSize()) {
         drawCircle(tint.copy(alpha = 0.18f), radius = ringR.dp.toPx(), center = center)
@@ -393,21 +447,23 @@ private fun CrestFrame(center: Offset, word: String, caption: String, tint: Colo
     val fontPx = if (big) 44f else 32f
     val perCharDp = if (big) 26f else 19f // rough advance width per glyph at this weight
     Box(
-        modifier = Modifier.fillMaxSize().offset {
-            IntOffset(
-                (center.x - (word.length * perCharDp).dp.toPx() / 2f).roundToInt(),
-                (center.y - fontPx.dp.toPx() / 2f).roundToInt(),
-            )
-        },
+        modifier =
+            Modifier.fillMaxSize().offset {
+                IntOffset(
+                    (center.x - (word.length * perCharDp).dp.toPx() / 2f).roundToInt(),
+                    (center.y - fontPx.dp.toPx() / 2f).roundToInt(),
+                )
+            },
     ) {
         Text(
             text = word,
-            style = TextStyle(
-                fontSize = fontPx.sp,
-                fontWeight = FontWeight.Black,
-                color = tint,
-                letterSpacing = 2.sp,
-            ),
+            style =
+                TextStyle(
+                    fontSize = fontPx.sp,
+                    fontWeight = FontWeight.Black,
+                    color = tint,
+                    letterSpacing = 2.sp,
+                ),
         )
     }
     CaptionPill(center, caption, tint, yPadDp = ringR + 12f)

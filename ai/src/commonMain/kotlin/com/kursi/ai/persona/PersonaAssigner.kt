@@ -5,7 +5,6 @@ import com.kursi.ai.ExpertPolicy
 import com.kursi.ai.GRANDMASTER_DEFAULT_BUDGET
 import com.kursi.ai.GrandmasterPolicy
 import com.kursi.ai.HardPolicy
-import com.kursi.ai.IsmctsSearch
 import com.kursi.ai.MediumPolicy
 import com.kursi.ai.SearchBudget
 import com.kursi.engine.PlayerId
@@ -30,18 +29,18 @@ enum class BotDifficulty {
  *         but callers decide seat mapping; this returns a list in order 0..<seatCount).
  */
 object PersonaAssigner {
-
     /**
      * Strong in-game Expert budget: 8 000 iterations / 900 ms / horizon 16.
      * Wall-clock cap keeps it safe on slower machines; extra iterations and
      * deeper rollout horizon give noticeably stronger play vs the old 4k/700ms.
      * Distinct from test budgets (defined locally in test files) so CI stays fast.
      */
-    val EXPERT_GAME_BUDGET = SearchBudget(
-        maxMillis = 900L,
-        maxIterations = 8000,
-        rolloutHorizon = 16,
-    )
+    val EXPERT_GAME_BUDGET =
+        SearchBudget(
+            maxMillis = 900L,
+            maxIterations = 8000,
+            rolloutHorizon = 16,
+        )
 
     fun assign(
         seatCount: Int,
@@ -62,23 +61,25 @@ object PersonaAssigner {
         val seenColors = mutableSetOf<Long>()
         val result = mutableListOf<Pair<BotPersona, PersonaPolicy>>()
         chosen.forEachIndexed { i, persona ->
-            val finalPersona = if (persona.seatColorArgb in seenColors) {
-                // Nudge lightness by brightening the persona's color slightly for disambiguation.
-                persona.copy(seatColorArgb = persona.seatColorArgb.nudgeLightness())
-            } else {
-                persona
-            }
+            val finalPersona =
+                if (persona.seatColorArgb in seenColors) {
+                    // Nudge lightness by brightening the persona's color slightly for disambiguation.
+                    persona.copy(seatColorArgb = persona.seatColorArgb.nudgeLightness())
+                } else {
+                    persona
+                }
             seenColors.add(finalPersona.seatColorArgb)
 
             val botSeed = seed * 31L + i
-            val base = when (difficulty) {
-                BotDifficulty.EASY   -> EasyPolicy(botSeed)
-                BotDifficulty.MEDIUM -> MediumPolicy(botSeed)
-                BotDifficulty.HARD   -> HardPolicy(botSeed)
-                BotDifficulty.EXPERT -> ExpertPolicy(seed = botSeed, budget = EXPERT_GAME_BUDGET)
-                BotDifficulty.GRANDMASTER ->
-                    GrandmasterPolicy(seed = botSeed, budget = GRANDMASTER_DEFAULT_BUDGET)
-            }
+            val base =
+                when (difficulty) {
+                    BotDifficulty.EASY -> EasyPolicy(botSeed)
+                    BotDifficulty.MEDIUM -> MediumPolicy(botSeed)
+                    BotDifficulty.HARD -> HardPolicy(botSeed)
+                    BotDifficulty.EXPERT -> ExpertPolicy(seed = botSeed, budget = EXPERT_GAME_BUDGET)
+                    BotDifficulty.GRANDMASTER ->
+                        GrandmasterPolicy(seed = botSeed, budget = GRANDMASTER_DEFAULT_BUDGET)
+                }
             result.add(finalPersona to PersonaPolicy(finalPersona, base, seed = botSeed + 99L))
         }
         return result
@@ -93,7 +94,9 @@ object PersonaAssigner {
         for (i in list.indices.reversed()) {
             s = s * 6364136223846793005L + 1442695040888963407L
             val j = ((s ushr 33) % (i + 1)).toInt().and(0x7fffffff) % (i + 1)
-            val tmp = list[i]; list[i] = list[j]; list[j] = tmp
+            val tmp = list[i]
+            list[i] = list[j]
+            list[j] = tmp
         }
         return list
     }

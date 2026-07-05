@@ -23,7 +23,15 @@ data class BotPersona(
 
 /** Events that trigger a bark line. */
 enum class BarkEvent {
-    ACT, BLUFF_DECLARE, BLOCK, CHALLENGED, WIN_CHALLENGE, LOSE_CHALLENGE, WIN_GAME, ELIMINATED, TAUNT
+    ACT,
+    BLUFF_DECLARE,
+    BLOCK,
+    CHALLENGED,
+    WIN_CHALLENGE,
+    LOSE_CHALLENGE,
+    WIN_GAME,
+    ELIMINATED,
+    TAUNT,
 }
 
 /**

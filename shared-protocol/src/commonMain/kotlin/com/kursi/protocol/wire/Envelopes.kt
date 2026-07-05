@@ -16,11 +16,12 @@ import kotlinx.serialization.json.Json
  * - [encodeDefaults] = false — keeps frames compact; default-valued fields (e.g. [WirePlayerView.schemaVersion])
  *   are omitted from frames produced by the current schema version and must be handled gracefully when absent.
  */
-val KursiJson: Json = Json {
-    ignoreUnknownKeys = true
-    classDiscriminator = "type"
-    encodeDefaults = true   // schemaVersion must always be present so clients can gate on it
-}
+val KursiJson: Json =
+    Json {
+        ignoreUnknownKeys = true
+        classDiscriminator = "type"
+        encodeDefaults = true // schemaVersion must always be present so clients can gate on it
+    }
 
 // ─────────────────────────── Client → Server ───────────────────────────
 
@@ -32,7 +33,6 @@ val KursiJson: Json = Json {
  */
 @Serializable
 sealed interface ClientMessage {
-
     val matchId: String
 
     /**
@@ -89,7 +89,6 @@ sealed interface ClientMessage {
  */
 @Serializable
 sealed interface ServerMessage {
-
     val matchId: String
     val seq: Long
 

@@ -10,7 +10,11 @@ import kotlinx.serialization.json.Json
 
 /** Wire model for one row from the server's /standings endpoint. */
 @Serializable
-data class RemoteStanding(val position: Int, val name: String, val rating: Int)
+data class RemoteStanding(
+    val position: Int,
+    val name: String,
+    val rating: Int,
+)
 
 /**
  * Fetches the online leaderboard from the Kursi server.
@@ -26,12 +30,16 @@ data class RemoteStanding(val position: Int, val name: String, val rating: Int)
  * @param port Port the server listens on (default 8080 per :server/App.kt).
  * @return Standings sorted best-first, or an empty list on any failure.
  */
-suspend fun fetchStandings(host: String, port: Int): List<RemoteStanding> {
-    val client = HttpClient(defaultHttpClientEngine()) {
-        install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true })
+suspend fun fetchStandings(
+    host: String,
+    port: Int,
+): List<RemoteStanding> {
+    val client =
+        HttpClient(defaultHttpClientEngine()) {
+            install(ContentNegotiation) {
+                json(Json { ignoreUnknownKeys = true })
+            }
         }
-    }
     return try {
         client.get("http://$host:$port/standings").body()
     } catch (_: Exception) {

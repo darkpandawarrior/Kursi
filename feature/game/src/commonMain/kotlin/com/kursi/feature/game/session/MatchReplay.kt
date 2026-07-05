@@ -20,15 +20,15 @@ import com.kursi.feature.game.OpponentPersona
  * names), but the policy seats are rebuilt deterministically.
  */
 object MatchReplay {
-
     /** Map the feature [Difficulty] to the AI [BotDifficulty] — identical to the live game mapping. */
-    private fun botDifficultyOf(difficulty: Difficulty): BotDifficulty = when (difficulty) {
-        Difficulty.Easy        -> BotDifficulty.EASY
-        Difficulty.Medium      -> BotDifficulty.MEDIUM
-        Difficulty.Hard        -> BotDifficulty.HARD
-        Difficulty.Expert      -> BotDifficulty.EXPERT
-        Difficulty.Grandmaster -> BotDifficulty.GRANDMASTER
-    }
+    private fun botDifficultyOf(difficulty: Difficulty): BotDifficulty =
+        when (difficulty) {
+            Difficulty.Easy -> BotDifficulty.EASY
+            Difficulty.Medium -> BotDifficulty.MEDIUM
+            Difficulty.Hard -> BotDifficulty.HARD
+            Difficulty.Expert -> BotDifficulty.EXPERT
+            Difficulty.Grandmaster -> BotDifficulty.GRANDMASTER
+        }
 
     /**
      * Build a [ReplaySession] from a recorded [match]. Reconstructs the bot policies deterministically
@@ -42,13 +42,16 @@ object MatchReplay {
         val botSeatCount = config.seatCount - humanCount
 
         // Rebuild the bot policies from the seed — deterministic, so identical to the live match.
-        val assignments = if (botSeatCount > 0) {
-            PersonaAssigner.assign(
-                seatCount  = botSeatCount,
-                difficulty = botDifficultyOf(match.difficultyEnum),
-                seed       = match.seed,
-            )
-        } else emptyList()
+        val assignments =
+            if (botSeatCount > 0) {
+                PersonaAssigner.assign(
+                    seatCount = botSeatCount,
+                    difficulty = botDifficultyOf(match.difficultyEnum),
+                    seed = match.seed,
+                )
+            } else {
+                emptyList()
+            }
 
         val bots = mutableMapOf<PlayerId, Policy>()
         assignments.forEachIndexed { index, (_, policy: PersonaPolicy) ->
@@ -56,21 +59,23 @@ object MatchReplay {
         }
 
         // Display lineup from the RECORD (names/colours frozen at game time).
-        val personas: Map<PlayerId, OpponentPersona> = match.personas.associate { p ->
-            PlayerId(p.seat) to OpponentPersona(
-                playerId      = PlayerId(p.seat),
-                name          = p.name,
-                monogram      = p.monogram,
-                seatColorArgb = p.seatColorArgb,
-            )
-        }
+        val personas: Map<PlayerId, OpponentPersona> =
+            match.personas.associate { p ->
+                PlayerId(p.seat) to
+                    OpponentPersona(
+                        playerId = PlayerId(p.seat),
+                        name = p.name,
+                        monogram = p.monogram,
+                        seatColorArgb = p.seatColorArgb,
+                    )
+            }
 
         return ReplaySession.build(
-            snapshot   = match.toSnapshot(),
+            snapshot = match.toSnapshot(),
             humanSeats = humanSeats,
-            bots       = bots,
+            bots = bots,
             winnerSeat = match.winnerSeat,
-            personas   = personas,
+            personas = personas,
         )
     }
 }

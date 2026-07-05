@@ -46,31 +46,34 @@ import com.kursi.protocol.wire.toEngine
 
 fun WireRole.toEngineRole(): Role = this.toEngine()
 
-fun WireLossReason.toEngineReason(): LossReason = when (this) {
-    WireLossReason.LOST_CHALLENGE -> LossReason.LOST_CHALLENGE
-    WireLossReason.LOST_BLOCK_CHALLENGE -> LossReason.LOST_BLOCK_CHALLENGE
-    WireLossReason.ASSASSINATED -> LossReason.ASSASSINATED
-    WireLossReason.COUPED -> LossReason.COUPED
-    WireLossReason.SABOTAGED -> LossReason.SABOTAGED
-    WireLossReason.EMERGENCY_COUPED -> LossReason.EMERGENCY_COUPED
-}
+fun WireLossReason.toEngineReason(): LossReason =
+    when (this) {
+        WireLossReason.LOST_CHALLENGE -> LossReason.LOST_CHALLENGE
+        WireLossReason.LOST_BLOCK_CHALLENGE -> LossReason.LOST_BLOCK_CHALLENGE
+        WireLossReason.ASSASSINATED -> LossReason.ASSASSINATED
+        WireLossReason.COUPED -> LossReason.COUPED
+        WireLossReason.SABOTAGED -> LossReason.SABOTAGED
+        WireLossReason.EMERGENCY_COUPED -> LossReason.EMERGENCY_COUPED
+    }
 
-fun WireReactionStep.toEngineStep(): ReactionStep = when (this) {
-    WireReactionStep.CHALLENGE_ACTION -> ReactionStep.CHALLENGE_ACTION
-    WireReactionStep.BLOCK -> ReactionStep.BLOCK
-    WireReactionStep.CHALLENGE_BLOCK -> ReactionStep.CHALLENGE_BLOCK
-}
+fun WireReactionStep.toEngineStep(): ReactionStep =
+    when (this) {
+        WireReactionStep.CHALLENGE_ACTION -> ReactionStep.CHALLENGE_ACTION
+        WireReactionStep.BLOCK -> ReactionStep.BLOCK
+        WireReactionStep.CHALLENGE_BLOCK -> ReactionStep.CHALLENGE_BLOCK
+    }
 
 fun WireOwnCard.toEngine(): OwnCard = OwnCard(id = CardId(id), role = role.toEngine(), faceUp = faceUp)
 
-fun WireOpponentView.toEngine(): OpponentView = OpponentView(
-    id = PlayerId(id),
-    seatIndex = seatIndex,
-    coins = coins,
-    faceUpRoles = faceUpRoles.map { it.toEngine() },
-    faceDownCount = faceDownCount,
-    eliminated = eliminated,
-)
+fun WireOpponentView.toEngine(): OpponentView =
+    OpponentView(
+        id = PlayerId(id),
+        seatIndex = seatIndex,
+        coins = coins,
+        faceUpRoles = faceUpRoles.map { it.toEngine() },
+        faceDownCount = faceDownCount,
+        eliminated = eliminated,
+    )
 
 /**
  * Reconstructs a [GameConfig] from its wire subset.
@@ -105,33 +108,37 @@ fun WireGameConfig.toEngine(): GameConfig {
     )
 }
 
-fun WirePhaseView.toEngine(): PhaseView = when (this) {
-    is WirePhaseView.Turn -> PhaseView.Turn(PlayerId(actor))
-    is WirePhaseView.Reactions -> PhaseView.Reactions(
-        actor = PlayerId(actor),
-        action = action.toEngine(),
-        claimedRole = claimedRole?.toEngine(),
-        step = step.toEngineStep(),
-        toRespond = toRespond?.let { PlayerId(it) },
-        blocker = blocker?.let { PlayerId(it) },
-        blockRole = blockRole?.toEngine(),
-    )
-    is WirePhaseView.InfluenceLoss -> PhaseView.InfluenceLoss(PlayerId(loser), reason.toEngineReason())
-    is WirePhaseView.Exchange -> PhaseView.Exchange(
-        actor = PlayerId(actor),
-        // `drawn` is non-empty ONLY in the acting viewer's projection (server redaction); mapping it
-        // straight through preserves that — every other seat receives an empty list and stays blind.
-        drawn = drawn.map { it.toEngine() },
-    )
-    // SECRECY-PRESERVING: the wire never carried `examinedCard`, so we cannot (and must not) invent it.
-    // null mirrors a non-examiner's view exactly; the examiner's client knows the peek out-of-band.
-    is WirePhaseView.InvestigatePeek -> PhaseView.InvestigatePeek(
-        examiner = PlayerId(examiner),
-        target = PlayerId(target),
-        examinedCard = null,
-    )
-    is WirePhaseView.Over -> PhaseView.Over(PlayerId(winner))
-}
+fun WirePhaseView.toEngine(): PhaseView =
+    when (this) {
+        is WirePhaseView.Turn -> PhaseView.Turn(PlayerId(actor))
+        is WirePhaseView.Reactions ->
+            PhaseView.Reactions(
+                actor = PlayerId(actor),
+                action = action.toEngine(),
+                claimedRole = claimedRole?.toEngine(),
+                step = step.toEngineStep(),
+                toRespond = toRespond?.let { PlayerId(it) },
+                blocker = blocker?.let { PlayerId(it) },
+                blockRole = blockRole?.toEngine(),
+            )
+        is WirePhaseView.InfluenceLoss -> PhaseView.InfluenceLoss(PlayerId(loser), reason.toEngineReason())
+        is WirePhaseView.Exchange ->
+            PhaseView.Exchange(
+                actor = PlayerId(actor),
+                // `drawn` is non-empty ONLY in the acting viewer's projection (server redaction); mapping it
+                // straight through preserves that — every other seat receives an empty list and stays blind.
+                drawn = drawn.map { it.toEngine() },
+            )
+        // SECRECY-PRESERVING: the wire never carried `examinedCard`, so we cannot (and must not) invent it.
+        // null mirrors a non-examiner's view exactly; the examiner's client knows the peek out-of-band.
+        is WirePhaseView.InvestigatePeek ->
+            PhaseView.InvestigatePeek(
+                examiner = PlayerId(examiner),
+                target = PlayerId(target),
+                examinedCard = null,
+            )
+        is WirePhaseView.Over -> PhaseView.Over(PlayerId(winner))
+    }
 
 /**
  * Re-hydrates the engine [PlayerView] the offline UI renders from the redacted [WirePlayerView] the
@@ -139,19 +146,20 @@ fun WirePhaseView.toEngine(): PhaseView = when (this) {
  * opponent's public face, the phase, and the table config. No opponent hidden role is reconstructable —
  * the wire never carried one, so neither does this.
  */
-fun WirePlayerView.toEngineView(): PlayerView = PlayerView(
-    viewer = PlayerId(viewer),
-    config = config.toEngine(),
-    treasury = treasury,
-    deckCount = deckCount,
-    turnNumber = turnNumber,
-    myCoins = myCoins,
-    myInfluence = myInfluence.map { it.toEngine() },
-    myFaceUp = myFaceUp.map { it.toEngine() },
-    myCards = myCards.map { it.toEngine() },
-    players = players.map { it.toEngine() },
-    phase = phase.toEngine(),
-)
+fun WirePlayerView.toEngineView(): PlayerView =
+    PlayerView(
+        viewer = PlayerId(viewer),
+        config = config.toEngine(),
+        treasury = treasury,
+        deckCount = deckCount,
+        turnNumber = turnNumber,
+        myCoins = myCoins,
+        myInfluence = myInfluence.map { it.toEngine() },
+        myFaceUp = myFaceUp.map { it.toEngine() },
+        myCards = myCards.map { it.toEngine() },
+        players = players.map { it.toEngine() },
+        phase = phase.toEngine(),
+    )
 
 /**
  * Re-hydrates an engine [GameEvent] from its already-per-viewer-redacted wire form.
@@ -163,40 +171,41 @@ fun WirePlayerView.toEngineView(): PlayerView = PlayerView(
  * renderer keys off the PUBLIC fields (who/what/role) — it never inspects these secret CardIds for a
  * non-owner — so the sentinel is display-inert and never leaks a real identity.
  */
-fun WireGameEvent.toEngineEvent(): GameEvent = when (this) {
-    is WireGameEvent.ActionDeclared ->
-        GameEvent.ActionDeclared(PlayerId(actor), action.toEngine(), claimedRole?.toEngine())
-    is WireGameEvent.Challenged ->
-        GameEvent.Challenged(PlayerId(challenger), PlayerId(target), claimedRole.toEngine())
-    is WireGameEvent.ChallengeRevealed ->
-        GameEvent.ChallengeRevealed(PlayerId(player), CardId(card), role.toEngine(), hadRole)
-    is WireGameEvent.CardReplaced ->
-        GameEvent.CardReplaced(PlayerId(player), CardId(returned), CardId(drawn ?: HIDDEN_CARD))
-    is WireGameEvent.Blocked ->
-        GameEvent.Blocked(PlayerId(blocker), role.toEngine(), action.toEngine())
-    is WireGameEvent.ActionResolved -> GameEvent.ActionResolved(PlayerId(actor), action.toEngine())
-    is WireGameEvent.ActionNegated -> GameEvent.ActionNegated(PlayerId(actor), action.toEngine())
-    is WireGameEvent.CoinsChanged -> GameEvent.CoinsChanged(PlayerId(player), delta)
-    is WireGameEvent.CoinsTransferred -> GameEvent.CoinsTransferred(PlayerId(from), PlayerId(to), amount)
-    is WireGameEvent.InfluenceLost ->
-        GameEvent.InfluenceLost(PlayerId(player), CardId(card), role.toEngine(), reason.toEngineReason())
-    is WireGameEvent.PlayerEliminated -> GameEvent.PlayerEliminated(PlayerId(player))
-    is WireGameEvent.Exchanged ->
-        GameEvent.Exchanged(
-            actor = PlayerId(actor),
-            kept = (kept ?: emptyList()).map { CardId(it) },
-            returned = returned.map { CardId(it) },
-        )
-    is WireGameEvent.Investigated -> GameEvent.Investigated(PlayerId(examiner), PlayerId(target))
-    is WireGameEvent.InvestigateRedraw -> GameEvent.InvestigateRedraw(PlayerId(target))
-    is WireGameEvent.TurnAdvanced -> GameEvent.TurnAdvanced(toSeat, turnNumber)
-    is WireGameEvent.GameEnded -> GameEvent.GameEnded(PlayerId(winner))
-    is WireGameEvent.InfluenceRestored -> GameEvent.InfluenceRestored(PlayerId(player), CardId(card), role.toEngine())
-    is WireGameEvent.CoinsGifted -> GameEvent.CoinsGifted(PlayerId(from), PlayerId(to), amount)
-    is WireGameEvent.EmergencyDeclared -> GameEvent.EmergencyDeclared(PlayerId(actor))
-    is WireGameEvent.KhazanaWon -> GameEvent.KhazanaWon(PlayerId(winner), lifetimeCoins)
-    is WireGameEvent.DarjaReached -> GameEvent.DarjaReached(PlayerId(player), level, lifetimeCoins)
-}
+fun WireGameEvent.toEngineEvent(): GameEvent =
+    when (this) {
+        is WireGameEvent.ActionDeclared ->
+            GameEvent.ActionDeclared(PlayerId(actor), action.toEngine(), claimedRole?.toEngine())
+        is WireGameEvent.Challenged ->
+            GameEvent.Challenged(PlayerId(challenger), PlayerId(target), claimedRole.toEngine())
+        is WireGameEvent.ChallengeRevealed ->
+            GameEvent.ChallengeRevealed(PlayerId(player), CardId(card), role.toEngine(), hadRole)
+        is WireGameEvent.CardReplaced ->
+            GameEvent.CardReplaced(PlayerId(player), CardId(returned), CardId(drawn ?: HIDDEN_CARD))
+        is WireGameEvent.Blocked ->
+            GameEvent.Blocked(PlayerId(blocker), role.toEngine(), action.toEngine())
+        is WireGameEvent.ActionResolved -> GameEvent.ActionResolved(PlayerId(actor), action.toEngine())
+        is WireGameEvent.ActionNegated -> GameEvent.ActionNegated(PlayerId(actor), action.toEngine())
+        is WireGameEvent.CoinsChanged -> GameEvent.CoinsChanged(PlayerId(player), delta)
+        is WireGameEvent.CoinsTransferred -> GameEvent.CoinsTransferred(PlayerId(from), PlayerId(to), amount)
+        is WireGameEvent.InfluenceLost ->
+            GameEvent.InfluenceLost(PlayerId(player), CardId(card), role.toEngine(), reason.toEngineReason())
+        is WireGameEvent.PlayerEliminated -> GameEvent.PlayerEliminated(PlayerId(player))
+        is WireGameEvent.Exchanged ->
+            GameEvent.Exchanged(
+                actor = PlayerId(actor),
+                kept = (kept ?: emptyList()).map { CardId(it) },
+                returned = returned.map { CardId(it) },
+            )
+        is WireGameEvent.Investigated -> GameEvent.Investigated(PlayerId(examiner), PlayerId(target))
+        is WireGameEvent.InvestigateRedraw -> GameEvent.InvestigateRedraw(PlayerId(target))
+        is WireGameEvent.TurnAdvanced -> GameEvent.TurnAdvanced(toSeat, turnNumber)
+        is WireGameEvent.GameEnded -> GameEvent.GameEnded(PlayerId(winner))
+        is WireGameEvent.InfluenceRestored -> GameEvent.InfluenceRestored(PlayerId(player), CardId(card), role.toEngine())
+        is WireGameEvent.CoinsGifted -> GameEvent.CoinsGifted(PlayerId(from), PlayerId(to), amount)
+        is WireGameEvent.EmergencyDeclared -> GameEvent.EmergencyDeclared(PlayerId(actor))
+        is WireGameEvent.KhazanaWon -> GameEvent.KhazanaWon(PlayerId(winner), lifetimeCoins)
+        is WireGameEvent.DarjaReached -> GameEvent.DarjaReached(PlayerId(player), level, lifetimeCoins)
+    }
 
 /**
  * Sentinel [CardId] raw used when a secret CardId was redacted out for this seat (server sent null).

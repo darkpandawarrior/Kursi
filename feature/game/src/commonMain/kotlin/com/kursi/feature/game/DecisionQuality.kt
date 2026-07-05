@@ -4,7 +4,7 @@ import com.kursi.ai.advisor.MoveAdvice
 import com.kursi.engine.Intent
 import kotlin.math.roundToLong
 
-/**
+/*
  * M6b ANALYTICS — decision-quality tracking.
  *
  * The decision-coach already runs [com.kursi.ai.advisor.MoveAdvisor.advise] on every human decision
@@ -42,7 +42,10 @@ data class DecisionQuality(
          * is not gradeable: no advice computed yet, fewer than 2 options, or the chosen intent is not
          * in the advice (a stale/illegal tap — never happens on the accepted path, but defensive).
          */
-        fun grade(chosen: Intent, advice: List<MoveAdvice>): DecisionQuality? {
+        fun grade(
+            chosen: Intent,
+            advice: List<MoveAdvice>,
+        ): DecisionQuality? {
             if (advice.size < 2) return null
             val chosenAdvice = advice.firstOrNull { it.intent == chosen } ?: return null
             val best = advice.firstOrNull { it.recommended } ?: advice.maxByOrNull { it.winProb } ?: return null
@@ -85,23 +88,23 @@ data class MatchDecisionTally(
     val bluffsOk: Int = 0,
 ) {
     /** Fold one graded decision into the running tally. */
-    operator fun plus(q: DecisionQuality): MatchDecisionTally = copy(
-        decisions = decisions + 1,
-        matchedBest = matchedBest + if (q.matchedBest) 1 else 0,
-        evLostMilli = evLostMilli + q.evLostMilli,
-        challenges = challenges + if (q.wasChallenge) 1 else 0,
-        challengesGood = challengesGood + if (q.wasChallenge && q.challengeGood) 1 else 0,
-        bluffsTried = bluffsTried + if (q.wasBluff) 1 else 0,
-        // bluffsOk is reconciled at game end from the public reveal log — not known at decision time.
-    )
+    operator fun plus(q: DecisionQuality): MatchDecisionTally =
+        copy(
+            decisions = decisions + 1,
+            matchedBest = matchedBest + if (q.matchedBest) 1 else 0,
+            evLostMilli = evLostMilli + q.evLostMilli,
+            challenges = challenges + if (q.wasChallenge) 1 else 0,
+            challengesGood = challengesGood + if (q.wasChallenge && q.challengeGood) 1 else 0,
+            bluffsTried = bluffsTried + if (q.wasBluff) 1 else 0,
+            // bluffsOk is reconciled at game end from the public reveal log — not known at decision time.
+        )
 
     /**
      * Reconcile bluff *outcomes* at game end. [survivedBluffs] is the count of the human's bluffs that
      * were NOT caught (i.e. bluffsTried − bluffsCaught from the M3 reveal scrape), clamped into
      * [0, bluffsTried] so a noisy scrape can never make the success rate exceed 100%.
      */
-    fun withBluffOutcome(survivedBluffs: Int): MatchDecisionTally =
-        copy(bluffsOk = survivedBluffs.coerceIn(0, bluffsTried))
+    fun withBluffOutcome(survivedBluffs: Int): MatchDecisionTally = copy(bluffsOk = survivedBluffs.coerceIn(0, bluffsTried))
 
     /** True when nothing worth persisting accrued (so an empty game doesn't churn the store). */
     val isEmpty: Boolean get() = decisions == 0 && challenges == 0 && bluffsTried == 0

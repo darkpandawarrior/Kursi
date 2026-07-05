@@ -24,5 +24,10 @@ data class Decision(
 
 interface BotBrain {
     val persona: Persona
-    suspend fun decide(view: PlayerView, legal: List<Intent>, memory: BotMemory): Decision
+
+    suspend fun decide(
+        view: PlayerView,
+        legal: List<Intent>,
+        memory: BotMemory,
+    ): Decision
 }

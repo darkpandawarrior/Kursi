@@ -121,11 +121,12 @@ class ReplaySession private constructor(
          * deterministic replay. A time cap (as the live coach uses for responsiveness) would let the ISMCTS
          * complete a different iteration count under CPU pressure and yield non-reproducible reads.
          */
-        val REVIEW_ADVICE_BUDGET = com.kursi.ai.SearchBudget(
-            maxMillis = Long.MAX_VALUE,
-            maxIterations = 900,
-            rolloutHorizon = 10,
-        )
+        val REVIEW_ADVICE_BUDGET =
+            com.kursi.ai.SearchBudget(
+                maxMillis = Long.MAX_VALUE,
+                maxIterations = 900,
+                rolloutHorizon = 10,
+            )
 
         /**
          * Reconstruct a [ReplaySession] from a [snapshot] (seed + human log) plus the match identity.
@@ -155,13 +156,14 @@ class ReplaySession private constructor(
             // Replay the human log one intent at a time. Before EACH human intent we snapshot the
             // decision frame the human faced; the bots between decisions auto-advance inside the
             // session exactly as they did live (deterministic from the redacted view).
-            val session = GameSession(
-                config = config,
-                seed = snapshot.seed,
-                humanSeats = humanSeats,
-                bots = bots,
-                opponentPersonas = personas,
-            )
+            val session =
+                GameSession(
+                    config = config,
+                    seed = snapshot.seed,
+                    humanSeats = humanSeats,
+                    bots = bots,
+                    opponentPersonas = personas,
+                )
             // FAIR advisor read for the annotations. It redacts internally (never peeks at hidden
             // cards), so the annotation is exactly the read the human could have had live — teach by
             // review. Seeded off the match seed so a given recorded game always annotates identically.
@@ -178,16 +180,19 @@ class ReplaySession private constructor(
                     // Only annotate the canonical "you" seat's genuine choices (≥2 legal options). A
                     // forced single-legal move is not a decision worth grading.
                     val seat = ui.activeSeat?.let { PlayerId(it) } ?: youSeat
-                    val annotation = if (seat == youSeat) {
-                        ReplayAnnotation.compute(
-                            advisor = advisor,
-                            state = fullState,
-                            seat = seat,
-                            legal = legalIntents(fullState, seat),
-                            chosen = intent,
-                            personas = personas,
-                        )
-                    } else null
+                    val annotation =
+                        if (seat == youSeat) {
+                            ReplayAnnotation.compute(
+                                advisor = advisor,
+                                state = fullState,
+                                seat = seat,
+                                legal = legalIntents(fullState, seat),
+                                chosen = intent,
+                                personas = personas,
+                            )
+                        } else {
+                            null
+                        }
                     frames.add(ReplayFrame(ui, isHumanDecision = true, annotation = annotation))
                     states.add(fullState)
                 }

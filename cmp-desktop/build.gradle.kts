@@ -29,9 +29,18 @@ tasks.register<JavaExec>("renderScreens") {
     description = "Render GameScreen fixture states to PNG files in build/shots/"
     mainClass.set("com.kursi.desktop.ScreenshotsKt")
     classpath = configurations["jvmRuntimeClasspath"] +
-        kotlin.targets.named("jvm").get().compilations.named("main").get()
+        kotlin.targets
+            .named("jvm")
+            .get()
+            .compilations
+            .named("main")
+            .get()
             .output.allOutputs
-    val shotsDir = layout.buildDirectory.dir("shots").get().asFile
+    val shotsDir =
+        layout.buildDirectory
+            .dir("shots")
+            .get()
+            .asFile
     systemProperty("kursi.shots.dir", shotsDir.absolutePath)
     doFirst { shotsDir.mkdirs() }
     dependsOn("jvmMainClasses")
@@ -61,9 +70,10 @@ compose.desktop {
                 packageVersion = "1.0.0"
                 dmgPackageVersion = "1.0.0"
                 infoPlist {
-                    extraKeysRawXml = """
+                    extraKeysRawXml =
+                        """
                         <key>NSHighResolutionCapable</key><true/>
-                    """.trimIndent()
+                        """.trimIndent()
                 }
             }
             windows {

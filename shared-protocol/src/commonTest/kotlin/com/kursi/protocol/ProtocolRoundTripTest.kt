@@ -17,12 +17,10 @@ import com.kursi.protocol.wire.ClientMessage
 import com.kursi.protocol.wire.KursiJson
 import com.kursi.protocol.wire.ServerMessage
 import com.kursi.protocol.wire.WireAction
-import com.kursi.protocol.wire.WireCardId
 import com.kursi.protocol.wire.WireGameConfig
 import com.kursi.protocol.wire.WireGameEvent
 import com.kursi.protocol.wire.WireIntent
 import com.kursi.protocol.wire.WireLossReason
-import com.kursi.protocol.wire.WireOpponentView
 import com.kursi.protocol.wire.WireOwnCard
 import com.kursi.protocol.wire.WirePhaseView
 import com.kursi.protocol.wire.WirePlayerView
@@ -34,7 +32,6 @@ import com.kursi.protocol.wire.toWireFor
 import kotlinx.serialization.encodeToString
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -50,7 +47,6 @@ import kotlin.test.assertTrue
  * A subset of tests also cross-map back to engine types and assert round-trip fidelity there.
  */
 class ProtocolRoundTripTest {
-
     // ─────────────────────────── WireRole ───────────────────────────
 
     @Test
@@ -75,15 +71,16 @@ class ProtocolRoundTripTest {
 
     @Test
     fun wireAction_roundTrip_allSubtypes() {
-        val actions = listOf(
-            WireAction.Income,
-            WireAction.ForeignAid,
-            WireAction.Coup(target = 1),
-            WireAction.Tax,
-            WireAction.Assassinate(target = 2),
-            WireAction.Steal(target = 3),
-            WireAction.Exchange,
-        )
+        val actions =
+            listOf(
+                WireAction.Income,
+                WireAction.ForeignAid,
+                WireAction.Coup(target = 1),
+                WireAction.Tax,
+                WireAction.Assassinate(target = 2),
+                WireAction.Steal(target = 3),
+                WireAction.Exchange,
+            )
         for (action in actions) {
             val json = KursiJson.encodeToString<WireAction>(action)
             val decoded = KursiJson.decodeFromString<WireAction>(json)
@@ -93,15 +90,16 @@ class ProtocolRoundTripTest {
 
     @Test
     fun wireAction_mapper_allEngineActions() {
-        val actions = listOf(
-            Action.Income,
-            Action.ForeignAid,
-            Action.Coup(PlayerId(1)),
-            Action.Tax,
-            Action.Assassinate(PlayerId(2)),
-            Action.Steal(PlayerId(3)),
-            Action.Exchange,
-        )
+        val actions =
+            listOf(
+                Action.Income,
+                Action.ForeignAid,
+                Action.Coup(PlayerId(1)),
+                Action.Tax,
+                Action.Assassinate(PlayerId(2)),
+                Action.Steal(PlayerId(3)),
+                Action.Exchange,
+            )
         for (action in actions) {
             val wire = action.toWire()
             val back = wire.toEngine()
@@ -113,15 +111,16 @@ class ProtocolRoundTripTest {
 
     @Test
     fun wireIntent_roundTrip_allSubtypes() {
-        val intents: List<WireIntent> = listOf(
-            WireIntent.DeclareAction(actor = 0, action = WireAction.Tax),
-            WireIntent.DeclareAction(actor = 0, action = WireAction.Coup(target = 1)),
-            WireIntent.Challenge(actor = 1),
-            WireIntent.Block(actor = 2, role = WireRole.VAKIL),
-            WireIntent.Pass(actor = 3),
-            WireIntent.ChooseInfluenceToLose(actor = 1, card = 4),
-            WireIntent.ChooseExchange(actor = 0, keep = listOf(2, 7)),
-        )
+        val intents: List<WireIntent> =
+            listOf(
+                WireIntent.DeclareAction(actor = 0, action = WireAction.Tax),
+                WireIntent.DeclareAction(actor = 0, action = WireAction.Coup(target = 1)),
+                WireIntent.Challenge(actor = 1),
+                WireIntent.Block(actor = 2, role = WireRole.VAKIL),
+                WireIntent.Pass(actor = 3),
+                WireIntent.ChooseInfluenceToLose(actor = 1, card = 4),
+                WireIntent.ChooseExchange(actor = 0, keep = listOf(2, 7)),
+            )
         for (intent in intents) {
             val json = KursiJson.encodeToString<WireIntent>(intent)
             val decoded = KursiJson.decodeFromString<WireIntent>(json)
@@ -131,15 +130,16 @@ class ProtocolRoundTripTest {
 
     @Test
     fun wireIntent_mapper_allEngineIntents() {
-        val intents: List<Intent> = listOf(
-            Intent.DeclareAction(PlayerId(0), Action.Tax),
-            Intent.DeclareAction(PlayerId(0), Action.Coup(PlayerId(1))),
-            Intent.Challenge(PlayerId(1)),
-            Intent.Block(PlayerId(2), Role.VAKIL),
-            Intent.Pass(PlayerId(3)),
-            Intent.ChooseInfluenceToLose(PlayerId(1), CardId(4)),
-            Intent.ChooseExchange(PlayerId(0), listOf(CardId(2), CardId(7))),
-        )
+        val intents: List<Intent> =
+            listOf(
+                Intent.DeclareAction(PlayerId(0), Action.Tax),
+                Intent.DeclareAction(PlayerId(0), Action.Coup(PlayerId(1))),
+                Intent.Challenge(PlayerId(1)),
+                Intent.Block(PlayerId(2), Role.VAKIL),
+                Intent.Pass(PlayerId(3)),
+                Intent.ChooseInfluenceToLose(PlayerId(1), CardId(4)),
+                Intent.ChooseExchange(PlayerId(0), listOf(CardId(2), CardId(7))),
+            )
         for (intent in intents) {
             val wire = intent.toWire()
             val back = wire.toEngine()
@@ -151,30 +151,31 @@ class ProtocolRoundTripTest {
 
     @Test
     fun wirePhaseView_roundTrip_allSubtypes() {
-        val phases: List<WirePhaseView> = listOf(
-            WirePhaseView.Turn(actor = 0),
-            WirePhaseView.Reactions(
-                actor = 0,
-                action = WireAction.Tax,
-                claimedRole = WireRole.NETA,
-                step = WireReactionStep.CHALLENGE_ACTION,
-                toRespond = 1,
-                blocker = null,
-                blockRole = null,
-            ),
-            WirePhaseView.Reactions(
-                actor = 0,
-                action = WireAction.Steal(target = 1),
-                claimedRole = WireRole.BABU,
-                step = WireReactionStep.CHALLENGE_BLOCK,
-                toRespond = 0,
-                blocker = 1,
-                blockRole = WireRole.JUGAADU,
-            ),
-            WirePhaseView.InfluenceLoss(loser = 1, reason = WireLossReason.COUPED),
-            WirePhaseView.Exchange(actor = 2),
-            WirePhaseView.Over(winner = 0),
-        )
+        val phases: List<WirePhaseView> =
+            listOf(
+                WirePhaseView.Turn(actor = 0),
+                WirePhaseView.Reactions(
+                    actor = 0,
+                    action = WireAction.Tax,
+                    claimedRole = WireRole.NETA,
+                    step = WireReactionStep.CHALLENGE_ACTION,
+                    toRespond = 1,
+                    blocker = null,
+                    blockRole = null,
+                ),
+                WirePhaseView.Reactions(
+                    actor = 0,
+                    action = WireAction.Steal(target = 1),
+                    claimedRole = WireRole.BABU,
+                    step = WireReactionStep.CHALLENGE_BLOCK,
+                    toRespond = 0,
+                    blocker = 1,
+                    blockRole = WireRole.JUGAADU,
+                ),
+                WirePhaseView.InfluenceLoss(loser = 1, reason = WireLossReason.COUPED),
+                WirePhaseView.Exchange(actor = 2),
+                WirePhaseView.Over(winner = 0),
+            )
         for (phase in phases) {
             val json = KursiJson.encodeToString<WirePhaseView>(phase)
             val decoded = KursiJson.decodeFromString<WirePhaseView>(json)
@@ -186,10 +187,11 @@ class ProtocolRoundTripTest {
 
     @Test
     fun wireOwnCard_roundTrip() {
-        val cards = listOf(
-            WireOwnCard(id = 0, role = WireRole.NETA, faceUp = false),
-            WireOwnCard(id = 7, role = WireRole.PATRAKAAR, faceUp = true),
-        )
+        val cards =
+            listOf(
+                WireOwnCard(id = 0, role = WireRole.NETA, faceUp = false),
+                WireOwnCard(id = 7, role = WireRole.PATRAKAAR, faceUp = true),
+            )
         for (c in cards) {
             val json = KursiJson.encodeToString(c)
             assertEquals(c, KursiJson.decodeFromString<WireOwnCard>(json))
@@ -199,10 +201,11 @@ class ProtocolRoundTripTest {
     @Test
     fun wirePhaseView_exchange_carriesDrawnForActorOnly() {
         // With drawn populated (actor's own view).
-        val withDrawn = WirePhaseView.Exchange(
-            actor = 0,
-            drawn = listOf(WireOwnCard(3, WireRole.BABU, false), WireOwnCard(4, WireRole.VAKIL, false)),
-        )
+        val withDrawn =
+            WirePhaseView.Exchange(
+                actor = 0,
+                drawn = listOf(WireOwnCard(3, WireRole.BABU, false), WireOwnCard(4, WireRole.VAKIL, false)),
+            )
         val json = KursiJson.encodeToString<WirePhaseView>(withDrawn)
         assertEquals(withDrawn, KursiJson.decodeFromString<WirePhaseView>(json))
 
@@ -218,26 +221,27 @@ class ProtocolRoundTripTest {
 
     @Test
     fun wireGameEvent_roundTrip_publicEvents() {
-        val events: List<WireGameEvent> = listOf(
-            WireGameEvent.ActionDeclared(0, WireAction.Tax, WireRole.NETA),
-            WireGameEvent.Challenged(1, 0, WireRole.NETA),
-            WireGameEvent.ChallengeRevealed(0, 5, WireRole.NETA, true),
-            WireGameEvent.CardReplaced(0, 5, drawn = 9),
-            WireGameEvent.CardReplaced(0, 5, drawn = null),
-            WireGameEvent.Blocked(1, WireRole.VAKIL, WireAction.Assassinate(0)),
-            WireGameEvent.ActionResolved(0, WireAction.Income),
-            WireGameEvent.ActionNegated(0, WireAction.ForeignAid),
-            WireGameEvent.CoinsChanged(0, 3),
-            WireGameEvent.CoinsTransferred(1, 0, 2),
-            WireGameEvent.InfluenceLost(1, 4, WireRole.BHAI, WireLossReason.COUPED),
-            WireGameEvent.PlayerEliminated(1),
-            WireGameEvent.Exchanged(0, kept = listOf(1, 2), returned = listOf(8, 9)),
-            WireGameEvent.Exchanged(0, kept = null, returned = listOf(8, 9)),
-            WireGameEvent.Investigated(0, 1),
-            WireGameEvent.InvestigateRedraw(1),
-            WireGameEvent.TurnAdvanced(1, 4),
-            WireGameEvent.GameEnded(0),
-        )
+        val events: List<WireGameEvent> =
+            listOf(
+                WireGameEvent.ActionDeclared(0, WireAction.Tax, WireRole.NETA),
+                WireGameEvent.Challenged(1, 0, WireRole.NETA),
+                WireGameEvent.ChallengeRevealed(0, 5, WireRole.NETA, true),
+                WireGameEvent.CardReplaced(0, 5, drawn = 9),
+                WireGameEvent.CardReplaced(0, 5, drawn = null),
+                WireGameEvent.Blocked(1, WireRole.VAKIL, WireAction.Assassinate(0)),
+                WireGameEvent.ActionResolved(0, WireAction.Income),
+                WireGameEvent.ActionNegated(0, WireAction.ForeignAid),
+                WireGameEvent.CoinsChanged(0, 3),
+                WireGameEvent.CoinsTransferred(1, 0, 2),
+                WireGameEvent.InfluenceLost(1, 4, WireRole.BHAI, WireLossReason.COUPED),
+                WireGameEvent.PlayerEliminated(1),
+                WireGameEvent.Exchanged(0, kept = listOf(1, 2), returned = listOf(8, 9)),
+                WireGameEvent.Exchanged(0, kept = null, returned = listOf(8, 9)),
+                WireGameEvent.Investigated(0, 1),
+                WireGameEvent.InvestigateRedraw(1),
+                WireGameEvent.TurnAdvanced(1, 4),
+                WireGameEvent.GameEnded(0),
+            )
         for (e in events) {
             val json = KursiJson.encodeToString<WireGameEvent>(e)
             assertEquals(e, KursiJson.decodeFromString<WireGameEvent>(json), "WireGameEvent $e round-trip failed")
@@ -345,20 +349,21 @@ class ProtocolRoundTripTest {
 
     @Test
     fun clientMessage_roundTrip_allSubtypes() {
-        val messages: List<ClientMessage> = listOf(
-            ClientMessage.JoinRoom(matchId = "match-1", roomCode = "ABCD"),
-            ClientMessage.SubmitIntent(
-                matchId = "match-1",
-                seq = 1L,
-                intent = WireIntent.DeclareAction(actor = 0, action = WireAction.Tax),
-            ),
-            ClientMessage.SubmitIntent(
-                matchId = "match-1",
-                seq = 2L,
-                intent = WireIntent.Challenge(actor = 1),
-            ),
-            ClientMessage.Pass(matchId = "match-1", seq = 3L),
-        )
+        val messages: List<ClientMessage> =
+            listOf(
+                ClientMessage.JoinRoom(matchId = "match-1", roomCode = "ABCD"),
+                ClientMessage.SubmitIntent(
+                    matchId = "match-1",
+                    seq = 1L,
+                    intent = WireIntent.DeclareAction(actor = 0, action = WireAction.Tax),
+                ),
+                ClientMessage.SubmitIntent(
+                    matchId = "match-1",
+                    seq = 2L,
+                    intent = WireIntent.Challenge(actor = 1),
+                ),
+                ClientMessage.Pass(matchId = "match-1", seq = 3L),
+            )
         for (msg in messages) {
             val json = KursiJson.encodeToString<ClientMessage>(msg)
             val decoded = KursiJson.decodeFromString<ClientMessage>(json)
@@ -374,12 +379,13 @@ class ProtocolRoundTripTest {
         val state = initialState(config, seed = 7L)
         val wireView = redact(state, PlayerId(0)).toWire()
 
-        val messages: List<ServerMessage> = listOf(
-            ServerMessage.StateUpdate(matchId = "match-1", seq = 1L, view = wireView),
-            ServerMessage.RoomJoined(matchId = "match-1", seq = 0L, seat = 0, playerCount = 2),
-            ServerMessage.GameOver(matchId = "match-1", seq = 10L, winnerSeat = 1),
-            ServerMessage.Error(matchId = "match-1", seq = 2L, clientSeq = 1L, reason = "out of turn"),
-        )
+        val messages: List<ServerMessage> =
+            listOf(
+                ServerMessage.StateUpdate(matchId = "match-1", seq = 1L, view = wireView),
+                ServerMessage.RoomJoined(matchId = "match-1", seq = 0L, seat = 0, playerCount = 2),
+                ServerMessage.GameOver(matchId = "match-1", seq = 10L, winnerSeat = 1),
+                ServerMessage.Error(matchId = "match-1", seq = 2L, clientSeq = 1L, reason = "out of turn"),
+            )
         for (msg in messages) {
             val json = KursiJson.encodeToString<ServerMessage>(msg)
             val decoded = KursiJson.decodeFromString<ServerMessage>(json)

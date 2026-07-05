@@ -35,13 +35,13 @@ import kotlinx.serialization.encodeToString
  * supplied by [defaultHttpClientEngine].
  */
 class KursiClient : AutoCloseable {
-
-    private val http: HttpClient = HttpClient(defaultHttpClientEngine()) {
-        install(WebSockets)
-        install(ContentNegotiation) {
-            json(KursiJson)
+    private val http: HttpClient =
+        HttpClient(defaultHttpClientEngine()) {
+            install(WebSockets)
+            install(ContentNegotiation) {
+                json(KursiJson)
+            }
         }
-    }
 
     /**
      * Opens a WebSocket connection to the Kursi server and returns a [KursiSession].
@@ -81,45 +81,49 @@ class KursiClient : AutoCloseable {
 
         // Incoming flow: wraps the WS duplex loop. channelFlow gives us a producer CoroutineScope so
         // the send loop and the receive loop can run concurrently as sibling children.
-        val incoming: Flow<ServerMessage> = channelFlow {
-            http.webSocket(host = host, port = port, path = "/play") {
-                // 1. Send JoinRoom as the first frame (protocol requirement).
-                val joinMsg = ClientMessage.JoinRoom(
-                    matchId = matchId,
-                    roomCode = roomCode,
-                    reconnectSeat = reconnectSeat,
-                )
-                send(Frame.Text(KursiJson.encodeToString<ClientMessage>(joinMsg)))
+        val incoming: Flow<ServerMessage> =
+            channelFlow {
+                http.webSocket(host = host, port = port, path = "/play") {
+                    // 1. Send JoinRoom as the first frame (protocol requirement).
+                    val joinMsg =
+                        ClientMessage.JoinRoom(
+                            matchId = matchId,
+                            roomCode = roomCode,
+                            reconnectSeat = reconnectSeat,
+                        )
+                    send(Frame.Text(KursiJson.encodeToString<ClientMessage>(joinMsg)))
 
-                // 2. Send loop — drains the outgoing channel into the socket as fast as the caller
-                //    enqueues, independent of inbound traffic.
-                val sender = launch {
-                    for (msg in outgoing) {
-                        if (!isActive) break
-                        send(Frame.Text(KursiJson.encodeToString<ClientMessage>(msg)))
-                    }
-                }
-
-                // 3. Receive loop — decode inbound frames and forward to the flow collector.
-                try {
-                    for (frame in incoming) {
-                        if (frame !is Frame.Text) continue
-                        val text = frame.readText()
-                        val serverMsg: ServerMessage = try {
-                            KursiJson.decodeFromString(text)
-                        } catch (_: Exception) {
-                            // Malformed frame: skip (server may have sent a future schema version).
-                            continue
+                    // 2. Send loop — drains the outgoing channel into the socket as fast as the caller
+                    //    enqueues, independent of inbound traffic.
+                    val sender =
+                        launch {
+                            for (msg in outgoing) {
+                                if (!isActive) break
+                                send(Frame.Text(KursiJson.encodeToString<ClientMessage>(msg)))
+                            }
                         }
-                        send(serverMsg)
+
+                    // 3. Receive loop — decode inbound frames and forward to the flow collector.
+                    try {
+                        for (frame in incoming) {
+                            if (frame !is Frame.Text) continue
+                            val text = frame.readText()
+                            val serverMsg: ServerMessage =
+                                try {
+                                    KursiJson.decodeFromString(text)
+                                } catch (_: Exception) {
+                                    // Malformed frame: skip (server may have sent a future schema version).
+                                    continue
+                                }
+                            send(serverMsg)
+                        }
+                    } finally {
+                        // Socket closed (normally or abnormally) → stop the send loop and the channel.
+                        sender.cancel()
+                        outgoing.close()
                     }
-                } finally {
-                    // Socket closed (normally or abnormally) → stop the send loop and the channel.
-                    sender.cancel()
-                    outgoing.close()
                 }
             }
-        }
 
         return KursiSession(incoming = incoming, outgoing = outgoing)
     }

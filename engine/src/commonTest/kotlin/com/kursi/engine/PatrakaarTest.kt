@@ -17,14 +17,19 @@ import kotlin.test.assertTrue
  * A 9-player config is the smallest table where PATRAKAAR is in the deck.
  */
 class PatrakaarTest {
-
     private val c9 = GameConfig.forPlayers(9) // 6 roles, copies 5
 
     /** Fills the remaining seats with 2 face-down cards each, never exceeding any role's copy budget. */
-    private fun addFiller(hands: MutableList<List<Role>>, cfg: GameConfig, used: List<Role>) {
-        val remaining = cfg.activeRoles.associateWith { r ->
-            cfg.copiesPerRole - used.count { it == r }
-        }.toMutableMap()
+    private fun addFiller(
+        hands: MutableList<List<Role>>,
+        cfg: GameConfig,
+        used: List<Role>,
+    ) {
+        val remaining =
+            cfg.activeRoles
+                .associateWith { r ->
+                    cfg.copiesPerRole - used.count { it == r }
+                }.toMutableMap()
         repeat(cfg.seatCount - hands.size) {
             val hand = ArrayList<Role>(2)
             repeat(2) {
@@ -39,8 +44,8 @@ class PatrakaarTest {
     /** Seat 0 holds PATRAKAAR + NETA; seat 1 holds VAKIL + BABU; rest are filler. Everyone has 2 coins. */
     private fun stateWithPatrakaarAtSeat0(): GameState {
         val hands = ArrayList<List<Role>>()
-        hands.add(listOf(Role.PATRAKAAR, Role.NETA))      // seat 0 — truthful examiner
-        hands.add(listOf(Role.VAKIL, Role.BABU))          // seat 1 — investigation target
+        hands.add(listOf(Role.PATRAKAAR, Role.NETA)) // seat 0 — truthful examiner
+        hands.add(listOf(Role.VAKIL, Role.BABU)) // seat 1 — investigation target
         addFiller(hands, c9, used = hands.flatten())
         return buildState(c9, hands, coins = List(c9.seatCount) { 2 })
     }
@@ -72,13 +77,20 @@ class PatrakaarTest {
      * Drives the current CHALLENGE_ACTION window: [challenger] challenges; everyone else passes (in turn
      * order). The window only resolves once all eligible players have responded (engine has no early-out).
      */
-    private fun driveChallengeWindow(start: GameState, challenger: PlayerId): GameState {
+    private fun driveChallengeWindow(
+        start: GameState,
+        challenger: PlayerId,
+    ): GameState {
         var s = start
         var guard = 0
         while (s.phase is Phase.AwaitingReactions) {
             val who = whoActsNext(s)!!
-            s = if (who == challenger) applyIntent(s, Intent.Challenge(who)).ok()
-                else applyIntent(s, Intent.Pass(who)).ok()
+            s =
+                if (who == challenger) {
+                    applyIntent(s, Intent.Challenge(who)).ok()
+                } else {
+                    applyIntent(s, Intent.Pass(who)).ok()
+                }
             check(guard++ < 32)
         }
         return s
@@ -107,8 +119,8 @@ class PatrakaarTest {
     fun bluffed_investigate_loses_card_and_action_fails() {
         // Seat 0 does NOT hold PATRAKAAR here → the claim is a bluff.
         val hands = ArrayList<List<Role>>()
-        hands.add(listOf(Role.NETA, Role.BHAI))   // seat 0 — bluffer (no PATRAKAAR)
-        hands.add(listOf(Role.VAKIL, Role.BABU))  // seat 1 — target / challenger
+        hands.add(listOf(Role.NETA, Role.BHAI)) // seat 0 — bluffer (no PATRAKAAR)
+        hands.add(listOf(Role.VAKIL, Role.BABU)) // seat 1 — target / challenger
         addFiller(hands, c9, used = hands.flatten())
         var s = buildState(c9, hands, List(c9.seatCount) { 2 })
 
@@ -146,7 +158,11 @@ class PatrakaarTest {
         var s = stateWithPatrakaarAtSeat0()
         s = applyIntent(s, Intent.DeclareAction(P[0], Action.Investigate(P[1]))).ok()
         var guard = 0
-        while (s.phase is Phase.AwaitingReactions) { val w = whoActsNext(s)!!; s = applyIntent(s, Intent.Pass(w)).ok(); check(guard++ < 32) }
+        while (s.phase is Phase.AwaitingReactions) {
+            val w = whoActsNext(s)!!
+            s = applyIntent(s, Intent.Pass(w)).ok()
+            check(guard++ < 32)
+        }
         val ph = s.phase as Phase.AwaitingInvestigatePeek
         val peekedRole = s.cards.getValue(ph.peeked)
 
@@ -179,7 +195,11 @@ class PatrakaarTest {
         var s = stateWithPatrakaarAtSeat0()
         s = applyIntent(s, Intent.DeclareAction(P[0], Action.Investigate(P[1]))).ok()
         var guard = 0
-        while (s.phase is Phase.AwaitingReactions) { val w = whoActsNext(s)!!; s = applyIntent(s, Intent.Pass(w)).ok(); check(guard++ < 32) }
+        while (s.phase is Phase.AwaitingReactions) {
+            val w = whoActsNext(s)!!
+            s = applyIntent(s, Intent.Pass(w)).ok()
+            check(guard++ < 32)
+        }
 
         // A non-examiner's view carries NO secret card identity at all.
         val before = redact(s, P[2]).phase as PhaseView.InvestigatePeek
@@ -195,7 +215,11 @@ class PatrakaarTest {
         var s = stateWithPatrakaarAtSeat0()
         s = applyIntent(s, Intent.DeclareAction(P[0], Action.Investigate(P[1]))).ok()
         var guard = 0
-        while (s.phase is Phase.AwaitingReactions) { val w = whoActsNext(s)!!; s = applyIntent(s, Intent.Pass(w)).ok(); check(guard++ < 32) }
+        while (s.phase is Phase.AwaitingReactions) {
+            val w = whoActsNext(s)!!
+            s = applyIntent(s, Intent.Pass(w)).ok()
+            check(guard++ < 32)
+        }
         val ph = s.phase as Phase.AwaitingInvestigatePeek
         val peeked = ph.peeked
         val targetCountBefore = s.influenceCount(P[1])
@@ -215,7 +239,11 @@ class PatrakaarTest {
         var s = stateWithPatrakaarAtSeat0()
         s = applyIntent(s, Intent.DeclareAction(P[0], Action.Investigate(P[1]))).ok()
         var guard = 0
-        while (s.phase is Phase.AwaitingReactions) { val w = whoActsNext(s)!!; s = applyIntent(s, Intent.Pass(w)).ok(); check(guard++ < 32) }
+        while (s.phase is Phase.AwaitingReactions) {
+            val w = whoActsNext(s)!!
+            s = applyIntent(s, Intent.Pass(w)).ok()
+            check(guard++ < 32)
+        }
         val ph = s.phase as Phase.AwaitingInvestigatePeek
         val handBefore = s.faceDownInfluence(P[1]).toSet()
 
@@ -232,10 +260,12 @@ class PatrakaarTest {
 
     @Test
     fun full_random_game_with_patrakaar_terminates_and_holds_invariants() {
-        val result = SimHarness.playOut(
-            c9, seed = 99L,
-            policies = (0 until 9).associate { PlayerId(it) to RandomLegalPolicy(it * 13L + 1) },
-        )
+        val result =
+            SimHarness.playOut(
+                c9,
+                seed = 99L,
+                policies = (0 until 9).associate { PlayerId(it) to RandomLegalPolicy(it * 13L + 1) },
+            )
         assertTrue(result.turns >= 1)
         assertTrue(result.winner.raw in 0..8)
     }

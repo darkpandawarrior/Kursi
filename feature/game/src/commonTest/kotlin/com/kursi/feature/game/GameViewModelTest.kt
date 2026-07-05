@@ -20,7 +20,6 @@ import kotlin.test.assertTrue
  * Seed 1 + seat 0 deterministically gives the human the opening turn (see GameSessionTest T3).
  */
 class GameViewModelTest {
-
     @Test
     fun illegalIntent_duringTurn_isIgnored_andDoesNotCrash() {
         val vm = GameViewModel()

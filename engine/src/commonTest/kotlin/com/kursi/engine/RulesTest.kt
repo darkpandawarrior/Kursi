@@ -7,7 +7,6 @@ import kotlin.test.assertTrue
 
 /** §6.1 — the engine spec's edge-case rulings, each pinned by a focused unit test. */
 class RulesTest {
-
     private val c2 = cfg(2)
 
     @Test
@@ -23,11 +22,11 @@ class RulesTest {
     fun fdi_blocked_by_neta_then_unchallenged_fizzles() {
         val s0 = buildState(c2, listOf(listOf(Role.BHAI, Role.BABU), listOf(Role.NETA, Role.JUGAADU)), listOf(2, 2))
         var s = applyIntent(s0, Intent.DeclareAction(P[0], Action.ForeignAid)).ok()
-        assertEquals(P[1], whoActsNext(s))            // block window, target-agnostic: all opponents
+        assertEquals(P[1], whoActsNext(s)) // block window, target-agnostic: all opponents
         s = applyIntent(s, Intent.Block(P[1], Role.NETA)).ok()
-        assertEquals(P[0], whoActsNext(s))            // challenge-the-block window
+        assertEquals(P[0], whoActsNext(s)) // challenge-the-block window
         s = applyIntent(s, Intent.Pass(P[0])).ok()
-        assertEquals(2, s.player(P[0]).coins)         // FDI negated
+        assertEquals(2, s.player(P[0]).coins) // FDI negated
     }
 
     @Test
@@ -54,9 +53,9 @@ class RulesTest {
         assertTrue(s.phase is Phase.AwaitingInfluenceLoss)
         assertEquals(P[1], (s.phase as Phase.AwaitingInfluenceLoss).loser)
         s = applyIntent(s, legalIntents(s, P[1]).first()).ok()
-        assertEquals(5, s.player(P[0]).coins)      // tax still happened
-        assertEquals(2, s.influenceCount(P[0]))    // prover revealed + redrew → unchanged count
-        assertEquals(1, s.influenceCount(P[1]))    // challenger lost one
+        assertEquals(5, s.player(P[0]).coins) // tax still happened
+        assertEquals(2, s.influenceCount(P[0])) // prover revealed + redrew → unchanged count
+        assertEquals(1, s.influenceCount(P[1])) // challenger lost one
     }
 
     @Test
@@ -66,7 +65,7 @@ class RulesTest {
         s = applyIntent(s, Intent.Challenge(P[1])).ok()
         assertEquals(P[0], (s.phase as Phase.AwaitingInfluenceLoss).loser)
         s = applyIntent(s, legalIntents(s, P[0]).first()).ok()
-        assertEquals(2, s.player(P[0]).coins)      // no tax
+        assertEquals(2, s.player(P[0]).coins) // no tax
         assertEquals(1, s.influenceCount(P[0]))
     }
 
@@ -74,11 +73,11 @@ class RulesTest {
     fun supari_cost_is_paid_at_declaration_and_not_refunded_when_challenged_away() {
         val s0 = buildState(c2, listOf(listOf(Role.BABU, Role.VAKIL), listOf(Role.NETA, Role.JUGAADU)), listOf(3, 2))
         var s = applyIntent(s0, Intent.DeclareAction(P[0], Action.Assassinate(P[1]))).ok() // bluff — no Bhai
-        assertEquals(0, s.player(P[0]).coins)      // E4: paid 3 at declaration
+        assertEquals(0, s.player(P[0]).coins) // E4: paid 3 at declaration
         s = applyIntent(s, Intent.Challenge(P[1])).ok()
         s = applyIntent(s, legalIntents(s, P[0]).first()).ok()
-        assertEquals(0, s.player(P[0]).coins)      // E4: NOT refunded
-        assertEquals(2, s.influenceCount(P[1]))    // target untouched
+        assertEquals(0, s.player(P[0]).coins) // E4: NOT refunded
+        assertEquals(2, s.influenceCount(P[1])) // target untouched
         assertEquals(1, s.influenceCount(P[0]))
     }
 
@@ -101,7 +100,7 @@ class RulesTest {
     fun khela_eliminates_last_influence_and_wins() {
         val s0 = buildState(c2, listOf(listOf(Role.NETA, Role.BHAI), listOf(Role.VAKIL)), listOf(7, 2))
         var s = applyIntent(s0, Intent.DeclareAction(P[0], Action.Coup(P[1]))).ok()
-        assertEquals(0, s.player(P[0]).coins)      // paid 7
+        assertEquals(0, s.player(P[0]).coins) // paid 7
         assertTrue(s.phase is Phase.AwaitingInfluenceLoss)
         s = applyIntent(s, legalIntents(s, P[1]).first()).ok()
         assertTrue(s.phase is Phase.GameOver)
@@ -113,12 +112,12 @@ class RulesTest {
         // Actor holds Bhai (assassinate is truthful); target bluffs a Vakil block.
         val s0 = buildState(c2, listOf(listOf(Role.BHAI, Role.NETA), listOf(Role.NETA, Role.JUGAADU)), listOf(3, 2))
         var s = applyIntent(s0, Intent.DeclareAction(P[0], Action.Assassinate(P[1]))).ok()
-        s = applyIntent(s, Intent.Pass(P[1])).ok()              // doesn't challenge the assassin
-        s = applyIntent(s, Intent.Block(P[1], Role.VAKIL)).ok()  // bluff block
-        s = applyIntent(s, Intent.Challenge(P[0])).ok()          // actor challenges the bluff
-        s = applyIntent(s, legalIntents(s, P[1]).first()).ok()   // 1st loss (failed block-challenge)
-        assertTrue(s.phase is Phase.AwaitingInfluenceLoss)        // assassination now lands → 2nd loss pending
-        s = applyIntent(s, legalIntents(s, P[1]).first()).ok()   // 2nd loss → eliminated
+        s = applyIntent(s, Intent.Pass(P[1])).ok() // doesn't challenge the assassin
+        s = applyIntent(s, Intent.Block(P[1], Role.VAKIL)).ok() // bluff block
+        s = applyIntent(s, Intent.Challenge(P[0])).ok() // actor challenges the bluff
+        s = applyIntent(s, legalIntents(s, P[1]).first()).ok() // 1st loss (failed block-challenge)
+        assertTrue(s.phase is Phase.AwaitingInfluenceLoss) // assassination now lands → 2nd loss pending
+        s = applyIntent(s, legalIntents(s, P[1]).first()).ok() // 2nd loss → eliminated
         assertTrue(s.phase is Phase.GameOver)
         assertEquals(P[0], (s.phase as Phase.GameOver).winner)
     }
@@ -129,11 +128,11 @@ class RulesTest {
         // block window re-opens (canonical Coup). The target declines to block → the hit lands → second loss.
         val s0 = buildState(c2, listOf(listOf(Role.BHAI, Role.NETA), listOf(Role.NETA, Role.JUGAADU)), listOf(3, 2))
         var s = applyIntent(s0, Intent.DeclareAction(P[0], Action.Assassinate(P[1]))).ok()
-        s = applyIntent(s, Intent.Challenge(P[1])).ok()          // wrongly challenges the real Bhai
-        s = applyIntent(s, legalIntents(s, P[1]).first()).ok()   // 1st loss (failed challenge)
-        assertTrue(s.phase is Phase.AwaitingReactions)            // action survived → block window re-opens for the target
-        s = applyIntent(s, Intent.Pass(P[1])).ok()               // declines to block → assassination proceeds
-        assertTrue(s.phase is Phase.AwaitingInfluenceLoss)        // → second loss
+        s = applyIntent(s, Intent.Challenge(P[1])).ok() // wrongly challenges the real Bhai
+        s = applyIntent(s, legalIntents(s, P[1]).first()).ok() // 1st loss (failed challenge)
+        assertTrue(s.phase is Phase.AwaitingReactions) // action survived → block window re-opens for the target
+        s = applyIntent(s, Intent.Pass(P[1])).ok() // declines to block → assassination proceeds
+        assertTrue(s.phase is Phase.AwaitingInfluenceLoss) // → second loss
         s = applyIntent(s, legalIntents(s, P[1]).first()).ok()
         assertTrue(s.phase is Phase.GameOver)
         assertEquals(P[0], (s.phase as Phase.GameOver).winner)
@@ -153,16 +152,23 @@ class RulesTest {
 
     @Test
     fun setting_exchange_keeps_influence_count() {
-        val s0 = buildState(cfg(3), listOf(
-            listOf(Role.JUGAADU, Role.NETA), listOf(Role.BHAI, Role.BABU), listOf(Role.VAKIL, Role.NETA),
-        ), listOf(2, 2, 2))
+        val s0 =
+            buildState(
+                cfg(3),
+                listOf(
+                    listOf(Role.JUGAADU, Role.NETA),
+                    listOf(Role.BHAI, Role.BABU),
+                    listOf(Role.VAKIL, Role.NETA),
+                ),
+                listOf(2, 2, 2),
+            )
         var s = applyIntent(s0, Intent.DeclareAction(P[0], Action.Exchange)).ok()
         s = applyIntent(s, Intent.Pass(P[1])).ok()
         s = applyIntent(s, Intent.Pass(P[2])).ok()
         assertTrue(s.phase is Phase.AwaitingExchange)
         val keep = legalIntents(s, P[0]).first()
         s = applyIntent(s, keep).ok()
-        assertEquals(2, s.influenceCount(P[0]))    // exchange never changes how much influence you hold
+        assertEquals(2, s.influenceCount(P[0])) // exchange never changes how much influence you hold
         checkInvariants(s)
     }
 }

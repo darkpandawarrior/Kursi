@@ -14,7 +14,6 @@ import kotlin.test.assertTrue
  * (c) An unviable draft throws from the [GameConfig] init block.
  */
 class DraftAnarchyTest {
-
     // ── (a) drafted deck ─────────────────────────────────────────────────────
 
     @Test
@@ -76,11 +75,14 @@ class DraftAnarchyTest {
 
     @Test
     fun effectiveCoupCost_withoutAnarchy_equalsConstantCoupCost() {
-        val cfg = GameConfig.forPlayers(4)  // anarchy = false
+        val cfg = GameConfig.forPlayers(4) // anarchy = false
         assertFalse(cfg.anarchy)
         for (turn in 1..60) {
-            assertEquals(cfg.coupCost, cfg.effectiveCoupCost(turn),
-                "without anarchy coup cost must be constant at turn $turn")
+            assertEquals(
+                cfg.coupCost,
+                cfg.effectiveCoupCost(turn),
+                "without anarchy coup cost must be constant at turn $turn",
+            )
         }
     }
 
@@ -98,29 +100,36 @@ class DraftAnarchyTest {
         val cfg = GameConfig.forPlayers(4).copy(anarchy = true)
         for (turn in 1..200) {
             val cost = cfg.effectiveCoupCost(turn)
-            assertTrue(cost >= cfg.coupCostFloor,
-                "anarchy coup cost must never go below coupCostFloor=${cfg.coupCostFloor} at turn $turn")
+            assertTrue(
+                cost >= cfg.coupCostFloor,
+                "anarchy coup cost must never go below coupCostFloor=${cfg.coupCostFloor} at turn $turn",
+            )
         }
     }
 
     @Test
     fun effectiveCoupCost_withAnarchy_strictlyDecreasesAfterGrace() {
         val cfg = GameConfig.forPlayers(4).copy(anarchy = true)
-        val grace = cfg.seatCount * 2  // = 8 for 4-seat
+        val grace = cfg.seatCount * 2 // = 8 for 4-seat
         // Collect costs at turn boundaries: one per "full round" past grace
         val roundsToCheck = 8
-        val costsAtRoundStarts = (0 until roundsToCheck).map { r ->
-            // First turn of the (r+1)-th round past the grace window
-            cfg.effectiveCoupCost(grace + r * cfg.seatCount + 1)
-        }
+        val costsAtRoundStarts =
+            (0 until roundsToCheck).map { r ->
+                // First turn of the (r+1)-th round past the grace window
+                cfg.effectiveCoupCost(grace + r * cfg.seatCount + 1)
+            }
         // After the floor is hit the cost stabilises — but before then it should be non-increasing.
         for (i in 1 until costsAtRoundStarts.size) {
-            assertTrue(costsAtRoundStarts[i] <= costsAtRoundStarts[i - 1],
-                "anarchy coup cost must be non-increasing across rounds past grace (round $i vs ${i - 1})")
+            assertTrue(
+                costsAtRoundStarts[i] <= costsAtRoundStarts[i - 1],
+                "anarchy coup cost must be non-increasing across rounds past grace (round $i vs ${i - 1})",
+            )
         }
         // Somewhere in the first several rounds it must actually drop (not be flat from the start).
-        assertTrue(costsAtRoundStarts.min() < cfg.coupCost,
-            "anarchy coup cost must fall below the base coup cost by the time the grace window is past")
+        assertTrue(
+            costsAtRoundStarts.min() < cfg.coupCost,
+            "anarchy coup cost must fall below the base coup cost by the time the grace window is past",
+        )
     }
 
     @Test
@@ -128,8 +137,11 @@ class DraftAnarchyTest {
         val cfg = GameConfig.forPlayers(4).copy(anarchy = true)
         // At a very large turn number the cost should be pinned at the floor.
         val veryLate = 10_000
-        assertEquals(cfg.coupCostFloor, cfg.effectiveCoupCost(veryLate),
-            "cost must equal coupCostFloor well past the grace window")
+        assertEquals(
+            cfg.coupCostFloor,
+            cfg.effectiveCoupCost(veryLate),
+            "cost must equal coupCostFloor well past the grace window",
+        )
     }
 
     // ── (c) unviable drafts throw ─────────────────────────────────────────────

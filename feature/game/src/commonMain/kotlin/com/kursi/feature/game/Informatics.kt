@@ -13,10 +13,7 @@ package com.kursi.feature.game
 // No engine/ai mutations — BluffOdds is a pure read-only helper.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -44,7 +41,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.kursi.ai.BluffOdds
 import com.kursi.ai.OpponentInsight
-import com.kursi.ai.RoleClaimStat
 import com.kursi.designsystem.*
 import com.kursi.engine.*
 
@@ -57,8 +53,14 @@ import com.kursi.engine.*
 object PrimerPrefs {
     private var _hasSeenPrimer: Boolean = false
     val hasSeenPrimer: Boolean get() = _hasSeenPrimer
-    fun markSeen() { _hasSeenPrimer = true }
-    fun reset() { _hasSeenPrimer = false }
+
+    fun markSeen() {
+        _hasSeenPrimer = true
+    }
+
+    fun reset() {
+        _hasSeenPrimer = false
+    }
 }
 
 // ─────────────────────────── Shared brass popover surface ────────────────────
@@ -81,19 +83,21 @@ private fun BrassParchmentSurface(
 ) {
     Box(modifier = modifier) {
         Column(
-            modifier = Modifier
-                .decoPopoverPaper(KursiRadii.md)
-                .padding(KursiDimens.space_md)
-                // Reserve room so content never collides with the wax seal.
-                .padding(top = 6.dp, end = 10.dp),
+            modifier =
+                Modifier
+                    .decoPopoverPaper(KursiRadii.md)
+                    .padding(KursiDimens.space_md)
+                    // Reserve room so content never collides with the wax seal.
+                    .padding(top = 6.dp, end = 10.dp),
             content = content,
         )
         // Wax-seal accent over the top-end corner.
         WaxSeal(
             mark = sealMark,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(x = (-6).dp, y = (-8).dp),
+            modifier =
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = (-6).dp, y = (-8).dp),
         )
     }
 }
@@ -101,14 +105,18 @@ private fun BrassParchmentSurface(
 // ─────────────────────────── Seal dot (role color) ───────────────────────────
 
 @Composable
-private fun RoleSealDot(role: Role, size: androidx.compose.ui.unit.Dp = 12.dp) {
+private fun RoleSealDot(
+    role: Role,
+    size: androidx.compose.ui.unit.Dp = 12.dp,
+) {
     val color = KursiColors.forRole(role).color
     Box(
-        modifier = Modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(color)
-            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.6f), CircleShape),
+        modifier =
+            Modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(color)
+                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.6f), CircleShape),
     )
 }
 
@@ -117,14 +125,15 @@ private fun RoleSealDot(role: Role, size: androidx.compose.ui.unit.Dp = 12.dp) {
 @Composable
 private fun BrassDivider() {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(
-                Brush.horizontalGradient(
-                    listOf(BrandTokens.BrassDark.copy(alpha = 0.3f), BrandTokens.GoldAntique.copy(alpha = 0.8f), BrandTokens.BrassDark.copy(alpha = 0.3f))
-                )
-            ),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(BrandTokens.BrassDark.copy(alpha = 0.3f), BrandTokens.GoldAntique.copy(alpha = 0.8f), BrandTokens.BrassDark.copy(alpha = 0.3f)),
+                    ),
+                ),
     )
 }
 
@@ -135,12 +144,16 @@ private fun BrassDivider() {
 // (avoids platform-specific Popup positioning issues on desktop/web).
 
 sealed interface ChitContent {
-    data class Identity(val role: Role) : ChitContent
+    data class Identity(
+        val role: Role,
+    ) : ChitContent
+
     data class RiskAction(
         val action: Action,
         val myCoins: Int,
         val bluffConf: BluffOdds.Confidence?,
     ) : ChitContent
+
     data class Dossier(
         val opponentName: String,
         val opponentCoins: Int,
@@ -206,6 +219,7 @@ sealed interface ChitContent {
 }
 
 // ─────────────────────────── Dossier intelligence (UI model) ─────────────────
+
 /**
  * The PUBLIC-info READ shown at the top of an opponent's dossier — a UI-shaped projection of
  * [com.kursi.ai.OpponentInsight] so the composable layer renders the real intelligence without
@@ -228,32 +242,38 @@ data class DossierIntel(
 ) {
     /** A 1..5 "shady-meter" pip reading derived from the inferred bluffRate. */
     val bluffPips: Int
-        get() = when {
-            bluffRate < 0.18 -> 1
-            bluffRate < 0.32 -> 2
-            bluffRate < 0.48 -> 3
-            bluffRate < 0.65 -> 4
-            else -> 5
-        }
+        get() =
+            when {
+                bluffRate < 0.18 -> 1
+                bluffRate < 0.32 -> 2
+                bluffRate < 0.48 -> 3
+                bluffRate < 0.65 -> 4
+                else -> 5
+            }
 
     /** Short human read of the bluffRate, e.g. "straight shooter" … "serial bluffer". */
     val bluffLabel: String
-        get() = when (bluffPips) {
-            1 -> "straight shooter"
-            2 -> "mostly honest"
-            3 -> "plays the odds"
-            4 -> "loves a bluff"
-            else -> "serial bluffer"
-        }
+        get() =
+            when (bluffPips) {
+                1 -> "straight shooter"
+                2 -> "mostly honest"
+                3 -> "plays the odds"
+                4 -> "loves a bluff"
+                else -> "serial bluffer"
+            }
 
     companion object {
         fun from(insight: OpponentInsight): DossierIntel {
-            val sorted = insight.posterior.entries.sortedByDescending { it.value }.map { it.key to it.value }
+            val sorted =
+                insight.posterior.entries
+                    .sortedByDescending { it.value }
+                    .map { it.key to it.value }
             val top = sorted.firstOrNull()
-            val claimRows = insight.claimStats
-                .filter { it.claims > 0 }
-                .sortedByDescending { it.claims }
-                .map { Triple(it.role, it.claims, it.caughtBluffing) }
+            val claimRows =
+                insight.claimStats
+                    .filter { it.claims > 0 }
+                    .sortedByDescending { it.claims }
+                    .map { Triple(it.role, it.claims, it.caughtBluffing) }
             return DossierIntel(
                 topRole = top?.first,
                 topRoleProb = top?.second ?: 0.0,
@@ -279,9 +299,18 @@ fun WhisperChit(
 ) {
     // Scrim to capture outside taps
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .clickable(indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, onClick = onDismiss),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .clickable(
+                    indication = null,
+                    interactionSource =
+                        remember {
+                            androidx.compose.foundation.interaction
+                                .MutableInteractionSource()
+                        },
+                    onClick = onDismiss,
+                ),
     ) {
         if (anchorBounds != null && containerSize != null) {
             AnchoredChit(
@@ -293,9 +322,10 @@ fun WhisperChit(
             )
         } else {
             Box(
-                modifier = modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 80.dp, start = 16.dp, end = 16.dp),
+                modifier =
+                    modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 80.dp, start = 16.dp, end = 16.dp),
             ) {
                 when (content) {
                     is ChitContent.Identity -> IdentityChitContent(content)
@@ -339,12 +369,13 @@ private fun AnchoredChit(
     val caretX = (anchor.center.x - clampedX).coerceIn(20f, chitWidthPx - 20f)
 
     Box(
-        modifier = modifier
-            .offset {
-                val y = if (placeBelow) anchor.bottom + gap else 0f // y computed after measure for above
-                androidx.compose.ui.unit.IntOffset(clampedX.toInt(), y.toInt())
-            }
-            .then(if (!placeBelow) Modifier else Modifier),
+        modifier =
+            modifier
+                .offset {
+                    val y = if (placeBelow) anchor.bottom + gap else 0f // y computed after measure for above
+                    androidx.compose.ui.unit
+                        .IntOffset(clampedX.toInt(), y.toInt())
+                }.then(if (!placeBelow) Modifier else Modifier),
     ) {
         // We need the chit height to place it above; use a sub-layout via Column with
         // caret on the correct side. For "above", anchor the bottom of the chit to the
@@ -382,10 +413,13 @@ private fun ChitWithCaret(
     val caretColor = BrandTokens.PaperDeep
 
     Column(
-        modifier = Modifier
-            .offset { androidx.compose.ui.unit.IntOffset(0, yShift) }
-            .width(widthDp)
-            .onGloballyPositioned { chitHeightPx = it.size.height },
+        modifier =
+            Modifier
+                .offset {
+                    androidx.compose.ui.unit
+                        .IntOffset(0, yShift)
+                }.width(widthDp)
+                .onGloballyPositioned { chitHeightPx = it.size.height },
         horizontalAlignment = Alignment.Start,
     ) {
         if (caretOnTop) {
@@ -416,23 +450,36 @@ private fun CaretTriangle(
 ) {
     val density = LocalDensity.current
     Canvas(
-        modifier = Modifier
-            .offset { androidx.compose.ui.unit.IntOffset((caretXPx - with(density) { size.toPx() }).toInt(), 0) }
-            .size(width = size * 2, height = size),
+        modifier =
+            Modifier
+                .offset {
+                    androidx.compose.ui.unit
+                        .IntOffset((caretXPx - with(density) { size.toPx() }).toInt(), 0)
+                }.size(width = size * 2, height = size),
     ) {
         val w = this.size.width
         val h = this.size.height
-        val path = androidx.compose.ui.graphics.Path().apply {
-            if (pointUp) {
-                moveTo(w / 2f, 0f); lineTo(0f, h); lineTo(w, h)
-            } else {
-                moveTo(0f, 0f); lineTo(w, 0f); lineTo(w / 2f, h)
+        val path =
+            androidx.compose.ui.graphics.Path().apply {
+                if (pointUp) {
+                    moveTo(w / 2f, 0f)
+                    lineTo(0f, h)
+                    lineTo(w, h)
+                } else {
+                    moveTo(0f, 0f)
+                    lineTo(w, 0f)
+                    lineTo(w / 2f, h)
+                }
+                close()
             }
-            close()
-        }
         drawPath(path, color)
-        drawPath(path, BrandTokens.BrassAged.copy(alpha = 0.6f),
-            style = androidx.compose.ui.graphics.drawscope.Stroke(1f))
+        drawPath(
+            path,
+            BrandTokens.BrassAged.copy(alpha = 0.6f),
+            style =
+                androidx.compose.ui.graphics.drawscope
+                    .Stroke(1f),
+        )
     }
 }
 
@@ -521,7 +568,10 @@ private fun RiskChitContent(c: ChitContent.RiskAction) {
 }
 
 @Composable
-private fun DossierChitContent(c: ChitContent.Dossier, onDismiss: () -> Unit) {
+private fun DossierChitContent(
+    c: ChitContent.Dossier,
+    onDismiss: () -> Unit,
+) {
     BrassParchmentSurface(modifier = Modifier.widthIn(max = 340.dp)) {
         // ── Header: name + a one-line headline READ (lead with intel) ──────────
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(KursiDimens.space_xs)) {
@@ -604,18 +654,27 @@ private fun DossierChitContent(c: ChitContent.Dossier, onDismiss: () -> Unit) {
         Spacer(Modifier.height(KursiDimens.space_sm))
 
         // Cards / influence
-        val cardsText = if (c.faceDownCount == 0) "No cards left — eliminated." else
-            "${c.faceDownCount} face-down" + if (c.faceUpRoles.isNotEmpty())
-                " · ${c.faceUpRoles.joinToString { it.name }} revealed" else ""
+        val cardsText =
+            if (c.faceDownCount == 0) {
+                "No cards left — eliminated."
+            } else {
+                "${c.faceDownCount} face-down" +
+                    if (c.faceUpRoles.isNotEmpty()) {
+                        " · ${c.faceUpRoles.joinToString { it.name }} revealed"
+                    } else {
+                        ""
+                    }
+            }
         ChitLine(label = "Cards:", text = cardsText)
 
         // Coins + threat read
-        val threat = when {
-            c.opponentCoins >= 10 -> "MUST Khela you. Immediate threat."
-            c.opponentCoins >= 7 -> "Can Khela (eliminate) you. Watch out."
-            c.opponentCoins >= 3 -> "Can Supari (assassinate). Be careful."
-            else -> "Broke for now. Harmless… probably."
-        }
+        val threat =
+            when {
+                c.opponentCoins >= 10 -> "MUST Khela you. Immediate threat."
+                c.opponentCoins >= 7 -> "Can Khela (eliminate) you. Watch out."
+                c.opponentCoins >= 3 -> "Can Supari (assassinate). Be careful."
+                else -> "Broke for now. Harmless… probably."
+            }
         ChitLine(label = "Coins:", text = "${c.opponentCoins} — $threat")
 
         if (c.lastActionText != null) {
@@ -669,21 +728,23 @@ private fun DossierChitContent(c: ChitContent.Dossier, onDismiss: () -> Unit) {
 private fun PosteriorBar(posterior: List<Pair<Role, Double>>) {
     val total = posterior.sumOf { it.second }.coerceAtLeast(1e-6)
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(20.dp)
-            .clip(Squircle(KursiRadii.sm))
-            .border(KursiDimens.stroke_hairline, BrandTokens.BrassDark.copy(alpha = 0.5f), Squircle(KursiRadii.sm)),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(20.dp)
+                .clip(Squircle(KursiRadii.sm))
+                .border(KursiDimens.stroke_hairline, BrandTokens.BrassDark.copy(alpha = 0.5f), Squircle(KursiRadii.sm)),
     ) {
         posterior.forEach { (role, p) ->
             val frac = (p / total).toFloat()
             if (frac <= 0.001f) return@forEach
             val hue = KursiColors.forRole(role).color
             Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .weight(frac)
-                    .background(hue.copy(alpha = 0.85f)),
+                modifier =
+                    Modifier
+                        .fillMaxHeight()
+                        .weight(frac)
+                        .background(hue.copy(alpha = 0.85f)),
                 contentAlignment = Alignment.Center,
             ) {
                 // Label only the segments wide enough to hold text at a legible size.
@@ -705,7 +766,11 @@ private fun PosteriorBar(posterior: List<Pair<Role, Double>>) {
 
 /** One per-role claim row: a seal dot, the role, its claim count, and a bluff-caught stamp. */
 @Composable
-private fun ClaimRecordRow(role: Role, claims: Int, caught: Int) {
+private fun ClaimRecordRow(
+    role: Role,
+    claims: Int,
+    caught: Int,
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -726,11 +791,12 @@ private fun ClaimRecordRow(role: Role, claims: Int, caught: Int) {
         if (caught > 0) {
             Spacer(Modifier.width(2.dp))
             Box(
-                modifier = Modifier
-                    .clip(Squircle(KursiRadii.sm))
-                    .background(KursiSemantics.Danger.copy(alpha = 0.18f))
-                    .border(KursiDimens.stroke_hairline, KursiSemantics.Danger.copy(alpha = 0.7f), Squircle(KursiRadii.sm))
-                    .padding(horizontal = 4.dp, vertical = 1.dp),
+                modifier =
+                    Modifier
+                        .clip(Squircle(KursiRadii.sm))
+                        .background(KursiSemantics.Danger.copy(alpha = 0.18f))
+                        .border(KursiDimens.stroke_hairline, KursiSemantics.Danger.copy(alpha = 0.7f), Squircle(KursiRadii.sm))
+                        .padding(horizontal = 4.dp, vertical = 1.dp),
             ) {
                 Text(
                     text = "✗ caught ×$caught",
@@ -746,28 +812,34 @@ private fun ClaimRecordRow(role: Role, claims: Int, caught: Int) {
 
 /** A compact 1..5 "shady-meter" badge — the headline bluff read on a dossier. */
 @Composable
-private fun ShadyMeter(pips: Int, label: String) {
+private fun ShadyMeter(
+    pips: Int,
+    label: String,
+) {
     val clamped = pips.coerceIn(1, 5)
-    val pipColor = when (clamped) {
-        1, 2 -> KursiSemantics.Success
-        3 -> BrandTokens.PendingAmber
-        else -> KursiSemantics.Danger
-    }
+    val pipColor =
+        when (clamped) {
+            1, 2 -> KursiSemantics.Success
+            3 -> BrandTokens.PendingAmber
+            else -> KursiSemantics.Danger
+        }
     Row(
-        modifier = Modifier
-            .clip(Squircle(KursiRadii.sm))
-            .background(BrandTokens.TeakDark.copy(alpha = 0.92f))
-            .border(KursiDimens.stroke_hairline, pipColor.copy(alpha = 0.6f), Squircle(KursiRadii.sm))
-            .padding(horizontal = KursiDimens.space_xs, vertical = 2.dp),
+        modifier =
+            Modifier
+                .clip(Squircle(KursiRadii.sm))
+                .background(BrandTokens.TeakDark.copy(alpha = 0.92f))
+                .border(KursiDimens.stroke_hairline, pipColor.copy(alpha = 0.6f), Squircle(KursiRadii.sm))
+                .padding(horizontal = KursiDimens.space_xs, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         repeat(5) { idx ->
             Box(
-                modifier = Modifier
-                    .size(5.dp)
-                    .clip(CircleShape)
-                    .background(if (idx < clamped) pipColor else KursiNeutrals.TextDisabled),
+                modifier =
+                    Modifier
+                        .size(5.dp)
+                        .clip(CircleShape)
+                        .background(if (idx < clamped) pipColor else KursiNeutrals.TextDisabled),
             )
         }
         Spacer(Modifier.width(2.dp))
@@ -852,7 +924,10 @@ private fun LogEventChitContent(c: ChitContent.LogEvent) {
 }
 
 @Composable
-private fun ChitLine(label: String, text: String) {
+private fun ChitLine(
+    label: String,
+    text: String,
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(KursiDimens.space_xs),
@@ -868,7 +943,10 @@ private fun ChitLine(label: String, text: String) {
 }
 
 @Composable
-private fun RiskLine(positive: Boolean, text: String) {
+private fun RiskLine(
+    positive: Boolean,
+    text: String,
+) {
     val color = if (positive) KursiSemantics.Success else KursiSemantics.Danger
     val prefix = if (positive) "✓" else "✗"
     Row(
@@ -884,28 +962,34 @@ private fun RiskLine(positive: Boolean, text: String) {
 // ─────────────────────────── Odds chip ───────────────────────────────────────
 
 @Composable
-fun OddsChip(conf: BluffOdds.Confidence, compact: Boolean = true) {
-    val pipColor = when (conf.pips) {
-        1, 2 -> KursiSemantics.Success
-        3 -> BrandTokens.PendingAmber
-        else -> KursiSemantics.Danger
-    }
+fun OddsChip(
+    conf: BluffOdds.Confidence,
+    compact: Boolean = true,
+) {
+    val pipColor =
+        when (conf.pips) {
+            1, 2 -> KursiSemantics.Success
+            3 -> BrandTokens.PendingAmber
+            else -> KursiSemantics.Danger
+        }
     Row(
-        modifier = Modifier
-            .clip(Squircle(KursiRadii.sm))
-            .background(BrandTokens.TeakDark.copy(alpha = 0.90f))
-            .border(KursiDimens.stroke_hairline, BrandTokens.BrassAged.copy(alpha = 0.5f), Squircle(KursiRadii.sm))
-            .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
+        modifier =
+            Modifier
+                .clip(Squircle(KursiRadii.sm))
+                .background(BrandTokens.TeakDark.copy(alpha = 0.90f))
+                .border(KursiDimens.stroke_hairline, BrandTokens.BrassAged.copy(alpha = 0.5f), Squircle(KursiRadii.sm))
+                .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(KursiDimens.space_xs),
     ) {
         // Pip row
         repeat(5) { idx ->
             Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .clip(CircleShape)
-                    .background(if (idx < conf.pips) pipColor else KursiNeutrals.TextDisabled),
+                modifier =
+                    Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(if (idx < conf.pips) pipColor else KursiNeutrals.TextDisabled),
             )
         }
         Spacer(Modifier.width(2.dp))
@@ -937,30 +1021,38 @@ fun OddsChip(conf: BluffOdds.Confidence, compact: Boolean = true) {
 
 // Oxblood / amber accents reused across the coach surface.
 private val CoachOxblood = Color(0xFF8E2B22)
-private val CoachAmber   = BrandTokens.PendingAmber
+private val CoachAmber = BrandTokens.PendingAmber
 
 /** The three coaching tints for a move's safety, derived from truthful/bluff. */
 internal enum class CoachTone { Truthful, Bluff, Neutral }
 
-internal fun coachTone(truthful: Boolean?, bluff: Boolean): CoachTone = when {
-    bluff -> CoachTone.Bluff
-    truthful == true -> CoachTone.Truthful
-    else -> CoachTone.Neutral
-}
+internal fun coachTone(
+    truthful: Boolean?,
+    bluff: Boolean,
+): CoachTone =
+    when {
+        bluff -> CoachTone.Bluff
+        truthful == true -> CoachTone.Truthful
+        else -> CoachTone.Neutral
+    }
 
 /** Accent colour for a coach tone, used for chip tints + badge fills. */
-internal fun coachAccent(tone: CoachTone): Color = when (tone) {
-    CoachTone.Truthful -> KursiSemantics.Success
-    CoachTone.Bluff    -> CoachOxblood
-    CoachTone.Neutral  -> BrandTokens.BrassAged
-}
+internal fun coachAccent(tone: CoachTone): Color =
+    when (tone) {
+        CoachTone.Truthful -> KursiSemantics.Success
+        CoachTone.Bluff -> CoachOxblood
+        CoachTone.Neutral -> BrandTokens.BrassAged
+    }
 
 /**
  * In-voice odds phrasing for a move.
  *  - Challenge: successOdds = P(opponent bluffing) → "~65% they're bluffing".
  *  - Bluff move: successOdds = P(not caught) → "~70% it flies".
  */
-private fun coachOddsText(isChallenge: Boolean, successOdds: Double): String {
+private fun coachOddsText(
+    isChallenge: Boolean,
+    successOdds: Double,
+): String {
     val pct = (successOdds * 100).toInt().coerceIn(0, 100)
     return if (isChallenge) "~$pct% bluff" else "~$pct% safe"
 }
@@ -980,16 +1072,18 @@ internal fun CoachBadge(
     if (tone == CoachTone.Neutral) return
     val accent = coachAccent(tone)
     val icon = if (tone == CoachTone.Truthful) "✓" else "⚠"
-    val text = when (tone) {
-        CoachTone.Truthful -> if (claimedRoleName != null) "REAL · ${claimedRoleName.uppercase()}" else "REAL"
-        else               -> "BLUFF"
-    }
+    val text =
+        when (tone) {
+            CoachTone.Truthful -> if (claimedRoleName != null) "REAL · ${claimedRoleName.uppercase()}" else "REAL"
+            else -> "BLUFF"
+        }
     Row(
-        modifier = modifier
-            .clip(Squircle(KursiRadii.sm))
-            .background(accent.copy(alpha = 0.18f))
-            .border(KursiDimens.stroke_hairline, accent.copy(alpha = 0.75f), Squircle(KursiRadii.sm))
-            .padding(horizontal = 5.dp, vertical = 1.dp),
+        modifier =
+            modifier
+                .clip(Squircle(KursiRadii.sm))
+                .background(accent.copy(alpha = 0.18f))
+                .border(KursiDimens.stroke_hairline, accent.copy(alpha = 0.75f), Squircle(KursiRadii.sm))
+                .padding(horizontal = 5.dp, vertical = 1.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
@@ -1015,17 +1109,19 @@ internal fun CoachOddsPill(
     // For a challenge, high P(bluff) = good. For a bluff, high P(safe) = good.
     val good = pct >= 55
     val mid = pct in 40..54
-    val tint = when {
-        good -> KursiSemantics.Success
-        mid  -> CoachAmber
-        else -> CoachOxblood
-    }
+    val tint =
+        when {
+            good -> KursiSemantics.Success
+            mid -> CoachAmber
+            else -> CoachOxblood
+        }
     Row(
-        modifier = modifier
-            .clip(Squircle(KursiRadii.sm))
-            .background(BrandTokens.TeakDark.copy(alpha = 0.92f))
-            .border(KursiDimens.stroke_hairline, tint.copy(alpha = 0.6f), Squircle(KursiRadii.sm))
-            .padding(horizontal = 5.dp, vertical = 1.dp),
+        modifier =
+            modifier
+                .clip(Squircle(KursiRadii.sm))
+                .background(BrandTokens.TeakDark.copy(alpha = 0.92f))
+                .border(KursiDimens.stroke_hairline, tint.copy(alpha = 0.6f), Squircle(KursiRadii.sm))
+                .padding(horizontal = 5.dp, vertical = 1.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -1042,15 +1138,15 @@ internal fun CoachOddsPill(
 @Composable
 internal fun RecommendedStar(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier
-            .size(16.dp)
-            .clip(CircleShape)
-            .background(
-                Brush.radialGradient(
-                    listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged)
-                )
-            )
-            .border(KursiDimens.stroke_hairline, BrandTokens.GoldAntique, CircleShape),
+        modifier =
+            modifier
+                .size(16.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.radialGradient(
+                        listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged),
+                    ),
+                ).border(KursiDimens.stroke_hairline, BrandTokens.GoldAntique, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -1083,8 +1179,8 @@ private fun CoachChitContent(c: ChitContent.Coach) {
         // Verdict line — the safety read.
         when (tone) {
             CoachTone.Truthful -> RiskLine(positive = true, text = "Natural counter — you really hold this. Safe to back up.")
-            CoachTone.Bluff    -> RiskLine(positive = false, text = "Bluff — you don't hold it. A card is at stake if challenged.")
-            CoachTone.Neutral  -> ChitLine(label = "Read:", text = "No role claim — nobody can challenge this.")
+            CoachTone.Bluff -> RiskLine(positive = false, text = "Bluff — you don't hold it. A card is at stake if challenged.")
+            CoachTone.Neutral -> ChitLine(label = "Read:", text = "No role claim — nobody can challenge this.")
         }
 
         // Odds line.
@@ -1099,12 +1195,13 @@ private fun CoachChitContent(c: ChitContent.Coach) {
         if (c.beliefLine != null) {
             Spacer(Modifier.height(KursiDimens.space_xs))
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(Squircle(KursiRadii.sm))
-                    .background(BrandTokens.GoldAntique.copy(alpha = 0.16f))
-                    .border(KursiDimens.stroke_hairline, BrandTokens.GoldAntique.copy(alpha = 0.5f), Squircle(KursiRadii.sm))
-                    .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(Squircle(KursiRadii.sm))
+                        .background(BrandTokens.GoldAntique.copy(alpha = 0.16f))
+                        .border(KursiDimens.stroke_hairline, BrandTokens.GoldAntique.copy(alpha = 0.5f), Squircle(KursiRadii.sm))
+                        .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
             ) {
                 Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(text = "🔎", style = KursiType.label_sm)
@@ -1153,18 +1250,18 @@ private fun CoachChitContent(c: ChitContent.Coach) {
 private fun PlayBestMoveChip(onClick: () -> Unit) {
     val voice = LocalKursiVoice.current
     Box(
-        modifier = Modifier
-            .height(24.dp)
-            .widthIn(min = 72.dp)
-            .clip(Squircle(KursiDimens.r_sm))
-            .background(BrandTokens.GoldAntique.copy(alpha = 0.20f))
-            .border(KursiDimens.stroke_hairline, BrandTokens.GoldAntique, Squircle(KursiDimens.r_sm))
-            .semantics(mergeDescendants = true) {
-                role = androidx.compose.ui.semantics.Role.Button
-                contentDescription = voice.playBestMove
-            }
-            .clickable(onClick = onClick)
-            .padding(horizontal = KursiDimens.space_sm, vertical = 2.dp),
+        modifier =
+            Modifier
+                .height(24.dp)
+                .widthIn(min = 72.dp)
+                .clip(Squircle(KursiDimens.r_sm))
+                .background(BrandTokens.GoldAntique.copy(alpha = 0.20f))
+                .border(KursiDimens.stroke_hairline, BrandTokens.GoldAntique, Squircle(KursiDimens.r_sm))
+                .semantics(mergeDescendants = true) {
+                    role = androidx.compose.ui.semantics.Role.Button
+                    contentDescription = voice.playBestMove
+                }.clickable(onClick = onClick)
+                .padding(horizontal = KursiDimens.space_sm, vertical = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -1177,26 +1274,29 @@ private fun PlayBestMoveChip(onClick: () -> Unit) {
 }
 
 @Composable
-private fun CoachToggleChip(coachEnabled: Boolean, onToggle: () -> Unit) {
+private fun CoachToggleChip(
+    coachEnabled: Boolean,
+    onToggle: () -> Unit,
+) {
     val accentColor = if (coachEnabled) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.55f)
     val bgColor = if (coachEnabled) BrandTokens.BrassAged.copy(alpha = 0.22f) else BrandTokens.TeakDark.copy(alpha = 0.85f)
     val label = if (coachEnabled) "COACH ON" else "COACH OFF"
     Box(
-        modifier = Modifier
-            .height(24.dp)
-            .widthIn(min = 72.dp)
-            .clip(Squircle(KursiDimens.r_sm))
-            .background(bgColor)
-            .border(KursiDimens.stroke_hairline, accentColor, Squircle(KursiDimens.r_sm))
-            // A11y: a toggle — role Switch, on/off state spoken, single merged node.
-            .semantics(mergeDescendants = true) {
-                role = androidx.compose.ui.semantics.Role.Switch
-                toggleableState = if (coachEnabled) ToggleableState.On else ToggleableState.Off
-                stateDescription = if (coachEnabled) "On" else "Off"
-                contentDescription = "Decision coach"
-            }
-            .clickable(onClick = onToggle)
-            .padding(horizontal = KursiDimens.space_sm, vertical = 2.dp),
+        modifier =
+            Modifier
+                .height(24.dp)
+                .widthIn(min = 72.dp)
+                .clip(Squircle(KursiDimens.r_sm))
+                .background(bgColor)
+                .border(KursiDimens.stroke_hairline, accentColor, Squircle(KursiDimens.r_sm))
+                // A11y: a toggle — role Switch, on/off state spoken, single merged node.
+                .semantics(mergeDescendants = true) {
+                    role = androidx.compose.ui.semantics.Role.Switch
+                    toggleableState = if (coachEnabled) ToggleableState.On else ToggleableState.Off
+                    stateDescription = if (coachEnabled) "On" else "Off"
+                    contentDescription = "Decision coach"
+                }.clickable(onClick = onToggle)
+                .padding(horizontal = KursiDimens.space_sm, vertical = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -1223,42 +1323,49 @@ fun HintRail(
     val (hintText, hintTone) = deriveHintText(gamePhase, state, voice)
 
     // Derive bluff odds if in a reaction window with a claimed role
-    val oddsConf: BluffOdds.Confidence? = if (gamePhase is GamePhase.ReactionWindow && gamePhase.claimedRole != null) {
-        val role = gamePhase.claimedRole
-        val cfg = state.view.config
-        val allFaceUp = state.view.players.flatMap { it.faceUpRoles } + state.view.myFaceUp
-        val eliminatedForRole = allFaceUp.count { it == role }
-        val myHandHasRole = state.view.myInfluence.count { it == role }
-        val oppFaceDown = state.view.players
-            .firstOrNull { it.id == gamePhase.actor }
-            ?.faceDownCount ?: 1
-        BluffOdds.estimate(
-            claimedRole = role,
-            copiesPerRole = cfg.copiesPerRole,
-            deckSize = cfg.deckSize,
-            eliminatedRolesForClaimedRole = eliminatedForRole,
-            myHandContainsClaimedRole = myHandHasRole,
-            opponentFaceDownCount = oppFaceDown,
-            totalVisibleCards = allFaceUp.size,
-        )
-    } else null
+    val oddsConf: BluffOdds.Confidence? =
+        if (gamePhase is GamePhase.ReactionWindow && gamePhase.claimedRole != null) {
+            val role = gamePhase.claimedRole
+            val cfg = state.view.config
+            val allFaceUp = state.view.players.flatMap { it.faceUpRoles } + state.view.myFaceUp
+            val eliminatedForRole = allFaceUp.count { it == role }
+            val myHandHasRole = state.view.myInfluence.count { it == role }
+            val oppFaceDown =
+                state.view.players
+                    .firstOrNull { it.id == gamePhase.actor }
+                    ?.faceDownCount ?: 1
+            BluffOdds.estimate(
+                claimedRole = role,
+                copiesPerRole = cfg.copiesPerRole,
+                deckSize = cfg.deckSize,
+                eliminatedRolesForClaimedRole = eliminatedForRole,
+                myHandContainsClaimedRole = myHandHasRole,
+                opponentFaceDownCount = oppFaceDown,
+                totalVisibleCards = allFaceUp.size,
+            )
+        } else {
+            null
+        }
 
-    val borderColor = when (hintTone) {
-        HintTone.Warning -> KursiSemantics.Danger
-        HintTone.Gold -> BrandTokens.GoldAntique
-        else -> BrandTokens.BrassAged
-    }
+    val borderColor =
+        when (hintTone) {
+            HintTone.Warning -> KursiSemantics.Danger
+            HintTone.Gold -> BrandTokens.GoldAntique
+            else -> BrandTokens.BrassAged
+        }
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(32.dp)
-            .clip(Squircle(KursiRadii.sm))
-            .background(BrandTokens.TeakDark.copy(alpha = 0.92f))
-            .border(KursiDimens.stroke_hairline,
-                Brush.horizontalGradient(listOf(borderColor.copy(alpha = 0.6f), borderColor.copy(alpha = 0.4f), borderColor.copy(alpha = 0.6f))),
-                Squircle(KursiRadii.sm))
-            .padding(horizontal = KursiDimens.space_sm),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(32.dp)
+                .clip(Squircle(KursiRadii.sm))
+                .background(BrandTokens.TeakDark.copy(alpha = 0.92f))
+                .border(
+                    KursiDimens.stroke_hairline,
+                    Brush.horizontalGradient(listOf(borderColor.copy(alpha = 0.6f), borderColor.copy(alpha = 0.4f), borderColor.copy(alpha = 0.6f))),
+                    Squircle(KursiRadii.sm),
+                ).padding(horizontal = KursiDimens.space_sm),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(KursiDimens.space_sm),
     ) {
@@ -1266,11 +1373,12 @@ fun HintRail(
         Text(
             text = hintText,
             style = KursiType.label_micro,
-            color = when (hintTone) {
-                HintTone.Warning -> KursiSemantics.Danger
-                HintTone.Gold -> BrandTokens.GoldAntique
-                else -> KursiNeutrals.TextSecondary
-            },
+            color =
+                when (hintTone) {
+                    HintTone.Warning -> KursiSemantics.Danger
+                    HintTone.Gold -> BrandTokens.GoldAntique
+                    else -> KursiNeutrals.TextSecondary
+                },
             modifier = Modifier.weight(1f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -1302,13 +1410,14 @@ private fun deriveHintText(
     gamePhase: GamePhase,
     state: GameUiState,
     voice: KursiVoice,
-): Pair<String, HintTone> {
-    return when (gamePhase) {
+): Pair<String, HintTone> =
+    when (gamePhase) {
         is GamePhase.PickAction -> {
-            if (state.view.myCoins >= 10)
+            if (state.view.myCoins >= 10) {
                 voice.phaseHint(PhaseHint.CoinCapKhela) to HintTone.Warning
-            else
+            } else {
                 voice.phaseHint(PhaseHint.PickAction) to HintTone.Gold
+            }
         }
         is GamePhase.PickTarget -> {
             voice.phaseHint(PhaseHint.PickTarget) to HintTone.Gold
@@ -1335,39 +1444,48 @@ private fun deriveHintText(
         is GamePhase.InvestigatePeek ->
             voice.phaseHint(PhaseHint.InvestigatePeek) to HintTone.Gold
         is GamePhase.Idle -> {
-            val actorId = when (val phase = state.view.phase) {
-                is PhaseView.Turn -> phase.actor
-                is PhaseView.Reactions -> phase.actor
-                else -> null
-            }
+            val actorId =
+                when (val phase = state.view.phase) {
+                    is PhaseView.Turn -> phase.actor
+                    is PhaseView.Reactions -> phase.actor
+                    else -> null
+                }
             val actorName = actorId?.let { personaNameOrDefault(it, state) }
             voice.phaseHint(PhaseHint.Thinking(actorName)) to HintTone.Normal
         }
         is GamePhase.GameOver ->
             voice.phaseHint(PhaseHint.GameOver) to HintTone.Normal
     }
-}
 
 // ─────────────────────────── NIYAM roundel button ────────────────────────────
 
 @Composable
-fun NiyamButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun NiyamButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
-        modifier = modifier
-            .size(32.dp)
-            .clip(CircleShape)
-            .background(
-                Brush.radialGradient(
-                    listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark)
-                )
-            )
-            .border(1.5.dp, BrandTokens.BrassDark, CircleShape)
-            .clickable(onClick = onClick),
+        modifier =
+            modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.radialGradient(
+                        listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark),
+                    ),
+                ).border(1.5.dp, BrandTokens.BrassDark, CircleShape)
+                .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Text(text = "?", style = KursiType.label_md, color = BrandTokens.TeakDark, textAlign = TextAlign.Center)
-        Text(text = "NIYAM", style = KursiType.label_micro.copy(letterSpacing = 0.5.sp), color = BrandTokens.TeakDark.copy(alpha = 0.7f), textAlign = TextAlign.Center, maxLines = 1)
+        Text(
+            text = "NIYAM",
+            style = KursiType.label_micro.copy(letterSpacing = 0.5.sp),
+            color = BrandTokens.TeakDark.copy(alpha = 0.7f),
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+        )
     }
 }
 
@@ -1384,39 +1502,50 @@ fun NiyamGazette(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(BrandTokens.TeakDark.copy(alpha = 0.94f))
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                    onClick = onDismiss,
-                ),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(BrandTokens.TeakDark.copy(alpha = 0.94f))
+                    .clickable(
+                        indication = null,
+                        interactionSource =
+                            remember {
+                                androidx.compose.foundation.interaction
+                                    .MutableInteractionSource()
+                            },
+                        onClick = onDismiss,
+                    ),
             contentAlignment = Alignment.Center,
         ) {
             // Dialog card — stops click propagation
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(0.94f)
-                    .fillMaxHeight(0.92f)
-                    .clip(Squircle(KursiRadii.xl))
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark)
-                        )
-                    )
-                    .border(2.dp,
-                        Brush.sweepGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark, BrandTokens.BrassAged, BrandTokens.GoldAntique)),
-                        Squircle(KursiRadii.xl),
-                    )
-                    .padding(2.dp)
-                    .clip(Squircle(KursiRadii.xl))
-                    .background(BrandTokens.TeakMid)
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                        onClick = {},
-                    ),
+                modifier =
+                    Modifier
+                        .fillMaxWidth(0.94f)
+                        .fillMaxHeight(0.92f)
+                        .clip(Squircle(KursiRadii.xl))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark),
+                            ),
+                        ).border(
+                            2.dp,
+                            Brush.sweepGradient(
+                                listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark, BrandTokens.BrassAged, BrandTokens.GoldAntique),
+                            ),
+                            Squircle(KursiRadii.xl),
+                        ).padding(2.dp)
+                        .clip(Squircle(KursiRadii.xl))
+                        .background(BrandTokens.TeakMid)
+                        .clickable(
+                            indication = null,
+                            interactionSource =
+                                remember {
+                                    androidx.compose.foundation.interaction
+                                        .MutableInteractionSource()
+                                },
+                            onClick = {},
+                        ),
             ) {
                 GazetteContent(onDismiss = onDismiss, onReplayPrimer = onReplayPrimer, initialTab = initialTab)
             }
@@ -1436,12 +1565,12 @@ private fun GazetteContent(
     Column(modifier = Modifier.fillMaxSize()) {
         // ── Masthead ──────────────────────────────────────────────────────────
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.horizontalGradient(listOf(BrandTokens.BrassDark, BrandTokens.BrassAged, BrandTokens.BrassDark))
-                )
-                .padding(horizontal = KursiDimens.space_lg, vertical = KursiDimens.space_sm),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.horizontalGradient(listOf(BrandTokens.BrassDark, BrandTokens.BrassAged, BrandTokens.BrassDark)),
+                    ).padding(horizontal = KursiDimens.space_lg, vertical = KursiDimens.space_sm),
         ) {
             Column(modifier = Modifier.align(Alignment.CenterStart)) {
                 Text(
@@ -1457,13 +1586,14 @@ private fun GazetteContent(
             }
             // Close button
             Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(BrandTokens.BrassDark)
-                    .border(1.dp, BrandTokens.GoldAntique, CircleShape)
-                    .clickable(onClick = onDismiss),
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterEnd)
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(BrandTokens.BrassDark)
+                        .border(1.dp, BrandTokens.GoldAntique, CircleShape)
+                        .clickable(onClick = onDismiss),
                 contentAlignment = Alignment.Center,
             ) {
                 Text("✕", style = KursiType.label_md, color = BrandTokens.GoldAntique)
@@ -1472,24 +1602,25 @@ private fun GazetteContent(
 
         // ── Tab rail ─────────────────────────────────────────────────────────
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(BrandTokens.BrassDark.copy(alpha = 0.5f))
-                .padding(horizontal = KursiDimens.space_sm),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(BrandTokens.BrassDark.copy(alpha = 0.5f))
+                    .padding(horizontal = KursiDimens.space_sm),
         ) {
             tabs.forEachIndexed { idx, tab ->
                 val active = idx == selectedTab
                 Box(
-                    modifier = Modifier
-                        .clip(Squircle(KursiRadii.sm))
-                        .background(if (active) BrandTokens.BrassAged else Color.Transparent)
-                        .border(
-                            if (active) 1.dp else 0.dp,
-                            BrandTokens.GoldAntique.copy(alpha = if (active) 1f else 0f),
-                            Squircle(KursiRadii.sm),
-                        )
-                        .clickable { selectedTab = idx }
-                        .padding(horizontal = KursiDimens.space_md, vertical = KursiDimens.space_xs),
+                    modifier =
+                        Modifier
+                            .clip(Squircle(KursiRadii.sm))
+                            .background(if (active) BrandTokens.BrassAged else Color.Transparent)
+                            .border(
+                                if (active) 1.dp else 0.dp,
+                                BrandTokens.GoldAntique.copy(alpha = if (active) 1f else 0f),
+                                Squircle(KursiRadii.sm),
+                            ).clickable { selectedTab = idx }
+                            .padding(horizontal = KursiDimens.space_md, vertical = KursiDimens.space_xs),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -1516,10 +1647,11 @@ private fun GazetteContent(
         // ── Footer ────────────────────────────────────────────────────────────
         BrassDivider()
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(BrandTokens.BrassDark.copy(alpha = 0.3f))
-                .padding(horizontal = KursiDimens.space_lg, vertical = KursiDimens.space_xs),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(BrandTokens.BrassDark.copy(alpha = 0.3f))
+                    .padding(horizontal = KursiDimens.space_lg, vertical = KursiDimens.space_xs),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -1567,22 +1699,24 @@ private fun RoleReferenceCard(role: Role) {
     val voice = LocalKursiVoice.current
     val visual = KursiColors.forRole(role)
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(Squircle(KursiRadii.md))
-            .background(BrandTokens.TeakDark.copy(alpha = 0.85f))
-            .border(KursiDimens.stroke_hairline, visual.color.copy(alpha = 0.5f), Squircle(KursiRadii.md))
-            .padding(KursiDimens.space_sm),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(Squircle(KursiRadii.md))
+                .background(BrandTokens.TeakDark.copy(alpha = 0.85f))
+                .border(KursiDimens.stroke_hairline, visual.color.copy(alpha = 0.5f), Squircle(KursiRadii.md))
+                .padding(KursiDimens.space_sm),
         horizontalArrangement = Arrangement.spacedBy(KursiDimens.space_sm),
         verticalAlignment = Alignment.Top,
     ) {
         // Seal
         Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(visual.color)
-                .border(1.5.dp, BrandTokens.BrassAged, CircleShape),
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(visual.color)
+                    .border(1.5.dp, BrandTokens.BrassAged, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             com.kursi.designsystem.RoleGlyph(
@@ -1613,16 +1747,21 @@ private fun RoleReferenceCard(role: Role) {
 
 @Composable
 private fun DhandhaTab() {
-    val actions = listOf(
-        Triple(Action.Income, "DEHAADI", "No claim — honest. Nobody blocks. The grind."),
-        Triple(Action.ForeignAid, "FDI", "No claim. NETA can block it."),
-        Triple(Action.Tax, "GHOTALA", "Claims NETA. Challengeable."),
-        Triple(Action.Exchange, "SETTING", "Claims JUGAADU. Challengeable."),
-        Triple(Action.Steal(PlayerId(0)), "VASOOLI", "Claims BABU. Challengeable. BABU/JUGAADU block."),
-        Triple(Action.Investigate(PlayerId(0)), "JAANCH", "Claims PATRAKAAR. Peek a card, optionally force a redraw. Challengeable. Unblockable. (Big tables only.)"),
-        Triple(Action.Assassinate(PlayerId(0)), "SUPARI", "Claims BHAI. Challengeable. VAKIL blocks."),
-        Triple(Action.Coup(PlayerId(0)), "KHELA", "No claim. Unblockable, unstoppable. Mandatory at 10+."),
-    )
+    val actions =
+        listOf(
+            Triple(Action.Income, "DEHAADI", "No claim — honest. Nobody blocks. The grind."),
+            Triple(Action.ForeignAid, "FDI", "No claim. NETA can block it."),
+            Triple(Action.Tax, "GHOTALA", "Claims NETA. Challengeable."),
+            Triple(Action.Exchange, "SETTING", "Claims JUGAADU. Challengeable."),
+            Triple(Action.Steal(PlayerId(0)), "VASOOLI", "Claims BABU. Challengeable. BABU/JUGAADU block."),
+            Triple(
+                Action.Investigate(PlayerId(0)),
+                "JAANCH",
+                "Claims PATRAKAAR. Peek a card, optionally force a redraw. Challengeable. Unblockable. (Big tables only.)",
+            ),
+            Triple(Action.Assassinate(PlayerId(0)), "SUPARI", "Claims BHAI. Challengeable. VAKIL blocks."),
+            Triple(Action.Coup(PlayerId(0)), "KHELA", "No claim. Unblockable, unstoppable. Mandatory at 10+."),
+        )
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(KursiDimens.space_md),
@@ -1631,10 +1770,12 @@ private fun DhandhaTab() {
         item {
             // Ledger header
             Row(
-                modifier = Modifier.fillMaxWidth()
-                    .clip(Squircle(KursiRadii.sm))
-                    .background(BrandTokens.BrassDark.copy(alpha = 0.6f))
-                    .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(Squircle(KursiRadii.sm))
+                        .background(BrandTokens.BrassDark.copy(alpha = 0.6f))
+                        .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
             ) {
                 Text("ACTION", style = KursiType.label_sm.copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique, modifier = Modifier.weight(1.2f))
                 Text("EFFECT", style = KursiType.label_sm.copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique, modifier = Modifier.weight(0.6f))
@@ -1643,11 +1784,13 @@ private fun DhandhaTab() {
         }
         items(actions) { (action, name, rules) ->
             Row(
-                modifier = Modifier.fillMaxWidth()
-                    .clip(Squircle(KursiRadii.sm))
-                    .background(BrandTokens.TeakDark.copy(alpha = 0.7f))
-                    .border(KursiDimens.stroke_hairline, BrandTokens.BrassDark.copy(alpha = 0.3f), Squircle(KursiRadii.sm))
-                    .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(Squircle(KursiRadii.sm))
+                        .background(BrandTokens.TeakDark.copy(alpha = 0.7f))
+                        .border(KursiDimens.stroke_hairline, BrandTokens.BrassDark.copy(alpha = 0.3f), Squircle(KursiRadii.sm))
+                        .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
                 verticalAlignment = Alignment.Top,
             ) {
                 Text(name, style = KursiType.label_sm, color = KursiNeutrals.TextPrimary, modifier = Modifier.weight(1.2f))
@@ -1672,23 +1815,27 @@ private fun DhandhaTab() {
 
 @Composable
 private fun DasturTab() {
-    val steps = listOf(
-        Triple("1. YOUR TURN — Make a Move",
-            "Pick one action. If it claims a role, you are declaring you hold that card. You might be lying.",
-            BrandTokens.GoldAntique,
-        ),
-        Triple("2. THE TABLE REACTS — Anyone Object?",
-            "CHALLENGE (\"Saboot dikhao!\"): someone says you're bluffing.\n" +
-            "  • You had it → challenger loses a card. You reshuffle and redraw.\n" +
-            "  • You didn't → you lose a card. The lie costs you.\n" +
-            "BLOCK (\"Yeh nahi chalega\"): someone claims a counter-role to stop you. A block can itself be challenged.",
-            BrandTokens.PendingAmber,
-        ),
-        Triple("3. RESOLVE — Hisaab Baraabar",
-            "Cards lost are flipped face-up forever (your secrets, exposed). Last player with a card standing takes the KURSI.",
-            KursiSemantics.Success,
-        ),
-    )
+    val steps =
+        listOf(
+            Triple(
+                "1. YOUR TURN — Make a Move",
+                "Pick one action. If it claims a role, you are declaring you hold that card. You might be lying.",
+                BrandTokens.GoldAntique,
+            ),
+            Triple(
+                "2. THE TABLE REACTS — Anyone Object?",
+                "CHALLENGE (\"Saboot dikhao!\"): someone says you're bluffing.\n" +
+                    "  • You had it → challenger loses a card. You reshuffle and redraw.\n" +
+                    "  • You didn't → you lose a card. The lie costs you.\n" +
+                    "BLOCK (\"Yeh nahi chalega\"): someone claims a counter-role to stop you. A block can itself be challenged.",
+                BrandTokens.PendingAmber,
+            ),
+            Triple(
+                "3. RESOLVE — Hisaab Baraabar",
+                "Cards lost are flipped face-up forever (your secrets, exposed). Last player with a card standing takes the KURSI.",
+                KursiSemantics.Success,
+            ),
+        )
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(KursiDimens.space_md),
@@ -1696,12 +1843,13 @@ private fun DasturTab() {
     ) {
         items(steps) { (title, body, accent) ->
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(Squircle(KursiRadii.md))
-                    .background(BrandTokens.TeakDark.copy(alpha = 0.8f))
-                    .border(KursiDimens.stroke_ring_idle, accent.copy(alpha = 0.5f), Squircle(KursiRadii.md))
-                    .padding(KursiDimens.space_md),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(Squircle(KursiRadii.md))
+                        .background(BrandTokens.TeakDark.copy(alpha = 0.8f))
+                        .border(KursiDimens.stroke_ring_idle, accent.copy(alpha = 0.5f), Squircle(KursiRadii.md))
+                        .padding(KursiDimens.space_md),
                 verticalArrangement = Arrangement.spacedBy(KursiDimens.space_xs),
             ) {
                 Text(text = title, style = KursiType.title_sm, color = accent)
@@ -1728,20 +1876,21 @@ private fun HisaabTab() {
     data class MatrixRow(
         val actionName: String,
         val effect: String,
-        val challengeNote: String,   // "safe" or "yes → ROLE"
-        val blockedBy: String,       // "—" or "ROLE / ROLE"
+        val challengeNote: String, // "safe" or "yes → ROLE"
+        val blockedBy: String, // "—" or "ROLE / ROLE"
     )
 
-    val rows = listOf(
-        MatrixRow("DEHAADI",  "+1",     "safe",          "— (untouchable)"),
-        MatrixRow("FDI",      "+2",     "safe",          "NETA"),
-        MatrixRow("GHOTALA",  "+3",     "yes → NETA",    "—"),
-        MatrixRow("VASOOLI",  "steal",  "yes → BABU",      "BABU · JUGAADU"),
-        MatrixRow("JAANCH",   "peek",   "yes → PATRAKAAR", "— (unblockable)"),
-        MatrixRow("SUPARI",   "−3 hit", "yes → BHAI",      "VAKIL"),
-        MatrixRow("SETTING",  "swap",   "yes → JUGAADU",   "—"),
-        MatrixRow("KHELA",    "−7 coup","safe",            "— (unstoppable)"),
-    )
+    val rows =
+        listOf(
+            MatrixRow("DEHAADI", "+1", "safe", "— (untouchable)"),
+            MatrixRow("FDI", "+2", "safe", "NETA"),
+            MatrixRow("GHOTALA", "+3", "yes → NETA", "—"),
+            MatrixRow("VASOOLI", "steal", "yes → BABU", "BABU · JUGAADU"),
+            MatrixRow("JAANCH", "peek", "yes → PATRAKAAR", "— (unblockable)"),
+            MatrixRow("SUPARI", "−3 hit", "yes → BHAI", "VAKIL"),
+            MatrixRow("SETTING", "swap", "yes → JUGAADU", "—"),
+            MatrixRow("KHELA", "−7 coup", "safe", "— (unstoppable)"),
+        )
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(KursiDimens.space_md),
@@ -1750,10 +1899,12 @@ private fun HisaabTab() {
         item {
             // Grid header
             Row(
-                modifier = Modifier.fillMaxWidth()
-                    .clip(Squircle(KursiRadii.sm))
-                    .background(BrandTokens.BrassDark.copy(alpha = 0.6f))
-                    .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(Squircle(KursiRadii.sm))
+                        .background(BrandTokens.BrassDark.copy(alpha = 0.6f))
+                        .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
             ) {
                 Text("ACTION", style = KursiType.label_sm.copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique, modifier = Modifier.weight(1.2f))
                 Text("EFFECT", style = KursiType.label_sm.copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique, modifier = Modifier.weight(0.6f))
@@ -1766,11 +1917,13 @@ private fun HisaabTab() {
             val isSafe = row.challengeNote == "safe"
             val isUnstoppable = row.blockedBy.startsWith("—")
             Row(
-                modifier = Modifier.fillMaxWidth()
-                    .clip(Squircle(KursiRadii.sm))
-                    .background(BrandTokens.TeakDark.copy(alpha = 0.7f))
-                    .border(KursiDimens.stroke_hairline, BrandTokens.BrassDark.copy(alpha = 0.3f), Squircle(KursiRadii.sm))
-                    .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(Squircle(KursiRadii.sm))
+                        .background(BrandTokens.TeakDark.copy(alpha = 0.7f))
+                        .border(KursiDimens.stroke_hairline, BrandTokens.BrassDark.copy(alpha = 0.3f), Squircle(KursiRadii.sm))
+                        .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(row.actionName, style = KursiType.label_sm, color = KursiNeutrals.TextPrimary, modifier = Modifier.weight(1.2f))
@@ -1794,22 +1947,24 @@ private fun HisaabTab() {
             Spacer(Modifier.height(KursiDimens.space_md))
             // Block chain quick-read
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(Squircle(KursiRadii.md))
-                    .background(BrandTokens.TeakDark.copy(alpha = 0.6f))
-                    .border(KursiDimens.stroke_hairline, BrandTokens.BrassDark.copy(alpha = 0.4f), Squircle(KursiRadii.md))
-                    .padding(KursiDimens.space_md),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(Squircle(KursiRadii.md))
+                        .background(BrandTokens.TeakDark.copy(alpha = 0.6f))
+                        .border(KursiDimens.stroke_hairline, BrandTokens.BrassDark.copy(alpha = 0.4f), Squircle(KursiRadii.md))
+                        .padding(KursiDimens.space_md),
                 verticalArrangement = Arrangement.spacedBy(KursiDimens.space_xs),
             ) {
                 Text("BLOCK CHAIN", style = KursiType.label_sm.copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique)
                 Spacer(Modifier.height(2.dp))
-                val items = listOf(
-                    "NETA stops free money (FDI).",
-                    "BABU + JUGAADU both guard your wallet (VASOOLI).",
-                    "VAKIL is the only thing between you and a SUPARI hit.",
-                    "A block is also a claim — and any claim can be challenged.",
-                )
+                val items =
+                    listOf(
+                        "NETA stops free money (FDI).",
+                        "BABU + JUGAADU both guard your wallet (VASOOLI).",
+                        "VAKIL is the only thing between you and a SUPARI hit.",
+                        "A block is also a claim — and any claim can be challenged.",
+                    )
                 items.forEach { line ->
                     Row(horizontalArrangement = Arrangement.spacedBy(KursiDimens.space_xs), verticalAlignment = Alignment.Top) {
                         Text("▸", style = KursiType.label_micro, color = BrandTokens.BrassAged)
@@ -1840,70 +1995,74 @@ data class CoachStep(
     val highlightLabel: String,
 )
 
-private val primerSteps = listOf(
-    CoachStep(
-        title = "Your Certificates",
-        highlightLabel = "HAND",
-        body = "These two certificates are your secret identities. Protect them — lose both and you're out.",
-    ),
-    CoachStep(
-        title = "Your Coins",
-        highlightLabel = "COINS",
-        body = "Coins buy power. 7 buys a hit (KHELA). 10 forces one.",
-    ),
-    CoachStep(
-        title = "The Action Grid",
-        highlightLabel = "DOCK",
-        body = "Every turn, one move. Some are honest. Most are… flexible.",
-    ),
-    CoachStep(
-        title = "Your Rivals",
-        highlightLabel = "OPPONENT",
-        body = "Three rivals. Long-press anyone to read their dossier.",
-    ),
-    CoachStep(
-        title = "The Gazette",
-        highlightLabel = "NIYAM",
-        body = "Lost? The Gazette has every rule. Long-press for the who-beats-whom matrix.",
-    ),
-)
+private val primerSteps =
+    listOf(
+        CoachStep(
+            title = "Your Certificates",
+            highlightLabel = "HAND",
+            body = "These two certificates are your secret identities. Protect them — lose both and you're out.",
+        ),
+        CoachStep(
+            title = "Your Coins",
+            highlightLabel = "COINS",
+            body = "Coins buy power. 7 buys a hit (KHELA). 10 forces one.",
+        ),
+        CoachStep(
+            title = "The Action Grid",
+            highlightLabel = "DOCK",
+            body = "Every turn, one move. Some are honest. Most are… flexible.",
+        ),
+        CoachStep(
+            title = "Your Rivals",
+            highlightLabel = "OPPONENT",
+            body = "Three rivals. Long-press anyone to read their dossier.",
+        ),
+        CoachStep(
+            title = "The Gazette",
+            highlightLabel = "NIYAM",
+            body = "Lost? The Gazette has every rule. Long-press for the who-beats-whom matrix.",
+        ),
+    )
 
 @Composable
-fun SwearingInPrimer(
-    onDone: () -> Unit,
-) {
+fun SwearingInPrimer(onDone: () -> Unit) {
     var step by remember { mutableStateOf(0) }
     val current = primerSteps[step]
     val isLast = step == primerSteps.lastIndex
 
     // Full-screen teak scrim
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BrandTokens.TeakDark.copy(alpha = 0.88f))
-            .clickable(
-                indication = null,
-                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                onClick = {},
-            ),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(BrandTokens.TeakDark.copy(alpha = 0.88f))
+                .clickable(
+                    indication = null,
+                    interactionSource =
+                        remember {
+                            androidx.compose.foundation.interaction
+                                .MutableInteractionSource()
+                        },
+                    onClick = {},
+                ),
     ) {
         // Central coach chit
         Column(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .widthIn(max = 360.dp)
-                .clip(Squircle(KursiRadii.xl))
-                .background(
-                    Brush.verticalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark))
-                )
-                .border(2.dp,
-                    Brush.sweepGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark, BrandTokens.GoldAntique)),
-                    Squircle(KursiRadii.xl),
-                )
-                .padding(2.dp)
-                .clip(Squircle(KursiRadii.xl))
-                .background(BrandTokens.PaperCream)
-                .padding(KursiDimens.space_xl),
+            modifier =
+                Modifier
+                    .align(Alignment.Center)
+                    .widthIn(max = 360.dp)
+                    .clip(Squircle(KursiRadii.xl))
+                    .background(
+                        Brush.verticalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark)),
+                    ).border(
+                        2.dp,
+                        Brush.sweepGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark, BrandTokens.GoldAntique)),
+                        Squircle(KursiRadii.xl),
+                    ).padding(2.dp)
+                    .clip(Squircle(KursiRadii.xl))
+                    .background(BrandTokens.PaperCream)
+                    .padding(KursiDimens.space_xl),
             verticalArrangement = Arrangement.spacedBy(KursiDimens.space_md),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -1911,21 +2070,23 @@ fun SwearingInPrimer(
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 repeat(primerSteps.size) { idx ->
                     Box(
-                        modifier = Modifier
-                            .size(6.dp)
-                            .clip(CircleShape)
-                            .background(if (idx <= step) BrandTokens.BrassDark else BrandTokens.BrassDark.copy(alpha = 0.2f)),
+                        modifier =
+                            Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(if (idx <= step) BrandTokens.BrassDark else BrandTokens.BrassDark.copy(alpha = 0.2f)),
                     )
                 }
             }
 
             // Highlight label
             Box(
-                modifier = Modifier
-                    .clip(Squircle(KursiRadii.sm))
-                    .background(BrandTokens.BrassDark.copy(alpha = 0.15f))
-                    .border(KursiDimens.stroke_hairline, BrandTokens.BrassDark, Squircle(KursiRadii.sm))
-                    .padding(horizontal = KursiDimens.space_md, vertical = KursiDimens.space_xs),
+                modifier =
+                    Modifier
+                        .clip(Squircle(KursiRadii.sm))
+                        .background(BrandTokens.BrassDark.copy(alpha = 0.15f))
+                        .border(KursiDimens.stroke_hairline, BrandTokens.BrassDark, Squircle(KursiRadii.sm))
+                        .padding(horizontal = KursiDimens.space_md, vertical = KursiDimens.space_xs),
             ) {
                 Text(
                     text = "▸ ${current.highlightLabel}",
@@ -1960,29 +2121,29 @@ fun SwearingInPrimer(
                     text = "Skip the formalities →",
                     style = KursiType.label_sm,
                     color = BrandTokens.BrassDark.copy(alpha = 0.7f),
-                    modifier = Modifier.clickable {
-                        PrimerPrefs.markSeen()
-                        onDone()
-                    },
+                    modifier =
+                        Modifier.clickable {
+                            PrimerPrefs.markSeen()
+                            onDone()
+                        },
                 )
 
                 // Next / Sworn In
                 Box(
-                    modifier = Modifier
-                        .clip(Squircle(KursiRadii.md))
-                        .background(
-                            Brush.horizontalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged))
-                        )
-                        .border(1.dp, BrandTokens.BrassDark, Squircle(KursiRadii.md))
-                        .clickable {
-                            if (isLast) {
-                                PrimerPrefs.markSeen()
-                                onDone()
-                            } else {
-                                step += 1
-                            }
-                        }
-                        .padding(horizontal = KursiDimens.space_lg, vertical = KursiDimens.space_sm),
+                    modifier =
+                        Modifier
+                            .clip(Squircle(KursiRadii.md))
+                            .background(
+                                Brush.horizontalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged)),
+                            ).border(1.dp, BrandTokens.BrassDark, Squircle(KursiRadii.md))
+                            .clickable {
+                                if (isLast) {
+                                    PrimerPrefs.markSeen()
+                                    onDone()
+                                } else {
+                                    step += 1
+                                }
+                            }.padding(horizontal = KursiDimens.space_lg, vertical = KursiDimens.space_sm),
                 ) {
                     Text(
                         text = if (isLast) "SWORN IN" else "Next",
@@ -1997,32 +2158,34 @@ fun SwearingInPrimer(
 
 // ─────────────────────────── Internal helpers ────────────────────────────────
 
-internal fun actionHindiName(action: Action): String = when (action) {
-    Action.Income        -> "DEHAADI"
-    Action.ForeignAid    -> "FDI"
-    Action.Tax           -> "GHOTALA"
-    Action.Exchange      -> "SETTING"
-    is Action.Steal      -> "VASOOLI"
-    is Action.Investigate -> "JAANCH"
-    is Action.Assassinate -> "SUPARI"
-    is Action.Coup       -> "KHELA"
-    Action.BailPe        -> "BAIL PE"
-    Action.Sabotage      -> "BALI KHEL"
-    is Action.Hawala     -> "HAWALA"
-    Action.Emergency     -> "ADHYADESH"
-}
+internal fun actionHindiName(action: Action): String =
+    when (action) {
+        Action.Income -> "DEHAADI"
+        Action.ForeignAid -> "FDI"
+        Action.Tax -> "GHOTALA"
+        Action.Exchange -> "SETTING"
+        is Action.Steal -> "VASOOLI"
+        is Action.Investigate -> "JAANCH"
+        is Action.Assassinate -> "SUPARI"
+        is Action.Coup -> "KHELA"
+        Action.BailPe -> "BAIL PE"
+        Action.Sabotage -> "BALI KHEL"
+        is Action.Hawala -> "HAWALA"
+        Action.Emergency -> "ADHYADESH"
+    }
 
-internal fun actionCostSummary(action: Action): String = when (action) {
-    Action.Income        -> "+1"
-    Action.ForeignAid    -> "+2"
-    Action.Tax           -> "+3"
-    Action.Exchange      -> "swap"
-    is Action.Steal      -> "+2 steal"
-    is Action.Investigate -> "peek"
-    is Action.Assassinate -> "−3"
-    is Action.Coup       -> "−7"
-    Action.BailPe        -> "−9 restore"
-    Action.Sabotage      -> "+3 −card"
-    is Action.Hawala     -> "gift"
-    Action.Emergency     -> "−all coins"
-}
+internal fun actionCostSummary(action: Action): String =
+    when (action) {
+        Action.Income -> "+1"
+        Action.ForeignAid -> "+2"
+        Action.Tax -> "+3"
+        Action.Exchange -> "swap"
+        is Action.Steal -> "+2 steal"
+        is Action.Investigate -> "peek"
+        is Action.Assassinate -> "−3"
+        is Action.Coup -> "−7"
+        Action.BailPe -> "−9 restore"
+        Action.Sabotage -> "+3 −card"
+        is Action.Hawala -> "gift"
+        Action.Emergency -> "−all coins"
+    }

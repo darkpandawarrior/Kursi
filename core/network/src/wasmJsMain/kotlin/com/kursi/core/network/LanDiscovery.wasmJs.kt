@@ -14,7 +14,12 @@ import kotlinx.coroutines.flow.emptyFlow
 // ─────────────────────────────────────────────────────────────────────────────
 
 actual class LanAdvertiser actual constructor() {
-    actual fun start(serviceName: String, roomCode: String, port: Int) { /* no-op: browser sandbox */ }
+    actual fun start(
+        serviceName: String,
+        roomCode: String,
+        port: Int,
+    ) { /* no-op: browser sandbox */ }
+
     actual fun stop() { /* no-op */ }
 }
 

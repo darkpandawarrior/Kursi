@@ -54,27 +54,40 @@ sealed interface WireAction {
     data object ForeignAid : WireAction
 
     @Serializable
-    data class Coup(val target: WirePlayerId) : WireAction
+    data class Coup(
+        val target: WirePlayerId,
+    ) : WireAction
 
     @Serializable
     data object Tax : WireAction
 
     @Serializable
-    data class Assassinate(val target: WirePlayerId) : WireAction
+    data class Assassinate(
+        val target: WirePlayerId,
+    ) : WireAction
 
     @Serializable
-    data class Steal(val target: WirePlayerId) : WireAction
+    data class Steal(
+        val target: WirePlayerId,
+    ) : WireAction
 
     @Serializable
     data object Exchange : WireAction
 
     @Serializable
-    data class Investigate(val target: WirePlayerId) : WireAction
+    data class Investigate(
+        val target: WirePlayerId,
+    ) : WireAction
 
     // ── Variant actions (all default=disabled; classic path never produces these) ──
     @Serializable data object BailPe : WireAction
+
     @Serializable data object Sabotage : WireAction
-    @Serializable data class Hawala(val to: WirePlayerId) : WireAction
+
+    @Serializable data class Hawala(
+        val to: WirePlayerId,
+    ) : WireAction
+
     @Serializable data object Emergency : WireAction
 }
 
@@ -91,25 +104,44 @@ sealed interface WireIntent {
     val actor: WirePlayerId
 
     @Serializable
-    data class DeclareAction(override val actor: WirePlayerId, val action: WireAction) : WireIntent
+    data class DeclareAction(
+        override val actor: WirePlayerId,
+        val action: WireAction,
+    ) : WireIntent
 
     @Serializable
-    data class Challenge(override val actor: WirePlayerId) : WireIntent
+    data class Challenge(
+        override val actor: WirePlayerId,
+    ) : WireIntent
 
     @Serializable
-    data class Block(override val actor: WirePlayerId, val role: WireRole) : WireIntent
+    data class Block(
+        override val actor: WirePlayerId,
+        val role: WireRole,
+    ) : WireIntent
 
     @Serializable
-    data class Pass(override val actor: WirePlayerId) : WireIntent
+    data class Pass(
+        override val actor: WirePlayerId,
+    ) : WireIntent
 
     @Serializable
-    data class ChooseInfluenceToLose(override val actor: WirePlayerId, val card: WireCardId) : WireIntent
+    data class ChooseInfluenceToLose(
+        override val actor: WirePlayerId,
+        val card: WireCardId,
+    ) : WireIntent
 
     @Serializable
-    data class ChooseExchange(override val actor: WirePlayerId, val keep: List<WireCardId>) : WireIntent
+    data class ChooseExchange(
+        override val actor: WirePlayerId,
+        val keep: List<WireCardId>,
+    ) : WireIntent
 
     @Serializable
-    data class ResolveInvestigate(override val actor: WirePlayerId, val forceRedraw: Boolean) : WireIntent
+    data class ResolveInvestigate(
+        override val actor: WirePlayerId,
+        val forceRedraw: Boolean,
+    ) : WireIntent
 }
 
 // ─────────────────────────── ReactionStep ───────────────────────────
@@ -145,9 +177,10 @@ enum class WireLossReason {
  */
 @Serializable
 sealed interface WirePhaseView {
-
     @Serializable
-    data class Turn(val actor: WirePlayerId) : WirePhaseView
+    data class Turn(
+        val actor: WirePlayerId,
+    ) : WirePhaseView
 
     @Serializable
     data class Reactions(
@@ -161,7 +194,10 @@ sealed interface WirePhaseView {
     ) : WirePhaseView
 
     @Serializable
-    data class InfluenceLoss(val loser: WirePlayerId, val reason: WireLossReason) : WirePhaseView
+    data class InfluenceLoss(
+        val loser: WirePlayerId,
+        val reason: WireLossReason,
+    ) : WirePhaseView
 
     /**
      * Serializable mirror of [com.kursi.engine.PhaseView.Exchange].
@@ -192,10 +228,15 @@ sealed interface WirePhaseView {
      * gameplay information is lost for the entitled viewer.
      */
     @Serializable
-    data class InvestigatePeek(val examiner: WirePlayerId, val target: WirePlayerId) : WirePhaseView
+    data class InvestigatePeek(
+        val examiner: WirePlayerId,
+        val target: WirePlayerId,
+    ) : WirePhaseView
 
     @Serializable
-    data class Over(val winner: WirePlayerId) : WirePhaseView
+    data class Over(
+        val winner: WirePlayerId,
+    ) : WirePhaseView
 }
 
 // ─────────────────────────── OwnCard ───────────────────────────
@@ -339,7 +380,6 @@ data class WirePlayerView(
  */
 @Serializable
 sealed interface WireGameEvent {
-
     @Serializable
     data class ActionDeclared(
         val actor: WirePlayerId,
@@ -382,13 +422,22 @@ sealed interface WireGameEvent {
     ) : WireGameEvent
 
     @Serializable
-    data class ActionResolved(val actor: WirePlayerId, val action: WireAction) : WireGameEvent
+    data class ActionResolved(
+        val actor: WirePlayerId,
+        val action: WireAction,
+    ) : WireGameEvent
 
     @Serializable
-    data class ActionNegated(val actor: WirePlayerId, val action: WireAction) : WireGameEvent
+    data class ActionNegated(
+        val actor: WirePlayerId,
+        val action: WireAction,
+    ) : WireGameEvent
 
     @Serializable
-    data class CoinsChanged(val player: WirePlayerId, val delta: Int) : WireGameEvent
+    data class CoinsChanged(
+        val player: WirePlayerId,
+        val delta: Int,
+    ) : WireGameEvent
 
     @Serializable
     data class CoinsTransferred(
@@ -407,7 +456,9 @@ sealed interface WireGameEvent {
     ) : WireGameEvent
 
     @Serializable
-    data class PlayerEliminated(val player: WirePlayerId) : WireGameEvent
+    data class PlayerEliminated(
+        val player: WirePlayerId,
+    ) : WireGameEvent
 
     /**
      * The exchanging actor finished. [returned] cards (to deck) are public; [kept] are the actor's new
@@ -426,37 +477,64 @@ sealed interface WireGameEvent {
      * dropped), never via this broadcast fact. No other seat ever learns the examined card from this.
      */
     @Serializable
-    data class Investigated(val examiner: WirePlayerId, val target: WirePlayerId) : WireGameEvent
+    data class Investigated(
+        val examiner: WirePlayerId,
+        val target: WirePlayerId,
+    ) : WireGameEvent
 
     /** The examiner forced a redraw. No role leaked publicly. */
     @Serializable
-    data class InvestigateRedraw(val target: WirePlayerId) : WireGameEvent
+    data class InvestigateRedraw(
+        val target: WirePlayerId,
+    ) : WireGameEvent
 
     @Serializable
-    data class TurnAdvanced(val toSeat: Int, val turnNumber: Int) : WireGameEvent
+    data class TurnAdvanced(
+        val toSeat: Int,
+        val turnNumber: Int,
+    ) : WireGameEvent
 
     @Serializable
-    data class GameEnded(val winner: WirePlayerId) : WireGameEvent
+    data class GameEnded(
+        val winner: WirePlayerId,
+    ) : WireGameEvent
 
     // ── Variant events (emitted only in variant game modes) ────────────────────────────────────────────
 
     /** BAIL PE BAHAR — a face-up card was restored to face-down by paying the bail cost. */
     @Serializable
-    data class InfluenceRestored(val player: WirePlayerId, val card: WireCardId, val role: WireRole) : WireGameEvent
+    data class InfluenceRestored(
+        val player: WirePlayerId,
+        val card: WireCardId,
+        val role: WireRole,
+    ) : WireGameEvent
 
     /** HAWALA — coins transferred directly between players (bypasses treasury). */
     @Serializable
-    data class CoinsGifted(val from: WirePlayerId, val to: WirePlayerId, val amount: Int) : WireGameEvent
+    data class CoinsGifted(
+        val from: WirePlayerId,
+        val to: WirePlayerId,
+        val amount: Int,
+    ) : WireGameEvent
 
     /** ADHYADESH (Emergency) — declared; actor pays all coins and chain-Coups all alive opponents. */
     @Serializable
-    data class EmergencyDeclared(val actor: WirePlayerId) : WireGameEvent
+    data class EmergencyDeclared(
+        val actor: WirePlayerId,
+    ) : WireGameEvent
 
     /** KHAZANA RAJ — a player reached the lifetime coin milestone and won. */
     @Serializable
-    data class KhazanaWon(val winner: WirePlayerId, val lifetimeCoins: Int) : WireGameEvent
+    data class KhazanaWon(
+        val winner: WirePlayerId,
+        val lifetimeCoins: Int,
+    ) : WireGameEvent
 
     /** DARJA milestone reached (corruption level 1-4 unlocked by lifetime coins). */
     @Serializable
-    data class DarjaReached(val player: WirePlayerId, val level: Int, val lifetimeCoins: Int) : WireGameEvent
+    data class DarjaReached(
+        val player: WirePlayerId,
+        val level: Int,
+        val lifetimeCoins: Int,
+    ) : WireGameEvent
 }

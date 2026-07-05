@@ -25,7 +25,6 @@ package com.kursi.feature.game
  * my seat until I resume — that is already observable.)
  */
 sealed interface OnlineConnectionStatus {
-
     /**
      * Whether inputs should be ENABLED. Only [InGame] permits play; every other state means the table is
      * either not live or not authoritative right now, so the screen disables action chips and shows the
@@ -57,7 +56,9 @@ sealed interface OnlineConnectionStatus {
      *
      * @param attempt 1-based retry counter, for an optional "Reconnecting… (2/6)" affordance.
      */
-    data class Reconnecting(val attempt: Int) : OnlineConnectionStatus {
+    data class Reconnecting(
+        val attempt: Int,
+    ) : OnlineConnectionStatus {
         override val label: String get() = "Reconnecting…"
     }
 
@@ -70,7 +71,9 @@ sealed interface OnlineConnectionStatus {
      *
      * @param seat the vacated opponent's seat index (for naming the banner), or null if unknown.
      */
-    data class OpponentDisconnected(val seat: Int?) : OnlineConnectionStatus {
+    data class OpponentDisconnected(
+        val seat: Int?,
+    ) : OnlineConnectionStatus {
         override val inputsEnabled: Boolean get() = true
         override val label: String get() = "Opponent left — bot playing their seat"
     }
@@ -82,7 +85,9 @@ sealed interface OnlineConnectionStatus {
      *
      * @param cause the underlying drop reason, if the network layer provided one.
      */
-    data class ServerLost(val cause: String?) : OnlineConnectionStatus {
+    data class ServerLost(
+        val cause: String?,
+    ) : OnlineConnectionStatus {
         override val label: String get() = "Connection lost"
     }
 }

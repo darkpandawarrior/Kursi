@@ -14,7 +14,6 @@ import kotlin.test.assertTrue
  * reaction-window eligibility query.
  */
 class ChallengeOrderTest {
-
     private val c2 = cfg(2)
 
     private fun List<GameEvent>.indexOfFirstOrFail(pred: (GameEvent) -> Boolean): Int {
@@ -28,7 +27,8 @@ class ChallengeOrderTest {
         // P0 truthfully claims Neta (Tax); P1 challenges and is wrong → P1 loses, P0 reveal-replaces.
         val s0 = buildState(c2, listOf(listOf(Role.NETA, Role.BHAI), listOf(Role.VAKIL, Role.BABU)), listOf(2, 2))
         var s = applyIntent(s0, Intent.DeclareAction(P[0], Action.Tax)).ok()
-        val chOut = applyIntent(s, Intent.Challenge(P[1])); s = chOut.ok()
+        val chOut = applyIntent(s, Intent.Challenge(P[1]))
+        s = chOut.ok()
         // P1 chooses which influence to lose; this step emits InfluenceLost (P1) then CardReplaced (P0).
         val lossOut = applyIntent(s, legalIntents(s, P[1]).first())
         val events = chOut.evts() + lossOut.evts()
@@ -65,8 +65,10 @@ class ChallengeOrderTest {
         // Order must be: target's failed-challenge loss → assassin reveal-replaces Bhai → (block declined) → hit.
         val s0 = buildState(c2, listOf(listOf(Role.BHAI, Role.NETA), listOf(Role.NETA, Role.JUGAADU)), listOf(3, 2))
         var s = applyIntent(s0, Intent.DeclareAction(P[0], Action.Assassinate(P[1]))).ok()
-        val chOut = applyIntent(s, Intent.Challenge(P[1])); s = chOut.ok()
-        val loss1Out = applyIntent(s, legalIntents(s, P[1]).first()); s = loss1Out.ok()
+        val chOut = applyIntent(s, Intent.Challenge(P[1]))
+        s = chOut.ok()
+        val loss1Out = applyIntent(s, legalIntents(s, P[1]).first())
+        s = loss1Out.ok()
         val events = chOut.evts() + loss1Out.evts()
         val lostIdx = events.indexOfFirstOrFail { it is GameEvent.InfluenceLost && it.player == P[1] }
         val replacedIdx = events.indexOfFirstOrFail { it is GameEvent.CardReplaced && it.player == P[0] }
@@ -94,11 +96,12 @@ class ChallengeOrderTest {
     @Test
     fun aliveFromLeftOf_skips_eliminated_players() {
         // Seat 2 is eliminated (no face-down influence: give it a single face-up card via 0 face-down).
-        val s = buildState(
-            cfg(4),
-            listOf(listOf(Role.NETA, Role.BHAI), listOf(Role.VAKIL, Role.BABU), emptyList(), listOf(Role.JUGAADU, Role.NETA)),
-            List(4) { 2 },
-        )
+        val s =
+            buildState(
+                cfg(4),
+                listOf(listOf(Role.NETA, Role.BHAI), listOf(Role.VAKIL, Role.BABU), emptyList(), listOf(Role.JUGAADU, Role.NETA)),
+                List(4) { 2 },
+            )
         assertTrue(!s.isAlive(P[2]))
         // From seat 0 clockwise: 1,2,3,0; drop eliminated P2 and the excluded start occupant P0 → [P1, P3].
         assertEquals(listOf(P[1], P[3]), s.aliveFromLeftOf(0, setOf(P[0])))
@@ -108,11 +111,12 @@ class ChallengeOrderTest {
     fun challenge_block_window_includes_the_actor_in_clockwise_order() {
         // 3 players. P0 plays FDI, P1 blocks (Neta). The challenge-block window is everyone-but-blocker,
         // clockwise from the actor: seats (1,2,0) minus P1 → [P2, P0]. The ACTOR (P0) is eligible and last.
-        val s0 = buildState(
-            cfg(3),
-            listOf(listOf(Role.BHAI, Role.BABU), listOf(Role.NETA, Role.JUGAADU), listOf(Role.VAKIL, Role.NETA)),
-            listOf(2, 2, 2),
-        )
+        val s0 =
+            buildState(
+                cfg(3),
+                listOf(listOf(Role.BHAI, Role.BABU), listOf(Role.NETA, Role.JUGAADU), listOf(Role.VAKIL, Role.NETA)),
+                listOf(2, 2, 2),
+            )
         var s = applyIntent(s0, Intent.DeclareAction(P[0], Action.ForeignAid)).ok()
         // FDI block window is all opponents [P1, P2]; both must respond before the window resolves.
         s = applyIntent(s, Intent.Block(P[1], Role.NETA)).ok()

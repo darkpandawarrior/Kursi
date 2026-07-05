@@ -83,9 +83,10 @@ fun ReviewScreen(
     var replay by remember(match, prebuilt) { mutableStateOf(prebuilt) }
     LaunchedEffect(match, prebuilt) {
         if (prebuilt == null && match != null) {
-            replay = withContext(kotlinx.coroutines.Dispatchers.Default) {
-                MatchReplay.replaySessionFor(match)
-            }
+            replay =
+                withContext(kotlinx.coroutines.Dispatchers.Default) {
+                    MatchReplay.replaySessionFor(match)
+                }
         }
     }
 
@@ -159,7 +160,10 @@ fun ReviewScreen(
                 isTerminal = isTerminal,
                 playing = playing,
                 onTogglePlay = { playing = !playing },
-                onStep = { target -> playing = false; step = target.coerceIn(0, r.stepCount - 1) },
+                onStep = { target ->
+                    playing = false
+                    step = target.coerceIn(0, r.stepCount - 1)
+                },
             )
         }
     }
@@ -168,28 +172,32 @@ fun ReviewScreen(
 // ───────────────────────────── header ─────────────────────────────
 
 @Composable
-private fun ReviewHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
+private fun ReviewHeader(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val s = LocalKursiStrings.current
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(BrandTokens.TeakDark)
-            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(BrandTokens.TeakDark)
+                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
-            modifier = Modifier
-                .defaultMinSize(minHeight = 52.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                .semantics(mergeDescendants = true) {
-                    role = Role.Button
-                    contentDescription = "Back"
-                }
-                .clickable(onClick = onBack)
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier =
+                Modifier
+                    .defaultMinSize(minHeight = 52.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                    .semantics(mergeDescendants = true) {
+                        role = Role.Button
+                        contentDescription = "Back"
+                    }.clickable(onClick = onBack)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
         ) {
             Text(s.reviewBack, style = KursiType.title.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary)
         }
@@ -203,10 +211,11 @@ private fun ReviewHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
         )
         // Corner stamp
         Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
-                .border(1.dp, BrandTokens.StampRed.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
-                .padding(horizontal = 8.dp, vertical = 3.dp),
+            modifier =
+                Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .border(1.dp, BrandTokens.StampRed.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
         ) {
             Text(
                 s.reviewBadge,
@@ -221,11 +230,12 @@ private fun ReviewHeader(onBack: () -> Unit, modifier: Modifier = Modifier) {
 private fun ReviewWatermark(modifier: Modifier = Modifier) {
     val s = LocalKursiStrings.current
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(BrandTokens.TeakInk.copy(alpha = 0.55f))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
-            .padding(horizontal = 8.dp, vertical = 3.dp),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(BrandTokens.TeakInk.copy(alpha = 0.55f))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
     ) {
         Text(
             s.reviewBadge,
@@ -238,26 +248,31 @@ private fun ReviewWatermark(modifier: Modifier = Modifier) {
 // ───────────────────────────── annotation panel ─────────────────────────────
 
 @Composable
-private fun AnnotationPanel(a: ReplayAnnotation, language: Language) {
+private fun AnnotationPanel(
+    a: ReplayAnnotation,
+    language: Language,
+) {
     val s = LocalKursiStrings.current
     val accent = verdictColor(a.verdict)
-    val verdictWord = when (a.verdict) {
-        ReplayAnnotation.Verdict.SHARP -> s.reviewVerdictSharp
-        ReplayAnnotation.Verdict.FINE -> s.reviewVerdictFine
-        ReplayAnnotation.Verdict.LOOSE -> s.reviewVerdictLoose
-        ReplayAnnotation.Verdict.COSTLY -> s.reviewVerdictCostly
-    }
+    val verdictWord =
+        when (a.verdict) {
+            ReplayAnnotation.Verdict.SHARP -> s.reviewVerdictSharp
+            ReplayAnnotation.Verdict.FINE -> s.reviewVerdictFine
+            ReplayAnnotation.Verdict.LOOSE -> s.reviewVerdictLoose
+            ReplayAnnotation.Verdict.COSTLY -> s.reviewVerdictCostly
+        }
     val belief = if (language == Language.ENGLISH) a.beliefEnglish else a.beliefHinglish
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF1C140E))
-            .border(width = 1.dp, color = accent.copy(alpha = 0.55f), shape = RoundedCornerShape(0.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .semantics {
-                contentDescription = "Advisor read. You played ${a.playedLabel}. Best move ${a.bestLabel}. $belief"
-            },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF1C140E))
+                .border(width = 1.dp, color = accent.copy(alpha = 0.55f), shape = RoundedCornerShape(0.dp))
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .semantics {
+                    contentDescription = "Advisor read. You played ${a.playedLabel}. Best move ${a.bestLabel}. $belief"
+                },
     ) {
         Column(
             modifier = Modifier.widthIn(max = 760.dp).fillMaxWidth(),
@@ -271,11 +286,12 @@ private fun AnnotationPanel(a: ReplayAnnotation, language: Language) {
                     color = BrandTokens.GoldAntique,
                 )
                 Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(accent.copy(alpha = 0.18f))
-                        .border(1.dp, accent.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
-                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                    modifier =
+                        Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(accent.copy(alpha = 0.18f))
+                            .border(1.dp, accent.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 8.dp, vertical = 2.dp),
                 ) {
                     Text(verdictWord, style = KursiType.label_micro.copy(fontSize = 9.sp, letterSpacing = 1.sp), color = accent)
                 }
@@ -332,13 +348,19 @@ private fun AnnotationPanel(a: ReplayAnnotation, language: Language) {
 }
 
 @Composable
-private fun MoveCell(label: String, value: String, accent: Color, modifier: Modifier = Modifier) {
+private fun MoveCell(
+    label: String,
+    value: String,
+    accent: Color,
+    modifier: Modifier = Modifier,
+) {
     Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(BrandTokens.PaperCream.copy(alpha = 0.05f))
-            .border(1.dp, accent.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(BrandTokens.PaperCream.copy(alpha = 0.05f))
+                .border(1.dp, accent.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
+                .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         Text(label, style = KursiType.label_micro.copy(fontSize = 8.sp, letterSpacing = 1.sp), color = KursiNeutrals.TextMuted)
@@ -346,12 +368,13 @@ private fun MoveCell(label: String, value: String, accent: Color, modifier: Modi
     }
 }
 
-private fun verdictColor(v: ReplayAnnotation.Verdict): Color = when (v) {
-    ReplayAnnotation.Verdict.SHARP -> Color(0xFF6FCF97)   // green — best/near-best
-    ReplayAnnotation.Verdict.FINE -> Color(0xFFB7C66B)    // olive — close enough
-    ReplayAnnotation.Verdict.LOOSE -> Color(0xFFE0B354)   // amber — leaked some EV
-    ReplayAnnotation.Verdict.COSTLY -> BrandTokens.StampRed // red — costly miss
-}
+private fun verdictColor(v: ReplayAnnotation.Verdict): Color =
+    when (v) {
+        ReplayAnnotation.Verdict.SHARP -> Color(0xFF6FCF97) // green — best/near-best
+        ReplayAnnotation.Verdict.FINE -> Color(0xFFB7C66B) // olive — close enough
+        ReplayAnnotation.Verdict.LOOSE -> Color(0xFFE0B354) // amber — leaked some EV
+        ReplayAnnotation.Verdict.COSTLY -> BrandTokens.StampRed // red — costly miss
+    }
 
 // ───────────────────────────── scrubber ─────────────────────────────
 
@@ -370,11 +393,12 @@ private fun Scrubber(
     val nextDecision = decisionIdx.firstOrNull { it > step }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(BrandTokens.TeakDark)
-            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.5f), RoundedCornerShape(0.dp))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(BrandTokens.TeakDark)
+                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.5f), RoundedCornerShape(0.dp))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Column(modifier = Modifier.widthIn(max = 760.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -394,20 +418,22 @@ private fun Scrubber(
                         val isDecision = i in decisionIdx
                         val isCurrent = i == step
                         val isLast = i == replay.stepCount - 1
-                        val pipColor = when {
-                            isCurrent -> BrandTokens.GoldAntique
-                            isLast -> BrandTokens.StampRed.copy(alpha = 0.8f)
-                            isDecision -> BrandTokens.BrassAged.copy(alpha = 0.85f)
-                            else -> BrandTokens.BrassDark.copy(alpha = 0.5f)
-                        }
+                        val pipColor =
+                            when {
+                                isCurrent -> BrandTokens.GoldAntique
+                                isLast -> BrandTokens.StampRed.copy(alpha = 0.8f)
+                                isDecision -> BrandTokens.BrassAged.copy(alpha = 0.85f)
+                                else -> BrandTokens.BrassDark.copy(alpha = 0.5f)
+                            }
                         Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(if (isCurrent) 16.dp else 10.dp)
-                                .clip(RoundedCornerShape(3.dp))
-                                .background(pipColor)
-                                .clickable { onStep(i) }
-                                .semantics { contentDescription = "Step ${i + 1}" },
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .height(if (isCurrent) 16.dp else 10.dp)
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(pipColor)
+                                    .clickable { onStep(i) }
+                                    .semantics { contentDescription = "Step ${i + 1}" },
                         )
                     }
                 }
@@ -423,13 +449,14 @@ private fun Scrubber(
                 TransportButton("◂", s.reviewStepBack, enabled = step > 0) { onStep(step - 1) }
                 // Play / pause — the hero control.
                 Box(
-                    modifier = Modifier
-                        .size(46.dp)
-                        .clip(CircleShape)
-                        .background(BrandTokens.BrassAged)
-                        .border(1.dp, BrandTokens.GoldAntique, CircleShape)
-                        .clickable(onClick = onTogglePlay)
-                        .semantics { contentDescription = if (playing) s.reviewPause else s.reviewPlay },
+                    modifier =
+                        Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                            .background(BrandTokens.BrassAged)
+                            .border(1.dp, BrandTokens.GoldAntique, CircleShape)
+                            .clickable(onClick = onTogglePlay)
+                            .semantics { contentDescription = if (playing) s.reviewPause else s.reviewPlay },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -457,16 +484,22 @@ private fun Scrubber(
 }
 
 @Composable
-private fun TransportButton(glyph: String, label: String, enabled: Boolean, onClick: () -> Unit) {
+private fun TransportButton(
+    glyph: String,
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
     Box(
-        modifier = Modifier
-            .size(38.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color(0xFF1E1610))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = if (enabled) 0.7f else 0.25f), RoundedCornerShape(8.dp))
-            .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
-            .alpha(if (enabled) 1f else 0.4f)
-            .semantics { contentDescription = label },
+        modifier =
+            Modifier
+                .size(38.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF1E1610))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = if (enabled) 0.7f else 0.25f), RoundedCornerShape(8.dp))
+                .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
+                .alpha(if (enabled) 1f else 0.4f)
+                .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
         Text(glyph, style = KursiType.title.copy(fontSize = 14.sp), color = BrandTokens.GoldAntique)
@@ -494,15 +527,21 @@ fun RecentMatchesList(
         }
         if (matches.isEmpty()) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
-                    .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-                    .padding(20.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
+                        .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                        .padding(20.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(s.reviewRecentEmpty, style = KursiType.caption.copy(fontSize = 11.sp, fontStyle = FontStyle.Italic), color = KursiNeutrals.TextMuted, textAlign = TextAlign.Center)
+                Text(
+                    s.reviewRecentEmpty,
+                    style = KursiType.caption.copy(fontSize = 11.sp, fontStyle = FontStyle.Italic),
+                    color = KursiNeutrals.TextMuted,
+                    textAlign = TextAlign.Center,
+                )
             }
         } else {
             matches.forEachIndexed { index, m ->
@@ -513,29 +552,34 @@ fun RecentMatchesList(
 }
 
 @Composable
-private fun RecentMatchRow(match: CompletedMatch, onClick: () -> Unit) {
+private fun RecentMatchRow(
+    match: CompletedMatch,
+    onClick: () -> Unit,
+) {
     val s = LocalKursiStrings.current
     val won = match.humanWon
     val tagColor = if (won) BrandTokens.GoldAntique else BrandTokens.StampRed
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFF1E1610))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
-            .clickable(onClick = onClick)
-            .semantics { contentDescription = "Review ${match.players}-player ${match.difficulty} game, ${if (won) "won" else "lost"}" }
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0xFF1E1610))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+                .clickable(onClick = onClick)
+                .semantics { contentDescription = "Review ${match.players}-player ${match.difficulty} game, ${if (won) "won" else "lost"}" }
+                .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         // Win/loss roundel
         Box(
-            modifier = Modifier
-                .size(34.dp)
-                .clip(CircleShape)
-                .background(tagColor.copy(alpha = 0.15f))
-                .border(1.dp, tagColor.copy(alpha = 0.7f), CircleShape),
+            modifier =
+                Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(tagColor.copy(alpha = 0.15f))
+                    .border(1.dp, tagColor.copy(alpha = 0.7f), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Text(

@@ -12,13 +12,15 @@ import kotlin.test.assertTrue
  * alive", team-aware bot targeting, and — critically — that free-for-all (teams == null) is unchanged.
  */
 class TeamsTest {
-
     /** 4 seats, two teams: {0,2}=team 0, {1,3}=team 1 (interleaved so seat order alternates teams). */
-    private fun teamCfg4(): GameConfig =
-        GameConfig.forPlayers(4).copy(teams = mapOf(0 to 0, 1 to 1, 2 to 0, 3 to 1))
+    private fun teamCfg4(): GameConfig = GameConfig.forPlayers(4).copy(teams = mapOf(0 to 0, 1 to 1, 2 to 0, 3 to 1))
 
     /** Drives a coup (pay 7, unblockable, unchallengeable) by [actor] on [target], resolving the loss. */
-    private fun coup(s: GameState, actor: PlayerId, target: PlayerId): GameState {
+    private fun coup(
+        s: GameState,
+        actor: PlayerId,
+        target: PlayerId,
+    ): GameState {
         var st = applyIntent(s, Intent.DeclareAction(actor, Action.Coup(target))).ok()
         if (st.phase is Phase.AwaitingInfluenceLoss) {
             st = applyIntent(st, legalIntents(st, target).first()).ok()
@@ -36,9 +38,10 @@ class TeamsTest {
 
     @Test
     fun teams_config_requires_two_distinct_teams() {
-        val ex = runCatching {
-            GameConfig.forPlayers(3).copy(teams = mapOf(0 to 7, 1 to 7, 2 to 7))
-        }.exceptionOrNull()
+        val ex =
+            runCatching {
+                GameConfig.forPlayers(3).copy(teams = mapOf(0 to 7, 1 to 7, 2 to 7))
+            }.exceptionOrNull()
         assertTrue(ex is IllegalArgumentException, "a single-team map must be rejected")
     }
 
@@ -125,9 +128,10 @@ class TeamsTest {
         // Raw legality DOES include a coup on the teammate (seat 2) — the engine never role-gates it.
         assertTrue(raw.any { it is Intent.DeclareAction && it.action == Action.Coup(P[2]) })
         // Team-safe filtering removes EVERY action targeting the teammate (seat 2)...
-        val teammateTargeted = safe.filter {
-            it is Intent.DeclareAction && Rules.targetOf(it.action) == P[2]
-        }
+        val teammateTargeted =
+            safe.filter {
+                it is Intent.DeclareAction && Rules.targetOf(it.action) == P[2]
+            }
         assertTrue(teammateTargeted.isEmpty(), "no team-safe action may target teammate seat 2")
         // ...but keeps coups on the two opponents (seats 1 and 3).
         assertTrue(safe.any { it is Intent.DeclareAction && it.action == Action.Coup(P[1]) })
@@ -178,7 +182,10 @@ class TeamsTest {
     // ── helpers ──
 
     /** Flips every face-down card of [pid] to face-up (eliminates them) WITHOUT driving the engine. */
-    private fun forceEliminate(s: GameState, pid: PlayerId): GameState {
+    private fun forceEliminate(
+        s: GameState,
+        pid: PlayerId,
+    ): GameState {
         var locs = s.locations
         for (c in s.faceDownInfluence(pid)) {
             locs = locs + (c to CardLocation.Hand(pid, faceUp = true))
@@ -187,7 +194,10 @@ class TeamsTest {
     }
 
     /** Runs a real Income action by [actor] so endTurn fires and any team win is detected by the engine. */
-    private fun endViaTurn(s: GameState, actor: PlayerId): GameState {
+    private fun endViaTurn(
+        s: GameState,
+        actor: PlayerId,
+    ): GameState {
         val seated = s.copy(phase = Phase.AwaitingAction(s.seatOf(actor)))
         return applyIntent(seated, Intent.DeclareAction(actor, Action.Income)).ok()
     }
