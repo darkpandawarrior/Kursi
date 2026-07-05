@@ -40,6 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          submodules: recursive
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Bump version
         run: bash scripts/bump_version.sh --${{ inputs.version_bump }}
@@ -71,6 +72,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          submodules: recursive
           ref: main  # pick up the version-bump commit
 
       - name: Set up JDK 17
@@ -162,6 +164,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          submodules: recursive
           ref: main
 
       - name: Set up JDK 17

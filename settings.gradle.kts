@@ -56,6 +56,17 @@ dependencyResolutionManagement {
 
 rootProject.name = "Kursi"
 
+// Shared MVI primitives (EffectEmitter) — vendored as a submodule, wired via composite build so
+// `com.siddharth.kmp:mvi-core:1.0.0` resolves to the local checkout instead of a remote repo.
+// Explicit substitution needed: the KMP root publication is renamed to "mvi-core" only at publish
+// time (see external/kmp-mvi-core/lib/build.gradle.kts) — the subproject itself is still `:lib`,
+// which Gradle would otherwise auto-substitute as `com.siddharth.kmp:lib`, not `:mvi-core`.
+includeBuild("external/kmp-mvi-core") {
+    dependencySubstitution {
+        substitute(module("com.siddharth.kmp:mvi-core")).using(project(":lib"))
+    }
+}
+
 // ── M0: PURE DOMAIN CORE (JVM target only until an Android SDK + apps land in M1/M2) ──
 include(":engine")            // PURE deterministic reducer. LEAF — depends on nothing.
 include(":ai")                // Bot policies (Easy, Medium). Depends on :engine only.

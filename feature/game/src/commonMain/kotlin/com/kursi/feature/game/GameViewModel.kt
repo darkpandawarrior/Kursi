@@ -16,12 +16,14 @@ import com.kursi.feature.game.session.GameSession
 import com.kursi.feature.game.session.MatchSnapshot
 import com.kursi.feature.game.session.toEngine
 import com.kursi.feature.game.session.toInput
+import com.siddharth.kmp.mvi.EffectEmitter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +31,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.random.Random
+
+/** One-shot, non-replayable signals from [GameViewModel] — collect via [GameViewModel.effects]. */
+sealed interface GameEffect {
+    /** The UI dispatched a [GameAction.Submit] whose intent was not in the currently-shown legal set. */
+    data object IllegalMove : GameEffect
+}
 
 /**
  * MVI ViewModel for a Kursi offline game.
@@ -131,6 +139,11 @@ class GameViewModel(
     private val coroutineScope: CoroutineScope = scope
     private val job: Job? = scope.coroutineContext[Job]
     private var session: GameSession? = null
+
+    // One-shot effects (e.g. illegal-move rejection) — reuses the existing coroutineScope above,
+    // no new scope and no androidx.lifecycle.ViewModel dependency.
+    private val effectEmitter = EffectEmitter<GameEffect>(coroutineScope)
+    val effects: Flow<GameEffect> = effectEmitter.effects
 
     /** The in-flight paced bot-advance loop (one bot action per tick). Cancelled on each new submit/new game. */
     private var advanceJob: Job? = null
@@ -604,7 +617,10 @@ class GameViewModel(
         // already advanced into a reaction window) is silently ignored; previously the engine
         // rejected it with an IllegalStateException that crashed the whole app.
         val shown = _state.value ?: return
-        if (action.intent !in shown.legalIntents) return
+        if (action.intent !in shown.legalIntents) {
+            effectEmitter.emit(GameEffect.IllegalMove)
+            return
+        }
 
         // M6b ANALYTICS — grade this decision against the coach's already-computed read BEFORE the
         // move is applied (the advice describes the pre-move decision). Cheap: a list lookup over the
