@@ -56,6 +56,7 @@ kotlin {
             implementation(project(":core:feedback"))
             implementation(project(":core:network"))
             implementation(project(":shared-protocol"))
+            implementation("com.siddharth.kmp:mvi-core:1.0.0")
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
         }
