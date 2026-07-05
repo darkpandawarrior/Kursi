@@ -1,0 +1,3 @@
+[submodule "external/kmp-mvi-core"]
+	path = external/kmp-mvi-core
+	url = https://github.com/darkpandawarrior/kmp-mvi-core
