@@ -116,26 +116,31 @@ class OnlineKursiClient(
         while (true) {
             _uiState.update {
                 it.copy(
-                    connection = if (attempt == 0) ConnectionState.Connecting
-                    else ConnectionState.Reconnecting(attempt),
+                    connection =
+                        if (attempt == 0) {
+                            ConnectionState.Connecting
+                        } else {
+                            ConnectionState.Reconnecting(attempt)
+                        },
                     lastError = null,
                 )
             }
 
             connectedThisAttempt = false
-            val cleanFinish = try {
-                runSingleConnection()
-                true // the server closed the socket normally (e.g. match over, or graceful close)
-            } catch (e: CancellationException) {
-                throw e // caller cancelled — propagate, do NOT reconnect
-            } catch (e: Exception) {
-                _uiState.update { it.copy(connection = ConnectionState.Dropped(e.message)) }
-                false
-            } finally {
-                liveSession = null
-                liveTransport?.close()
-                liveTransport = null
-            }
+            val cleanFinish =
+                try {
+                    runSingleConnection()
+                    true // the server closed the socket normally (e.g. match over, or graceful close)
+                } catch (e: CancellationException) {
+                    throw e // caller cancelled — propagate, do NOT reconnect
+                } catch (e: Exception) {
+                    _uiState.update { it.copy(connection = ConnectionState.Dropped(e.message)) }
+                    false
+                } finally {
+                    liveSession = null
+                    liveTransport?.close()
+                    liveTransport = null
+                }
 
             // A connection that actually reached Connected resets the backoff budget, so a long-lived
             // match that suffers several SEPARATE blips doesn't exhaust maxAttempts on the cumulative count.
@@ -151,8 +156,11 @@ class OnlineKursiClient(
                 // Socket closed without an exception and game not over: treat as a drop and retry
                 // (the server only closes mid-match on an abnormal condition).
                 _uiState.update {
-                    if (it.connection is ConnectionState.Connected)
-                        it.copy(connection = ConnectionState.Dropped(cause = "socket closed")) else it
+                    if (it.connection is ConnectionState.Connected) {
+                        it.copy(connection = ConnectionState.Dropped(cause = "socket closed"))
+                    } else {
+                        it
+                    }
                 }
             }
 
@@ -169,10 +177,11 @@ class OnlineKursiClient(
                 return
             }
 
-            val backoff = minOf(
-                config.initialBackoffMs shl (attempt - 1),
-                config.maxBackoffMs,
-            )
+            val backoff =
+                minOf(
+                    config.initialBackoffMs shl (attempt - 1),
+                    config.maxBackoffMs,
+                )
             delay(backoff)
         }
     }
@@ -184,13 +193,14 @@ class OnlineKursiClient(
     private suspend fun runSingleConnection() {
         val transport = transportFactory()
         liveTransport = transport
-        val session = transport.connect(
-            host = host,
-            port = port,
-            roomCode = roomCode,
-            matchId = matchId,
-            reconnectSeat = mySeat,
-        )
+        val session =
+            transport.connect(
+                host = host,
+                port = port,
+                roomCode = roomCode,
+                matchId = matchId,
+                reconnectSeat = mySeat,
+            )
         liveSession = session
         session.incoming.collect { msg -> onServerMessage(msg) }
     }
@@ -219,8 +229,9 @@ class OnlineKursiClient(
                         recentEvents = merged,
                         isHumanTurn = view.isMyTurn(),
                         // A late StateUpdate confirms we are live again after a reconnect resync.
-                        connection = (prev.connection as? ConnectionState.Connected)
-                            ?: ConnectionState.Connected(mySeat ?: view.viewer),
+                        connection =
+                            (prev.connection as? ConnectionState.Connected)
+                                ?: ConnectionState.Connected(mySeat ?: view.viewer),
                         mySeat = prev.mySeat ?: view.viewer,
                     )
                 }

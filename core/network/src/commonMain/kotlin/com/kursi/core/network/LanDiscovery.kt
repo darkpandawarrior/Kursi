@@ -48,7 +48,11 @@ expect class LanAdvertiser() {
      * Begins advertising [host]:[port] / [roomCode] under [serviceName]. Safe to call once;
      * calling again before [stop] is implementation-defined (prefer one instance per ad).
      */
-    fun start(serviceName: String, roomCode: String, port: Int)
+    fun start(
+        serviceName: String,
+        roomCode: String,
+        port: Int,
+    )
 
     /** Stops advertising and releases platform resources. Idempotent. */
     fun stop()

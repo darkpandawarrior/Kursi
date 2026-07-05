@@ -17,15 +17,15 @@ import kotlin.test.assertTrue
  * round-trip end-to-end, including through the serialized [MatchSnapshot] string.
  */
 class MatchResumeTest {
-
     private val seed = 4242L
     private val players = 4
 
     private fun makeSession(): GameSession {
         val config = GameConfig.forPlayers(players)
-        val bots = (1 until players).associate { seat ->
-            PlayerId(seat) to EasyPolicy(seed * 31L + seat) as Policy
-        }
+        val bots =
+            (1 until players).associate { seat ->
+                PlayerId(seat) to EasyPolicy(seed * 31L + seat) as Policy
+            }
         return GameSession(config = config, seed = seed, humanSeat = PlayerId(0), bots = bots)
     }
 
@@ -33,7 +33,10 @@ class MatchResumeTest {
      * Drive a session forward N human moves with a deterministic policy, return the session plus the
      * GameState at that point. Bot seats auto-advance inside the session between human turns.
      */
-    private fun drivePartway(session: GameSession, humanMoves: Int): GameSession {
+    private fun drivePartway(
+        session: GameSession,
+        humanMoves: Int,
+    ): GameSession {
         val humanPolicy = EasyPolicy(99L)
         var ui = session.start()
         var moves = 0
@@ -75,15 +78,17 @@ class MatchResumeTest {
         val originalState = original.snapshotState()
 
         // Encode → string → decode, exactly as AppPrefs persistence does.
-        val snap = MatchSnapshot.of(
-            seed = seed,
-            players = players,
-            difficulty = Difficulty.Medium,
-            humanLog = original.humanActionLog(),
-        )
+        val snap =
+            MatchSnapshot.of(
+                seed = seed,
+                players = players,
+                difficulty = Difficulty.Medium,
+                humanLog = original.humanActionLog(),
+            )
         val encoded = snap.encode()
-        val decoded = MatchSnapshot.decode(encoded)
-            ?: error("snapshot failed to decode")
+        val decoded =
+            MatchSnapshot.decode(encoded)
+                ?: error("snapshot failed to decode")
         assertEquals(seed, decoded.seed)
         assertEquals(players, decoded.players)
 

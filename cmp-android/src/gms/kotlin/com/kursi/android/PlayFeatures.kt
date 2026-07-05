@@ -10,8 +10,10 @@ import com.kursi.core.prefs.AppPrefs
 
 /** Gms-flavor implementation: Play Core in-app review + in-app update. Stubbed out in noGms. */
 object PlayFeatures {
-
-    fun launchInAppReview(activity: ComponentActivity, appPrefs: AppPrefs) {
+    fun launchInAppReview(
+        activity: ComponentActivity,
+        appPrefs: AppPrefs,
+    ) {
         val manager = ReviewManagerFactory.create(activity)
         manager.requestReviewFlow().addOnCompleteListener { task ->
             if (task.isSuccessful) {

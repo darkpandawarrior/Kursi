@@ -11,7 +11,6 @@ import kotlin.test.assertTrue
  * is wiped by a career reset.
  */
 class RecentMatchesStoreTest {
-
     @Test
     fun freshStore_isEmpty() {
         val prefs = AppPrefs(MapSettings())

@@ -1,7 +1,6 @@
 package com.kursi.shared.nav
 
 import com.kursi.feature.game.Difficulty
-import com.kursi.feature.game.GameUiState
 
 /**
  * MatchSummary — a serializable snapshot of game results.

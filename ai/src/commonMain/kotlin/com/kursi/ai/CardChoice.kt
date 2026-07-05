@@ -17,19 +17,19 @@ import com.kursi.engine.*
  * bug this helper fixes.
  */
 object CardChoice {
-
     /**
      * Higher = more valuable to keep. The one ranking every tier scores against.
      * PATRAKAAR (Inquisitor / Jaanch): info-then-disrupt with no own counter — slotted just under BABU.
      */
-    val roleValue: Map<Role, Int> = mapOf(
-        Role.NETA to 6,
-        Role.BABU to 5,
-        Role.PATRAKAAR to 4,
-        Role.BHAI to 3,
-        Role.VAKIL to 2,
-        Role.JUGAADU to 1,
-    )
+    val roleValue: Map<Role, Int> =
+        mapOf(
+            Role.NETA to 6,
+            Role.BABU to 5,
+            Role.PATRAKAAR to 4,
+            Role.BHAI to 3,
+            Role.VAKIL to 2,
+            Role.JUGAADU to 1,
+        )
 
     fun value(role: Role): Int = roleValue[role] ?: 0
 
@@ -47,15 +47,20 @@ object CardChoice {
     }
 
     /** Sum of [roleValue] over a keep-set, resolved via [roleOf]. Unknown CardIds contribute 0. */
-    fun keepValue(keep: List<CardId>, roleOf: Map<CardId, Role>): Int =
-        keep.sumOf { value(roleOf[it] ?: return@sumOf 0) }
+    fun keepValue(
+        keep: List<CardId>,
+        roleOf: Map<CardId, Role>,
+    ): Int = keep.sumOf { value(roleOf[it] ?: return@sumOf 0) }
 
     /**
      * The role-optimal [Intent.ChooseExchange]: the legal keep-set with the highest summed role value.
      * Ties broken deterministically by the engine's enumeration order (stable [maxByOrNull]).
      * Returns null only if there are no ChooseExchange intents (caller should fall back).
      */
-    fun bestExchange(view: PlayerView, legal: List<Intent>): Intent.ChooseExchange? {
+    fun bestExchange(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent.ChooseExchange? {
         val choices = legal.filterIsInstance<Intent.ChooseExchange>()
         if (choices.isEmpty()) return null
         val roleOf = exchangeRoleOf(view)
@@ -67,7 +72,10 @@ object CardChoice {
      * Resolves each candidate CardId to its true role via [PlayerView.myCards] (face-down only),
      * fixing the role-ordinal-vs-CardId index bug. Returns null if there are no loss intents.
      */
-    fun worstLoss(view: PlayerView, legal: List<Intent>): Intent.ChooseInfluenceToLose? {
+    fun worstLoss(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent.ChooseInfluenceToLose? {
         val losses = legal.filterIsInstance<Intent.ChooseInfluenceToLose>()
         if (losses.isEmpty()) return null
         val roleOf = view.myCards.filter { !it.faceUp }.associate { it.id to it.role }

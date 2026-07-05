@@ -12,6 +12,9 @@
     <ID>CyclomaticComplexMethod:MoveAdvisor.kt:MoveAdvisor$private fun labelFor: String</ID>
     <ID>FunctionParameterNaming:IsmctsSearch.kt:Node$C: Double</ID>
     <ID>LongMethod:Determinizer.kt:Determinizer$fun sample: Pair&lt;GameState, Rng&gt;</ID>
+    <ID>LongMethod:HardPolicy.kt:HardPolicy$private fun decideTurn: Intent</ID>
+    <ID>LongMethod:MediumPolicy.kt:MediumPolicy$private fun decideTurn: Intent</ID>
+    <ID>LongMethod:PersonaPrompts.kt:PersonaPrompts$private fun voiceFor: String</ID>
     <ID>LoopWithTooManyJumpStatements:IsmctsSearch.kt:IsmctsSearch$while</ID>
     <ID>MagicNumber:AnthropicProvider.kt:AnthropicProvider$5_000</ID>
     <ID>MagicNumber:BeliefModel.kt:BotMemory$0.8</ID>
@@ -77,6 +80,5 @@
     <ID>UnusedParameter:MoveAdvisor.kt:MoveAdvisor$state: GameState</ID>
     <ID>UnusedParameter:MoveAdvisor.kt:MoveAdvisor$view: PlayerView</ID>
     <ID>UnusedParameter:PersonaPolicy.kt:PersonaPolicy$view: PlayerView</ID>
-    <ID>VariableNaming:IsmctsSearch.kt:IsmctsSearch$private val C = 0.7</ID>
   </CurrentIssues>
 </SmellBaseline>

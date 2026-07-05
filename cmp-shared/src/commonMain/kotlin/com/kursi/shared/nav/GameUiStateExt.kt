@@ -1,6 +1,5 @@
 package com.kursi.shared.nav
 
-import com.kursi.engine.GameEvent
 import com.kursi.feature.game.Difficulty
 import com.kursi.feature.game.GameUiState
 
@@ -35,16 +34,17 @@ fun GameUiState.toMatchSummary(
     }
 
     // Build final standings: winner first, then everyone else by elimination order
-    val standings = buildList {
-        winnerSeat?.let { s ->
-            val name = if (s == 0) "Aap" else opponentPersonas[com.kursi.engine.PlayerId(s)]?.name ?: "P$s"
-            add(name)
+    val standings =
+        buildList {
+            winnerSeat?.let { s ->
+                val name = if (s == 0) "Aap" else opponentPersonas[com.kursi.engine.PlayerId(s)]?.name ?: "P$s"
+                add(name)
+            }
+            (0 until players).filter { it != winnerSeat }.forEach { s ->
+                val name = if (s == 0) "Aap" else opponentPersonas[com.kursi.engine.PlayerId(s)]?.name ?: "P$s"
+                add(name)
+            }
         }
-        (0 until players).filter { it != winnerSeat }.forEach { s ->
-            val name = if (s == 0) "Aap" else opponentPersonas[com.kursi.engine.PlayerId(s)]?.name ?: "P$s"
-            add(name)
-        }
-    }
 
     return MatchSummary(
         matchId = "", // filled by MatchSummaryStore.put()

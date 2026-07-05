@@ -67,7 +67,11 @@ class OnlineHubController(
     // ─────────────────────────── REST: create / quickmatch ───────────────────────────
 
     /** Host a PRIVATE room of [playerCount] seats: mints a share-code, then opens the lobby on it. */
-    fun createPrivateRoom(host: String, port: Int, playerCount: Int) {
+    fun createPrivateRoom(
+        host: String,
+        port: Int,
+        playerCount: Int,
+    ) {
         _uiState.update { it.copy(phase = HubPhase.Working, error = null) }
         scope.launch {
             roomApiFactory(host, port).use { api ->
@@ -81,7 +85,11 @@ class OnlineHubController(
     }
 
     /** Find a public QUICK-MATCH of [playerCount] seats: gets a waiting room's code, then opens the lobby. */
-    fun quickMatch(host: String, port: Int, playerCount: Int) {
+    fun quickMatch(
+        host: String,
+        port: Int,
+        playerCount: Int,
+    ) {
         _uiState.update { it.copy(phase = HubPhase.Working, error = null) }
         scope.launch {
             roomApiFactory(host, port).use { api ->
@@ -95,7 +103,12 @@ class OnlineHubController(
     }
 
     /** JOIN a private room by its shared [code] — no REST call, straight to the lobby on that code. */
-    fun joinByCode(host: String, port: Int, code: String, playerCount: Int = 0) {
+    fun joinByCode(
+        host: String,
+        port: Int,
+        code: String,
+        playerCount: Int = 0,
+    ) {
         val trimmed = code.trim().uppercase()
         if (trimmed.isEmpty()) {
             fail("Enter a room code")
@@ -118,14 +131,18 @@ class OnlineHubController(
         if (lanJob?.isActive == true) return
         _uiState.update { it.copy(lanBrowsing = true, lanHosts = emptyList()) }
         val discoverer = lanDiscovererFactory()
-        lanJob = scope.launch {
-            discoverer.discover().collect { found ->
-                _uiState.update { st ->
-                    if (st.lanHosts.any { it.host == found.host && it.port == found.port && it.roomCode == found.roomCode }) st
-                    else st.copy(lanHosts = st.lanHosts + found)
+        lanJob =
+            scope.launch {
+                discoverer.discover().collect { found ->
+                    _uiState.update { st ->
+                        if (st.lanHosts.any { it.host == found.host && it.port == found.port && it.roomCode == found.roomCode }) {
+                            st
+                        } else {
+                            st.copy(lanHosts = st.lanHosts + found)
+                        }
+                    }
                 }
             }
-        }
     }
 
     /** Stop LAN discovery (e.g. leaving the LAN tab). */
@@ -142,7 +159,13 @@ class OnlineHubController(
      * connection lifecycle into [OnlineHubUiState.lobby]. Flips [OnlineHubUiState.started] once the
      * server's first StateUpdate arrives (the match has begun).
      */
-    private fun openLobby(host: String, port: Int, code: String, playerCount: Int, kind: LobbyKind) {
+    private fun openLobby(
+        host: String,
+        port: Int,
+        code: String,
+        playerCount: Int,
+        kind: LobbyKind,
+    ) {
         lobbyJob?.cancel()
         client?.close()
 
@@ -154,13 +177,14 @@ class OnlineHubController(
             it.copy(
                 phase = HubPhase.Lobby,
                 error = null,
-                lobby = LobbyState(
-                    host = host,
-                    port = port,
-                    code = code,
-                    kind = kind,
-                    seatCount = playerCount,
-                ),
+                lobby =
+                    LobbyState(
+                        host = host,
+                        port = port,
+                        code = code,
+                        kind = kind,
+                        seatCount = playerCount,
+                    ),
                 started = false,
             )
         }
@@ -169,22 +193,24 @@ class OnlineHubController(
         // the table — no reconnect on hand-off.
         _adapter?.connect(host = host, port = port, roomCode = code)
 
-        lobbyJob = scope.launch {
-            c.uiState.collect { online ->
-                val started = online.view != null && !online.isGameOver
-                _uiState.update { st ->
-                    val lob = st.lobby ?: return@update st
-                    st.copy(
-                        lobby = lob.copy(
-                            connection = online.connection,
-                            mySeat = online.mySeat,
-                            joinedSeats = seatsKnown(online),
-                        ),
-                        started = st.started || started,
-                    )
+        lobbyJob =
+            scope.launch {
+                c.uiState.collect { online ->
+                    val started = online.view != null && !online.isGameOver
+                    _uiState.update { st ->
+                        val lob = st.lobby ?: return@update st
+                        st.copy(
+                            lobby =
+                                lob.copy(
+                                    connection = online.connection,
+                                    mySeat = online.mySeat,
+                                    joinedSeats = seatsKnown(online),
+                                ),
+                            started = st.started || started,
+                        )
+                    }
                 }
             }
-        }
     }
 
     /** Best-effort count of seats the server has confirmed (own seat + any rendered in the first view). */
@@ -209,8 +235,11 @@ class OnlineHubController(
         _uiState.update { it.copy(phase = HubPhase.Idle, error = message) }
     }
 
-    private fun unreachableMsg(host: String, port: Int, cause: String?): String =
-        "Daftar band hai — $host:$port se rabta nahi hua${cause?.let { " ($it)" } ?: ""}."
+    private fun unreachableMsg(
+        host: String,
+        port: Int,
+        cause: String?,
+    ): String = "Daftar band hai — $host:$port se rabta nahi hua${cause?.let { " ($it)" } ?: ""}."
 
     /** Tear everything down: lobby, LAN browse, client, adapter. */
     fun close() {
@@ -277,6 +306,7 @@ data class LobbyState(
     /** A short status the waiting room renders ("Connecting…", "Waiting for players…", "Lost"). */
     val isConnecting: Boolean get() = connection is ConnectionState.Connecting || connection is ConnectionState.Idle
     val isWaiting: Boolean get() = connection is ConnectionState.Connected
-    val isLost: Boolean get() = connection is ConnectionState.Dropped ||
-        (connection is ConnectionState.Closed)
+    val isLost: Boolean get() =
+        connection is ConnectionState.Dropped ||
+            (connection is ConnectionState.Closed)
 }

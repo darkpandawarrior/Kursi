@@ -68,20 +68,22 @@ data class ReplayAnnotation(
             val view = redact(state, seat)
             val advice = advisor.advise(state, seat, legal)
             val chosenAdvice = advice.firstOrNull { it.intent == chosen } ?: return null
-            val best = advice.firstOrNull { it.recommended }
-                ?: advice.maxByOrNull { it.winProb }
-                ?: return null
+            val best =
+                advice.firstOrNull { it.recommended }
+                    ?: advice.maxByOrNull { it.winProb }
+                    ?: return null
 
             val matched = chosenAdvice.intent == best.intent
             val evGap = (best.winProb - chosenAdvice.winProb).coerceAtLeast(0.0)
             val evGapPct = (evGap * 100.0).roundToInt().coerceIn(0, 100)
 
-            val verdict = when {
-                matched -> Verdict.SHARP
-                evGapPct <= 4 -> Verdict.FINE
-                evGapPct <= 12 -> Verdict.LOOSE
-                else -> Verdict.COSTLY
-            }
+            val verdict =
+                when {
+                    matched -> Verdict.SHARP
+                    evGapPct <= 4 -> Verdict.FINE
+                    evGapPct <= 12 -> Verdict.LOOSE
+                    else -> Verdict.COSTLY
+                }
 
             val (hi, en) = beliefRead(chosen, chosenAdvice, view, personas)
 
@@ -176,7 +178,10 @@ data class ReplayAnnotation(
          * revealed) copy on the table plus the copies in the viewer's own hand. The more accounted for,
          * the fewer remain hidden for an opponent to truthfully hold — the heart of the challenge read.
          */
-        private fun accountedFor(view: PlayerView, role: Role): Int {
+        private fun accountedFor(
+            view: PlayerView,
+            role: Role,
+        ): Int {
             val faceUpOpp = view.players.sumOf { p -> p.faceUpRoles.count { it == role } }
             val myFaceUp = view.myFaceUp.count { it == role }
             val myHand = view.myInfluence.count { it == role }
@@ -185,51 +190,63 @@ data class ReplayAnnotation(
 
         // ── labels ────────────────────────────────────────────────────────────────
 
-        private fun claimedRoleOf(intent: Intent): Role? = when (intent) {
-            is Intent.DeclareAction -> Rules.claimedRole(intent.action)
-            is Intent.Block -> intent.role
-            else -> null
-        }
+        private fun claimedRoleOf(intent: Intent): Role? =
+            when (intent) {
+                is Intent.DeclareAction -> Rules.claimedRole(intent.action)
+                is Intent.Block -> intent.role
+                else -> null
+            }
 
         /** A short, identity-flavoured label for a move — the sarkari action name + any role claim. */
-        private fun labelOf(intent: Intent, view: PlayerView, personas: Map<PlayerId, OpponentPersona>): String = when (intent) {
-            is Intent.DeclareAction -> when (val a = intent.action) {
-                Action.Income -> "DEHAADI (+1)"
-                Action.ForeignAid -> "FDI (+2)"
-                Action.Tax -> "GHOTALA (NETA)"
-                Action.Exchange -> "SETTING (JUGAADU)"
-                is Action.Coup -> "KHELA → ${seatName(a.target, view, personas)}"
-                is Action.Assassinate -> "SUPARI → ${seatName(a.target, view, personas)}"
-                is Action.Steal -> "VASOOLI → ${seatName(a.target, view, personas)}"
-                is Action.Investigate -> "JAANCH → ${seatName(a.target, view, personas)}"
-                Action.BailPe -> "BAIL PE BAHAR"
-                Action.Sabotage -> "BALI KHEL"
-                is Action.Hawala -> "HAWALA → ${seatName(a.to, view, personas)}"
-                Action.Emergency -> "ADHYADESH"
+        private fun labelOf(
+            intent: Intent,
+            view: PlayerView,
+            personas: Map<PlayerId, OpponentPersona>,
+        ): String =
+            when (intent) {
+                is Intent.DeclareAction ->
+                    when (val a = intent.action) {
+                        Action.Income -> "DEHAADI (+1)"
+                        Action.ForeignAid -> "FDI (+2)"
+                        Action.Tax -> "GHOTALA (NETA)"
+                        Action.Exchange -> "SETTING (JUGAADU)"
+                        is Action.Coup -> "KHELA → ${seatName(a.target, view, personas)}"
+                        is Action.Assassinate -> "SUPARI → ${seatName(a.target, view, personas)}"
+                        is Action.Steal -> "VASOOLI → ${seatName(a.target, view, personas)}"
+                        is Action.Investigate -> "JAANCH → ${seatName(a.target, view, personas)}"
+                        Action.BailPe -> "BAIL PE BAHAR"
+                        Action.Sabotage -> "BALI KHEL"
+                        is Action.Hawala -> "HAWALA → ${seatName(a.to, view, personas)}"
+                        Action.Emergency -> "ADHYADESH"
+                    }
+                is Intent.Block -> "Block (${intent.role})"
+                is Intent.Challenge -> "Lalkaar / Challenge"
+                is Intent.Pass -> "Pass"
+                is Intent.ChooseInfluenceToLose -> "Patta gira diya"
+                is Intent.ChooseExchange -> "Patte rakhe"
+                is Intent.ResolveInvestigate -> if (intent.forceRedraw) "Force redraw" else "Leave card"
             }
-            is Intent.Block -> "Block (${intent.role})"
-            is Intent.Challenge -> "Lalkaar / Challenge"
-            is Intent.Pass -> "Pass"
-            is Intent.ChooseInfluenceToLose -> "Patta gira diya"
-            is Intent.ChooseExchange -> "Patte rakhe"
-            is Intent.ResolveInvestigate -> if (intent.forceRedraw) "Force redraw" else "Leave card"
-        }
 
-        private fun seatName(id: PlayerId, view: PlayerView, personas: Map<PlayerId, OpponentPersona>): String =
+        private fun seatName(
+            id: PlayerId,
+            view: PlayerView,
+            personas: Map<PlayerId, OpponentPersona>,
+        ): String =
             personas[id]?.name
                 ?: view.players.firstOrNull { it.id == id }?.let { "Seat ${it.seatIndex}" }
                 ?: "P${id.raw}"
 
         private fun roleHinglish(role: Role): String = role.name // role names already read as the cast
 
-        private fun numberHinglish(n: Int): String = when (n) {
-            0 -> "Ek bhi nahi"
-            1 -> "Ek"
-            2 -> "Do"
-            3 -> "Teen"
-            4 -> "Chaar"
-            5 -> "Paanch"
-            else -> n.toString()
-        }
+        private fun numberHinglish(n: Int): String =
+            when (n) {
+                0 -> "Ek bhi nahi"
+                1 -> "Ek"
+                2 -> "Do"
+                3 -> "Teen"
+                4 -> "Chaar"
+                5 -> "Paanch"
+                else -> n.toString()
+            }
     }
 }

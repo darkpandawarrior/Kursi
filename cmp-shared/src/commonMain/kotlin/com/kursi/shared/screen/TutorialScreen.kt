@@ -30,9 +30,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
@@ -81,18 +81,19 @@ fun TutorialScreen(
     val s = LocalKursiStrings.current
 
     // The eight beats, paired (title, body) from the localized string table.
-    val beats = remember(s) {
-        listOf(
-            s.tut1Title to s.tut1Body,
-            s.tut2Title to s.tut2Body,
-            s.tut3Title to s.tut3Body,
-            s.tut4Title to s.tut4Body,
-            s.tut5Title to s.tut5Body, // YOU act: GHOTALA
-            s.tut6Title to s.tut6Body, // rival challenges
-            s.tut7Title to s.tut7Body, // reveal — JHOOTH (bluff caught)
-            s.tut8Title to s.tut8Body, // graduation
-        )
-    }
+    val beats =
+        remember(s) {
+            listOf(
+                s.tut1Title to s.tut1Body,
+                s.tut2Title to s.tut2Body,
+                s.tut3Title to s.tut3Body,
+                s.tut4Title to s.tut4Body,
+                s.tut5Title to s.tut5Body, // YOU act: GHOTALA
+                s.tut6Title to s.tut6Body, // rival challenges
+                s.tut7Title to s.tut7Body, // reveal — JHOOTH (bluff caught)
+                s.tut8Title to s.tut8Body, // graduation
+            )
+        }
 
     var step by remember { mutableStateOf(initialStep.coerceIn(0, beats.lastIndex)) }
     val isLast = step == beats.lastIndex
@@ -107,7 +108,6 @@ fun TutorialScreen(
     val revealed = step >= 6
 
     Box(modifier = modifier.fillMaxSize().background(BrandTokens.TeakInk)) {
-
         // ── Scripted table backdrop (always present; mutates with the beat) ─────
         ScriptedTable(
             challenged = challenged,
@@ -139,11 +139,12 @@ fun TutorialScreen(
                 isLast = isLast,
                 // Beat 5 (index 4) makes the primary CTA the "stamp GHOTALA" action so the learner
                 // performs the move; advancing reveals the challenge + bluff-caught beats.
-                primaryLabel = when {
-                    promptingAction -> s.tutorialDoIt
-                    isLast -> s.tutorialFinish
-                    else -> s.tutorialNext
-                },
+                primaryLabel =
+                    when {
+                        promptingAction -> s.tutorialDoIt
+                        isLast -> s.tutorialFinish
+                        else -> s.tutorialNext
+                    },
                 backLabel = s.tutorialBack,
                 canGoBack = step > 0,
                 onBack = { if (step > 0) step -= 1 },
@@ -170,61 +171,91 @@ fun TutorialOfferDialog(
 ) {
     val s = LocalKursiStrings.current
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BrandTokens.TeakDark.copy(alpha = 0.88f))
-            .clickable(indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, onClick = {}),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(BrandTokens.TeakDark.copy(alpha = 0.88f))
+                .clickable(
+                    indication = null,
+                    interactionSource =
+                        remember {
+                            androidx.compose.foundation.interaction
+                                .MutableInteractionSource()
+                        },
+                    onClick = {},
+                ),
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = Modifier
-                .widthIn(max = 380.dp)
-                .padding(24.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(Brush.verticalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark)))
-                .border(2.dp, Brush.sweepGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark, BrandTokens.GoldAntique)), RoundedCornerShape(18.dp))
-                .padding(2.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(BrandTokens.PaperCream)
-                .padding(22.dp),
+            modifier =
+                Modifier
+                    .widthIn(max = 380.dp)
+                    .padding(24.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(Brush.verticalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark)))
+                    .border(
+                        2.dp,
+                        Brush.sweepGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark, BrandTokens.GoldAntique)),
+                        RoundedCornerShape(18.dp),
+                    ).padding(2.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(BrandTokens.PaperCream)
+                    .padding(22.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Seal mark
             Box(
-                modifier = Modifier
-                    .size(46.dp)
-                    .clip(CircleShape)
-                    .background(Brush.radialGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark)))
-                    .border(1.5.dp, BrandTokens.BrassAged, CircleShape),
+                modifier =
+                    Modifier
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(Brush.radialGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark)))
+                        .border(1.5.dp, BrandTokens.BrassAged, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text("✦", style = KursiType.title.copy(fontSize = 20.sp), color = BrandTokens.TeakDark)
             }
             Text(s.tutorialOfferTitle, style = KursiType.title_md.copy(fontSize = 18.sp), color = BrandTokens.CreamInk, textAlign = TextAlign.Center)
-            Text(s.tutorialOfferBody, style = KursiType.body.copy(fontSize = 13.sp), color = BrandTokens.CreamInk.copy(alpha = 0.85f), textAlign = TextAlign.Center)
+            Text(
+                s.tutorialOfferBody,
+                style = KursiType.body.copy(fontSize = 13.sp),
+                color = BrandTokens.CreamInk.copy(alpha = 0.85f),
+                textAlign = TextAlign.Center,
+            )
             Spacer(Modifier.height(2.dp))
             // Accept (hero) — stamp
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Brush.horizontalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged)))
-                    .border(1.dp, BrandTokens.BrassDark, RoundedCornerShape(10.dp))
-                    .clickable(onClick = onAccept)
-                    .semantics { role = androidx.compose.ui.semantics.Role.Button; contentDescription = s.tutorialOfferAccept }
-                    .padding(vertical = 12.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Brush.horizontalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged)))
+                        .border(1.dp, BrandTokens.BrassDark, RoundedCornerShape(10.dp))
+                        .clickable(onClick = onAccept)
+                        .semantics {
+                            role = androidx.compose.ui.semantics.Role.Button
+                            contentDescription = s.tutorialOfferAccept
+                        }.padding(vertical = 12.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(s.tutorialOfferAccept, style = KursiType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp), color = BrandTokens.TeakDark)
+                Text(
+                    s.tutorialOfferAccept,
+                    style = KursiType.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp),
+                    color = BrandTokens.TeakDark,
+                )
             }
             Text(
                 s.tutorialOfferDecline,
                 style = KursiType.label.copy(fontSize = 11.sp),
                 color = BrandTokens.BrassDark.copy(alpha = 0.8f),
-                modifier = Modifier
-                    .clickable(onClick = onDecline)
-                    .semantics { role = androidx.compose.ui.semantics.Role.Button; contentDescription = s.tutorialOfferDecline },
+                modifier =
+                    Modifier
+                        .clickable(onClick = onDecline)
+                        .semantics {
+                            role = androidx.compose.ui.semantics.Role.Button
+                            contentDescription = s.tutorialOfferDecline
+                        },
             )
         }
     }
@@ -243,22 +274,24 @@ private fun TutorialHeader(
     skipLabel: String,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(BrandTokens.TeakDark)
-            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(BrandTokens.TeakDark)
+                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
+                .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
             Text(header, style = KursiType.title.copy(fontSize = 15.sp, letterSpacing = 1.sp), color = KursiNeutrals.TextPrimary)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(3.dp))
-                        .background(BrandTokens.StampRed.copy(alpha = 0.12f))
-                        .border(0.7.dp, BrandTokens.StampRed.copy(alpha = 0.4f), RoundedCornerShape(3.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                    modifier =
+                        Modifier
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(BrandTokens.StampRed.copy(alpha = 0.12f))
+                            .border(0.7.dp, BrandTokens.StampRed.copy(alpha = 0.4f), RoundedCornerShape(3.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
                 ) {
                     Text(badge, style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.6.sp), color = BrandTokens.StampRed.copy(alpha = 0.8f))
                 }
@@ -269,9 +302,13 @@ private fun TutorialHeader(
             text = skipLabel,
             style = KursiType.caption.copy(fontSize = 11.sp),
             color = BrandTokens.BrassAged,
-            modifier = Modifier
-                .clickable(onClick = onSkip)
-                .semantics { role = androidx.compose.ui.semantics.Role.Button; contentDescription = skipLabel },
+            modifier =
+                Modifier
+                    .clickable(onClick = onSkip)
+                    .semantics {
+                        role = androidx.compose.ui.semantics.Role.Button
+                        contentDescription = skipLabel
+                    },
         )
     }
 }
@@ -293,38 +330,39 @@ private fun CoachChit(
     onPrimary: () -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 20.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 20.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = Modifier
-                .widthIn(max = 560.dp)
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(
-                    Brush.verticalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark)),
-                )
-                .border(
-                    2.dp,
-                    Brush.sweepGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark, BrandTokens.GoldAntique)),
-                    RoundedCornerShape(16.dp),
-                )
-                .padding(2.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(BrandTokens.PaperCream)
-                .padding(horizontal = 20.dp, vertical = 18.dp),
+            modifier =
+                Modifier
+                    .widthIn(max = 560.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        Brush.verticalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark)),
+                    ).border(
+                        2.dp,
+                        Brush.sweepGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark, BrandTokens.GoldAntique)),
+                        RoundedCornerShape(16.dp),
+                    ).padding(2.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(BrandTokens.PaperCream)
+                    .padding(horizontal = 20.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             // Narrator nameplate + step dots
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(BrandTokens.BrassDark.copy(alpha = 0.18f))
-                        .border(0.8.dp, BrandTokens.BrassDark, RoundedCornerShape(4.dp))
-                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                    modifier =
+                        Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(BrandTokens.BrassDark.copy(alpha = 0.18f))
+                            .border(0.8.dp, BrandTokens.BrassDark, RoundedCornerShape(4.dp))
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
                 ) {
                     Text("▸ $coachTag", style = KursiType.label.copy(fontSize = 9.sp, letterSpacing = 1.sp), color = BrandTokens.BrassDark)
                 }
@@ -332,10 +370,11 @@ private fun CoachChit(
                 Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                     repeat(total) { idx ->
                         Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .clip(CircleShape)
-                                .background(if (idx <= step) BrandTokens.BrassDark else BrandTokens.BrassDark.copy(alpha = 0.2f)),
+                            modifier =
+                                Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(if (idx <= step) BrandTokens.BrassDark else BrandTokens.BrassDark.copy(alpha = 0.2f)),
                         )
                     }
                 }
@@ -363,14 +402,14 @@ private fun CoachChit(
             ) {
                 if (canGoBack) {
                     Box(
-                        modifier = Modifier
-                            .defaultMinSize(minWidth = 64.dp, minHeight = 52.dp)
-                            .semantics(mergeDescendants = true) {
-                                role = androidx.compose.ui.semantics.Role.Button
-                                contentDescription = backLabel
-                            }
-                            .clickable(onClick = onBack)
-                            .padding(horizontal = 8.dp),
+                        modifier =
+                            Modifier
+                                .defaultMinSize(minWidth = 64.dp, minHeight = 52.dp)
+                                .semantics(mergeDescendants = true) {
+                                    role = androidx.compose.ui.semantics.Role.Button
+                                    contentDescription = backLabel
+                                }.clickable(onClick = onBack)
+                                .padding(horizontal = 8.dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(text = backLabel, style = KursiType.label.copy(fontSize = 11.sp), color = BrandTokens.BrassDark.copy(alpha = 0.8f))
@@ -380,13 +419,16 @@ private fun CoachChit(
                 }
 
                 Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Brush.horizontalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged)))
-                        .border(1.dp, BrandTokens.BrassDark, RoundedCornerShape(8.dp))
-                        .clickable(onClick = onPrimary)
-                        .semantics { role = androidx.compose.ui.semantics.Role.Button; contentDescription = primaryLabel }
-                        .padding(horizontal = 18.dp, vertical = 9.dp),
+                    modifier =
+                        Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Brush.horizontalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged)))
+                            .border(1.dp, BrandTokens.BrassDark, RoundedCornerShape(8.dp))
+                            .clickable(onClick = onPrimary)
+                            .semantics {
+                                role = androidx.compose.ui.semantics.Role.Button
+                                contentDescription = primaryLabel
+                            }.padding(horizontal = 18.dp, vertical = 9.dp),
                 ) {
                     Text(primaryLabel, style = KursiType.label.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold), color = BrandTokens.TeakDark)
                 }
@@ -412,14 +454,16 @@ private fun ScriptedTable(
 ) {
     val s = LocalKursiStrings.current
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .drawBehind { drawFeltGuilloche() },
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .drawBehind { drawFeltGuilloche() },
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 84.dp, start = 24.dp, end = 24.dp, bottom = 200.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(top = 84.dp, start = 24.dp, end = 24.dp, bottom = 200.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -428,9 +472,23 @@ private fun ScriptedTable(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                RivalPlate(name = challengerName, monogram = "BF", hue = KursiRoleHues.Babu, role = Role.BABU, active = challenged, modifier = Modifier.weight(1f))
+                RivalPlate(
+                    name = challengerName,
+                    monogram = "BF",
+                    hue = KursiRoleHues.Babu,
+                    role = Role.BABU,
+                    active = challenged,
+                    modifier = Modifier.weight(1f),
+                )
                 RivalPlate(name = "Netaji Vachan", monogram = "NV", hue = KursiRoleHues.Neta, role = Role.NETA, active = false, modifier = Modifier.weight(1f))
-                RivalPlate(name = "Vakil Loophole", monogram = "VL", hue = KursiRoleHues.Vakil, role = Role.VAKIL, active = false, modifier = Modifier.weight(1f))
+                RivalPlate(
+                    name = "Vakil Loophole",
+                    monogram = "VL",
+                    hue = KursiRoleHues.Vakil,
+                    role = Role.VAKIL,
+                    active = false,
+                    modifier = Modifier.weight(1f),
+                )
             }
 
             // Challenge banner — drops in when Babu challenges.
@@ -467,20 +525,22 @@ private fun RivalPlate(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (active) hue.copy(alpha = 0.16f) else BrandTokens.TeakDark.copy(alpha = 0.55f))
-            .border(if (active) 1.5.dp else 1.dp, if (active) hue else BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
-            .padding(horizontal = 10.dp, vertical = 10.dp),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(if (active) hue.copy(alpha = 0.16f) else BrandTokens.TeakDark.copy(alpha = 0.55f))
+                .border(if (active) 1.5.dp else 1.dp, if (active) hue else BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
+                .padding(horizontal = 10.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Box(
-            modifier = Modifier
-                .size(34.dp)
-                .clip(CircleShape)
-                .background(Brush.radialGradient(listOf(hue, hue.copy(alpha = 0.5f))))
-                .border(1.dp, BrandTokens.BrassAged, CircleShape),
+            modifier =
+                Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(Brush.radialGradient(listOf(hue, hue.copy(alpha = 0.5f))))
+                    .border(1.dp, BrandTokens.BrassAged, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Text(monogram, style = KursiType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold), color = KursiNeutrals.Cream)
@@ -490,11 +550,12 @@ private fun RivalPlate(
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             repeat(2) {
                 Box(
-                    modifier = Modifier
-                        .size(width = 14.dp, height = 18.dp)
-                        .clip(RoundedCornerShape(3.dp))
-                        .background(BrandTokens.TeakInk)
-                        .border(0.8.dp, BrandTokens.BrassDark.copy(alpha = 0.6f), RoundedCornerShape(3.dp)),
+                    modifier =
+                        Modifier
+                            .size(width = 14.dp, height = 18.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(BrandTokens.TeakInk)
+                            .border(0.8.dp, BrandTokens.BrassDark.copy(alpha = 0.6f), RoundedCornerShape(3.dp)),
                 )
             }
         }
@@ -502,15 +563,19 @@ private fun RivalPlate(
 }
 
 @Composable
-private fun ChallengeBanner(text: String, revealed: Boolean) {
+private fun ChallengeBanner(
+    text: String,
+    revealed: Boolean,
+) {
     val accent = if (revealed) BrandTokens.StampRed else BrandTokens.GoldAntique
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(accent.copy(alpha = 0.14f))
-            .border(1.2.dp, accent, RoundedCornerShape(8.dp))
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(accent.copy(alpha = 0.14f))
+                .border(1.2.dp, accent, RoundedCornerShape(8.dp))
+                .padding(horizontal = 14.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -523,6 +588,7 @@ private fun ChallengeBanner(text: String, revealed: Boolean) {
 }
 
 private fun challengeLine(): String = "\"You hold NETA? Show me.\""
+
 private fun revealVerdictLine(): String = "JHOOTH! No NETA — the bluff is caught."
 
 /** Your two cards: a hidden card + the bluffed NETA card that flips face-up to JHOOTH when caught. */
@@ -550,18 +616,23 @@ private fun HandRow(revealed: Boolean) {
 }
 
 @Composable
-private fun HandCard(faceUp: Boolean, role: Role, caught: Boolean) {
+private fun HandCard(
+    faceUp: Boolean,
+    role: Role,
+    caught: Boolean,
+) {
     val hue = roleHue(role)
     Box(
-        modifier = Modifier
-            .size(width = 78.dp, height = 104.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (faceUp) BrandTokens.PaperCream else BrandTokens.TeakDark)
-            .border(
-                if (caught) 2.dp else 1.2.dp,
-                if (caught) BrandTokens.StampRed else BrandTokens.BrassAged.copy(alpha = 0.7f),
-                RoundedCornerShape(10.dp),
-            ),
+        modifier =
+            Modifier
+                .size(width = 78.dp, height = 104.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(if (faceUp) BrandTokens.PaperCream else BrandTokens.TeakDark)
+                .border(
+                    if (caught) 2.dp else 1.2.dp,
+                    if (caught) BrandTokens.StampRed else BrandTokens.BrassAged.copy(alpha = 0.7f),
+                    RoundedCornerShape(10.dp),
+                ),
         contentAlignment = Alignment.Center,
     ) {
         if (faceUp) {
@@ -570,24 +641,30 @@ private fun HandCard(faceUp: Boolean, role: Role, caught: Boolean) {
                 Text(roleName(role), style = KursiType.label.copy(fontSize = 9.sp, letterSpacing = 1.sp), color = BrandTokens.CreamInk)
                 if (caught) {
                     Box(
-                        modifier = Modifier
-                            .rotate(-8f)
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(BrandTokens.StampRed.copy(alpha = 0.9f))
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                        modifier =
+                            Modifier
+                                .rotate(-8f)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(BrandTokens.StampRed.copy(alpha = 0.9f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
                     ) {
-                        Text("JHOOTH", style = KursiType.caption.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp), color = KursiNeutrals.Cream)
+                        Text(
+                            "JHOOTH",
+                            style = KursiType.caption.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp),
+                            color = KursiNeutrals.Cream,
+                        )
                     }
                 }
             }
         } else {
             // Face-down crest
             Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(Brush.radialGradient(listOf(BrandTokens.BrassAged.copy(alpha = 0.4f), BrandTokens.BrassDark.copy(alpha = 0.6f))))
-                    .border(1.dp, BrandTokens.BrassDark, CircleShape),
+                modifier =
+                    Modifier
+                        .size(34.dp)
+                        .clip(CircleShape)
+                        .background(Brush.radialGradient(listOf(BrandTokens.BrassAged.copy(alpha = 0.4f), BrandTokens.BrassDark.copy(alpha = 0.6f))))
+                        .border(1.dp, BrandTokens.BrassDark, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text("✦", style = KursiType.title.copy(fontSize = 16.sp), color = BrandTokens.GoldAntique.copy(alpha = 0.7f))
@@ -600,11 +677,12 @@ private fun HandCard(faceUp: Boolean, role: Role, caught: Boolean) {
 private fun CoinTally(coins: Int) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(
-            modifier = Modifier
-                .size(22.dp)
-                .clip(CircleShape)
-                .background(Brush.radialGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark)))
-                .border(1.dp, BrandTokens.BrassAged, CircleShape),
+            modifier =
+                Modifier
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .background(Brush.radialGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark)))
+                    .border(1.dp, BrandTokens.BrassAged, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Text("₹", style = KursiType.caption.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold), color = BrandTokens.TeakDark)
@@ -614,7 +692,12 @@ private fun CoinTally(coins: Int) {
 }
 
 @Composable
-private fun ActionDock(ghotalaLabel: String, ghotalaSub: String, pulse: Boolean, spent: Boolean) {
+private fun ActionDock(
+    ghotalaLabel: String,
+    ghotalaSub: String,
+    pulse: Boolean,
+    spent: Boolean,
+) {
     val infinite = rememberInfiniteTransition(label = "dockPulse")
     val glow by infinite.animateFloat(
         initialValue = 0f,
@@ -628,17 +711,17 @@ private fun ActionDock(ghotalaLabel: String, ghotalaSub: String, pulse: Boolean,
     ) {
         // The GHOTALA chip — the move the learner performs.
         Box(
-            modifier = Modifier
-                .weight(1f)
-                .clip(RoundedCornerShape(10.dp))
-                .background(if (pulse) BrandTokens.GoldAntique.copy(alpha = 0.20f + glow * 0.18f) else BrandTokens.TeakDark.copy(alpha = 0.55f))
-                .border(
-                    if (pulse) 2.dp else 1.dp,
-                    if (pulse) BrandTokens.GoldAntique.copy(alpha = 0.7f + glow * 0.3f) else BrandTokens.BrassDark.copy(alpha = 0.5f),
-                    RoundedCornerShape(10.dp),
-                )
-                .alpha(if (spent) 0.5f else 1f)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(if (pulse) BrandTokens.GoldAntique.copy(alpha = 0.20f + glow * 0.18f) else BrandTokens.TeakDark.copy(alpha = 0.55f))
+                    .border(
+                        if (pulse) 2.dp else 1.dp,
+                        if (pulse) BrandTokens.GoldAntique.copy(alpha = 0.7f + glow * 0.3f) else BrandTokens.BrassDark.copy(alpha = 0.5f),
+                        RoundedCornerShape(10.dp),
+                    ).alpha(if (spent) 0.5f else 1f)
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 RoleGlyph(role = Role.NETA, modifier = Modifier.size(26.dp), tint = KursiRoleHues.Neta)
@@ -651,13 +734,14 @@ private fun ActionDock(ghotalaLabel: String, ghotalaSub: String, pulse: Boolean,
         // Two dimmed sibling chips (context — there are always more moves).
         repeat(2) {
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(BrandTokens.TeakDark.copy(alpha = 0.4f))
-                    .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-                    .alpha(0.55f)
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(BrandTokens.TeakDark.copy(alpha = 0.4f))
+                        .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                        .alpha(0.55f)
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
             ) {
                 Text(if (it == 0) "DEHAADI" else "FDI", style = KursiType.name.copy(fontSize = 12.sp), color = KursiNeutrals.TextSecondary)
             }
@@ -667,18 +751,25 @@ private fun ActionDock(ghotalaLabel: String, ghotalaSub: String, pulse: Boolean,
 
 // ─────────────────────────── Helpers ──────────────────────────────────────────
 
-private fun roleHue(role: Role): Color = when (role) {
-    Role.NETA -> KursiRoleHues.Neta
-    Role.BHAI -> KursiRoleHues.Bhai
-    Role.BABU -> KursiRoleHues.Babu
-    Role.JUGAADU -> KursiRoleHues.Jugaadu
-    Role.VAKIL -> KursiRoleHues.Vakil
-    Role.PATRAKAAR -> KursiRoleHues.Patrakaar
-}
+private fun roleHue(role: Role): Color =
+    when (role) {
+        Role.NETA -> KursiRoleHues.Neta
+        Role.BHAI -> KursiRoleHues.Bhai
+        Role.BABU -> KursiRoleHues.Babu
+        Role.JUGAADU -> KursiRoleHues.Jugaadu
+        Role.VAKIL -> KursiRoleHues.Vakil
+        Role.PATRAKAAR -> KursiRoleHues.Patrakaar
+    }
 
-private fun roleName(role: Role): String = when (role) {
-    Role.NETA -> "NETA"; Role.BHAI -> "BHAI"; Role.BABU -> "BABU"; Role.JUGAADU -> "JUGAADU"; Role.VAKIL -> "VAKIL"; Role.PATRAKAAR -> "PATRAKAAR"
-}
+private fun roleName(role: Role): String =
+    when (role) {
+        Role.NETA -> "NETA"
+        Role.BHAI -> "BHAI"
+        Role.BABU -> "BABU"
+        Role.JUGAADU -> "JUGAADU"
+        Role.VAKIL -> "VAKIL"
+        Role.PATRAKAAR -> "PATRAKAAR"
+    }
 
 /** A faint guilloche felt texture behind the scripted table (reuses the Home depth motif idiom). */
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFeltGuilloche() {
@@ -689,7 +780,9 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFeltGuilloche()
         drawCircle(
             color = BrandTokens.BrassAged.copy(alpha = a),
             radius = baseR * (1f - i * 0.18f),
-            center = androidx.compose.ui.geometry.Offset(cx, cy),
+            center =
+                androidx.compose.ui.geometry
+                    .Offset(cx, cy),
             style = Stroke(width = 1f),
         )
     }
@@ -698,8 +791,12 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFeltGuilloche()
         val angle = (i * 2.0 * PI / rays).toFloat()
         drawLine(
             color = BrandTokens.BrassAged.copy(alpha = 0.04f),
-            start = androidx.compose.ui.geometry.Offset(cx + baseR * 0.85f * cos(angle), cy + baseR * 0.85f * sin(angle)),
-            end = androidx.compose.ui.geometry.Offset(cx + baseR * cos(angle), cy + baseR * sin(angle)),
+            start =
+                androidx.compose.ui.geometry
+                    .Offset(cx + baseR * 0.85f * cos(angle), cy + baseR * 0.85f * sin(angle)),
+            end =
+                androidx.compose.ui.geometry
+                    .Offset(cx + baseR * cos(angle), cy + baseR * sin(angle)),
             strokeWidth = 0.8f,
         )
     }

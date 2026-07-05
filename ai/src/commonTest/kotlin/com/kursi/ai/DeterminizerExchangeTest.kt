@@ -11,17 +11,17 @@ import kotlin.test.assertTrue
  * which made Exchange unevaluable in search.
  */
 class DeterminizerExchangeTest {
-
     private val cfg = GameConfig.forPlayers(2)
     private val me = PlayerId(0)
     private val opp = PlayerId(1)
 
     private fun exchangeView(drawn: List<Role>): PlayerView {
         val ownFaceDown = listOf(Role.NETA, Role.JUGAADU)
-        val myCards = listOf(
-            OwnCard(CardId(0), ownFaceDown[0], faceUp = false),
-            OwnCard(CardId(1), ownFaceDown[1], faceUp = false),
-        )
+        val myCards =
+            listOf(
+                OwnCard(CardId(0), ownFaceDown[0], faceUp = false),
+                OwnCard(CardId(1), ownFaceDown[1], faceUp = false),
+            )
         // Drawn cards carry CardIds that are irrelevant to the determinizer (it assigns its own).
         val drawnCards = drawn.mapIndexed { i, role -> OwnCard(CardId(100 + i), role, faceUp = false) }
         // Keep coins conserved (treasury + all player coins == coinSupply) so checkInvariants holds.
@@ -37,10 +37,11 @@ class DeterminizerExchangeTest {
             myInfluence = ownFaceDown.sortedBy { it.ordinal },
             myFaceUp = emptyList(),
             myCards = myCards,
-            players = listOf(
-                OpponentView(me, 0, 2, emptyList(), 2, false),
-                OpponentView(opp, 1, 2, emptyList(), 2, false),
-            ),
+            players =
+                listOf(
+                    OpponentView(me, 0, 2, emptyList(), 2, false),
+                    OpponentView(opp, 1, 2, emptyList(), 2, false),
+                ),
             phase = PhaseView.Exchange(me, drawnCards),
         )
     }
@@ -62,8 +63,11 @@ class DeterminizerExchangeTest {
         val drawnRoles = ph.drawn.map { state.cards.getValue(it) }.sorted()
         assertEquals(listOf(Role.BABU, Role.BHAI).sorted(), drawnRoles)
         for (c in ph.drawn) {
-            assertEquals(CardLocation.ExchangeHeld(me), state.locations.getValue(c),
-                "drawn card $c must be ExchangeHeld by the actor")
+            assertEquals(
+                CardLocation.ExchangeHeld(me),
+                state.locations.getValue(c),
+                "drawn card $c must be ExchangeHeld by the actor",
+            )
         }
     }
 
@@ -85,8 +89,10 @@ class DeterminizerExchangeTest {
         val redacted = redact(state, me)
         val best = CardChoice.bestExchange(redacted, legal)!!
         val outcome = applyIntent(state, best)
-        assertTrue(outcome is ApplyOutcome.Accepted,
-            "engine must accept the determinized exchange keep-set; got $outcome")
+        assertTrue(
+            outcome is ApplyOutcome.Accepted,
+            "engine must accept the determinized exchange keep-set; got $outcome",
+        )
     }
 
     private fun List<Role>.sorted() = this.sortedBy { it.ordinal }

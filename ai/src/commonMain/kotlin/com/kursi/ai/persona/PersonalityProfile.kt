@@ -30,10 +30,13 @@ data class PersonalityProfile(
 enum class TargetingBias {
     /** Most influence, then most coins — punishes the table leader. */
     LEADER,
+
     /** Fewest influence — finishes off whoever is nearly dead. */
     WEAKEST,
+
     /** Whoever most recently challenged or hit this bot (grudge map). */
     VINDICTIVE,
+
     /** Chosen uniformly at random — impossible to read. */
     RANDOM,
 }
@@ -50,7 +53,10 @@ class GrudgeMap {
     private val scores = HashMap<PlayerId, Double>()
 
     /** Record that [target] hit this bot, bumping their grudge score by [weight]. */
-    fun add(target: PlayerId, weight: Int = 1) {
+    fun add(
+        target: PlayerId,
+        weight: Int = 1,
+    ) {
         scores[target] = (scores[target] ?: 0.0) + weight.toDouble()
     }
 
@@ -69,8 +75,7 @@ class GrudgeMap {
     }
 
     /** Returns the candidate with the highest live grudge score, or null if none carries a grudge. */
-    fun topTarget(candidates: List<PlayerId>): PlayerId? =
-        candidates.maxByOrNull { scores[it] ?: 0.0 }?.takeIf { (scores[it] ?: 0.0) > 0.0 }
+    fun topTarget(candidates: List<PlayerId>): PlayerId? = candidates.maxByOrNull { scores[it] ?: 0.0 }?.takeIf { (scores[it] ?: 0.0) > 0.0 }
 
     /** Current grudge score for [pid] (0.0 if none). */
     fun scoreFor(pid: PlayerId): Double = scores[pid] ?: 0.0

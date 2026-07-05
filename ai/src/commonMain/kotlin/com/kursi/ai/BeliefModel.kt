@@ -28,8 +28,10 @@ data class OpponentBelief(
     val style: StyleEstimate = StyleEstimate(),
     val claimCount: Int = 0,
     val bluffCount: Int = 0,
-    // ── Raw style counters (feed StyleEstimate; see BotMemory.recomputeStyle) ──────────────
-    /** Total actions this opponent has declared (Income/FDI/Tax/Steal/Assassinate/Coup/Exchange). */
+    /**
+     * Raw style counters (feed StyleEstimate; see BotMemory.recomputeStyle).
+     * Total actions this opponent has declared (Income/FDI/Tax/Steal/Assassinate/Coup/Exchange).
+     */
     val actionCount: Int = 0,
     /** Of those, how many were "aggressive" (Coup / Assassinate / Steal — they attacked someone). */
     val aggressiveCount: Int = 0,
@@ -56,17 +58,21 @@ class BotMemory {
 
     fun beliefFor(pid: PlayerId) = beliefs.getOrPut(pid) { OpponentBelief() }
 
-    fun observe(event: GameEvent, turnNumber: Int) {
+    fun observe(
+        event: GameEvent,
+        turnNumber: Int,
+    ) {
         when (event) {
             is GameEvent.ActionDeclared -> {
                 // Track aggression for EVERY declared action, role-claim or not (Coup claims no role
                 // but is the most aggressive move there is, so it must count toward aggression).
                 run {
                     val belief = beliefs.getOrPut(event.actor) { OpponentBelief() }
-                    beliefs[event.actor] = belief.copy(
-                        actionCount = belief.actionCount + 1,
-                        aggressiveCount = belief.aggressiveCount + if (isAggressive(event.action)) 1 else 0,
-                    )
+                    beliefs[event.actor] =
+                        belief.copy(
+                            actionCount = belief.actionCount + 1,
+                            aggressiveCount = belief.aggressiveCount + if (isAggressive(event.action)) 1 else 0,
+                        )
                     recomputeStyle(event.actor)
                 }
                 val role = event.claimedRole ?: return
@@ -78,9 +84,10 @@ class BotMemory {
                 val weight = (1.0 - belief.style.bluffRate) * 0.4
                 belief.roleEvidence[role] = (belief.roleEvidence[role] ?: 0.0) + weight
                 // A claim is a tracked claim for bluff-rate purposes too.
-                beliefs[event.actor] = beliefs.getValue(event.actor).copy(
-                    claimCount = beliefs.getValue(event.actor).claimCount + 1,
-                )
+                beliefs[event.actor] =
+                    beliefs.getValue(event.actor).copy(
+                        claimCount = beliefs.getValue(event.actor).claimCount + 1,
+                    )
                 recomputeStyle(event.actor)
             }
             is GameEvent.Challenged -> {
@@ -96,9 +103,10 @@ class BotMemory {
                 belief.roleEvidence[event.role] = (belief.roleEvidence[event.role] ?: 0.0) + weight
                 claimHistory.add(RoleClaim(event.blocker, event.role, turnNumber = turnNumber))
                 // A block is also a role-claim that could be a bluff.
-                beliefs[event.blocker] = beliefs.getValue(event.blocker).copy(
-                    claimCount = beliefs.getValue(event.blocker).claimCount + 1,
-                )
+                beliefs[event.blocker] =
+                    beliefs.getValue(event.blocker).copy(
+                        claimCount = beliefs.getValue(event.blocker).claimCount + 1,
+                    )
                 recomputeStyle(event.blocker)
             }
             is GameEvent.ChallengeRevealed -> {
@@ -150,23 +158,30 @@ class BotMemory {
         val opportunities = (totalClaimsObserved - b.claimCount).coerceAtLeast(0)
         val challengeRate = smooth(b.challengeCount.toDouble(), opportunities.toDouble(), prior = 0.30, k = k)
 
-        beliefs[pid] = b.copy(
-            style = StyleEstimate(
-                bluffRate = bluffRate.coerceIn(0.0, 0.8),
-                aggression = aggression.coerceIn(0.0, 1.0),
-                challengeRate = challengeRate.coerceIn(0.0, 1.0),
+        beliefs[pid] =
+            b.copy(
+                style =
+                    StyleEstimate(
+                        bluffRate = bluffRate.coerceIn(0.0, 0.8),
+                        aggression = aggression.coerceIn(0.0, 1.0),
+                        challengeRate = challengeRate.coerceIn(0.0, 1.0),
+                    ),
             )
-        )
     }
 
-    private fun smooth(observed: Double, n: Double, prior: Double, k: Double): Double =
-        (observed + k * prior) / (n + k)
+    private fun smooth(
+        observed: Double,
+        n: Double,
+        prior: Double,
+        k: Double,
+    ): Double = (observed + k * prior) / (n + k)
 
     /** Aggressive = a move that directly attacks another player (Coup / Assassinate / Steal). */
-    private fun isAggressive(action: Action): Boolean = when (action) {
-        is Action.Coup, is Action.Assassinate, is Action.Steal -> true
-        else -> false
-    }
+    private fun isAggressive(action: Action): Boolean =
+        when (action) {
+            is Action.Coup, is Action.Assassinate, is Action.Steal -> true
+            else -> false
+        }
 }
 
 /**
@@ -174,12 +189,15 @@ class BotMemory {
  * on top of the global deck-composition prior.
  */
 class BeliefModel {
-
     /**
      * Posterior P(this role | observations), for one opponent.
      * Returns a normalized probability map over Role.
      */
-    fun posterior(view: PlayerView, opponentId: PlayerId, belief: OpponentBelief): Map<Role, Double> {
+    fun posterior(
+        view: PlayerView,
+        opponentId: PlayerId,
+        belief: OpponentBelief,
+    ): Map<Role, Double> {
         val cfg = view.config
         val faceUpTotal = view.players.sumOf { it.faceUpRoles.size } + view.myFaceUp.size
         val totalUnseen = cfg.deckSize - view.myInfluence.size - faceUpTotal
@@ -188,13 +206,18 @@ class BeliefModel {
         // Iterate activeRoles, NOT Role.entries: PATRAKAAR only exists on big tables, so a small-table
         // posterior must never put mass on it (it has 0 copies in the deck there).
         for (role in cfg.activeRoles) {
-            val unseenR = (cfg.copiesPerRole
-                - view.players.sumOf { p -> p.faceUpRoles.count { it == role } }
-                - view.myFaceUp.count { it == role }
-                - view.myInfluence.count { it == role })
-            val baseLogit = if (totalUnseen > 0 && unseenR > 0)
-                ln(unseenR.toDouble() / totalUnseen)
-            else -10.0
+            val unseenR = (
+                cfg.copiesPerRole -
+                    view.players.sumOf { p -> p.faceUpRoles.count { it == role } } -
+                    view.myFaceUp.count { it == role } -
+                    view.myInfluence.count { it == role }
+            )
+            val baseLogit =
+                if (totalUnseen > 0 && unseenR > 0) {
+                    ln(unseenR.toDouble() / totalUnseen)
+                } else {
+                    -10.0
+                }
             val evidence = belief.roleEvidence[role] ?: 0.0
             logits[role] = baseLogit + evidence
         }
@@ -202,7 +225,12 @@ class BeliefModel {
     }
 
     /** P(opponent holds role in ≥1 of their k face-down cards). */
-    fun pHolds(view: PlayerView, opponentId: PlayerId, belief: OpponentBelief, role: Role): Double {
+    fun pHolds(
+        view: PlayerView,
+        opponentId: PlayerId,
+        belief: OpponentBelief,
+        role: Role,
+    ): Double {
         val k = view.players.firstOrNull { it.id == opponentId }?.faceDownCount ?: 0
         if (k <= 0) return 0.0
         val pSlot = posterior(view, opponentId, belief)[role] ?: 0.0

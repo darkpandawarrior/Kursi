@@ -27,13 +27,19 @@ sealed interface ConnectionState {
     data object Connecting : ConnectionState
 
     /** Socket is open and the seat has been assigned. [seat] is this client's seat index. */
-    data class Connected(val seat: Int) : ConnectionState
+    data class Connected(
+        val seat: Int,
+    ) : ConnectionState
 
     /** The socket dropped unexpectedly. Auto-reconnect (if enabled) moves to [Reconnecting]. */
-    data class Dropped(val cause: String?) : ConnectionState
+    data class Dropped(
+        val cause: String?,
+    ) : ConnectionState
 
     /** A reconnect attempt is in flight. [attempt] is the 1-based retry counter. */
-    data class Reconnecting(val attempt: Int) : ConnectionState
+    data class Reconnecting(
+        val attempt: Int,
+    ) : ConnectionState
 
     /** The client was closed by the caller; no further reconnects. */
     data object Closed : ConnectionState

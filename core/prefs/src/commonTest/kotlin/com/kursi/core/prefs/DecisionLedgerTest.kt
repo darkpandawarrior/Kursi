@@ -12,7 +12,6 @@ import kotlin.test.assertTrue
  * the same store, and is wiped by a career reset.
  */
 class DecisionLedgerTest {
-
     @Test
     fun freshDecisionLedger_isEmptyAndZero() {
         val prefs = AppPrefs(MapSettings())
@@ -33,22 +32,33 @@ class DecisionLedgerTest {
         // Game 1: 8 decisions, 6 matched best, 240 milli EV lost total (3% avg).
         prefs.recordDecisionTally(
             DecisionTally(
-                decisions = 8, matchedBest = 6, evLostMilli = 240L,
-                challenges = 2, challengesGood = 1, bluffsTried = 3, bluffsOk = 2,
+                decisions = 8,
+                matchedBest = 6,
+                evLostMilli = 240L,
+                challenges = 2,
+                challengesGood = 1,
+                bluffsTried = 3,
+                bluffsOk = 2,
             ),
         )
         // Game 2: 12 decisions, 9 matched best, 360 milli EV lost.
-        val after = prefs.recordDecisionTally(
-            DecisionTally(
-                decisions = 12, matchedBest = 9, evLostMilli = 360L,
-                challenges = 2, challengesGood = 2, bluffsTried = 1, bluffsOk = 1,
-            ),
-        )
+        val after =
+            prefs.recordDecisionTally(
+                DecisionTally(
+                    decisions = 12,
+                    matchedBest = 9,
+                    evLostMilli = 360L,
+                    challenges = 2,
+                    challengesGood = 2,
+                    bluffsTried = 1,
+                    bluffsOk = 1,
+                ),
+            )
 
         assertEquals(20, after.decisions)
         assertEquals(15, after.matchedBest)
         assertEquals(600L, after.evLostMilli)
-        assertEquals(75, after.accuracyPct)            // 15 / 20
+        assertEquals(75, after.accuracyPct) // 15 / 20
         // avg EV lost = (600/1000)/20 = 0.03 → 3%
         assertEquals(3, after.avgEvLostPct)
         // challenges: 4 total, 3 good → 75%

@@ -52,20 +52,21 @@ import com.kursi.designsystem.*
 // ══════════════════════════════════════════════════════════════════════════════
 
 /** Canonical avatar emoji roster — political/strategy theme, 12 options. */
-val AVATAR_ROSTER = listOf(
-    "🪑", // The Chair itself
-    "👑", // Crown
-    "⚖️", // Scales — law/vakil
-    "🎯", // Precision
-    "🃏", // Joker card
-    "🎭", // Masks — bluff/drama
-    "🏛️", // Institution
-    "📜", // Official scroll
-    "🔑", // Keys to power
-    "🎪", // Tamasha
-    "🦁", // Sher — lion
-    "🦊", // Siyaar — cunning fox
-)
+val AVATAR_ROSTER =
+    listOf(
+        "🪑", // The Chair itself
+        "👑", // Crown
+        "⚖️", // Scales — law/vakil
+        "🎯", // Precision
+        "🃏", // Joker card
+        "🎭", // Masks — bluff/drama
+        "🏛️", // Institution
+        "📜", // Official scroll
+        "🔑", // Keys to power
+        "🎪", // Tamasha
+        "🦁", // Sher — lion
+        "🦊", // Siyaar — cunning fox
+    )
 
 @Composable
 fun ProfileSetupScreen(
@@ -81,7 +82,7 @@ fun ProfileSetupScreen(
     var colorArgb by remember {
         mutableLongStateOf(
             prefs.playerColorArgb.takeIf { it != 0L }
-                ?: 0xFFE63946L // default warm red
+                ?: 0xFFE63946L, // default warm red
         )
     }
 
@@ -89,16 +90,18 @@ fun ProfileSetupScreen(
     val nameFocusRequester = remember { FocusRequester() }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(BrandTokens.TeakInk)
-            .verticalScroll(rememberScrollState()),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(BrandTokens.TeakInk)
+                .verticalScroll(rememberScrollState()),
     ) {
         // ── Header ────────────────────────────────────────────────────────────
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (fromSettings && onBack != null) {
@@ -106,12 +109,13 @@ fun ProfileSetupScreen(
                     text = "← WAPAS",
                     style = KursiType.label_sm.copy(letterSpacing = 0.8.sp),
                     color = BrandTokens.BrassAged,
-                    modifier = Modifier
-                        .clickable(
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() },
-                        ) { onBack() }
-                        .padding(end = 16.dp),
+                    modifier =
+                        Modifier
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() },
+                            ) { onBack() }
+                            .padding(end = 16.dp),
                 )
             }
             Column {
@@ -130,25 +134,32 @@ fun ProfileSetupScreen(
 
         // ── Cream certificate card ─────────────────────────────────────────
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(BrandTokens.PaperCream.copy(alpha = 0.97f))
-                .padding(horizontal = 20.dp, vertical = 24.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(BrandTokens.PaperCream.copy(alpha = 0.97f))
+                    .padding(horizontal = 20.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             // ── Live preview monogram ──────────────────────────────────────
             val previewColor = Color(colorArgb)
             val previewEmoji = AVATAR_ROSTER.getOrNull(avatarIdx) ?: "🪑"
-            val previewMonogram = name.trim().take(2).uppercase().ifBlank { "KH" }
+            val previewMonogram =
+                name
+                    .trim()
+                    .take(2)
+                    .uppercase()
+                    .ifBlank { "KH" }
 
             Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(previewColor)
-                    .align(Alignment.CenterHorizontally),
+                modifier =
+                    Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(previewColor)
+                        .align(Alignment.CenterHorizontally),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -167,45 +178,49 @@ fun ProfileSetupScreen(
             // ── FORM FIELD 1 — Display name ────────────────────────────────
             FormSection(label = "AAPKA NAAM") {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(BrandTokens.TeakInk.copy(alpha = 0.06f))
-                        .border(
-                            1.dp,
-                            BrandTokens.BrassDark.copy(alpha = 0.4f),
-                            RoundedCornerShape(8.dp),
-                        )
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(BrandTokens.TeakInk.copy(alpha = 0.06f))
+                            .border(
+                                1.dp,
+                                BrandTokens.BrassDark.copy(alpha = 0.4f),
+                                RoundedCornerShape(8.dp),
+                            ).padding(horizontal = 14.dp, vertical = 12.dp),
                 ) {
                     BasicTextField(
                         value = name,
                         onValueChange = { if (it.length <= 18) name = it },
-                        textStyle = TextStyle(
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = BrandTokens.TeakInk,
-                            fontFamily = KursiType.name.fontFamily,
-                        ),
+                        textStyle =
+                            TextStyle(
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = BrandTokens.TeakInk,
+                                fontFamily = KursiType.name.fontFamily,
+                            ),
                         cursorBrush = SolidColor(BrandTokens.BrassDark),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.Words,
-                            imeAction = ImeAction.Done,
-                        ),
+                        keyboardOptions =
+                            KeyboardOptions(
+                                capitalization = KeyboardCapitalization.Words,
+                                imeAction = ImeAction.Done,
+                            ),
                         keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(nameFocusRequester),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .focusRequester(nameFocusRequester),
                         decorationBox = { inner ->
                             if (name.isEmpty()) {
                                 Text(
                                     "Khiladi",
-                                    style = TextStyle(
-                                        fontSize = 18.sp,
-                                        color = BrandTokens.TeakInk.copy(alpha = 0.30f),
-                                        fontFamily = KursiType.name.fontFamily,
-                                    ),
+                                    style =
+                                        TextStyle(
+                                            fontSize = 18.sp,
+                                            color = BrandTokens.TeakInk.copy(alpha = 0.30f),
+                                            fontFamily = KursiType.name.fontFamily,
+                                        ),
                                 )
                             }
                             inner()
@@ -226,9 +241,11 @@ fun ProfileSetupScreen(
                     columns = GridCells.Fixed(6),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(112.dp), // 2 rows × (48dp + 8dp gap)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(112.dp),
+                    // 2 rows × (48dp + 8dp gap)
                     userScrollEnabled = false,
                 ) {
                     itemsIndexed(AVATAR_ROSTER) { idx, emoji ->
@@ -239,19 +256,22 @@ fun ProfileSetupScreen(
                             label = "avatarBorder",
                         )
                         Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (selected) previewColor.copy(alpha = 0.15f)
-                                    else BrandTokens.TeakInk.copy(alpha = 0.06f)
-                                )
-                                .border(2.dp, borderColor, CircleShape)
-                                .clickable(
-                                    indication = null,
-                                    interactionSource = remember { MutableInteractionSource() },
-                                ) { avatarIdx = idx }
-                                .semantics { contentDescription = "Avatar $emoji" },
+                            modifier =
+                                Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (selected) {
+                                            previewColor.copy(alpha = 0.15f)
+                                        } else {
+                                            BrandTokens.TeakInk.copy(alpha = 0.06f)
+                                        },
+                                    ).border(2.dp, borderColor, CircleShape)
+                                    .clickable(
+                                        indication = null,
+                                        interactionSource = remember { MutableInteractionSource() },
+                                    ) { avatarIdx = idx }
+                                    .semantics { contentDescription = "Avatar $emoji" },
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(text = emoji, fontSize = 22.sp)
@@ -275,17 +295,18 @@ fun ProfileSetupScreen(
                             label = "swatchBorder",
                         )
                         Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
-                                .clip(CircleShape)
-                                .background(swatch)
-                                .border(2.dp, borderColor, CircleShape)
-                                .clickable(
-                                    indication = null,
-                                    interactionSource = remember { MutableInteractionSource() },
-                                ) { colorArgb = swatchArgb }
-                                .semantics { contentDescription = "Seat color" },
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .aspectRatio(1f)
+                                    .clip(CircleShape)
+                                    .background(swatch)
+                                    .border(2.dp, borderColor, CircleShape)
+                                    .clickable(
+                                        indication = null,
+                                        interactionSource = remember { MutableInteractionSource() },
+                                    ) { colorArgb = swatchArgb }
+                                    .semantics { contentDescription = "Seat color" },
                         )
                     }
                 }
@@ -296,21 +317,21 @@ fun ProfileSetupScreen(
 
         // ── MUHAR LAGAO — commit button ────────────────────────────────────
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(BrandTokens.BrassDark)
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() },
-                ) {
-                    prefs.playerName = name.trim().ifBlank { "Khiladi" }
-                    prefs.playerAvatarIdx = avatarIdx
-                    prefs.playerColorArgb = colorArgb
-                    onDone()
-                }
-                .padding(vertical = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(BrandTokens.BrassDark)
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() },
+                    ) {
+                        prefs.playerName = name.trim().ifBlank { "Khiladi" }
+                        prefs.playerAvatarIdx = avatarIdx
+                        prefs.playerColorArgb = colorArgb
+                        onDone()
+                    }.padding(vertical = 16.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -327,19 +348,20 @@ fun ProfileSetupScreen(
                 style = KursiType.label_micro.copy(letterSpacing = 0.8.sp),
                 color = BrandTokens.BrassAged.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp)
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() },
-                    ) {
-                        // Save defaults even on skip so hasPlayerProfile triggers only on explicit set.
-                        if (prefs.playerName.isBlank()) prefs.playerName = "Khiladi"
-                        if (prefs.playerAvatarIdx < 0) prefs.playerAvatarIdx = 0
-                        if (prefs.playerColorArgb == 0L) prefs.playerColorArgb = 0xFFE63946L
-                        onDone()
-                    },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp)
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() },
+                        ) {
+                            // Save defaults even on skip so hasPlayerProfile triggers only on explicit set.
+                            if (prefs.playerName.isBlank()) prefs.playerName = "Khiladi"
+                            if (prefs.playerAvatarIdx < 0) prefs.playerAvatarIdx = 0
+                            if (prefs.playerColorArgb == 0L) prefs.playerColorArgb = 0xFFE63946L
+                            onDone()
+                        },
             )
         }
 

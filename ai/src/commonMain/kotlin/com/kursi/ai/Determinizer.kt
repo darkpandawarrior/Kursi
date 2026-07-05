@@ -2,9 +2,14 @@ package com.kursi.ai
 
 import com.kursi.engine.*
 
-class Determinizer(private val beliefModel: BeliefModel) {
-
-    fun sample(view: PlayerView, memory: BotMemory, rng: Rng): Pair<GameState, Rng> {
+class Determinizer(
+    private val beliefModel: BeliefModel,
+) {
+    fun sample(
+        view: PlayerView,
+        memory: BotMemory,
+        rng: Rng,
+    ): Pair<GameState, Rng> {
         val cfg = view.config
         var r = rng
 
@@ -29,7 +34,8 @@ class Determinizer(private val beliefModel: BeliefModel) {
         val exchangeDrawnRoles: List<Role> =
             (view.phase as? PhaseView.Exchange)
                 ?.takeIf { it.actor == view.viewer }
-                ?.drawn?.map { it.role }
+                ?.drawn
+                ?.map { it.role }
                 ?: emptyList()
         for (role in exchangeDrawnRoles) unseenPool.remove(role)
 
@@ -115,24 +121,27 @@ class Determinizer(private val beliefModel: BeliefModel) {
         }
 
         // --- Build PlayerState list ---
-        val players = view.players.map { opp ->
-            val coins = if (opp.id == view.viewer) view.myCoins else opp.coins
-            PlayerState(opp.id, opp.seatIndex, coins)
-        }.sortedBy { it.seatIndex }
+        val players =
+            view.players
+                .map { opp ->
+                    val coins = if (opp.id == view.viewer) view.myCoins else opp.coins
+                    PlayerState(opp.id, opp.seatIndex, coins)
+                }.sortedBy { it.seatIndex }
 
         // --- Reconstruct phase ---
         val phase = reconstructPhase(view, players, exchangeDrawnIds, cards, locations)
 
-        val state = GameState(
-            config = cfg,
-            cards = cards,
-            locations = locations,
-            players = players,
-            treasury = view.treasury,
-            phase = phase,
-            rng = r.state,
-            turnNumber = view.turnNumber,
-        )
+        val state =
+            GameState(
+                config = cfg,
+                cards = cards,
+                locations = locations,
+                players = players,
+                treasury = view.treasury,
+                phase = phase,
+                rng = r.state,
+                turnNumber = view.turnNumber,
+            )
 
         return state to r
     }
@@ -141,7 +150,11 @@ class Determinizer(private val beliefModel: BeliefModel) {
      * Draw one role from the pool, weighted by the posterior distribution.
      * Falls back to uniform if weights sum to zero.
      */
-    private fun weightedDraw(pool: List<Role>, posterior: Map<Role, Double>, rng: Rng): Pair<Role, Rng> {
+    private fun weightedDraw(
+        pool: List<Role>,
+        posterior: Map<Role, Double>,
+        rng: Rng,
+    ): Pair<Role, Rng> {
         val weights = pool.map { posterior[it] ?: (1.0 / Role.entries.size) }
         val totalW = weights.sum()
         val (randLong, r1) = rng.nextLong()
@@ -161,15 +174,19 @@ class Determinizer(private val beliefModel: BeliefModel) {
         exchangeDrawnIds: List<CardId>,
         cards: Map<CardId, Role>,
         locations: Map<CardId, CardLocation>,
-    ): Phase {
-        return when (val ph = view.phase) {
+    ): Phase =
+        when (val ph = view.phase) {
             is PhaseView.Turn -> Phase.AwaitingAction(players.first { it.id == ph.actor }.seatIndex)
             is PhaseView.Reactions -> {
                 val pending = PendingAction(ph.actor, ph.action, ph.claimedRole)
                 val blocker = ph.blocker
                 val blockRole = ph.blockRole
-                val block = if (blocker != null && blockRole != null)
-                    BlockClaim(blocker, blockRole) else null
+                val block =
+                    if (blocker != null && blockRole != null) {
+                        BlockClaim(blocker, blockRole)
+                    } else {
+                        null
+                    }
                 val toRespond = ph.toRespond
                 val eligible: List<PlayerId> = if (toRespond != null) listOf(toRespond) else emptyList()
                 Phase.AwaitingReactions(ReactionCtx(pending, ph.step, eligible, emptyMap(), block))
@@ -187,17 +204,24 @@ class Determinizer(private val beliefModel: BeliefModel) {
                 // role (examinedCard != null — only the examiner ever does), prefer a face-down card with
                 // that exact role so the reconstructed peek matches reality; else fall back to any of the
                 // target's face-down cards.
-                val targetFaceDown = locations.entries
-                    .filter { val l = it.value; l is CardLocation.Hand && l.player == ph.target && !l.faceUp }
-                    .map { it.key }
+                val targetFaceDown =
+                    locations.entries
+                        .filter {
+                            val l = it.value
+                            l is CardLocation.Hand && l.player == ph.target && !l.faceUp
+                        }.map { it.key }
                 val peekedRole = ph.examinedCard?.role
-                val peeked = (peekedRole?.let { role -> targetFaceDown.firstOrNull { cards[it] == role } }
-                    ?: targetFaceDown.firstOrNull())
-                if (peeked != null) Phase.AwaitingInvestigatePeek(ph.examiner, ph.target, peeked)
-                // Degenerate (target somehow has no face-down card): treat as a no-op turn end.
-                else Phase.AwaitingAction(players.first { it.id == ph.examiner }.seatIndex)
+                val peeked = (
+                    peekedRole?.let { role -> targetFaceDown.firstOrNull { cards[it] == role } }
+                        ?: targetFaceDown.firstOrNull()
+                )
+                if (peeked != null) {
+                    Phase.AwaitingInvestigatePeek(ph.examiner, ph.target, peeked)
+                } else {
+                    // Degenerate (target somehow has no face-down card): treat as a no-op turn end.
+                    Phase.AwaitingAction(players.first { it.id == ph.examiner }.seatIndex)
+                }
             }
             is PhaseView.Over -> Phase.GameOver(ph.winner)
         }
-    }
 }

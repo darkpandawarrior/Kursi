@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -59,20 +58,22 @@ fun GauntletScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             // ── Header ──
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BrandTokens.TeakDark)
-                    .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(BrandTokens.TeakDark)
+                        .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Box(
-                    modifier = Modifier
-                        .defaultMinSize(minWidth = 64.dp, minHeight = 52.dp)
-                        .semantics(mergeDescendants = true) { role = Role.Button }
-                        .clickable(onClick = onBack)
-                        .padding(horizontal = 8.dp),
+                    modifier =
+                        Modifier
+                            .defaultMinSize(minWidth = 64.dp, minHeight = 52.dp)
+                            .semantics(mergeDescendants = true) { role = Role.Button }
+                            .clickable(onClick = onBack)
+                            .padding(horizontal = 8.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(text = s.back, style = KursiType.body.copy(fontSize = 13.sp), color = BrandTokens.BrassAged)
@@ -85,22 +86,24 @@ fun GauntletScreen(
                 )
                 Spacer(Modifier.weight(1f))
                 Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(BrandTokens.BrassDark.copy(alpha = 0.3f))
-                        .border(0.8.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    modifier =
+                        Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(BrandTokens.BrassDark.copy(alpha = 0.3f))
+                            .border(0.8.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
                 ) {
                     Text(s.gauntletBadge, style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted)
                 }
             }
 
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(scroll)
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(scroll)
+                        .padding(horizontal = 24.dp, vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Column(
@@ -127,11 +130,12 @@ fun GauntletScreen(
 
                     // The ladder, top rung first (most prestigious at the top so it reads as a climb).
                     rungs.asReversed().forEach { rung ->
-                        val state = when {
-                            rung.index <= progress.clearedRung -> RungState.CLEARED
-                            rung.index == targetIndex && !conquered -> RungState.CURRENT
-                            else -> RungState.LOCKED
-                        }
+                        val state =
+                            when {
+                                rung.index <= progress.clearedRung -> RungState.CLEARED
+                                rung.index == targetIndex && !conquered -> RungState.CURRENT
+                                else -> RungState.LOCKED
+                            }
                         GauntletRungCard(
                             rung = rung,
                             state = state,
@@ -148,14 +152,18 @@ fun GauntletScreen(
 private enum class RungState { CLEARED, CURRENT, LOCKED }
 
 @Composable
-private fun ConqueredBanner(title: String, body: String) {
+private fun ConqueredBanner(
+    title: String,
+    body: String,
+) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(BrandTokens.GoldAntique.copy(alpha = 0.16f))
-            .border(1.5.dp, BrandTokens.GoldAntique, RoundedCornerShape(12.dp))
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(BrandTokens.GoldAntique.copy(alpha = 0.16f))
+                .border(1.5.dp, BrandTokens.GoldAntique, RoundedCornerShape(12.dp))
+                .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(title, style = KursiType.title.copy(fontSize = 16.sp).rozha(), color = BrandTokens.GoldAntique)
@@ -177,47 +185,53 @@ private fun GauntletRungCard(
     val current = state == RungState.CURRENT
     val cleared = state == RungState.CLEARED
 
-    val borderColor = when {
-        current -> BrandTokens.GoldAntique
-        cleared -> BrandTokens.BrassAged.copy(alpha = 0.7f)
-        else -> BrandTokens.BrassDark.copy(alpha = 0.35f)
-    }
-    val bg = when {
-        current -> BrandTokens.GoldAntique.copy(alpha = 0.14f)
-        cleared -> BrandTokens.BrassAged.copy(alpha = 0.10f)
-        else -> BrandTokens.TeakDark.copy(alpha = 0.5f)
-    }
+    val borderColor =
+        when {
+            current -> BrandTokens.GoldAntique
+            cleared -> BrandTokens.BrassAged.copy(alpha = 0.7f)
+            else -> BrandTokens.BrassDark.copy(alpha = 0.35f)
+        }
+    val bg =
+        when {
+            current -> BrandTokens.GoldAntique.copy(alpha = 0.14f)
+            cleared -> BrandTokens.BrassAged.copy(alpha = 0.10f)
+            else -> BrandTokens.TeakDark.copy(alpha = 0.5f)
+        }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(bg)
-            .border(if (current) 1.5.dp else 1.dp, borderColor, RoundedCornerShape(10.dp))
-            .then(if (!locked) Modifier.clickable(onClick = onPlay) else Modifier)
-            .semantics(mergeDescendants = true) {
-                if (!locked) role = androidx.compose.ui.semantics.Role.Button
-                contentDescription = "$nameplate. $difficultyName. ${rung.players} seats. " + when (state) {
-                    RungState.CURRENT -> strings.gauntletCurrentTag
-                    RungState.CLEARED -> strings.gauntletClearedTag
-                    RungState.LOCKED -> strings.gauntletLockedTag
-                }
-            }
-            .padding(horizontal = 14.dp, vertical = 12.dp)
-            .alpha(if (locked) 0.55f else 1f),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(bg)
+                .border(if (current) 1.5.dp else 1.dp, borderColor, RoundedCornerShape(10.dp))
+                .then(if (!locked) Modifier.clickable(onClick = onPlay) else Modifier)
+                .semantics(mergeDescendants = true) {
+                    if (!locked) role = androidx.compose.ui.semantics.Role.Button
+                    contentDescription = "$nameplate. $difficultyName. ${rung.players} seats. " +
+                        when (state) {
+                            RungState.CURRENT -> strings.gauntletCurrentTag
+                            RungState.CLEARED -> strings.gauntletClearedTag
+                            RungState.LOCKED -> strings.gauntletLockedTag
+                        }
+                }.padding(horizontal = 14.dp, vertical = 12.dp)
+                .alpha(if (locked) 0.55f else 1f),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             // Rung numeral roundel
             Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (cleared || current) Brush.radialGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark))
-                        else Brush.radialGradient(listOf(BrandTokens.BrassDark.copy(alpha = 0.4f), BrandTokens.TeakDark)),
-                    )
-                    .border(1.dp, borderColor, CircleShape),
+                modifier =
+                    Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (cleared || current) {
+                                Brush.radialGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassDark))
+                            } else {
+                                Brush.radialGradient(listOf(BrandTokens.BrassDark.copy(alpha = 0.4f), BrandTokens.TeakDark))
+                            },
+                        ).border(1.dp, borderColor, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -243,40 +257,41 @@ private fun GauntletRungCard(
                 )
             }
             // State badge
-            val tag = when (state) {
-                RungState.CURRENT -> strings.gauntletCurrentTag
-                RungState.CLEARED -> strings.gauntletClearedTag
-                RungState.LOCKED -> strings.gauntletLockedTag
-            }
+            val tag =
+                when (state) {
+                    RungState.CURRENT -> strings.gauntletCurrentTag
+                    RungState.CLEARED -> strings.gauntletClearedTag
+                    RungState.LOCKED -> strings.gauntletLockedTag
+                }
             Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(
-                        when (state) {
-                            RungState.CURRENT -> BrandTokens.GoldAntique.copy(alpha = 0.18f)
-                            RungState.CLEARED -> BrandTokens.BrassAged.copy(alpha = 0.18f)
-                            RungState.LOCKED -> BrandTokens.StampRed.copy(alpha = 0.10f)
-                        },
-                    )
-                    .border(
-                        0.7.dp,
-                        when (state) {
-                            RungState.CURRENT -> BrandTokens.GoldAntique.copy(alpha = 0.7f)
-                            RungState.CLEARED -> BrandTokens.BrassAged.copy(alpha = 0.6f)
-                            RungState.LOCKED -> BrandTokens.StampRed.copy(alpha = 0.4f)
-                        },
-                        RoundedCornerShape(3.dp),
-                    )
-                    .padding(horizontal = 6.dp, vertical = 3.dp),
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(
+                            when (state) {
+                                RungState.CURRENT -> BrandTokens.GoldAntique.copy(alpha = 0.18f)
+                                RungState.CLEARED -> BrandTokens.BrassAged.copy(alpha = 0.18f)
+                                RungState.LOCKED -> BrandTokens.StampRed.copy(alpha = 0.10f)
+                            },
+                        ).border(
+                            0.7.dp,
+                            when (state) {
+                                RungState.CURRENT -> BrandTokens.GoldAntique.copy(alpha = 0.7f)
+                                RungState.CLEARED -> BrandTokens.BrassAged.copy(alpha = 0.6f)
+                                RungState.LOCKED -> BrandTokens.StampRed.copy(alpha = 0.4f)
+                            },
+                            RoundedCornerShape(3.dp),
+                        ).padding(horizontal = 6.dp, vertical = 3.dp),
             ) {
                 Text(
                     text = tag,
                     style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.5.sp),
-                    color = when (state) {
-                        RungState.CURRENT -> BrandTokens.GoldAntique
-                        RungState.CLEARED -> BrandTokens.BrassAged
-                        RungState.LOCKED -> BrandTokens.StampRed.copy(alpha = 0.75f)
-                    },
+                    color =
+                        when (state) {
+                            RungState.CURRENT -> BrandTokens.GoldAntique
+                            RungState.CLEARED -> BrandTokens.BrassAged
+                            RungState.LOCKED -> BrandTokens.StampRed.copy(alpha = 0.75f)
+                        },
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -296,18 +311,26 @@ private fun GauntletRungCard(
     }
 }
 
-private fun rungNameOf(index: Int, s: KursiStrings): String = when (index) {
-    0 -> s.gauntletRung0Name
-    1 -> s.gauntletRung1Name
-    2 -> s.gauntletRung2Name
-    3 -> s.gauntletRung3Name
-    else -> s.gauntletRung4Name
-}
+private fun rungNameOf(
+    index: Int,
+    s: KursiStrings,
+): String =
+    when (index) {
+        0 -> s.gauntletRung0Name
+        1 -> s.gauntletRung1Name
+        2 -> s.gauntletRung2Name
+        3 -> s.gauntletRung3Name
+        else -> s.gauntletRung4Name
+    }
 
-private fun difficultyNameOf(d: Difficulty, s: KursiStrings): String = when (d) {
-    Difficulty.Easy -> s.diffEasyName
-    Difficulty.Medium -> s.diffMediumName
-    Difficulty.Hard -> s.diffHardName
-    Difficulty.Expert -> s.diffExpertName
-    Difficulty.Grandmaster -> s.diffGrandmasterName
-}
+private fun difficultyNameOf(
+    d: Difficulty,
+    s: KursiStrings,
+): String =
+    when (d) {
+        Difficulty.Easy -> s.diffEasyName
+        Difficulty.Medium -> s.diffMediumName
+        Difficulty.Hard -> s.diffHardName
+        Difficulty.Expert -> s.diffExpertName
+        Difficulty.Grandmaster -> s.diffGrandmasterName
+    }

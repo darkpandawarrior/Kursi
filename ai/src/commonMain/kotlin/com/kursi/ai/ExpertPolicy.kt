@@ -25,12 +25,16 @@ class ExpertPolicy(
     private val determinizer = Determinizer(beliefModel)
     private val search = IsmctsSearch(determinizer, budget, rolloutSeed = seed + 999L)
 
-    override fun decide(view: PlayerView, legal: List<Intent>): Intent {
+    override fun decide(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent {
         require(legal.isNotEmpty()) { "no legal intents supplied" }
         if (legal.size == 1) return legal.single()
         return try {
             val chosen = search.chooseIntent(view, legal, memory, rng)
-            val (_, r) = rng.nextLong(); rng = r
+            val (_, r) = rng.nextLong()
+            rng = r
             if (chosen in legal) chosen else fallback.decide(view, legal)
         } catch (t: Throwable) {
             fallback.decide(view, legal)
@@ -38,5 +42,8 @@ class ExpertPolicy(
     }
 
     /** Feed game events into the belief model so it can track opponent behaviour. */
-    fun observe(event: GameEvent, turnNumber: Int) = memory.observe(event, turnNumber)
+    fun observe(
+        event: GameEvent,
+        turnNumber: Int,
+    ) = memory.observe(event, turnNumber)
 }

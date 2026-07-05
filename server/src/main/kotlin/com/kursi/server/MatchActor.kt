@@ -27,7 +27,9 @@ sealed interface MatchCommand {
     ) : MatchCommand
 
     /** A human player's WebSocket disconnected. */
-    data class PlayerLeft(val connectionId: String) : MatchCommand
+    data class PlayerLeft(
+        val connectionId: String,
+    ) : MatchCommand
 
     /** A human player submitted an intent. */
     data class IntentSubmitted(
@@ -74,10 +76,13 @@ class MatchActor(
 
     // seat index → (connectionId, WebSocketSession) for the CURRENTLY connected humans
     private val humanSeats = mutableMapOf<Int, Pair<String, WebSocketSession>>()
+
     // connectionId → seat index (reverse map for fast lookup)
     private val connToSeat = mutableMapOf<String, Int>()
+
     // bot seats: seat index → Policy (a seat is bot-driven when empty OR after a human drops it)
     private val botPolicies = mutableMapOf<Int, Policy>()
+
     // Seats that were once held by a human and are now vacant — eligible for reconnection.
     private val reconnectableSeats = mutableSetOf<Int>()
 
@@ -88,22 +93,23 @@ class MatchActor(
     private fun nextSeq() = ++serverSeq
 
     // ── Actor loop ──────────────────────────────────────────────────────────
-    private val job: Job = scope.launch {
-        for (cmd in mailbox) {
-            try {
-                when (cmd) {
-                    is MatchCommand.PlayerJoined -> handleJoin(cmd)
-                    is MatchCommand.PlayerLeft -> handleLeft(cmd)
-                    is MatchCommand.IntentSubmitted -> handleIntent(cmd)
+    private val job: Job =
+        scope.launch {
+            for (cmd in mailbox) {
+                try {
+                    when (cmd) {
+                        is MatchCommand.PlayerJoined -> handleJoin(cmd)
+                        is MatchCommand.PlayerLeft -> handleLeft(cmd)
+                        is MatchCommand.IntentSubmitted -> handleIntent(cmd)
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    // Log and continue — one bad command must not crash the actor
+                    println("[MatchActor $matchId] Unhandled exception: ${e.message}")
                 }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                // Log and continue — one bad command must not crash the actor
-                println("[MatchActor $matchId] Unhandled exception: ${e.message}")
             }
         }
-    }
 
     fun isFinished(): Boolean = mailbox.isClosedForSend || job.isCompleted
 
@@ -118,13 +124,15 @@ class MatchActor(
 
     private suspend fun handleJoin(cmd: MatchCommand.PlayerJoined) {
         // Reconnection path: caller asks to resume a specific seat it previously held.
-        val resumeSeat = cmd.reconnectSeat?.takeIf {
-            it in 0 until config.seatCount && it !in humanSeats
-        }
+        val resumeSeat =
+            cmd.reconnectSeat?.takeIf {
+                it in 0 until config.seatCount && it !in humanSeats
+            }
         val reconnected = resumeSeat != null
-        val seat = resumeSeat ?: (0 until config.seatCount).firstOrNull { it !in humanSeats && it !in reconnectableSeats }
-            // If every seat is either occupied or reserved-for-reconnect, fall back to any vacant seat.
-            ?: (0 until config.seatCount).firstOrNull { it !in humanSeats }
+        val seat =
+            resumeSeat ?: (0 until config.seatCount).firstOrNull { it !in humanSeats && it !in reconnectableSeats }
+                // If every seat is either occupied or reserved-for-reconnect, fall back to any vacant seat.
+                ?: (0 until config.seatCount).firstOrNull { it !in humanSeats }
         if (seat == null) {
             cmd.replyChannel.completeExceptionally(IllegalStateException("Match $matchId is full"))
             return
@@ -138,12 +146,13 @@ class MatchActor(
 
         // The actor sends RoomJoined ITSELF (before any StateUpdate) so frame ordering is guaranteed by
         // the serial actor loop — never racing the routing coroutine. The reply only carries metadata.
-        val result = PlayerJoinedResult(
-            seat = seat,
-            matchId = matchId,
-            playerCount = humanSeats.size,
-            reconnected = reconnected,
-        )
+        val result =
+            PlayerJoinedResult(
+                seat = seat,
+                matchId = matchId,
+                playerCount = humanSeats.size,
+                reconnected = reconnected,
+            )
         trySend(
             cmd.session,
             ServerMessage.RoomJoined(
@@ -282,11 +291,12 @@ class MatchActor(
         if (state.phase is Phase.GameOver) {
             val winner = (state.phase as Phase.GameOver).winner
             val seq2 = nextSeq()
-            val gameOver: ServerMessage = ServerMessage.GameOver(
-                matchId = matchId,
-                seq = seq2,
-                winnerSeat = winner.raw,
-            )
+            val gameOver: ServerMessage =
+                ServerMessage.GameOver(
+                    matchId = matchId,
+                    seq = seq2,
+                    winnerSeat = winner.raw,
+                )
             for ((_, pair) in humanSeats) {
                 trySend(pair.second, gameOver)
             }
@@ -294,32 +304,45 @@ class MatchActor(
     }
 
     /** Send a single seat its current redacted view + per-seat-projected events. */
-    private suspend fun sendStateTo(seat: Int, events: List<GameEvent>, seq: Long = nextSeq()) {
+    private suspend fun sendStateTo(
+        seat: Int,
+        events: List<GameEvent>,
+        seq: Long = nextSeq(),
+    ) {
         val session = humanSeats[seat]?.second ?: return
         val pid = PlayerId(seat)
         val view = redact(state, pid).toWire()
-        val msg: ServerMessage = ServerMessage.StateUpdate(
-            matchId = matchId,
-            seq = seq,
-            view = view,
-            events = events.map { it.toWireFor(pid) },
-        )
+        val msg: ServerMessage =
+            ServerMessage.StateUpdate(
+                matchId = matchId,
+                seq = seq,
+                view = view,
+                events = events.map { it.toWireFor(pid) },
+            )
         trySend(session, msg)
     }
 
-    private suspend fun sendError(connectionId: String, clientSeq: Long, reason: String) {
+    private suspend fun sendError(
+        connectionId: String,
+        clientSeq: Long,
+        reason: String,
+    ) {
         val seat = connToSeat[connectionId] ?: return
         val session = humanSeats[seat]?.second ?: return
-        val msg: ServerMessage = ServerMessage.Error(
-            matchId = matchId,
-            seq = nextSeq(),
-            clientSeq = clientSeq,
-            reason = reason,
-        )
+        val msg: ServerMessage =
+            ServerMessage.Error(
+                matchId = matchId,
+                seq = nextSeq(),
+                clientSeq = clientSeq,
+                reason = reason,
+            )
         trySend(session, msg)
     }
 
-    private suspend fun trySend(session: WebSocketSession, msg: ServerMessage) {
+    private suspend fun trySend(
+        session: WebSocketSession,
+        msg: ServerMessage,
+    ) {
         try {
             val json = KursiJson.encodeToString(msg)
             session.send(Frame.Text(json))

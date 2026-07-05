@@ -79,9 +79,10 @@ class OnlineGameAdapter(
         reconnectSeat: Int? = null,
     ) {
         collectJob?.cancel()
-        collectJob = scope.launch {
-            client.uiState.collect { online -> project(online) }
-        }
+        collectJob =
+            scope.launch {
+                client.uiState.collect { online -> project(online) }
+            }
         client.connect(host = host, port = port, roomCode = roomCode, matchId = matchId, reconnectSeat = reconnectSeat)
     }
 
@@ -112,8 +113,11 @@ class OnlineGameAdapter(
         if (action.intent !in shown.legalIntents) return
         val wire = action.intent.toWire()
         scope.launch {
-            if (wire is com.kursi.protocol.wire.WireIntent.Pass) client.pass()
-            else client.submit(wire)
+            if (wire is com.kursi.protocol.wire.WireIntent.Pass) {
+                client.pass()
+            } else {
+                client.submit(wire)
+            }
         }
     }
 

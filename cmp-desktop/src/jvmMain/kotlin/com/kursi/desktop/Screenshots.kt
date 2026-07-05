@@ -21,41 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import com.kursi.designsystem.BrandTokens
-import com.kursi.designsystem.KursiRoleHues
-import com.kursi.designsystem.KursiType
-import com.kursi.designsystem.moment.ActionMomentOverlay
-import com.kursi.designsystem.moment.KursiMoment
-import com.kursi.designsystem.moment.MomentHost
-import com.kursi.designsystem.moment.TableAnchors
-import com.kursi.shared.screen.CareerScreen
-import com.kursi.shared.screen.GauntletScreen
-import com.kursi.shared.screen.HomeScreen
-import com.kursi.shared.screen.LeaderboardScreen
-import com.kursi.shared.screen.RecentMatchesList
-import com.kursi.shared.screen.ReviewScreen
-import com.kursi.shared.screen.SetupScreen
-import com.kursi.shared.screen.StoryScreen
-import com.kursi.feature.game.narrative.ArcId
-import com.kursi.feature.game.narrative.ChatActionKind
-import com.kursi.feature.game.narrative.ChatKind
-import com.kursi.feature.game.narrative.ChatMessage
-import com.kursi.feature.game.narrative.ChatSuggestion
-import com.kursi.feature.game.narrative.MessageTone
-import com.kursi.shared.screen.TutorialScreen
-import com.kursi.shared.screen.LobbyScreen
-import com.kursi.shared.screen.OnlineHubScreen
-import com.kursi.shared.screen.OnlineStandings
-import com.kursi.shared.screen.OnlineStandingRow
-import com.kursi.shared.screen.ResultsScreen
-import com.kursi.shared.screen.SettingsScreen
+import com.kursi.ai.BotMemory
+import com.kursi.ai.OpponentInsight
+import com.kursi.ai.advisor.MoveAdvisor
+import com.kursi.ai.persona.BotDifficulty
+import com.kursi.ai.persona.PersonaAssigner
 import com.kursi.core.network.ConnectionState
 import com.kursi.core.network.LanHost
-import com.kursi.feature.game.HubPhase
-import com.kursi.feature.game.LobbyKind
-import com.kursi.feature.game.LobbyState
-import com.kursi.feature.game.OnlineHubUiState
-import com.kursi.shared.nav.MatchSummary
 import com.kursi.core.prefs.AppPrefs
 import com.kursi.core.prefs.DailyStanding
 import com.kursi.core.prefs.DecisionLedger
@@ -63,22 +35,49 @@ import com.kursi.core.prefs.GauntletProgress
 import com.kursi.core.prefs.PersonaRecord
 import com.kursi.core.prefs.RankedStanding
 import com.kursi.core.prefs.StatsLedger
-import com.kursi.shared.nav.MatchDecisionSummary
-import com.kursi.ai.BotMemory
-import com.kursi.ai.OpponentInsight
-import com.kursi.ai.advisor.MoveAdvisor
-import com.kursi.ai.persona.BotDifficulty
-import com.kursi.ai.persona.PersonaAssigner
+import com.kursi.designsystem.BrandTokens
+import com.kursi.designsystem.KursiRoleHues
 import com.kursi.designsystem.KursiTheme
+import com.kursi.designsystem.KursiType
+import com.kursi.designsystem.moment.ActionMomentOverlay
+import com.kursi.designsystem.moment.KursiMoment
+import com.kursi.designsystem.moment.MomentHost
+import com.kursi.designsystem.moment.TableAnchors
 import com.kursi.engine.*
-import com.kursi.feature.game.Difficulty
 import com.kursi.feature.game.ChitContent
-import com.kursi.feature.game.GameAction
+import com.kursi.feature.game.Difficulty
 import com.kursi.feature.game.GamePhase
 import com.kursi.feature.game.GameScreen
 import com.kursi.feature.game.GameUiState
+import com.kursi.feature.game.HubPhase
+import com.kursi.feature.game.LobbyKind
+import com.kursi.feature.game.LobbyState
+import com.kursi.feature.game.OnlineHubUiState
 import com.kursi.feature.game.OpponentPersona
+import com.kursi.feature.game.narrative.ArcId
+import com.kursi.feature.game.narrative.ChatActionKind
+import com.kursi.feature.game.narrative.ChatKind
+import com.kursi.feature.game.narrative.ChatMessage
+import com.kursi.feature.game.narrative.ChatSuggestion
+import com.kursi.feature.game.narrative.MessageTone
 import com.kursi.feature.game.riskBluffConf
+import com.kursi.shared.nav.MatchDecisionSummary
+import com.kursi.shared.nav.MatchSummary
+import com.kursi.shared.screen.CareerScreen
+import com.kursi.shared.screen.GauntletScreen
+import com.kursi.shared.screen.HomeScreen
+import com.kursi.shared.screen.LeaderboardScreen
+import com.kursi.shared.screen.LobbyScreen
+import com.kursi.shared.screen.OnlineHubScreen
+import com.kursi.shared.screen.OnlineStandingRow
+import com.kursi.shared.screen.OnlineStandings
+import com.kursi.shared.screen.RecentMatchesList
+import com.kursi.shared.screen.ResultsScreen
+import com.kursi.shared.screen.ReviewScreen
+import com.kursi.shared.screen.SettingsScreen
+import com.kursi.shared.screen.SetupScreen
+import com.kursi.shared.screen.StoryScreen
+import com.kursi.shared.screen.TutorialScreen
 import java.io.File
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -107,45 +106,77 @@ fun main() {
     val p1 = PlayerId(1)
     val p1Persona = chitState.opponentPersonas[p1]
     val p1Id = p1Persona?.name?.lowercase()?.replace(" ", "_") ?: ""
-    val voice = com.kursi.feature.game.KursiVoice(com.kursi.feature.game.Language.ENGLISH)
-    fun actionLabel(a: Action): String = when (a) {
-        Action.Income -> "DEHAADI"; Action.ForeignAid -> "FDI"; Action.Tax -> "GHOTALA"
-        Action.Exchange -> "SETTING"; is Action.Steal -> "VASOOLI"
-        is Action.Investigate -> "JAANCH"
-        is Action.Assassinate -> "SUPARI"; is Action.Coup -> "KHELA"
-        Action.BailPe -> "BAIL PE"; Action.Sabotage -> "BALI KHEL"
-        is Action.Hawala -> "HAWALA"; Action.Emergency -> "ADHYADESH"
-    }
-    val legalAgainstP1 = chitState.legalIntents
-        .filterIsInstance<Intent.DeclareAction>()
-        .filter { Rules.targetOf(it.action) == p1 }
-        .map { actionLabel(it.action) }
-        .distinct()
+    val voice =
+        com.kursi.feature.game
+            .KursiVoice(com.kursi.feature.game.Language.ENGLISH)
 
-    val p1Intel = chitState.insightFor(p1)?.let { com.kursi.feature.game.DossierIntel.from(it) }
+    fun actionLabel(a: Action): String =
+        when (a) {
+            Action.Income -> "DEHAADI"
+            Action.ForeignAid -> "FDI"
+            Action.Tax -> "GHOTALA"
+            Action.Exchange -> "SETTING"
+            is Action.Steal -> "VASOOLI"
+            is Action.Investigate -> "JAANCH"
+            is Action.Assassinate -> "SUPARI"
+            is Action.Coup -> "KHELA"
+            Action.BailPe -> "BAIL PE"
+            Action.Sabotage -> "BALI KHEL"
+            is Action.Hawala -> "HAWALA"
+            Action.Emergency -> "ADHYADESH"
+        }
+    val legalAgainstP1 =
+        chitState.legalIntents
+            .filterIsInstance<Intent.DeclareAction>()
+            .filter { Rules.targetOf(it.action) == p1 }
+            .map { actionLabel(it.action) }
+            .distinct()
+
+    val p1Intel =
+        chitState.insightFor(p1)?.let {
+            com.kursi.feature.game.DossierIntel
+                .from(it)
+        }
     renderToPng(
-        chitState, outDir, "4p_chit_dossier", null,
-        initialChit = ChitContent.Dossier(
-            opponentName = p1Persona?.name ?: "P1",
-            opponentCoins = chitState.view.players.first { it.id == p1 }.coins,
-            faceDownCount = chitState.view.players.first { it.id == p1 }.faceDownCount,
-            faceUpRoles = chitState.view.players.first { it.id == p1 }.faceUpRoles,
-            lastActionText = "GHOTALA",
-            personaDossierLine = voice.personaBio(p1Id),
-            personaRivalryLine = voice.personaRivalry(p1Id),
-            legalMovesAgainst = legalAgainstP1,
-            intel = p1Intel,
-        ),
+        chitState,
+        outDir,
+        "4p_chit_dossier",
+        null,
+        initialChit =
+            ChitContent.Dossier(
+                opponentName = p1Persona?.name ?: "P1",
+                opponentCoins =
+                    chitState.view.players
+                        .first { it.id == p1 }
+                        .coins,
+                faceDownCount =
+                    chitState.view.players
+                        .first { it.id == p1 }
+                        .faceDownCount,
+                faceUpRoles =
+                    chitState.view.players
+                        .first { it.id == p1 }
+                        .faceUpRoles,
+                lastActionText = "GHOTALA",
+                personaDossierLine = voice.personaBio(p1Id),
+                personaRivalryLine = voice.personaRivalry(p1Id),
+                legalMovesAgainst = legalAgainstP1,
+                intel = p1Intel,
+            ),
     )
     println("  wrote 4p_chit_dossier.png")
 
     renderToPng(
-        chitState, outDir, "4p_chit_risk", null,
-        initialChit = ChitContent.RiskAction(
-            action = Action.Tax,
-            myCoins = chitState.view.myCoins,
-            bluffConf = riskBluffConf(Action.Tax, chitState),
-        ),
+        chitState,
+        outDir,
+        "4p_chit_risk",
+        null,
+        initialChit =
+            ChitContent.RiskAction(
+                action = Action.Tax,
+                myCoins = chitState.view.myCoins,
+                bluffConf = riskBluffConf(Action.Tax, chitState),
+            ),
     )
     println("  wrote 4p_chit_risk.png")
 
@@ -159,7 +190,11 @@ fun main() {
     // home_mode_gauntlet.png — GAUNTLET tile pre-selected; right panel shows description + ENTER.
     renderComposableAnimated(outDir, "home_mode_gauntlet") {
         HomeScreen(
-            onNewGame = {}, onGazette = {}, onSettings = {}, onOnlineTap = {}, launchIndex = 1,
+            onNewGame = {},
+            onGazette = {},
+            onSettings = {},
+            onOnlineTap = {},
+            launchIndex = 1,
             gauntlet = GauntletProgress(clearedRung = 1, wins = 7),
             gauntletRungCount = 5,
             initialSelectedKey = "gauntlet",
@@ -170,7 +205,11 @@ fun main() {
     // home_mode_story.png — KISSA tile pre-selected; right panel shows KISSA description.
     renderComposableAnimated(outDir, "home_mode_story") {
         HomeScreen(
-            onNewGame = {}, onGazette = {}, onSettings = {}, onOnlineTap = {}, launchIndex = 7,
+            onNewGame = {},
+            onGazette = {},
+            onSettings = {},
+            onOnlineTap = {},
+            launchIndex = 7,
             initialSelectedKey = "story",
         )
     }
@@ -178,7 +217,8 @@ fun main() {
 
     // M6a: the Niyam Gazette — DARBAR (roles) tab now includes the 6th role, PATRAKAAR.
     renderComposable(outDir, "gazette_roles") {
-        com.kursi.feature.game.NiyamGazette(onDismiss = {}, onReplayPrimer = {}, initialTab = 0)
+        com.kursi.feature.game
+            .NiyamGazette(onDismiss = {}, onReplayPrimer = {}, initialTab = 0)
     }
     println("  wrote gazette_roles.png")
 
@@ -195,7 +235,9 @@ fun main() {
     // ── M6e GAUNTLET — the escalating promotion ladder (mid-run: rungs 0-1 cleared) ──
     renderComposable(outDir, "gauntlet") {
         GauntletScreen(
-            progress = com.kursi.core.prefs.GauntletProgress(clearedRung = 1, wins = 3),
+            progress =
+                com.kursi.core.prefs
+                    .GauntletProgress(clearedRung = 1, wins = 3),
             onPlayRung = {},
             onBack = {},
         )
@@ -234,25 +276,66 @@ fun main() {
     run {
         val (base, _) = buildMidClaimState()
         // A snapshot of an AFWAAH arc unfolding against seat 2 (Babu), with the table piling on.
-        val feed = listOf(
-            ChatMessage(1, senderSeat = 0, targetSeat = 2, body = "Suna? Babu ke paas Patrakaar chhupa hai. Sambhal ke.", tone = MessageTone.SLY, kind = ChatKind.ARC, arc = ArcId.AFWAAH, fromPlayer = true),
-            ChatMessage(2, senderSeat = -1, targetSeat = 2, body = "Darbar mein khusur-phusur shuru… Babu ke khilaaf.", tone = MessageTone.SYSTEM, kind = ChatKind.SYSTEM, arc = ArcId.AFWAAH),
-            ChatMessage(3, senderSeat = 1, targetSeat = 2, body = "Toh yeh baat hai! Main pehle hi maarunga.", tone = MessageTone.HOSTILE, kind = ChatKind.TABLE),
-            ChatMessage(4, senderSeat = 2, body = "Mere against kyun? Maine toh sirf file rok rakhi thi.", tone = MessageTone.PANICKED, kind = ChatKind.TABLE),
-            ChatMessage(5, senderSeat = 3, targetSeat = 2, body = "Babu pehle. Baaki baad mein.", tone = MessageTone.HOSTILE, kind = ChatKind.TABLE),
-        )
-        val suggestions = listOf(
-            ChatSuggestion("start.gathbandhan.1", "Gathbandhan: Bhai Teja", ChatActionKind.ARC_START, ArcId.GATHBANDHAN, 1, "Bhai Teja", "Secret pact — coordinate, then betray"),
-            ChatSuggestion("afwaah.fuel.2", "Aur hawa do", ChatActionKind.ARC_REPLY, ArcId.AFWAAH, 2, "Babu", "Twist the knife — more heat on Babu"),
-            ChatSuggestion("talk.taunt.3", "Taunt Jugaadu", ChatActionKind.TAUNT, null, 3, "Jugaadu", "Heat them up"),
-        )
-        val narrativeState = base.copy(
-            narrativeEnabled = true,
-            chatFeed = feed,
-            chatSuggestions = suggestions,
-            activeArcs = listOf(ArcId.AFWAAH),
-            unreadChat = 3,
-        )
+        val feed =
+            listOf(
+                ChatMessage(
+                    1,
+                    senderSeat = 0,
+                    targetSeat = 2,
+                    body = "Suna? Babu ke paas Patrakaar chhupa hai. Sambhal ke.",
+                    tone = MessageTone.SLY,
+                    kind = ChatKind.ARC,
+                    arc = ArcId.AFWAAH,
+                    fromPlayer = true,
+                ),
+                ChatMessage(
+                    2,
+                    senderSeat = -1,
+                    targetSeat = 2,
+                    body = "Darbar mein khusur-phusur shuru… Babu ke khilaaf.",
+                    tone = MessageTone.SYSTEM,
+                    kind = ChatKind.SYSTEM,
+                    arc = ArcId.AFWAAH,
+                ),
+                ChatMessage(
+                    3,
+                    senderSeat = 1,
+                    targetSeat = 2,
+                    body = "Toh yeh baat hai! Main pehle hi maarunga.",
+                    tone = MessageTone.HOSTILE,
+                    kind = ChatKind.TABLE,
+                ),
+                ChatMessage(
+                    4,
+                    senderSeat = 2,
+                    body = "Mere against kyun? Maine toh sirf file rok rakhi thi.",
+                    tone = MessageTone.PANICKED,
+                    kind = ChatKind.TABLE,
+                ),
+                ChatMessage(5, senderSeat = 3, targetSeat = 2, body = "Babu pehle. Baaki baad mein.", tone = MessageTone.HOSTILE, kind = ChatKind.TABLE),
+            )
+        val suggestions =
+            listOf(
+                ChatSuggestion(
+                    "start.gathbandhan.1",
+                    "Gathbandhan: Bhai Teja",
+                    ChatActionKind.ARC_START,
+                    ArcId.GATHBANDHAN,
+                    1,
+                    "Bhai Teja",
+                    "Secret pact — coordinate, then betray",
+                ),
+                ChatSuggestion("afwaah.fuel.2", "Aur hawa do", ChatActionKind.ARC_REPLY, ArcId.AFWAAH, 2, "Babu", "Twist the knife — more heat on Babu"),
+                ChatSuggestion("talk.taunt.3", "Taunt Jugaadu", ChatActionKind.TAUNT, null, 3, "Jugaadu", "Heat them up"),
+            )
+        val narrativeState =
+            base.copy(
+                narrativeEnabled = true,
+                chatFeed = feed,
+                chatSuggestions = suggestions,
+                activeArcs = listOf(ArcId.AFWAAH),
+                unreadChat = 3,
+            )
         renderToPng(narrativeState, outDir, "darbar_table", null)
         println("  wrote darbar_table.png")
     }
@@ -316,27 +399,30 @@ fun main() {
     // M3 §3 — career / Roznamcha register with a sample populated ledger.
     renderComposable(outDir, "career") {
         CareerScreen(
-            ledger = StatsLedger(
-                games = 14,
-                wins = 9,
-                bluffsHeld = 21,
-                bluffsCaught = 6,
-                headToHead = mapOf(
-                    "netaji_vachan" to PersonaRecord(played = 8, wins = 5),
-                    "bhai_teja" to PersonaRecord(played = 6, wins = 2),
-                    "babu_filewala" to PersonaRecord(played = 5, wins = 4),
+            ledger =
+                StatsLedger(
+                    games = 14,
+                    wins = 9,
+                    bluffsHeld = 21,
+                    bluffsCaught = 6,
+                    headToHead =
+                        mapOf(
+                            "netaji_vachan" to PersonaRecord(played = 8, wins = 5),
+                            "bhai_teja" to PersonaRecord(played = 6, wins = 2),
+                            "babu_filewala" to PersonaRecord(played = 5, wins = 4),
+                        ),
                 ),
-            ),
             // M6b: a populated decision-quality dossier (grades SHARP per the tiering).
-            decisionLedger = DecisionLedger(
-                decisions = 168,
-                matchedBest = 121,      // ~72% best-move match
-                evLostMilli = 6720L,    // ~4% avg win-prob bled (6720 / 1000 / 168)
-                challenges = 24,
-                challengesGood = 17,    // ~71% challenge accuracy
-                bluffsTried = 31,
-                bluffsOk = 22,          // ~71% bluff success
-            ),
+            decisionLedger =
+                DecisionLedger(
+                    decisions = 168,
+                    matchedBest = 121, // ~72% best-move match
+                    evLostMilli = 6720L, // ~4% avg win-prob bled (6720 / 1000 / 168)
+                    challenges = 24,
+                    challengesGood = 17, // ~71% challenge accuracy
+                    bluffsTried = 31,
+                    bluffsOk = 22, // ~71% bluff success
+                ),
             // M6d — ranked standing surfaced at the top of the career file.
             ranked = sampleRanked(),
             onBack = {},
@@ -360,15 +446,17 @@ fun main() {
             ranked = sampleRanked(),
             daily = DailyStanding(lastDay = 20_001L, lastWon = true, streak = 5, bestStreak = 9, played = 22, won = 14),
             onBack = {},
-            onlineStandings = OnlineStandings(
-                connected = true,
-                rows = listOf(
-                    OnlineStandingRow(1, "Netaji Vachan", 1342),
-                    OnlineStandingRow(2, "Aap", 1185, isMe = true),
-                    OnlineStandingRow(3, "Madam Sarpanch", 1120),
-                    OnlineStandingRow(4, "Seth Khokhawala", 1071),
+            onlineStandings =
+                OnlineStandings(
+                    connected = true,
+                    rows =
+                        listOf(
+                            OnlineStandingRow(1, "Netaji Vachan", 1342),
+                            OnlineStandingRow(2, "Aap", 1185, isMe = true),
+                            OnlineStandingRow(3, "Madam Sarpanch", 1120),
+                            OnlineStandingRow(4, "Seth Khokhawala", 1071),
+                        ),
                 ),
-            ),
         )
     }
     println("  wrote leaderboard_online.png")
@@ -377,9 +465,14 @@ fun main() {
     renderComposable(outDir, "online_hub") {
         OnlineHubScreen(
             state = OnlineHubUiState(phase = HubPhase.Idle),
-            onBack = {}, onCreatePrivate = { _, _, _ -> }, onJoinByCode = { _, _, _ -> },
-            onQuickMatch = { _, _, _ -> }, onStartLanBrowse = {}, onStopLanBrowse = {},
-            onJoinLanHost = {}, onLeaveLobby = {},
+            onBack = {},
+            onCreatePrivate = { _, _, _ -> },
+            onJoinByCode = { _, _, _ -> },
+            onQuickMatch = { _, _, _ -> },
+            onStartLanBrowse = {},
+            onStopLanBrowse = {},
+            onJoinLanHost = {},
+            onLeaveLobby = {},
         )
     }
     println("  wrote online_hub.png")
@@ -387,17 +480,24 @@ fun main() {
     // ── M7 ONLINE HUB: LAN browse populated with discovered hosts ──
     renderComposable(outDir, "online_hub_lan") {
         OnlineHubScreen(
-            state = OnlineHubUiState(
-                phase = HubPhase.Idle,
-                lanBrowsing = true,
-                lanHosts = listOf(
-                    LanHost(host = "192.168.1.21", port = 8080, roomCode = "TEAK", name = "Sid ki mez"),
-                    LanHost(host = "192.168.1.34", port = 8080, roomCode = "BRSS", name = "Daftar #2"),
+            state =
+                OnlineHubUiState(
+                    phase = HubPhase.Idle,
+                    lanBrowsing = true,
+                    lanHosts =
+                        listOf(
+                            LanHost(host = "192.168.1.21", port = 8080, roomCode = "TEAK", name = "Sid ki mez"),
+                            LanHost(host = "192.168.1.34", port = 8080, roomCode = "BRSS", name = "Daftar #2"),
+                        ),
                 ),
-            ),
-            onBack = {}, onCreatePrivate = { _, _, _ -> }, onJoinByCode = { _, _, _ -> },
-            onQuickMatch = { _, _, _ -> }, onStartLanBrowse = {}, onStopLanBrowse = {},
-            onJoinLanHost = {}, onLeaveLobby = {},
+            onBack = {},
+            onCreatePrivate = { _, _, _ -> },
+            onJoinByCode = { _, _, _ -> },
+            onQuickMatch = { _, _, _ -> },
+            onStartLanBrowse = {},
+            onStopLanBrowse = {},
+            onJoinLanHost = {},
+            onLeaveLobby = {},
         )
     }
     println("  wrote online_hub_lan.png")
@@ -405,18 +505,29 @@ fun main() {
     // ── M7 ONLINE HUB: waiting room (connected, seated, awaiting players) ──
     renderComposable(outDir, "online_lobby") {
         OnlineHubScreen(
-            state = OnlineHubUiState(
-                phase = HubPhase.Lobby,
-                lobby = LobbyState(
-                    host = "localhost", port = 8080, code = "TEAK",
-                    kind = LobbyKind.PrivateHost, seatCount = 4,
-                    connection = ConnectionState.Connected(seat = 0),
-                    mySeat = 0, joinedSeats = 2,
+            state =
+                OnlineHubUiState(
+                    phase = HubPhase.Lobby,
+                    lobby =
+                        LobbyState(
+                            host = "localhost",
+                            port = 8080,
+                            code = "TEAK",
+                            kind = LobbyKind.PrivateHost,
+                            seatCount = 4,
+                            connection = ConnectionState.Connected(seat = 0),
+                            mySeat = 0,
+                            joinedSeats = 2,
+                        ),
                 ),
-            ),
-            onBack = {}, onCreatePrivate = { _, _, _ -> }, onJoinByCode = { _, _, _ -> },
-            onQuickMatch = { _, _, _ -> }, onStartLanBrowse = {}, onStopLanBrowse = {},
-            onJoinLanHost = {}, onLeaveLobby = {},
+            onBack = {},
+            onCreatePrivate = { _, _, _ -> },
+            onJoinByCode = { _, _, _ -> },
+            onQuickMatch = { _, _, _ -> },
+            onStartLanBrowse = {},
+            onStopLanBrowse = {},
+            onJoinLanHost = {},
+            onLeaveLobby = {},
         )
     }
     println("  wrote online_lobby.png")
@@ -424,19 +535,30 @@ fun main() {
     // ── M7 ONLINE HUB: connection-status fixture — reconnect/lost banner in the waiting room ──
     renderComposable(outDir, "online_lobby_lost") {
         OnlineHubScreen(
-            state = OnlineHubUiState(
-                phase = HubPhase.Lobby,
-                error = null,
-                lobby = LobbyState(
-                    host = "10.0.0.7", port = 8080, code = "BRSS",
-                    kind = LobbyKind.JoinByCode, seatCount = 4,
-                    connection = ConnectionState.Dropped(cause = "socket closed"),
-                    mySeat = 1, joinedSeats = 3,
+            state =
+                OnlineHubUiState(
+                    phase = HubPhase.Lobby,
+                    error = null,
+                    lobby =
+                        LobbyState(
+                            host = "10.0.0.7",
+                            port = 8080,
+                            code = "BRSS",
+                            kind = LobbyKind.JoinByCode,
+                            seatCount = 4,
+                            connection = ConnectionState.Dropped(cause = "socket closed"),
+                            mySeat = 1,
+                            joinedSeats = 3,
+                        ),
                 ),
-            ),
-            onBack = {}, onCreatePrivate = { _, _, _ -> }, onJoinByCode = { _, _, _ -> },
-            onQuickMatch = { _, _, _ -> }, onStartLanBrowse = {}, onStopLanBrowse = {},
-            onJoinLanHost = {}, onLeaveLobby = {},
+            onBack = {},
+            onCreatePrivate = { _, _, _ -> },
+            onJoinByCode = { _, _, _ -> },
+            onQuickMatch = { _, _, _ -> },
+            onStartLanBrowse = {},
+            onStopLanBrowse = {},
+            onJoinLanHost = {},
+            onLeaveLobby = {},
         )
     }
     println("  wrote online_lobby_lost.png")
@@ -444,17 +566,26 @@ fun main() {
     // home_ranked.png — ranked strip + daily challenge + career stats + gauntlet progress.
     renderComposableAnimated(outDir, "home_ranked") {
         HomeScreen(
-            onNewGame = {}, onGazette = {}, onSettings = {}, onOnlineTap = {}, launchIndex = 0,
+            onNewGame = {},
+            onGazette = {},
+            onSettings = {},
+            onOnlineTap = {},
+            launchIndex = 0,
             ranked = sampleRanked(),
             daily = DailyStanding(lastDay = 20_000L, lastWon = true, streak = 5, bestStreak = 9, played = 22, won = 14),
             todayDailyDone = false,
-            ledger = StatsLedger(
-                games = 14, wins = 9, bluffsHeld = 21, bluffsCaught = 6,
-                headToHead = mapOf(
-                    "netaji_vachan" to PersonaRecord(8, 5),
-                    "bhai_teja" to PersonaRecord(4, 2),
-                )
-            ),
+            ledger =
+                StatsLedger(
+                    games = 14,
+                    wins = 9,
+                    bluffsHeld = 21,
+                    bluffsCaught = 6,
+                    headToHead =
+                        mapOf(
+                            "netaji_vachan" to PersonaRecord(8, 5),
+                            "bhai_teja" to PersonaRecord(4, 2),
+                        ),
+                ),
             gauntlet = GauntletProgress(clearedRung = 2, wins = 9),
             gauntletRungCount = 5,
         )
@@ -464,18 +595,27 @@ fun main() {
     // home_resume.png — shows in-progress match resume strip + all progression data.
     renderComposableAnimated(outDir, "home_resume") {
         HomeScreen(
-            onNewGame = {}, onGazette = {}, onSettings = {}, onOnlineTap = {}, launchIndex = 5,
+            onNewGame = {},
+            onGazette = {},
+            onSettings = {},
+            onOnlineTap = {},
+            launchIndex = 5,
             resumeLabel = "6-Player Hard · Rung 3 · Turn 14",
             ranked = sampleRanked(),
             daily = DailyStanding(lastDay = 20_001L, lastWon = false, streak = 3, bestStreak = 9, played = 22, won = 14),
             todayDailyDone = false,
-            ledger = StatsLedger(
-                games = 14, wins = 9, bluffsHeld = 21, bluffsCaught = 6,
-                headToHead = mapOf(
-                    "netaji_vachan" to PersonaRecord(8, 5),
-                    "jugaadu_chhotu" to PersonaRecord(5, 3),
-                )
-            ),
+            ledger =
+                StatsLedger(
+                    games = 14,
+                    wins = 9,
+                    bluffsHeld = 21,
+                    bluffsCaught = 6,
+                    headToHead =
+                        mapOf(
+                            "netaji_vachan" to PersonaRecord(8, 5),
+                            "jugaadu_chhotu" to PersonaRecord(5, 3),
+                        ),
+                ),
             gauntlet = GauntletProgress(clearedRung = 1, wins = 5),
             gauntletRungCount = 5,
         )
@@ -505,11 +645,14 @@ fun main() {
     run {
         val record = buildCompletedMatchFixture()
         // Pre-build the deterministic ReplaySession synchronously (the live screen does this off-thread).
-        val replay = com.kursi.feature.game.session.MatchReplay.replaySessionFor(record)
+        val replay =
+            com.kursi.feature.game.session.MatchReplay
+                .replaySessionFor(record)
         // Open on the first human decision that carries an annotation (the teach-by-review beat).
-        val annotatedStep = replay.humanDecisionIndices.firstOrNull { replay.annotationAt(it) != null }
-            ?: replay.humanDecisionIndices.firstOrNull()
-            ?: 0
+        val annotatedStep =
+            replay.humanDecisionIndices.firstOrNull { replay.annotationAt(it) != null }
+                ?: replay.humanDecisionIndices.firstOrNull()
+                ?: 0
         renderComposable(outDir, "review_replay") {
             ReviewScreen(
                 match = record,
@@ -526,11 +669,12 @@ fun main() {
             Box(Modifier.fillMaxSize().background(BrandTokens.TeakInk).padding(24.dp)) {
                 Box(Modifier.fillMaxWidth(0.6f).align(Alignment.TopCenter)) {
                     RecentMatchesList(
-                        matches = listOf(
-                            record,
-                            record.copy(winnerSeat = 1, seed = record.seed + 7),
-                            record.copy(winnerSeat = 0, seed = record.seed + 13, players = 6),
-                        ),
+                        matches =
+                            listOf(
+                                record,
+                                record.copy(winnerSeat = 1, seed = record.seed + 7),
+                                record.copy(winnerSeat = 0, seed = record.seed + 13, players = 6),
+                            ),
                         onReview = {},
                     )
                 }
@@ -551,35 +695,47 @@ private fun buildCompletedMatchFixture(): com.kursi.feature.game.session.Complet
     val seed = 71L
     val players = 4
     val personasMap = buildPersonaMap(players, seed)
-    val bots: Map<PlayerId, Policy> = run {
-        val assignments = PersonaAssigner.assign(
-            seatCount = players - 1,
-            difficulty = BotDifficulty.MEDIUM,
+    val bots: Map<PlayerId, Policy> =
+        run {
+            val assignments =
+                PersonaAssigner.assign(
+                    seatCount = players - 1,
+                    difficulty = BotDifficulty.MEDIUM,
+                    seed = seed,
+                )
+            assignments.mapIndexed { i, pair -> PlayerId(i + 1) to (pair.second as Policy) }.toMap()
+        }
+    val session =
+        com.kursi.feature.game.session.GameSession(
+            config = GameConfig.forPlayers(players),
             seed = seed,
+            humanSeat = PlayerId(0),
+            bots = bots,
+            opponentPersonas = personasMap,
         )
-        assignments.mapIndexed { i, pair -> PlayerId(i + 1) to (pair.second as Policy) }.toMap()
-    }
-    val session = com.kursi.feature.game.session.GameSession(
-        config = GameConfig.forPlayers(players),
-        seed = seed,
-        humanSeat = PlayerId(0),
-        bots = bots,
-        opponentPersonas = personasMap,
-    )
     val human = com.kursi.ai.EasyPolicy(2024L)
     var ui = session.start()
     while (!ui.isGameOver && ui.isHumanTurn && ui.legalIntents.isNotEmpty()) {
         ui = session.submitHuman(human.decide(ui.view, ui.legalIntents))
     }
     val winner = (session.snapshotState().phase as Phase.GameOver).winner.raw
-    val personas = personasMap.values.sortedBy { it.playerId.raw }.map { p ->
-        com.kursi.feature.game.session.SnapPersona(
-            seat = p.playerId.raw, name = p.name, monogram = p.monogram,
-            seatColorArgb = p.seatColorArgb, isHuman = p.playerId.raw == 0,
-        )
-    } + com.kursi.feature.game.session.SnapPersona(
-        seat = 0, name = "Aap", monogram = "A", seatColorArgb = 0xFF009E73L, isHuman = true,
-    )
+    val personas =
+        personasMap.values.sortedBy { it.playerId.raw }.map { p ->
+            com.kursi.feature.game.session.SnapPersona(
+                seat = p.playerId.raw,
+                name = p.name,
+                monogram = p.monogram,
+                seatColorArgb = p.seatColorArgb,
+                isHuman = p.playerId.raw == 0,
+            )
+        } +
+            com.kursi.feature.game.session.SnapPersona(
+                seat = 0,
+                name = "Aap",
+                monogram = "A",
+                seatColorArgb = 0xFF009E73L,
+                isHuman = true,
+            )
     return com.kursi.feature.game.session.CompletedMatch.of(
         seed = seed,
         players = players,
@@ -602,18 +758,19 @@ private fun buildCompletedMatchFixture(): com.kursi.feature.game.session.Complet
  */
 private fun renderTeamSetup(dir: File) {
     val scrollState = ScrollState(initial = 0)
-    val scene = ImageComposeScene(width = 1440, height = 900, density = Density(1f)) {
-        KursiTheme {
-            SetupScreen(
-                onBack = {},
-                onNext = { _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ -> },
-                initialPlayers = 4,
-                initialDifficulty = Difficulty.Medium,
-                initialTeamPlay = true,
-                scrollState = scrollState,
-            )
+    val scene =
+        ImageComposeScene(width = 1440, height = 900, density = Density(1f)) {
+            KursiTheme {
+                SetupScreen(
+                    onBack = {},
+                    onNext = { _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ -> },
+                    initialPlayers = 4,
+                    initialDifficulty = Difficulty.Medium,
+                    initialTeamPlay = true,
+                    scrollState = scrollState,
+                )
+            }
         }
-    }
     // Frame 1: lay out so maxValue is known.
     scene.render()
     // Scroll the form body to the bottom — the Team Khel (1-D) row + footer sit there.
@@ -638,9 +795,13 @@ private fun buildTeamTableState(): Pair<GameUiState, List<GameEvent>> {
         val ph = cur.phase
         if (ph is Phase.AwaitingAction && ph.actorSeat == 0 && cur.phase !is Phase.GameOver) return@repeat
         val who = whoActsNext(cur) ?: return@repeat
-        val intents = legalIntents(cur, who); if (intents.isEmpty()) return@repeat
+        val intents = legalIntents(cur, who)
+        if (intents.isEmpty()) return@repeat
         val out = applyIntent(cur, intents.first())
-        if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
+        if (out is ApplyOutcome.Accepted) {
+            cur = out.state
+            ev += out.events
+        }
     }
     val personas = buildPersonaMap(seatCount = 4, seed = seed)
     val ui = buildUiState(cur, viewerSeat = 0, ev.takeLast(GameUiState.MAX_EVENTS), personas)
@@ -651,26 +812,29 @@ private fun buildTeamTableState(): Pair<GameUiState, List<GameEvent>> {
 @Composable
 private fun ReducedMotionGallery() {
     // Each cell gets seat anchors local to its own box (cells are ~470×290).
-    val anchors = TableAnchors(
-        seatCenters = mapOf(
-            0 to Offset(235f, 150f),
-            1 to Offset(110f, 90f),
-            2 to Offset(360f, 90f),
-        ),
-        treasuryCenter = Offset(235f, 150f),
-    )
+    val anchors =
+        TableAnchors(
+            seatCenters =
+                mapOf(
+                    0 to Offset(235f, 150f),
+                    1 to Offset(110f, 90f),
+                    2 to Offset(360f, 90f),
+                ),
+            treasuryCenter = Offset(235f, 150f),
+        )
     val hue = KursiRoleHues
-    val moments: List<Pair<String, KursiMoment>> = listOf(
-        "Income (coins)"  to KursiMoment.Income(actorSeat = 0),
-        "Tax (held stamp)" to KursiMoment.Tax(actorSeat = 0, roleHue = hue.Neta),
-        "Steal (yank)"    to KursiMoment.Steal(actorSeat = 0, victim = 1, roleHue = hue.Babu),
-        "Reveal JHOOTH"   to KursiMoment.Reveal(actorSeat = 1, claimant = 1, claimedRole = "BABU", truthful = false, roleHue = hue.Babu),
-        "Reveal SACH"     to KursiMoment.Reveal(actorSeat = 2, claimant = 2, claimedRole = "NETA", truthful = true, roleHue = hue.Neta),
-        "Influence lost"  to KursiMoment.InfluenceLoss(actorSeat = 0, lostRole = "VAKIL", roleHue = hue.Vakil),
-        "Elimination"     to KursiMoment.Elimination(actorSeat = 1),
-        "Coup (crest)"    to KursiMoment.Coup(actorSeat = 0, target = 1),
-        "Win (KURSI)"     to KursiMoment.Win(actorSeat = 0),
-    )
+    val moments: List<Pair<String, KursiMoment>> =
+        listOf(
+            "Income (coins)" to KursiMoment.Income(actorSeat = 0),
+            "Tax (held stamp)" to KursiMoment.Tax(actorSeat = 0, roleHue = hue.Neta),
+            "Steal (yank)" to KursiMoment.Steal(actorSeat = 0, victim = 1, roleHue = hue.Babu),
+            "Reveal JHOOTH" to KursiMoment.Reveal(actorSeat = 1, claimant = 1, claimedRole = "BABU", truthful = false, roleHue = hue.Babu),
+            "Reveal SACH" to KursiMoment.Reveal(actorSeat = 2, claimant = 2, claimedRole = "NETA", truthful = true, roleHue = hue.Neta),
+            "Influence lost" to KursiMoment.InfluenceLoss(actorSeat = 0, lostRole = "VAKIL", roleHue = hue.Vakil),
+            "Elimination" to KursiMoment.Elimination(actorSeat = 1),
+            "Coup (crest)" to KursiMoment.Coup(actorSeat = 0, target = 1),
+            "Win (KURSI)" to KursiMoment.Win(actorSeat = 0),
+        )
     Box(Modifier.fillMaxSize().background(BrandTokens.TeakInk).padding(8.dp)) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -699,9 +863,10 @@ private fun ReducedMotionCell(
 ) {
     val host = remember(moment) { MomentHost().also { it.play(moment) } }
     Box(
-        modifier = modifier
-            .background(BrandTokens.TeakMid, RoundedCornerShape(8.dp))
-            .border(1.dp, BrandTokens.BrassDark, RoundedCornerShape(8.dp)),
+        modifier =
+            modifier
+                .background(BrandTokens.TeakMid, RoundedCornerShape(8.dp))
+                .border(1.dp, BrandTokens.BrassDark, RoundedCornerShape(8.dp)),
     ) {
         ActionMomentOverlay(host = host, anchors = anchors, reducedMotion = true)
         BasicText(
@@ -713,64 +878,68 @@ private fun ReducedMotionCell(
 }
 
 /** A representative ranked standing — Under Secretary tier with a climbing rating spark-line. */
-private fun sampleRanked(): RankedStanding = RankedStanding(
-    rating = 1185,
-    peak = 1240,
-    games = 18,
-    history = listOf(1000, 1018, 1002, 1031, 1057, 1042, 1078, 1095, 1120, 1108, 1142, 1166, 1151, 1185),
-)
+private fun sampleRanked(): RankedStanding =
+    RankedStanding(
+        rating = 1185,
+        peak = 1240,
+        games = 18,
+        history = listOf(1000, 1018, 1002, 1031, 1057, 1042, 1078, 1095, 1120, 1108, 1142, 1166, 1151, 1185),
+    )
 
 /** A representative human-won verdict, shaped from the real MatchSummary nav model. */
-private fun sampleMatchSummary(): MatchSummary = MatchSummary(
-    matchId = "match_sample",
-    seed = 42L,
-    players = 6,
-    difficulty = Difficulty.Hard,
-    winnerSeat = 0,
-    winnerName = "Aap",
-    winnerMonogram = "AAP",
-    winnerColor = 0xFFE63946L,
-    humanWon = true,
-    turnsTotal = 37,
-    bluffsHeld = 5,
-    bluffsCaught = 2,
-    recentEvents = listOf(
-        "Aap ne GHOTALA stamp kiya — +3 Khokha.",
-        "Babu Filewala challenged. Rangey haath pakda gaya.",
-        "Inspector Damaad ki kursi gayi.",
-    ),
-    finalStandings = listOf(
-        "Aap",
-        "Madam Sarpanch",
-        "Seth Khokhawala",
-        "Vakil Loophole",
-    ),
-    bestMomentPersonaId = null,
-    // M6b — the per-game decision-quality recap line on the results certificate.
-    decisionSummary = MatchDecisionSummary(
-        decisions = 18,
-        accuracyPct = 78,
-        avgEvLostPct = 3,
-        challenges = 3,
-        challengeAccuracyPct = 67,
-    ),
-)
+private fun sampleMatchSummary(): MatchSummary =
+    MatchSummary(
+        matchId = "match_sample",
+        seed = 42L,
+        players = 6,
+        difficulty = Difficulty.Hard,
+        winnerSeat = 0,
+        winnerName = "Aap",
+        winnerMonogram = "AAP",
+        winnerColor = 0xFFE63946L,
+        humanWon = true,
+        turnsTotal = 37,
+        bluffsHeld = 5,
+        bluffsCaught = 2,
+        recentEvents =
+            listOf(
+                "Aap ne GHOTALA stamp kiya — +3 Khokha.",
+                "Babu Filewala challenged. Rangey haath pakda gaya.",
+                "Inspector Damaad ki kursi gayi.",
+            ),
+        finalStandings =
+            listOf(
+                "Aap",
+                "Madam Sarpanch",
+                "Seth Khokhawala",
+                "Vakil Loophole",
+            ),
+        bestMomentPersonaId = null,
+        // M6b — the per-game decision-quality recap line on the results certificate.
+        decisionSummary =
+            MatchDecisionSummary(
+                decisions = 18,
+                accuracyPct = 78,
+                avgEvLostPct = 3,
+                challenges = 3,
+                challengeAccuracyPct = 67,
+            ),
+    )
 
-private fun renderComposable(dir: File, name: String, content: @Composable () -> Unit) {
-    val scene = ImageComposeScene(width = 1440, height = 900, density = Density(1f)) {
-        KursiTheme { content() }
-    }
+private fun renderComposable(
+    dir: File,
+    name: String,
+    content: @Composable () -> Unit,
+) {
+    val scene =
+        ImageComposeScene(width = 1440, height = 900, density = Density(1f)) {
+            KursiTheme { content() }
+        }
     val data = scene.render().encodeToData() ?: error("encode null for $name")
     File(dir, "$name.png").writeBytes(data.bytes)
     scene.close()
 }
 
-/**
- * Two-frame render for screens that gate content behind entrance animations driven by
- * [LaunchedEffect]. Frame 0 at t=0 triggers the effect (sets visible=true); frame 1 at
- * t=800ms lets all [animateFloatAsState] tweens (max 420ms + 260ms delay = 680ms) settle
- * to their final values before the image is captured.
- */
 /**
  * Multi-frame render for screens with LaunchedEffect-gated entrance animations.
  *
@@ -785,16 +954,23 @@ private fun renderComposable(dir: File, name: String, content: @Composable () ->
  * frame 2, not completes: the animation clock is 800ms when the target first becomes 1f,
  * so it still reads 0f progress at that capture time.
  */
-private fun renderComposableAnimated(dir: File, name: String, content: @Composable () -> Unit) {
-    val scene = ImageComposeScene(width = 1440, height = 900, density = Density(1f)) {
-        KursiTheme { content() }
-    }
-    val frameNs = 16_000_000L   // 16 ms per frame
+private fun renderComposableAnimated(
+    dir: File,
+    name: String,
+    content: @Composable () -> Unit,
+) {
+    val scene =
+        ImageComposeScene(width = 1440, height = 900, density = Density(1f)) {
+            KursiTheme { content() }
+        }
+    val frameNs = 16_000_000L // 16 ms per frame
     for (frame in 0L..60L) {
         scene.render(nanoTime = frame * frameNs)
     }
-    val data = scene.render(nanoTime = 61L * frameNs)
-        .encodeToData() ?: error("encode null for $name")
+    val data =
+        scene
+            .render(nanoTime = 61L * frameNs)
+            .encodeToData() ?: error("encode null for $name")
     File(dir, "$name.png").writeBytes(data.bytes)
     scene.close()
 }
@@ -810,26 +986,27 @@ private fun renderToPng(
     forceHandoff: Boolean? = null,
     spectator: Boolean = false,
 ) {
-    val scene = ImageComposeScene(
-        width = 1440,
-        height = 900,
-        density = Density(1f),
-    ) {
-        KursiTheme {
-            // Suppress the first-run "Your Certificates" SwearingInPrimer coachmark so the
-            // real in-game table renders un-dimmed for portfolio capture (otherwise the whole
-            // game UI sits at ~30% opacity behind the centered onboarding modal).
-            GameScreen(
-                state = state,
-                onAction = {},
-                initialLocalPhase = localPhase,
-                showPrimerOverride = false,
-                initialChit = initialChit,
-                forceHandoffOverride = forceHandoff,
-                spectator = spectator,
-            )
+    val scene =
+        ImageComposeScene(
+            width = 1440,
+            height = 900,
+            density = Density(1f),
+        ) {
+            KursiTheme {
+                // Suppress the first-run "Your Certificates" SwearingInPrimer coachmark so the
+                // real in-game table renders un-dimmed for portfolio capture (otherwise the whole
+                // game UI sits at ~30% opacity behind the centered onboarding modal).
+                GameScreen(
+                    state = state,
+                    onAction = {},
+                    initialLocalPhase = localPhase,
+                    showPrimerOverride = false,
+                    initialChit = initialChit,
+                    forceHandoffOverride = forceHandoff,
+                    spectator = spectator,
+                )
+            }
         }
-    }
     val image = scene.render()
     val data = image.encodeToData() ?: error("encodeToData() returned null for $name")
     File(dir, "$name.png").writeBytes(data.bytes)
@@ -838,7 +1015,11 @@ private fun renderToPng(
 
 // ─────────────────────────── Engine helpers ───────────────────────────────────
 
-private fun evolve(state: GameState, steps: Int, seed: Long = 99L): Pair<GameState, List<GameEvent>> {
+private fun evolve(
+    state: GameState,
+    steps: Int,
+    seed: Long = 99L,
+): Pair<GameState, List<GameEvent>> {
     var cur = state
     val events = mutableListOf<GameEvent>()
     var s = seed
@@ -884,7 +1065,12 @@ private fun buildUiState(
  * [ui]. This is exactly what the live ViewModel does asynchronously — here we do it inline so the
  * static screenshot captures the coach badges/odds/recommended marker fully populated.
  */
-private fun withCoachAdvice(state: GameState, viewer: PlayerId, ui: GameUiState, seed: Long = 42L): GameUiState {
+private fun withCoachAdvice(
+    state: GameState,
+    viewer: PlayerId,
+    ui: GameUiState,
+    seed: Long = 42L,
+): GameUiState {
     if (state.phase is Phase.GameOver || whoActsNext(state) != viewer) return ui
     val legal = legalIntents(state, viewer)
     if (legal.isEmpty()) return ui
@@ -899,7 +1085,11 @@ private fun withCoachAdvice(state: GameState, viewer: PlayerId, ui: GameUiState,
  * dossier posterior / claim-counts / bluff-caught / bluffRate so the static shots render the real
  * intelligence. SECRECY-safe: only the public [events] are observed — never hidden cards.
  */
-private fun buildInsights(state: GameState, viewer: PlayerId, events: List<GameEvent>): List<OpponentInsight> {
+private fun buildInsights(
+    state: GameState,
+    viewer: PlayerId,
+    events: List<GameEvent>,
+): List<OpponentInsight> {
     val memory = BotMemory()
     events.forEach { memory.observe(it, state.turnNumber) }
     val view = redact(state, viewer)
@@ -907,27 +1097,37 @@ private fun buildInsights(state: GameState, viewer: PlayerId, events: List<GameE
 }
 
 /** Fold real PUBLIC-info dossiers into [ui] so the dossier/suspicion surfaces render populated. */
-private fun withInsights(state: GameState, viewer: PlayerId, events: List<GameEvent>, ui: GameUiState): GameUiState =
-    ui.copy(opponentInsights = buildInsights(state, viewer, events))
+private fun withInsights(
+    state: GameState,
+    viewer: PlayerId,
+    events: List<GameEvent>,
+    ui: GameUiState,
+): GameUiState = ui.copy(opponentInsights = buildInsights(state, viewer, events))
 
 /** Build a deterministic persona map for N bot seats (seats 1..n-1). */
-private fun buildPersonaMap(seatCount: Int, seed: Long): Map<PlayerId, OpponentPersona> {
+private fun buildPersonaMap(
+    seatCount: Int,
+    seed: Long,
+): Map<PlayerId, OpponentPersona> {
     val botCount = seatCount - 1
     if (botCount <= 0) return emptyMap()
-    val assignments = PersonaAssigner.assign(
-        seatCount  = botCount,
-        difficulty = BotDifficulty.MEDIUM,
-        seed       = seed,
-    )
-    return assignments.mapIndexed { index: Int, pair: Pair<com.kursi.ai.persona.BotPersona, com.kursi.ai.persona.PersonaPolicy> ->
-        val persona = pair.first
-        PlayerId(index + 1) to OpponentPersona(
-            playerId      = PlayerId(index + 1),
-            name          = persona.name,
-            monogram      = persona.monogram,
-            seatColorArgb = persona.seatColorArgb,
+    val assignments =
+        PersonaAssigner.assign(
+            seatCount = botCount,
+            difficulty = BotDifficulty.MEDIUM,
+            seed = seed,
         )
-    }.toMap()
+    return assignments
+        .mapIndexed { index: Int, pair: Pair<com.kursi.ai.persona.BotPersona, com.kursi.ai.persona.PersonaPolicy> ->
+            val persona = pair.first
+            PlayerId(index + 1) to
+                OpponentPersona(
+                    playerId = PlayerId(index + 1),
+                    name = persona.name,
+                    monogram = persona.monogram,
+                    seatColorArgb = persona.seatColorArgb,
+                )
+        }.toMap()
 }
 
 // ─────────────────────────── Fixtures ────────────────────────────────────────
@@ -948,19 +1148,26 @@ private fun buildMidClaimState(): Pair<GameUiState, List<GameEvent>> {
         val ph = cur.phase
         if (ph is Phase.AwaitingAction && ph.actorSeat == 0 && cur.phase !is Phase.GameOver) return@repeat
         val who = whoActsNext(cur) ?: return@repeat
-        val intents = legalIntents(cur, who); if (intents.isEmpty()) return@repeat
+        val intents = legalIntents(cur, who)
+        if (intents.isEmpty()) return@repeat
         val out = applyIntent(cur, intents.first())
-        if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
+        if (out is ApplyOutcome.Accepted) {
+            cur = out.state
+            ev += out.events
+        }
     }
-    val p1 = PlayerId(1); val p2 = PlayerId(2); val p3 = PlayerId(3)
-    val crafted = listOf(
-        GameEvent.ActionDeclared(p1, Action.Tax, Role.NETA),
-        GameEvent.ActionDeclared(p1, Action.Tax, Role.NETA),
-        GameEvent.ActionDeclared(p2, Action.Steal(target = PlayerId(0)), Role.BABU),
-        GameEvent.Challenged(challenger = PlayerId(0), target = p2, claimedRole = Role.BABU),
-        GameEvent.ChallengeRevealed(player = p2, card = CardId(0), role = Role.NETA, hadRole = false),
-        GameEvent.ActionDeclared(p3, Action.Assassinate(target = PlayerId(0)), Role.BHAI),
-    )
+    val p1 = PlayerId(1)
+    val p2 = PlayerId(2)
+    val p3 = PlayerId(3)
+    val crafted =
+        listOf(
+            GameEvent.ActionDeclared(p1, Action.Tax, Role.NETA),
+            GameEvent.ActionDeclared(p1, Action.Tax, Role.NETA),
+            GameEvent.ActionDeclared(p2, Action.Steal(target = PlayerId(0)), Role.BABU),
+            GameEvent.Challenged(challenger = PlayerId(0), target = p2, claimedRole = Role.BABU),
+            GameEvent.ChallengeRevealed(player = p2, card = CardId(0), role = Role.NETA, hadRole = false),
+            GameEvent.ActionDeclared(p3, Action.Assassinate(target = PlayerId(0)), Role.BHAI),
+        )
     val evWithClaims = (ev + crafted).takeLast(GameUiState.MAX_EVENTS)
     val personas = buildPersonaMap(seatCount = 4, seed = seed)
     // Fold REAL public-info dossiers (posterior / claim-counts / bluff-caught / bluffRate) so the
@@ -986,415 +1193,536 @@ private fun buildPassAndPlayHandoffState(): Pair<GameUiState, List<GameEvent>> {
         if (ph is Phase.AwaitingAction && ph.actorSeat == 1) return@repeat
         if (cur.phase is Phase.GameOver) return@repeat
         val who = whoActsNext(cur) ?: return@repeat
-        val intents = legalIntents(cur, who); if (intents.isEmpty()) return@repeat
+        val intents = legalIntents(cur, who)
+        if (intents.isEmpty()) return@repeat
         val out = applyIntent(cur, intents.first())
-        if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
+        if (out is ApplyOutcome.Accepted) {
+            cur = out.state
+            ev += out.events
+        }
     }
     // Personas: humans on seats 0 & 1, bots on 2 & 3.
-    val botPersonas = buildPersonaMap(seatCount = 4, seed = seed)
-        .filterKeys { it.raw >= 2 }
+    val botPersonas =
+        buildPersonaMap(seatCount = 4, seed = seed)
+            .filterKeys { it.raw >= 2 }
     val humanColors = longArrayOf(0xFF009E73L, 0xFFD55E00L)
-    val personas = (botPersonas + mapOf(
-        PlayerId(0) to OpponentPersona(PlayerId(0), "Khiladi 1", "K1", humanColors[0]),
-        PlayerId(1) to OpponentPersona(PlayerId(1), "Khiladi 2", "K2", humanColors[1]),
-    ))
+    val personas = (
+        botPersonas +
+            mapOf(
+                PlayerId(0) to OpponentPersona(PlayerId(0), "Khiladi 1", "K1", humanColors[0]),
+                PlayerId(1) to OpponentPersona(PlayerId(1), "Khiladi 2", "K2", humanColors[1]),
+            )
+    )
     val viewer = PlayerId(1)
     val view = redact(cur, viewer)
-    val ui = GameUiState(
-        view = view,
-        legalIntents = if (whoActsNext(cur) == viewer) legalIntents(cur, viewer) else emptyList(),
-        recentEvents = ev.takeLast(GameUiState.MAX_EVENTS),
-        isHumanTurn = whoActsNext(cur) == viewer,
-        isGameOver = false,
-        winnerSeat = null,
-        opponentPersonas = personas,
-        activeSeat = 1,
-        isPassAndPlay = true,
-    )
+    val ui =
+        GameUiState(
+            view = view,
+            legalIntents = if (whoActsNext(cur) == viewer) legalIntents(cur, viewer) else emptyList(),
+            recentEvents = ev.takeLast(GameUiState.MAX_EVENTS),
+            isHumanTurn = whoActsNext(cur) == viewer,
+            isGameOver = false,
+            winnerSeat = null,
+            opponentPersonas = personas,
+            activeSeat = 1,
+            isPassAndPlay = true,
+        )
     return ui to ev
 }
 
-private fun buildFixtures(): List<Triple<String, GameUiState, GamePhase?>> = buildList {
-
-    // ── 4p_pick_action ────────────────────────────────────────────────────────
-    run {
-        val cfg = GameConfig.forPlayers(4)
-        val seed = 42L
-        val base = initialState(cfg, seed = seed)
-        val (state, events) = evolve(base, steps = 12, seed = 1L)
-        var cur = state; var ev = events.toMutableList()
-        repeat(40) {
-            if (cur.phase is Phase.AwaitingAction &&
-                (cur.phase as Phase.AwaitingAction).actorSeat == 0 &&
-                cur.phase !is Phase.GameOver) return@repeat
-            val who = whoActsNext(cur) ?: return@repeat
-            val intents = legalIntents(cur, who); if (intents.isEmpty()) return@repeat
-            val intent = intents.first()
-            val out = applyIntent(cur, intent)
-            if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
-        }
-        val personas = buildPersonaMap(seatCount = 4, seed = seed)
-        add(Triple("4p_pick_action", buildUiState(cur, viewerSeat = 0, ev, personas), null))
-    }
-
-    // ── 4p_pick_target ────────────────────────────────────────────────────────
-    // Real PickTarget localPhase — opponent chips show ValidTarget green glow.
-    run {
-        val cfg = GameConfig.forPlayers(4)
-        var cur = initialState(cfg, seed = 77L)
-        var ev = mutableListOf<GameEvent>()
-        repeat(80) {
-            val ph = cur.phase
-            if (ph is Phase.AwaitingAction && ph.actorSeat == 0 &&
-                cur.player(PlayerId(0)).coins >= 2) return@repeat
-            val who = whoActsNext(cur) ?: return@repeat
-            val intents = legalIntents(cur, who); if (intents.isEmpty()) return@repeat
-            val out = applyIntent(cur, intents.first())
-            if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
-        }
-        // Splice public claim/reveal events so opponents carry a real READ (suspicion pips +
-        // dossiers) even on the target-pick dock, and the weakest/richest tags read off live coins.
-        val p1 = PlayerId(1); val p2 = PlayerId(2); val p3 = PlayerId(3)
-        val crafted = listOf(
-            GameEvent.ActionDeclared(p1, Action.Tax, Role.NETA),
-            GameEvent.ActionDeclared(p1, Action.Tax, Role.NETA),
-            GameEvent.ActionDeclared(p2, Action.Steal(target = PlayerId(0)), Role.BABU),
-            GameEvent.Challenged(challenger = PlayerId(0), target = p2, claimedRole = Role.BABU),
-            GameEvent.ChallengeRevealed(player = p2, card = CardId(0), role = Role.NETA, hadRole = false),
-            GameEvent.ActionDeclared(p3, Action.Assassinate(target = PlayerId(0)), Role.BHAI),
-        )
-        val evT = (ev + crafted).takeLast(GameUiState.MAX_EVENTS)
-        val personas = buildPersonaMap(seatCount = 4, seed = 77L)
-        // Seed a real PickTarget localPhase so opponent chips render with ValidTarget state
-        val ui = withInsights(cur, PlayerId(0), evT, buildUiState(cur, viewerSeat = 0, evT, personas))
-        add(Triple("4p_pick_target", ui, GamePhase.PickTarget(Action.Steal(PlayerId(0)))))
-    }
-
-    // ── 4p_confirm ────────────────────────────────────────────────────────────
-    // Confirm localPhase on a CLAIM-BEARING action (Vasooli / Steal, claims BABU) targeting P1,
-    // so the dock's at-the-moment-of-declaring DECISION-COACH read is visible: the REAL/BLUFF badge
-    // + the P(it flies) odds pill + the brass recommended star when the advisor backs the move.
-    // (Coup/Khela makes no claim and correctly shows no read — this fixture proves the claim path.)
-    run {
-        val cfg = GameConfig.forPlayers(4)
-        var cur = initialState(cfg, seed = 55L)
-        var ev = mutableListOf<GameEvent>()
-        repeat(200) {
-            val ph = cur.phase
-            if (ph is Phase.AwaitingAction && ph.actorSeat == 0) return@repeat
-            if (cur.phase is Phase.GameOver) return@repeat
-            val who = whoActsNext(cur) ?: return@repeat
-            val intents = legalIntents(cur, who); if (intents.isEmpty()) return@repeat
-            val out = applyIntent(cur, intents.first())
-            if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
-        }
-        // Splice public claims so the plates above the confirm dock carry a real READ.
-        val p1 = PlayerId(1); val p2 = PlayerId(2); val p3 = PlayerId(3)
-        val crafted = listOf(
-            GameEvent.ActionDeclared(p1, Action.Tax, Role.NETA),
-            GameEvent.ActionDeclared(p1, Action.Tax, Role.NETA),
-            GameEvent.ActionDeclared(p2, Action.Steal(target = PlayerId(0)), Role.BABU),
-            GameEvent.Challenged(challenger = PlayerId(0), target = p2, claimedRole = Role.BABU),
-            GameEvent.ChallengeRevealed(player = p2, card = CardId(0), role = Role.NETA, hadRole = false),
-            GameEvent.ActionDeclared(p3, Action.Assassinate(target = PlayerId(0)), Role.BHAI),
-        )
-        val evC = (ev + crafted).takeLast(GameUiState.MAX_EVENTS)
-        val personas = buildPersonaMap(seatCount = 4, seed = 55L)
-        val ui = withInsights(cur, PlayerId(0), evC, buildUiState(cur, viewerSeat = 0, evC, personas))
-        // Fold in real coach advice so the confirm dock's badge/odds/star can resolve.
-        val uiCoached = withCoachAdvice(cur, PlayerId(0), ui, 55L)
-        add(Triple("4p_confirm", uiCoached, GamePhase.Confirm(Action.Steal(PlayerId(1)), PlayerId(1))))
-    }
-
-    // ── 4p_mid_claim ───────────────────────────────────────────────────────────
-    // Phase TILES showcase: it is the HUMAN's turn (no live pending claim), yet the
-    // opponent plates must STILL show each rival's standing role-claim + a live bluff-odds
-    // chip derived from the public event history. We evolve to a human PickAction state,
-    // then splice deterministic public ActionDeclared / ChallengeRevealed events so the
-    // plates read "claimed NETA ×2", "claimed BABU ✗ (caught)", etc., with odds chips.
-    run {
-        val (state, _) = buildMidClaimState()
-        add(Triple("4p_mid_claim", state, null))
-    }
-
-    // ── 4p_reaction ───────────────────────────────────────────────────────────
-    // Real engine AwaitingReactions where seat 0 must respond. Use a for-loop
-    // with break so we don't overshoot into game-over.
-    run {
-        val cfg = GameConfig.forPlayers(4)
-        var cur = initialState(cfg, seed = 123L)
-        var ev = mutableListOf<GameEvent>()
-        var seed2 = 999L
-        for (i in 0 until 2000) {
-            val ph = cur.phase
-            if (ph is Phase.AwaitingReactions && whoActsNext(cur) == PlayerId(0)) break
-            if (cur.phase is Phase.GameOver) break
-            val who = whoActsNext(cur) ?: break
-            val intents = legalIntents(cur, who)
-            if (intents.isEmpty()) break
-            seed2 = seed2 * 6364136223846793005L + 1442695040888963407L
-            val intent = intents[((seed2 ushr 33).toInt().and(0x7fffffff)) % intents.size]
-            val out = applyIntent(cur, intent)
-            if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
-        }
-        val personas = buildPersonaMap(seatCount = 4, seed = 123L)
-        // Real reaction window — fold insights so the dossier read is live, and coach advice so the
-        // chips carry truthful/bluff + odds. The belief banner reads off public card-accounting.
-        val ui = withInsights(cur, PlayerId(0), ev, buildUiState(cur, viewerSeat = 0, ev, personas))
-        add(Triple("4p_reaction", withCoachAdvice(cur, PlayerId(0), ui, 123L), null))
-    }
-
-    // ── 4p_reaction_block ───────────────────────────────────────────────────────
-    // The BLOCK step of a reaction window (seat 0 deciding whether to BLOCK an opponent's
-    // action), specifically so the rendered shot PROVES the block-step safe-vs-bluff marking:
-    // each 🛡 BLOCK chip carries the coach's REAL/BLUFF badge + a P(it flies) odds pill, with the
-    // advisor's pick starred. The existing 4p_reaction lands on CHALLENGE_ACTION, so this fixture
-    // searches seeds for a real engine AwaitingReactions where seat 0's step == BLOCK.
-    run {
-        val cfg = GameConfig.forPlayers(4)
-        var chosen: Triple<GameState, MutableList<GameEvent>, Long>? = null
-        for (s in longArrayOf(42L, 7L, 123L, 55L, 99L, 200L, 321L, 777L, 1234L, 4242L, 31337L, 90210L, 1L, 88L, 2024L)) {
-            var cur = initialState(cfg, seed = s)
-            var ev = mutableListOf<GameEvent>()
-            var seed2 = s xor 0x5DEECE66DL
-            var hit: GameState? = null
-            for (i in 0 until 4000) {
-                val ph = cur.phase
-                if (ph is Phase.AwaitingReactions &&
-                    ph.ctx.step == ReactionStep.BLOCK &&
-                    whoActsNext(cur) == PlayerId(0)
-                ) { hit = cur; break }
-                if (cur.phase is Phase.GameOver) break
-                val who = whoActsNext(cur) ?: break
-                val intents = legalIntents(cur, who); if (intents.isEmpty()) break
-                seed2 = seed2 * 6364136223846793005L + 1442695040888963407L
-                val intent = intents[((seed2 ushr 33).toInt().and(0x7fffffff)) % intents.size]
-                val out = applyIntent(cur, intent)
-                if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
-            }
-            if (hit != null) { chosen = Triple(hit, ev, s); break }
-        }
-        if (chosen != null) {
-            val (state, ev, seed) = chosen
-            val personas = buildPersonaMap(seatCount = 4, seed = seed)
-            val ui = withInsights(state, PlayerId(0), ev, buildUiState(state, viewerSeat = 0, ev, personas))
-            add(Triple("4p_reaction_block", withCoachAdvice(state, PlayerId(0), ui, seed), null))
-        }
-    }
-
-    // ── 4p_lose_influence ─────────────────────────────────────────────────────
-    run {
-        val cfg = GameConfig.forPlayers(4)
-        var cur = initialState(cfg, seed = 200L)
-        var ev = mutableListOf<GameEvent>()
-        repeat(500) {
-            if (cur.phase is Phase.AwaitingInfluenceLoss &&
-                (cur.phase as Phase.AwaitingInfluenceLoss).loser == PlayerId(0)) return@repeat
-            if (cur.phase is Phase.GameOver) return@repeat
-            val who = whoActsNext(cur) ?: return@repeat
-            val intents = legalIntents(cur, who); if (intents.isEmpty()) return@repeat
-            val coup = intents.filterIsInstance<Intent.DeclareAction>()
-                .firstOrNull { it.action is Action.Coup && (it.action as Action.Coup).target == PlayerId(0) }
-            val intent = coup ?: intents.first()
-            val out = applyIntent(cur, intent)
-            if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
-        }
-        // Personas so the LossReason cause line names the aggressor ("Lost to <persona>'s Khela.").
-        val personas = buildPersonaMap(seatCount = 4, seed = 200L)
-        val ui = withInsights(cur, PlayerId(0), ev, buildUiState(cur, viewerSeat = 0, ev, personas))
-        add(Triple("4p_lose_influence", ui, null))
-    }
-
-    // ── 4p_exchange ───────────────────────────────────────────────────────────
-    // Drive P0 to an AwaitingExchange decision (Exchange declared + reactions passed) so the dock
-    // renders a POPULATED keep-decision: real two-role keep options, drawn-vs-hand tags, and the
-    // advisor's recommended keep starred (folded in via withCoachAdvice).
-    run {
-        val cfg = GameConfig.forPlayers(4)
-        val seed321 = 321L
-        var cur = initialState(cfg, seed = seed321)
-        var ev = mutableListOf<GameEvent>()
-        repeat(2000) {
-            if (cur.phase is Phase.AwaitingExchange &&
-                (cur.phase as Phase.AwaitingExchange).actor == PlayerId(0)) return@repeat
-            if (cur.phase is Phase.GameOver) return@repeat
-            val who = whoActsNext(cur) ?: return@repeat
-            val intents = legalIntents(cur, who); if (intents.isEmpty()) return@repeat
-            // Bias P0 toward declaring Exchange; everyone else passes/plays the first legal move
-            // (which passes reactions so the Exchange resolves into AwaitingExchange for P0).
-            val exc = if (who == PlayerId(0)) {
-                intents.filterIsInstance<Intent.DeclareAction>()
-                    .firstOrNull { it.action == Action.Exchange }
-            } else null
-            val intent = exc ?: intents.first()
-            val out = applyIntent(cur, intent)
-            if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
-        }
-        val personas = buildPersonaMap(seatCount = 4, seed = seed321)
-        val ui = buildUiState(cur, viewerSeat = 0, ev, personas)
-        add(Triple("4p_exchange", withCoachAdvice(cur, PlayerId(0), ui, seed321), null))
-    }
-
-    // ── 4p_game_over ─────────────────────────────────────────────────────────
-    run {
-        val cfg = GameConfig.forPlayers(4)
-        var cur = initialState(cfg, seed = 7L)
-        var ev = mutableListOf<GameEvent>()
-        var seed = 42L
-        repeat(5000) {
-            if (cur.phase is Phase.GameOver) return@repeat
-            val who = whoActsNext(cur) ?: return@repeat
-            val intents = legalIntents(cur, who); if (intents.isEmpty()) return@repeat
-            seed = seed * 6364136223846793005L + 1442695040888963407L
-            val intent = intents[((seed ushr 33).toInt().and(0x7fffffff)) % intents.size]
-            val out = applyIntent(cur, intent)
-            if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
-        }
-        val personas = buildPersonaMap(seatCount = 4, seed = 7L)
-        add(Triple("4p_game_over", buildUiState(cur, viewerSeat = 0, ev, personas), null))
-    }
-
-    // ── 2p_pick_action ────────────────────────────────────────────────────────
-    run {
-        val cfg = GameConfig.forPlayers(2)
-        val (state, events) = evolve(initialState(cfg, seed = 11L), steps = 4, seed = 2L)
-        var cur = state; var ev = events.toMutableList()
-        repeat(40) {
-            if (cur.phase is Phase.AwaitingAction &&
-                (cur.phase as Phase.AwaitingAction).actorSeat == 0) return@repeat
-            val who = whoActsNext(cur) ?: return@repeat
-            val intents = legalIntents(cur, who); if (intents.isEmpty()) return@repeat
-            val out = applyIntent(cur, intents.first())
-            if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
-        }
-        add(Triple("2p_pick_action", buildUiState(cur, viewerSeat = 0, ev), null))
-    }
-
-    // ── 10p_pick_action ───────────────────────────────────────────────────────
-    run {
-        val cfg = GameConfig.forPlayers(10)
-        val (state, events) = evolve(initialState(cfg, seed = 999L), steps = 6, seed = 3L)
-        var cur = state; var ev = events.toMutableList()
-        repeat(40) {
-            if (cur.phase is Phase.AwaitingAction &&
-                (cur.phase as Phase.AwaitingAction).actorSeat == 0) return@repeat
-            val who = whoActsNext(cur) ?: return@repeat
-            val intents = legalIntents(cur, who); if (intents.isEmpty()) return@repeat
-            val out = applyIntent(cur, intents.first())
-            if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
-        }
-        add(Triple("10p_pick_action", buildUiState(cur, viewerSeat = 0, ev), null))
-    }
-
-    // ── 4p_pick_action_nocoach ───────────────────────────────────────────────────
-    // Coach OFF: same human-turn fixture as 4p_pick_action but with coachEnabled=false so we can
-    // visually confirm that recommended stars, odds pills, and REAL/BLUFF badges are absent while
-    // the chip structure is unchanged. Also folds in real advice (so the comparison is apples-to-apples)
-    // but coachEnabled=false must suppress all visible guidance at render time.
-    run {
-        val cfg = GameConfig.forPlayers(4)
-        val seed = 88L
-        var cur = initialState(cfg, seed = seed)
-        var ev = mutableListOf<GameEvent>()
-        repeat(400) {
-            val ph = cur.phase
-            if (ph is Phase.AwaitingAction && ph.actorSeat == 0 &&
-                cur.player(PlayerId(0)).coins >= 3) return@repeat
-            if (cur.phase is Phase.GameOver) return@repeat
-            val who = whoActsNext(cur) ?: return@repeat
-            val intents = legalIntents(cur, who); if (intents.isEmpty()) return@repeat
-            val out = applyIntent(cur, intents.first())
-            if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
-        }
-        val personas = buildPersonaMap(seatCount = 4, seed = seed)
-        val ui = buildUiState(cur, viewerSeat = 0, ev, personas)
-        // Advice is computed (same as the ON shot) but coachEnabled=false hides it in the render.
-        val uiCoached = withCoachAdvice(cur, PlayerId(0), ui, seed).copy(coachEnabled = false)
-        add(Triple("4p_pick_action_nocoach", uiCoached, null))
-    }
-
-    // ── 4p_coach_action ─────────────────────────────────────────────────────────
-    // DECISION-COACH on the ACTION dock: it is the human's turn, and the real MoveAdvisor
-    // brain has ranked every action chip. Each role-claim chip carries a truthful/bluff badge,
-    // the recommended chip wears a brass star + gold rim. We evolve to a human PickAction state
-    // (with enough coins that Supari/Khela are live so the disrupt chips also show a verdict),
-    // then fold in real advice via withCoachAdvice.
-    run {
-        val cfg = GameConfig.forPlayers(4)
-        val seed = 88L
-        var cur = initialState(cfg, seed = seed)
-        var ev = mutableListOf<GameEvent>()
-        repeat(400) {
-            val ph = cur.phase
-            if (ph is Phase.AwaitingAction && ph.actorSeat == 0 &&
-                cur.player(PlayerId(0)).coins >= 3) return@repeat
-            if (cur.phase is Phase.GameOver) return@repeat
-            val who = whoActsNext(cur) ?: return@repeat
-            val intents = legalIntents(cur, who); if (intents.isEmpty()) return@repeat
-            val out = applyIntent(cur, intents.first())
-            if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
-        }
-        val personas = buildPersonaMap(seatCount = 4, seed = seed)
-        val ui = buildUiState(cur, viewerSeat = 0, ev, personas)
-        add(Triple("4p_coach_action", withCoachAdvice(cur, PlayerId(0), ui, seed), null))
-    }
-
-    // ── 4p_coach_reaction ───────────────────────────────────────────────────────
-    // DECISION-COACH on the REACTION screen ("Block? Or let it pass?"): a real engine reaction
-    // window where seat 0 must respond to an opponent's action. The advisor tags each option —
-    // a TRUTHFUL block (green ✓, "you really hold it, safe to back up") vs a risky CHALLENGE
-    // (oxblood, with the "~% they're bluffing" odds) — and stars its pick. We search seeds for a
-    // BLOCK-step reaction where seat 0 actually holds the blocking role, so the truthful-vs-risky
-    // contrast is unmistakable in the shot.
-    run {
-        val cfg = GameConfig.forPlayers(4)
-        var chosen: Triple<GameState, MutableList<GameEvent>, Long>? = null
-        // Prefer a BLOCK step where the human holds a blocking role (truthful block available).
-        for (s in longArrayOf(123L, 7L, 42L, 55L, 99L, 200L, 321L, 777L, 1234L, 4242L, 31337L, 90210L)) {
-            var cur = initialState(cfg, seed = s)
-            var ev = mutableListOf<GameEvent>()
-            var seed2 = s xor 0x5DEECE66DL
-            var hit: GameState? = null
-            for (i in 0 until 4000) {
-                val ph = cur.phase
-                if (ph is Phase.AwaitingReactions && whoActsNext(cur) == PlayerId(0)) {
-                    val legal = legalIntents(cur, PlayerId(0))
-                    val blocks = legal.filterIsInstance<Intent.Block>()
-                    val myRoles = redact(cur, PlayerId(0)).myInfluence
-                    val truthfulBlock = blocks.any { it.role in myRoles }
-                    val hasChallenge = legal.any { it is Intent.Challenge }
-                    if (truthfulBlock && hasChallenge) { hit = cur; break }
+private fun buildFixtures(): List<Triple<String, GameUiState, GamePhase?>> =
+    buildList {
+        // ── 4p_pick_action ────────────────────────────────────────────────────────
+        run {
+            val cfg = GameConfig.forPlayers(4)
+            val seed = 42L
+            val base = initialState(cfg, seed = seed)
+            val (state, events) = evolve(base, steps = 12, seed = 1L)
+            var cur = state
+            var ev = events.toMutableList()
+            repeat(40) {
+                if (cur.phase is Phase.AwaitingAction &&
+                    (cur.phase as Phase.AwaitingAction).actorSeat == 0 &&
+                    cur.phase !is Phase.GameOver
+                ) {
+                    return@repeat
                 }
-                if (cur.phase is Phase.GameOver) break
-                val who = whoActsNext(cur) ?: break
-                val intents = legalIntents(cur, who); if (intents.isEmpty()) break
-                seed2 = seed2 * 6364136223846793005L + 1442695040888963407L
-                val intent = intents[((seed2 ushr 33).toInt().and(0x7fffffff)) % intents.size]
+                val who = whoActsNext(cur) ?: return@repeat
+                val intents = legalIntents(cur, who)
+                if (intents.isEmpty()) return@repeat
+                val intent = intents.first()
                 val out = applyIntent(cur, intent)
-                if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
+                if (out is ApplyOutcome.Accepted) {
+                    cur = out.state
+                    ev += out.events
+                }
             }
-            if (hit != null) { chosen = Triple(hit, ev, s); break }
+            val personas = buildPersonaMap(seatCount = 4, seed = seed)
+            add(Triple("4p_pick_action", buildUiState(cur, viewerSeat = 0, ev, personas), null))
         }
-        // Fallback: ANY seat-0 reaction window (still shows challenge/pass advice with odds).
-        if (chosen == null) {
+
+        // ── 4p_pick_target ────────────────────────────────────────────────────────
+        // Real PickTarget localPhase — opponent chips show ValidTarget green glow.
+        run {
+            val cfg = GameConfig.forPlayers(4)
+            var cur = initialState(cfg, seed = 77L)
+            var ev = mutableListOf<GameEvent>()
+            repeat(80) {
+                val ph = cur.phase
+                if (ph is Phase.AwaitingAction &&
+                    ph.actorSeat == 0 &&
+                    cur.player(PlayerId(0)).coins >= 2
+                ) {
+                    return@repeat
+                }
+                val who = whoActsNext(cur) ?: return@repeat
+                val intents = legalIntents(cur, who)
+                if (intents.isEmpty()) return@repeat
+                val out = applyIntent(cur, intents.first())
+                if (out is ApplyOutcome.Accepted) {
+                    cur = out.state
+                    ev += out.events
+                }
+            }
+            // Splice public claim/reveal events so opponents carry a real READ (suspicion pips +
+            // dossiers) even on the target-pick dock, and the weakest/richest tags read off live coins.
+            val p1 = PlayerId(1)
+            val p2 = PlayerId(2)
+            val p3 = PlayerId(3)
+            val crafted =
+                listOf(
+                    GameEvent.ActionDeclared(p1, Action.Tax, Role.NETA),
+                    GameEvent.ActionDeclared(p1, Action.Tax, Role.NETA),
+                    GameEvent.ActionDeclared(p2, Action.Steal(target = PlayerId(0)), Role.BABU),
+                    GameEvent.Challenged(challenger = PlayerId(0), target = p2, claimedRole = Role.BABU),
+                    GameEvent.ChallengeRevealed(player = p2, card = CardId(0), role = Role.NETA, hadRole = false),
+                    GameEvent.ActionDeclared(p3, Action.Assassinate(target = PlayerId(0)), Role.BHAI),
+                )
+            val evT = (ev + crafted).takeLast(GameUiState.MAX_EVENTS)
+            val personas = buildPersonaMap(seatCount = 4, seed = 77L)
+            // Seed a real PickTarget localPhase so opponent chips render with ValidTarget state
+            val ui = withInsights(cur, PlayerId(0), evT, buildUiState(cur, viewerSeat = 0, evT, personas))
+            add(Triple("4p_pick_target", ui, GamePhase.PickTarget(Action.Steal(PlayerId(0)))))
+        }
+
+        // ── 4p_confirm ────────────────────────────────────────────────────────────
+        // Confirm localPhase on a CLAIM-BEARING action (Vasooli / Steal, claims BABU) targeting P1,
+        // so the dock's at-the-moment-of-declaring DECISION-COACH read is visible: the REAL/BLUFF badge
+        // + the P(it flies) odds pill + the brass recommended star when the advisor backs the move.
+        // (Coup/Khela makes no claim and correctly shows no read — this fixture proves the claim path.)
+        run {
+            val cfg = GameConfig.forPlayers(4)
+            var cur = initialState(cfg, seed = 55L)
+            var ev = mutableListOf<GameEvent>()
+            repeat(200) {
+                val ph = cur.phase
+                if (ph is Phase.AwaitingAction && ph.actorSeat == 0) return@repeat
+                if (cur.phase is Phase.GameOver) return@repeat
+                val who = whoActsNext(cur) ?: return@repeat
+                val intents = legalIntents(cur, who)
+                if (intents.isEmpty()) return@repeat
+                val out = applyIntent(cur, intents.first())
+                if (out is ApplyOutcome.Accepted) {
+                    cur = out.state
+                    ev += out.events
+                }
+            }
+            // Splice public claims so the plates above the confirm dock carry a real READ.
+            val p1 = PlayerId(1)
+            val p2 = PlayerId(2)
+            val p3 = PlayerId(3)
+            val crafted =
+                listOf(
+                    GameEvent.ActionDeclared(p1, Action.Tax, Role.NETA),
+                    GameEvent.ActionDeclared(p1, Action.Tax, Role.NETA),
+                    GameEvent.ActionDeclared(p2, Action.Steal(target = PlayerId(0)), Role.BABU),
+                    GameEvent.Challenged(challenger = PlayerId(0), target = p2, claimedRole = Role.BABU),
+                    GameEvent.ChallengeRevealed(player = p2, card = CardId(0), role = Role.NETA, hadRole = false),
+                    GameEvent.ActionDeclared(p3, Action.Assassinate(target = PlayerId(0)), Role.BHAI),
+                )
+            val evC = (ev + crafted).takeLast(GameUiState.MAX_EVENTS)
+            val personas = buildPersonaMap(seatCount = 4, seed = 55L)
+            val ui = withInsights(cur, PlayerId(0), evC, buildUiState(cur, viewerSeat = 0, evC, personas))
+            // Fold in real coach advice so the confirm dock's badge/odds/star can resolve.
+            val uiCoached = withCoachAdvice(cur, PlayerId(0), ui, 55L)
+            add(Triple("4p_confirm", uiCoached, GamePhase.Confirm(Action.Steal(PlayerId(1)), PlayerId(1))))
+        }
+
+        // ── 4p_mid_claim ───────────────────────────────────────────────────────────
+        // Phase TILES showcase: it is the HUMAN's turn (no live pending claim), yet the
+        // opponent plates must STILL show each rival's standing role-claim + a live bluff-odds
+        // chip derived from the public event history. We evolve to a human PickAction state,
+        // then splice deterministic public ActionDeclared / ChallengeRevealed events so the
+        // plates read "claimed NETA ×2", "claimed BABU ✗ (caught)", etc., with odds chips.
+        run {
+            val (state, _) = buildMidClaimState()
+            add(Triple("4p_mid_claim", state, null))
+        }
+
+        // ── 4p_reaction ───────────────────────────────────────────────────────────
+        // Real engine AwaitingReactions where seat 0 must respond. Use a for-loop
+        // with break so we don't overshoot into game-over.
+        run {
+            val cfg = GameConfig.forPlayers(4)
             var cur = initialState(cfg, seed = 123L)
             var ev = mutableListOf<GameEvent>()
             var seed2 = 999L
-            for (i in 0 until 4000) {
+            for (i in 0 until 2000) {
                 val ph = cur.phase
-                if (ph is Phase.AwaitingReactions && whoActsNext(cur) == PlayerId(0)) { chosen = Triple(cur, ev, 123L); break }
+                if (ph is Phase.AwaitingReactions && whoActsNext(cur) == PlayerId(0)) break
                 if (cur.phase is Phase.GameOver) break
                 val who = whoActsNext(cur) ?: break
-                val intents = legalIntents(cur, who); if (intents.isEmpty()) break
+                val intents = legalIntents(cur, who)
+                if (intents.isEmpty()) break
                 seed2 = seed2 * 6364136223846793005L + 1442695040888963407L
                 val intent = intents[((seed2 ushr 33).toInt().and(0x7fffffff)) % intents.size]
                 val out = applyIntent(cur, intent)
-                if (out is ApplyOutcome.Accepted) { cur = out.state; ev += out.events }
+                if (out is ApplyOutcome.Accepted) {
+                    cur = out.state
+                    ev += out.events
+                }
+            }
+            val personas = buildPersonaMap(seatCount = 4, seed = 123L)
+            // Real reaction window — fold insights so the dossier read is live, and coach advice so the
+            // chips carry truthful/bluff + odds. The belief banner reads off public card-accounting.
+            val ui = withInsights(cur, PlayerId(0), ev, buildUiState(cur, viewerSeat = 0, ev, personas))
+            add(Triple("4p_reaction", withCoachAdvice(cur, PlayerId(0), ui, 123L), null))
+        }
+
+        // ── 4p_reaction_block ───────────────────────────────────────────────────────
+        // The BLOCK step of a reaction window (seat 0 deciding whether to BLOCK an opponent's
+        // action), specifically so the rendered shot PROVES the block-step safe-vs-bluff marking:
+        // each 🛡 BLOCK chip carries the coach's REAL/BLUFF badge + a P(it flies) odds pill, with the
+        // advisor's pick starred. The existing 4p_reaction lands on CHALLENGE_ACTION, so this fixture
+        // searches seeds for a real engine AwaitingReactions where seat 0's step == BLOCK.
+        run {
+            val cfg = GameConfig.forPlayers(4)
+            var chosen: Triple<GameState, MutableList<GameEvent>, Long>? = null
+            for (s in longArrayOf(42L, 7L, 123L, 55L, 99L, 200L, 321L, 777L, 1234L, 4242L, 31337L, 90210L, 1L, 88L, 2024L)) {
+                var cur = initialState(cfg, seed = s)
+                var ev = mutableListOf<GameEvent>()
+                var seed2 = s xor 0x5DEECE66DL
+                var hit: GameState? = null
+                for (i in 0 until 4000) {
+                    val ph = cur.phase
+                    if (ph is Phase.AwaitingReactions &&
+                        ph.ctx.step == ReactionStep.BLOCK &&
+                        whoActsNext(cur) == PlayerId(0)
+                    ) {
+                        hit = cur
+                        break
+                    }
+                    if (cur.phase is Phase.GameOver) break
+                    val who = whoActsNext(cur) ?: break
+                    val intents = legalIntents(cur, who)
+                    if (intents.isEmpty()) break
+                    seed2 = seed2 * 6364136223846793005L + 1442695040888963407L
+                    val intent = intents[((seed2 ushr 33).toInt().and(0x7fffffff)) % intents.size]
+                    val out = applyIntent(cur, intent)
+                    if (out is ApplyOutcome.Accepted) {
+                        cur = out.state
+                        ev += out.events
+                    }
+                }
+                if (hit != null) {
+                    chosen = Triple(hit, ev, s)
+                    break
+                }
+            }
+            if (chosen != null) {
+                val (state, ev, seed) = chosen
+                val personas = buildPersonaMap(seatCount = 4, seed = seed)
+                val ui = withInsights(state, PlayerId(0), ev, buildUiState(state, viewerSeat = 0, ev, personas))
+                add(Triple("4p_reaction_block", withCoachAdvice(state, PlayerId(0), ui, seed), null))
             }
         }
-        val (state, ev, seed) = chosen!!
-        val personas = buildPersonaMap(seatCount = 4, seed = seed)
-        val ui = buildUiState(state, viewerSeat = 0, ev, personas)
-        add(Triple("4p_coach_reaction", withCoachAdvice(state, PlayerId(0), ui, seed), null))
+
+        // ── 4p_lose_influence ─────────────────────────────────────────────────────
+        run {
+            val cfg = GameConfig.forPlayers(4)
+            var cur = initialState(cfg, seed = 200L)
+            var ev = mutableListOf<GameEvent>()
+            repeat(500) {
+                if (cur.phase is Phase.AwaitingInfluenceLoss &&
+                    (cur.phase as Phase.AwaitingInfluenceLoss).loser == PlayerId(0)
+                ) {
+                    return@repeat
+                }
+                if (cur.phase is Phase.GameOver) return@repeat
+                val who = whoActsNext(cur) ?: return@repeat
+                val intents = legalIntents(cur, who)
+                if (intents.isEmpty()) return@repeat
+                val coup =
+                    intents
+                        .filterIsInstance<Intent.DeclareAction>()
+                        .firstOrNull { it.action is Action.Coup && (it.action as Action.Coup).target == PlayerId(0) }
+                val intent = coup ?: intents.first()
+                val out = applyIntent(cur, intent)
+                if (out is ApplyOutcome.Accepted) {
+                    cur = out.state
+                    ev += out.events
+                }
+            }
+            // Personas so the LossReason cause line names the aggressor ("Lost to <persona>'s Khela.").
+            val personas = buildPersonaMap(seatCount = 4, seed = 200L)
+            val ui = withInsights(cur, PlayerId(0), ev, buildUiState(cur, viewerSeat = 0, ev, personas))
+            add(Triple("4p_lose_influence", ui, null))
+        }
+
+        // ── 4p_exchange ───────────────────────────────────────────────────────────
+        // Drive P0 to an AwaitingExchange decision (Exchange declared + reactions passed) so the dock
+        // renders a POPULATED keep-decision: real two-role keep options, drawn-vs-hand tags, and the
+        // advisor's recommended keep starred (folded in via withCoachAdvice).
+        run {
+            val cfg = GameConfig.forPlayers(4)
+            val seed321 = 321L
+            var cur = initialState(cfg, seed = seed321)
+            var ev = mutableListOf<GameEvent>()
+            repeat(2000) {
+                if (cur.phase is Phase.AwaitingExchange &&
+                    (cur.phase as Phase.AwaitingExchange).actor == PlayerId(0)
+                ) {
+                    return@repeat
+                }
+                if (cur.phase is Phase.GameOver) return@repeat
+                val who = whoActsNext(cur) ?: return@repeat
+                val intents = legalIntents(cur, who)
+                if (intents.isEmpty()) return@repeat
+                // Bias P0 toward declaring Exchange; everyone else passes/plays the first legal move
+                // (which passes reactions so the Exchange resolves into AwaitingExchange for P0).
+                val exc =
+                    if (who == PlayerId(0)) {
+                        intents
+                            .filterIsInstance<Intent.DeclareAction>()
+                            .firstOrNull { it.action == Action.Exchange }
+                    } else {
+                        null
+                    }
+                val intent = exc ?: intents.first()
+                val out = applyIntent(cur, intent)
+                if (out is ApplyOutcome.Accepted) {
+                    cur = out.state
+                    ev += out.events
+                }
+            }
+            val personas = buildPersonaMap(seatCount = 4, seed = seed321)
+            val ui = buildUiState(cur, viewerSeat = 0, ev, personas)
+            add(Triple("4p_exchange", withCoachAdvice(cur, PlayerId(0), ui, seed321), null))
+        }
+
+        // ── 4p_game_over ─────────────────────────────────────────────────────────
+        run {
+            val cfg = GameConfig.forPlayers(4)
+            var cur = initialState(cfg, seed = 7L)
+            var ev = mutableListOf<GameEvent>()
+            var seed = 42L
+            repeat(5000) {
+                if (cur.phase is Phase.GameOver) return@repeat
+                val who = whoActsNext(cur) ?: return@repeat
+                val intents = legalIntents(cur, who)
+                if (intents.isEmpty()) return@repeat
+                seed = seed * 6364136223846793005L + 1442695040888963407L
+                val intent = intents[((seed ushr 33).toInt().and(0x7fffffff)) % intents.size]
+                val out = applyIntent(cur, intent)
+                if (out is ApplyOutcome.Accepted) {
+                    cur = out.state
+                    ev += out.events
+                }
+            }
+            val personas = buildPersonaMap(seatCount = 4, seed = 7L)
+            add(Triple("4p_game_over", buildUiState(cur, viewerSeat = 0, ev, personas), null))
+        }
+
+        // ── 2p_pick_action ────────────────────────────────────────────────────────
+        run {
+            val cfg = GameConfig.forPlayers(2)
+            val (state, events) = evolve(initialState(cfg, seed = 11L), steps = 4, seed = 2L)
+            var cur = state
+            var ev = events.toMutableList()
+            repeat(40) {
+                if (cur.phase is Phase.AwaitingAction &&
+                    (cur.phase as Phase.AwaitingAction).actorSeat == 0
+                ) {
+                    return@repeat
+                }
+                val who = whoActsNext(cur) ?: return@repeat
+                val intents = legalIntents(cur, who)
+                if (intents.isEmpty()) return@repeat
+                val out = applyIntent(cur, intents.first())
+                if (out is ApplyOutcome.Accepted) {
+                    cur = out.state
+                    ev += out.events
+                }
+            }
+            add(Triple("2p_pick_action", buildUiState(cur, viewerSeat = 0, ev), null))
+        }
+
+        // ── 10p_pick_action ───────────────────────────────────────────────────────
+        run {
+            val cfg = GameConfig.forPlayers(10)
+            val (state, events) = evolve(initialState(cfg, seed = 999L), steps = 6, seed = 3L)
+            var cur = state
+            var ev = events.toMutableList()
+            repeat(40) {
+                if (cur.phase is Phase.AwaitingAction &&
+                    (cur.phase as Phase.AwaitingAction).actorSeat == 0
+                ) {
+                    return@repeat
+                }
+                val who = whoActsNext(cur) ?: return@repeat
+                val intents = legalIntents(cur, who)
+                if (intents.isEmpty()) return@repeat
+                val out = applyIntent(cur, intents.first())
+                if (out is ApplyOutcome.Accepted) {
+                    cur = out.state
+                    ev += out.events
+                }
+            }
+            add(Triple("10p_pick_action", buildUiState(cur, viewerSeat = 0, ev), null))
+        }
+
+        // ── 4p_pick_action_nocoach ───────────────────────────────────────────────────
+        // Coach OFF: same human-turn fixture as 4p_pick_action but with coachEnabled=false so we can
+        // visually confirm that recommended stars, odds pills, and REAL/BLUFF badges are absent while
+        // the chip structure is unchanged. Also folds in real advice (so the comparison is apples-to-apples)
+        // but coachEnabled=false must suppress all visible guidance at render time.
+        run {
+            val cfg = GameConfig.forPlayers(4)
+            val seed = 88L
+            var cur = initialState(cfg, seed = seed)
+            var ev = mutableListOf<GameEvent>()
+            repeat(400) {
+                val ph = cur.phase
+                if (ph is Phase.AwaitingAction &&
+                    ph.actorSeat == 0 &&
+                    cur.player(PlayerId(0)).coins >= 3
+                ) {
+                    return@repeat
+                }
+                if (cur.phase is Phase.GameOver) return@repeat
+                val who = whoActsNext(cur) ?: return@repeat
+                val intents = legalIntents(cur, who)
+                if (intents.isEmpty()) return@repeat
+                val out = applyIntent(cur, intents.first())
+                if (out is ApplyOutcome.Accepted) {
+                    cur = out.state
+                    ev += out.events
+                }
+            }
+            val personas = buildPersonaMap(seatCount = 4, seed = seed)
+            val ui = buildUiState(cur, viewerSeat = 0, ev, personas)
+            // Advice is computed (same as the ON shot) but coachEnabled=false hides it in the render.
+            val uiCoached = withCoachAdvice(cur, PlayerId(0), ui, seed).copy(coachEnabled = false)
+            add(Triple("4p_pick_action_nocoach", uiCoached, null))
+        }
+
+        // ── 4p_coach_action ─────────────────────────────────────────────────────────
+        // DECISION-COACH on the ACTION dock: it is the human's turn, and the real MoveAdvisor
+        // brain has ranked every action chip. Each role-claim chip carries a truthful/bluff badge,
+        // the recommended chip wears a brass star + gold rim. We evolve to a human PickAction state
+        // (with enough coins that Supari/Khela are live so the disrupt chips also show a verdict),
+        // then fold in real advice via withCoachAdvice.
+        run {
+            val cfg = GameConfig.forPlayers(4)
+            val seed = 88L
+            var cur = initialState(cfg, seed = seed)
+            var ev = mutableListOf<GameEvent>()
+            repeat(400) {
+                val ph = cur.phase
+                if (ph is Phase.AwaitingAction &&
+                    ph.actorSeat == 0 &&
+                    cur.player(PlayerId(0)).coins >= 3
+                ) {
+                    return@repeat
+                }
+                if (cur.phase is Phase.GameOver) return@repeat
+                val who = whoActsNext(cur) ?: return@repeat
+                val intents = legalIntents(cur, who)
+                if (intents.isEmpty()) return@repeat
+                val out = applyIntent(cur, intents.first())
+                if (out is ApplyOutcome.Accepted) {
+                    cur = out.state
+                    ev += out.events
+                }
+            }
+            val personas = buildPersonaMap(seatCount = 4, seed = seed)
+            val ui = buildUiState(cur, viewerSeat = 0, ev, personas)
+            add(Triple("4p_coach_action", withCoachAdvice(cur, PlayerId(0), ui, seed), null))
+        }
+
+        // ── 4p_coach_reaction ───────────────────────────────────────────────────────
+        // DECISION-COACH on the REACTION screen ("Block? Or let it pass?"): a real engine reaction
+        // window where seat 0 must respond to an opponent's action. The advisor tags each option —
+        // a TRUTHFUL block (green ✓, "you really hold it, safe to back up") vs a risky CHALLENGE
+        // (oxblood, with the "~% they're bluffing" odds) — and stars its pick. We search seeds for a
+        // BLOCK-step reaction where seat 0 actually holds the blocking role, so the truthful-vs-risky
+        // contrast is unmistakable in the shot.
+        run {
+            val cfg = GameConfig.forPlayers(4)
+            var chosen: Triple<GameState, MutableList<GameEvent>, Long>? = null
+            // Prefer a BLOCK step where the human holds a blocking role (truthful block available).
+            for (s in longArrayOf(123L, 7L, 42L, 55L, 99L, 200L, 321L, 777L, 1234L, 4242L, 31337L, 90210L)) {
+                var cur = initialState(cfg, seed = s)
+                var ev = mutableListOf<GameEvent>()
+                var seed2 = s xor 0x5DEECE66DL
+                var hit: GameState? = null
+                for (i in 0 until 4000) {
+                    val ph = cur.phase
+                    if (ph is Phase.AwaitingReactions && whoActsNext(cur) == PlayerId(0)) {
+                        val legal = legalIntents(cur, PlayerId(0))
+                        val blocks = legal.filterIsInstance<Intent.Block>()
+                        val myRoles = redact(cur, PlayerId(0)).myInfluence
+                        val truthfulBlock = blocks.any { it.role in myRoles }
+                        val hasChallenge = legal.any { it is Intent.Challenge }
+                        if (truthfulBlock && hasChallenge) {
+                            hit = cur
+                            break
+                        }
+                    }
+                    if (cur.phase is Phase.GameOver) break
+                    val who = whoActsNext(cur) ?: break
+                    val intents = legalIntents(cur, who)
+                    if (intents.isEmpty()) break
+                    seed2 = seed2 * 6364136223846793005L + 1442695040888963407L
+                    val intent = intents[((seed2 ushr 33).toInt().and(0x7fffffff)) % intents.size]
+                    val out = applyIntent(cur, intent)
+                    if (out is ApplyOutcome.Accepted) {
+                        cur = out.state
+                        ev += out.events
+                    }
+                }
+                if (hit != null) {
+                    chosen = Triple(hit, ev, s)
+                    break
+                }
+            }
+            // Fallback: ANY seat-0 reaction window (still shows challenge/pass advice with odds).
+            if (chosen == null) {
+                var cur = initialState(cfg, seed = 123L)
+                var ev = mutableListOf<GameEvent>()
+                var seed2 = 999L
+                for (i in 0 until 4000) {
+                    val ph = cur.phase
+                    if (ph is Phase.AwaitingReactions && whoActsNext(cur) == PlayerId(0)) {
+                        chosen = Triple(cur, ev, 123L)
+                        break
+                    }
+                    if (cur.phase is Phase.GameOver) break
+                    val who = whoActsNext(cur) ?: break
+                    val intents = legalIntents(cur, who)
+                    if (intents.isEmpty()) break
+                    seed2 = seed2 * 6364136223846793005L + 1442695040888963407L
+                    val intent = intents[((seed2 ushr 33).toInt().and(0x7fffffff)) % intents.size]
+                    val out = applyIntent(cur, intent)
+                    if (out is ApplyOutcome.Accepted) {
+                        cur = out.state
+                        ev += out.events
+                    }
+                }
+            }
+            val (state, ev, seed) = chosen!!
+            val personas = buildPersonaMap(seatCount = 4, seed = seed)
+            val ui = buildUiState(state, viewerSeat = 0, ev, personas)
+            add(Triple("4p_coach_reaction", withCoachAdvice(state, PlayerId(0), ui, seed), null))
+        }
     }
-}

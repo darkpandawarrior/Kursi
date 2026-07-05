@@ -10,7 +10,6 @@ import kotlin.test.assertTrue
  * generally differ (good spread, not a constant).
  */
 class DailyChallengeTest {
-
     @Test
     fun same_day_yields_same_challenge() {
         val day = 20_000L // an arbitrary fixed epoch-day

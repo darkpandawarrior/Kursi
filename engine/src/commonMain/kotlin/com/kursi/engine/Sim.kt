@@ -5,20 +5,34 @@ package com.kursi.engine
  * policy that reads opponents' hidden cards is structurally impossible. Humans and bots share this exact path.
  */
 fun interface Policy {
-    fun decide(view: PlayerView, legal: List<Intent>): Intent
+    fun decide(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent
 }
 
 /** Picks a uniformly-random legal intent. Deterministic given its seed — the workhorse for property/fuzz tests. */
-class RandomLegalPolicy(seed: Long) : Policy {
+class RandomLegalPolicy(
+    seed: Long,
+) : Policy {
     private var rng = Rng(seed)
-    override fun decide(view: PlayerView, legal: List<Intent>): Intent {
+
+    override fun decide(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent {
         require(legal.isNotEmpty()) { "no legal intents" }
-        val (i, r) = rng.nextInt(legal.size); rng = r
+        val (i, r) = rng.nextInt(legal.size)
+        rng = r
         return legal[i]
     }
 }
 
-data class GameResult(val winner: PlayerId, val turns: Int, val steps: Int)
+data class GameResult(
+    val winner: PlayerId,
+    val turns: Int,
+    val steps: Int,
+)
 
 data class SimStats(
     val games: Int,
@@ -70,10 +84,11 @@ object SimHarness {
         var totalTurns = 0L
         var games = 0
         for (seed in seeds) {
-            val policies = (0 until config.seatCount).associate { seat ->
-                val pid = PlayerId(seat)
-                pid to policyFactory(pid, seed * 131 + seat)
-            }
+            val policies =
+                (0 until config.seatCount).associate { seat ->
+                    val pid = PlayerId(seat)
+                    pid to policyFactory(pid, seed * 131 + seat)
+                }
             val result = playOut(config, seed, policies)
             val seat = result.winner.raw
             winsBySeat[seat] = (winsBySeat[seat] ?: 0) + 1

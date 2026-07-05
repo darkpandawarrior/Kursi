@@ -18,7 +18,6 @@ import kotlin.test.assertTrue
  * headroom at 80 games; at n=80 the margin-of-error on a binomial ≈ ±0.11.
  */
 class PersonaNeutralityTest {
-
     @Test
     fun hard_personas_neutrality_4player() {
         val config = GameConfig.forPlayers(4)
@@ -29,15 +28,18 @@ class PersonaNeutralityTest {
             val gameSeed = gameIdx.toLong() * 137L + 19L
 
             // Assign 4 distinct personas (Hard tier), one per seat.
-            val assignments = PersonaAssigner.assign(
-                seatCount = 4,
-                difficulty = BotDifficulty.HARD,
-                seed = gameSeed,
-            )
+            val assignments =
+                PersonaAssigner.assign(
+                    seatCount = 4,
+                    difficulty = BotDifficulty.HARD,
+                    seed = gameSeed,
+                )
 
-            val policies: Map<PlayerId, Policy> = assignments.mapIndexed { seat, pair ->
-                PlayerId(seat) to (pair.second as Policy)
-            }.toMap()
+            val policies: Map<PlayerId, Policy> =
+                assignments
+                    .mapIndexed { seat, pair ->
+                        PlayerId(seat) to (pair.second as Policy)
+                    }.toMap()
 
             val result = SimHarness.playOut(config, seed = gameSeed, policies)
             winsBySeat[result.winner.raw]++
@@ -51,7 +53,7 @@ class PersonaNeutralityTest {
         assertTrue(
             spread < 0.12,
             "Persona win-share spread $spread >= 0.12 — persona is affecting strength. " +
-                "Wins by seat: ${winsBySeat.toList()} / $games games. Shares: $winShares"
+                "Wins by seat: ${winsBySeat.toList()} / $games games. Shares: $winShares",
         )
     }
 }

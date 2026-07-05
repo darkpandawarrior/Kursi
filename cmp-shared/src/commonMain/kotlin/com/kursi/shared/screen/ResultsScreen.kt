@@ -91,188 +91,224 @@ fun ResultsScreen(
     }
 
     Box(modifier = modifier.fillMaxSize().background(BrandTokens.TeakInk)) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        // Header
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(BrandTokens.TeakDark)
-                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                s.resultsTitle,
-                style = KursiType.title.copy(fontSize = 16.sp, letterSpacing = 1.sp),
-                color = BrandTokens.GoldAntique,
-            )
-        }
-
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 24.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            // Centre the certificate in the available height: when the report
-            // and bark are shorter than the viewport (the common case), the
-            // slack distributes evenly above and below instead of pooling into
-            // a dead band between the card and the footer. When content grows
-            // past the viewport, verticalScroll lets it scroll normally.
-            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize(),
         ) {
-          // Centred certificate column so the verdict reads as a stamped share-card
-          // rather than full-bleed bands on wide desktop windows.
-          Column(
-            modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-          ) {
-            // ── Verdict Roundel ────────────────────────────────────────────────
-            VerdictRoundel(
-                summary = summary,
-                winnerColor = winnerColor,
-                stampColor = stampColor,
-            )
-
-            // Winner bark
-            val winBark = when {
-                summary.humanWon -> voice.youWin
-                summary.winnerName != null -> {
-                    val personaId = summary.bestMomentPersonaId
-                        ?: summary.winnerName.lowercase().replace(" ", "_")
-                    voice.personaBark(personaId, "win").ifEmpty { voice.youWin }
-                }
-                else -> voice.youWin
-            }
+            // Header
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(BrandTokens.PaperCream.copy(alpha = 0.06f))
-                    .border(1.dp, stampColor.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-                    .padding(16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(BrandTokens.TeakDark)
+                        .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        "\"$winBark\"",
-                        style = KursiType.title.copy(fontSize = 15.sp, fontStyle = FontStyle.Italic),
-                        color = KursiNeutrals.TextPrimary,
-                        textAlign = TextAlign.Center,
+                Text(
+                    s.resultsTitle,
+                    style = KursiType.title.copy(fontSize = 16.sp, letterSpacing = 1.sp),
+                    color = BrandTokens.GoldAntique,
+                )
+            }
+
+            Column(
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 24.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                // Centre the certificate in the available height: when the report
+                // and bark are shorter than the viewport (the common case), the
+                // slack distributes evenly above and below instead of pooling into
+                // a dead band between the card and the footer. When content grows
+                // past the viewport, verticalScroll lets it scroll normally.
+                verticalArrangement = Arrangement.Center,
+            ) {
+                // Centred certificate column so the verdict reads as a stamped share-card
+                // rather than full-bleed bands on wide desktop windows.
+                Column(
+                    modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(24.dp),
+                ) {
+                    // ── Verdict Roundel ────────────────────────────────────────────────
+                    VerdictRoundel(
+                        summary = summary,
+                        winnerColor = winnerColor,
+                        stampColor = stampColor,
                     )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        s.resultsVerdictSub,
-                        style = KursiType.caption.copy(fontSize = 11.sp, fontStyle = FontStyle.Italic),
-                        color = KursiNeutrals.TextMuted,
-                        textAlign = TextAlign.Center,
-                    )
+
+                    // Winner bark
+                    val winBark =
+                        when {
+                            summary.humanWon -> voice.youWin
+                            summary.winnerName != null -> {
+                                val personaId =
+                                    summary.bestMomentPersonaId
+                                        ?: summary.winnerName.lowercase().replace(" ", "_")
+                                voice.personaBark(personaId, "win").ifEmpty { voice.youWin }
+                            }
+                            else -> voice.youWin
+                        }
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(BrandTokens.PaperCream.copy(alpha = 0.06f))
+                                .border(1.dp, stampColor.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                .padding(16.dp),
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "\"$winBark\"",
+                                style = KursiType.title.copy(fontSize = 15.sp, fontStyle = FontStyle.Italic),
+                                color = KursiNeutrals.TextPrimary,
+                                textAlign = TextAlign.Center,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                s.resultsVerdictSub,
+                                style = KursiType.caption.copy(fontSize = 11.sp, fontStyle = FontStyle.Italic),
+                                color = KursiNeutrals.TextMuted,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+
+                    // ── ROZNAMCHA Recap ────────────────────────────────────────────────
+                    RoznamchaRecap(summary = summary)
+
+                    Spacer(Modifier.height(8.dp))
                 }
             }
 
-            // ── ROZNAMCHA Recap ────────────────────────────────────────────────
-            RoznamchaRecap(summary = summary)
-
-            Spacer(Modifier.height(8.dp))
-          }
-        }
-
-        // ── Footer Actions ─────────────────────────────────────────────────────
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(BrandTokens.TeakDark)
-                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.5f), RoundedCornerShape(0.dp))
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-          Column(
-            modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-          ) {
-            // PROMOTE — shown only for gauntlet wins with a next rung available
-            if (onNextGauntletRung != null) {
-                StampChit(
-                    label = "PROMOTE",
-                    sublabel = "Agla rung — next challenge awaits",
-                    isHero = true,
-                    onClick = onNextGauntletRung,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            // REMATCH hero CTA — downgraded to non-hero when PROMOTE is present
-            StampChit(
-                label = s.resultsRematch,
-                sublabel = s.resultsRematchSub,
-                isHero = onNextGauntletRung == null,
-                onClick = onRematch,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            // M6c — REVIEW THIS GAME (teach-by-review). Only when a replayable record exists.
-            if (onReview != null) {
-                StampChit(
-                    label = s.reviewCta,
-                    sublabel = s.reviewCtaSub,
-                    onClick = onReview,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            if (onShare != null) {
-                StampChit(
-                    label = "SHARE",
-                    sublabel = "Faisla share karo",
-                    onClick = onShare,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                // NAYA KHEL
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .defaultMinSize(minHeight = 52.dp)
-                        .clip(RoundedCornerShape(8.dp))
+            // ── Footer Actions ─────────────────────────────────────────────────────
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
                         .background(BrandTokens.TeakDark)
-                        .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
-                        .semantics(mergeDescendants = true) { role = Role.Button }
-                        .clickable(onClick = onNewGame)
-                        .padding(horizontal = 12.dp, vertical = 12.dp),
-                    contentAlignment = Alignment.Center,
+                        .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.5f), RoundedCornerShape(0.dp))
+                        .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Column(
+                    modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(s.resultsNewGame, style = KursiType.title.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text("Reconfigure", style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    // PROMOTE — shown only for gauntlet wins with a next rung available
+                    if (onNextGauntletRung != null) {
+                        StampChit(
+                            label = "PROMOTE",
+                            sublabel = "Agla rung — next challenge awaits",
+                            isHero = true,
+                            onClick = onNextGauntletRung,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    // REMATCH hero CTA — downgraded to non-hero when PROMOTE is present
+                    StampChit(
+                        label = s.resultsRematch,
+                        sublabel = s.resultsRematchSub,
+                        isHero = onNextGauntletRung == null,
+                        onClick = onRematch,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    // M6c — REVIEW THIS GAME (teach-by-review). Only when a replayable record exists.
+                    if (onReview != null) {
+                        StampChit(
+                            label = s.reviewCta,
+                            sublabel = s.reviewCtaSub,
+                            onClick = onReview,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    if (onShare != null) {
+                        StampChit(
+                            label = "SHARE",
+                            sublabel = "Faisla share karo",
+                            onClick = onShare,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        // NAYA KHEL
+                        Box(
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .defaultMinSize(minHeight = 52.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(BrandTokens.TeakDark)
+                                    .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                                    .semantics(mergeDescendants = true) { role = Role.Button }
+                                    .clickable(onClick = onNewGame)
+                                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    s.resultsNewGame,
+                                    style = KursiType.title.copy(fontSize = 13.sp),
+                                    color = KursiNeutrals.TextPrimary,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    "Reconfigure",
+                                    style = KursiType.caption.copy(fontSize = 9.sp),
+                                    color = KursiNeutrals.TextMuted,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                        // DAFTAR (HOME)
+                        Box(
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .defaultMinSize(minHeight = 52.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(BrandTokens.TeakDark)
+                                    .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                                    .semantics(mergeDescendants = true) { role = Role.Button }
+                                    .clickable(onClick = onHome)
+                                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    s.resultsHome,
+                                    style = KursiType.title.copy(fontSize = 13.sp),
+                                    color = KursiNeutrals.TextPrimary,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    "Main office",
+                                    style = KursiType.caption.copy(fontSize = 9.sp),
+                                    color = KursiNeutrals.TextMuted,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
                     }
                 }
-                // DAFTAR (HOME)
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .defaultMinSize(minHeight = 52.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(BrandTokens.TeakDark)
-                        .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                        .semantics(mergeDescendants = true) { role = Role.Button }
-                        .clickable(onClick = onHome)
-                        .padding(horizontal = 12.dp, vertical = 12.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(s.resultsHome, style = KursiType.title.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text("Main office", style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                }
             }
-          }
         }
-    }
 
         // ── Win moment overlay — KURSI HAASIL stamp on entry ────────────────────
         ActionMomentOverlay(
@@ -284,10 +320,11 @@ fun ResultsScreen(
 }
 
 /** Centre-anchored geometry: the Win confetti + stamp land mid-screen. */
-private fun resultsAnchors(): TableAnchors = TableAnchors(
-    seatCenters = mapOf(0 to Offset(720f, 360f)),
-    treasuryCenter = Offset(720f, 360f),
-)
+private fun resultsAnchors(): TableAnchors =
+    TableAnchors(
+        seatCenters = mapOf(0 to Offset(720f, 360f)),
+        treasuryCenter = Offset(720f, 360f),
+    )
 
 // ─────────────────────────── Verdict Roundel ──────────────────────────────────
 
@@ -300,35 +337,34 @@ private fun VerdictRoundel(
     Box(contentAlignment = Alignment.Center) {
         // Large brass roundel
         Box(
-            modifier = Modifier
-                .size(160.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.radialGradient(
-                        listOf(winnerColor.copy(alpha = 0.3f), BrandTokens.TeakDark.copy(alpha = 0.9f)),
-                    ),
-                )
-                .border(
-                    3.dp,
-                    Brush.sweepGradient(listOf(stampColor, BrandTokens.BrassAged, stampColor)),
-                    CircleShape,
-                )
-                .drawBehind {
-                    val cx = size.width / 2
-                    val cy = size.height / 2
-                    val r = size.width * 0.48f
-                    val rays = 16
-                    for (i in 0 until rays) {
-                        val angle = (i * 2 * PI / rays).toFloat()
-                        drawLine(
-                            stampColor.copy(alpha = 0.2f),
-                            Offset(cx + r * 0.72f * cos(angle), cy + r * 0.72f * sin(angle)),
-                            Offset(cx + r * 0.95f * cos(angle), cy + r * 0.95f * sin(angle)),
-                            strokeWidth = 1.dp.toPx(),
-                        )
-                    }
-                    drawCircle(stampColor.copy(alpha = 0.15f), r * 0.68f, Offset(cx, cy), style = Stroke(0.8.dp.toPx()))
-                },
+            modifier =
+                Modifier
+                    .size(160.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            listOf(winnerColor.copy(alpha = 0.3f), BrandTokens.TeakDark.copy(alpha = 0.9f)),
+                        ),
+                    ).border(
+                        3.dp,
+                        Brush.sweepGradient(listOf(stampColor, BrandTokens.BrassAged, stampColor)),
+                        CircleShape,
+                    ).drawBehind {
+                        val cx = size.width / 2
+                        val cy = size.height / 2
+                        val r = size.width * 0.48f
+                        val rays = 16
+                        for (i in 0 until rays) {
+                            val angle = (i * 2 * PI / rays).toFloat()
+                            drawLine(
+                                stampColor.copy(alpha = 0.2f),
+                                Offset(cx + r * 0.72f * cos(angle), cy + r * 0.72f * sin(angle)),
+                                Offset(cx + r * 0.95f * cos(angle), cy + r * 0.95f * sin(angle)),
+                                strokeWidth = 1.dp.toPx(),
+                            )
+                        }
+                        drawCircle(stampColor.copy(alpha = 0.15f), r * 0.68f, Offset(cx, cy), style = Stroke(0.8.dp.toPx()))
+                    },
             contentAlignment = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -350,13 +386,14 @@ private fun VerdictRoundel(
 
         // Win stamp overlay
         Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .offset(y = 16.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(stampColor.copy(alpha = 0.9f))
-                .border(1.dp, stampColor, RoundedCornerShape(4.dp))
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(y = 16.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(stampColor.copy(alpha = 0.9f))
+                    .border(1.dp, stampColor, RoundedCornerShape(4.dp))
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
         ) {
             Text(
                 LocalKursiStrings.current.resultsWinStamp,
@@ -373,12 +410,13 @@ private fun VerdictRoundel(
 private fun RoznamchaRecap(summary: MatchSummary) {
     val s = LocalKursiStrings.current
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
-            .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
+                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
@@ -387,9 +425,10 @@ private fun RoznamchaRecap(summary: MatchSummary) {
             color = BrandTokens.BrassAged,
         )
         Box(
-            modifier = Modifier.fillMaxWidth().height(1.dp).background(
-                Brush.horizontalGradient(listOf(Color.Transparent, BrandTokens.BrassAged.copy(alpha = 0.3f), Color.Transparent)),
-            ),
+            modifier =
+                Modifier.fillMaxWidth().height(1.dp).background(
+                    Brush.horizontalGradient(listOf(Color.Transparent, BrandTokens.BrassAged.copy(alpha = 0.3f), Color.Transparent)),
+                ),
         )
         RecapRow(s.resultsRecapSurvived, "${summary.turnsTotal} turns")
         RecapRow(s.resultsRecapBluffsLanded, "${summary.bluffsHeld} bluffs held")
@@ -413,9 +452,10 @@ private fun RoznamchaRecap(summary: MatchSummary) {
 
         Spacer(Modifier.height(6.dp))
         Box(
-            modifier = Modifier.fillMaxWidth().height(1.dp).background(
-                Brush.horizontalGradient(listOf(Color.Transparent, BrandTokens.BrassAged.copy(alpha = 0.3f), Color.Transparent)),
-            ),
+            modifier =
+                Modifier.fillMaxWidth().height(1.dp).background(
+                    Brush.horizontalGradient(listOf(Color.Transparent, BrandTokens.BrassAged.copy(alpha = 0.3f), Color.Transparent)),
+                ),
         )
         Spacer(Modifier.height(6.dp))
         Text(
@@ -446,23 +486,25 @@ private fun ResultsExpired(
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = Modifier
-                .widthIn(max = 520.dp)
-                .padding(32.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(BrandTokens.PaperCream.copy(alpha = 0.05f))
-                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
-                .padding(28.dp)
-                .semantics { contentDescription = "Match record expired" },
+            modifier =
+                Modifier
+                    .widthIn(max = 520.dp)
+                    .padding(32.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(BrandTokens.PaperCream.copy(alpha = 0.05f))
+                    .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
+                    .padding(28.dp)
+                    .semantics { contentDescription = "Match record expired" },
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             // Faded "RAD" (cancelled) stamp roundel
             Box(
-                modifier = Modifier
-                    .size(96.dp)
-                    .clip(CircleShape)
-                    .border(2.dp, BrandTokens.StampRed.copy(alpha = 0.45f), CircleShape),
+                modifier =
+                    Modifier
+                        .size(96.dp)
+                        .clip(CircleShape)
+                        .border(2.dp, BrandTokens.StampRed.copy(alpha = 0.45f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -493,18 +535,18 @@ private fun ResultsExpired(
                 modifier = Modifier.fillMaxWidth(),
             )
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 52.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(BrandTokens.TeakDark)
-                    .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                    .semantics(mergeDescendants = true) {
-                        role = Role.Button
-                        contentDescription = "Return to Daftar home"
-                    }
-                    .clickable(onClick = onHome)
-                    .padding(vertical = 12.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 52.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(BrandTokens.TeakDark)
+                        .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                        .semantics(mergeDescendants = true) {
+                            role = Role.Button
+                            contentDescription = "Return to Daftar home"
+                        }.clickable(onClick = onHome)
+                        .padding(vertical = 12.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text("DAFTAR", style = KursiType.title.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary)
@@ -514,7 +556,10 @@ private fun ResultsExpired(
 }
 
 @Composable
-private fun RecapRow(label: String, value: String) {
+private fun RecapRow(
+    label: String,
+    value: String,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,

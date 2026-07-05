@@ -30,14 +30,19 @@ fun Squircle(radius: Dp): Shape = RoundedCornerShape(radius)
 object KursiRadii {
     /** 6 dp — influence-pip backplates, small tags. */
     val xs: Dp = 6.dp
+
     /** 11 dp — claim chips, coin pills, log-row icons. */
     val sm: Dp = 11.dp
+
     /** 14 dp — avatars, card-backs. */
     val md: Dp = 14.dp
+
     /** 20 dp — opponent chips, dock surface, status spine. */
     val lg: Dp = 20.dp
+
     /** 22 dp — influence cards, action/reaction buttons, confirm strip. */
     val xl: Dp = 22.dp
+
     /** 28 dp — felt play area, reaction theatre, bottom sheets. */
     val xxl: Dp = 28.dp
 }

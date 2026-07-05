@@ -8,11 +8,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -26,7 +27,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.Text
 import com.kursi.ai.persona.BarkEvent
 import com.kursi.ai.persona.BotDifficulty
 import com.kursi.ai.persona.BotPersona
@@ -63,14 +63,18 @@ fun LobbyScreen(
     val botDifficulty = remember(difficulty) { difficulty.toBotDifficulty() }
     val botCount = (players - humanCount).coerceAtLeast(0)
 
-    val roster = remember(currentSeed, botCount, botDifficulty) {
-        if (botCount <= 0) emptyList()
-        else PersonaAssigner.assign(
-            seatCount = botCount.coerceIn(1, 9),
-            difficulty = botDifficulty,
-            seed = currentSeed,
-        )
-    }
+    val roster =
+        remember(currentSeed, botCount, botDifficulty) {
+            if (botCount <= 0) {
+                emptyList()
+            } else {
+                PersonaAssigner.assign(
+                    seatCount = botCount.coerceIn(1, 9),
+                    difficulty = botDifficulty,
+                    seed = currentSeed,
+                )
+            }
+        }
 
     val scrollState = rememberScrollState()
 
@@ -96,175 +100,180 @@ fun LobbyScreen(
         LaunchedEffect(screenWidthPx, screenHeightPx) {
             tableAnchors = centeredAnchors(screenWidthPx, screenHeightPx)
         }
-    Column(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        // Header
-        LobbyHeader(seed = currentSeed, onBack = onBack)
-
-        // Attendance register — centred on both axes so the register reads as a bound
-        // ledger page floating on the teak desk, instead of stretching edge-to-edge on
-        // wide windows or top-anchoring with a dead band above the footer. The outer
-        // column scrolls (content may exceed the viewport at 9 bots); when the roster
-        // fits, Arrangement.Center settles the ledger in the optical middle of the canvas.
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 24.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize(),
         ) {
-          Column(
-            modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-          ) {
-            val ls = LocalKursiStrings.current
-            // Register title
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(BrandTokens.BrassDark.copy(alpha = 0.25f))
-                    .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+            // Header
+            LobbyHeader(seed = currentSeed, onBack = onBack)
+
+            // Attendance register — centred on both axes so the register reads as a bound
+            // ledger page floating on the teak desk, instead of stretching edge-to-edge on
+            // wide windows or top-anchoring with a dead band above the footer. The outer
+            // column scrolls (content may exceed the viewport at 9 bots); when the roster
+            // fits, Arrangement.Center settles the ledger in the optical middle of the canvas.
+            Column(
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 24.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Column(
+                    modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    val ls = LocalKursiStrings.current
+                    // Register title
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(BrandTokens.BrassDark.copy(alpha = 0.25f))
+                                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 16.dp, vertical = 10.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Column {
+                                Text(
+                                    ls.lobbyHeader,
+                                    style = KursiType.title.copy(fontSize = 14.sp, letterSpacing = 1.sp),
+                                    color = BrandTokens.GoldAntique,
+                                )
+                                // Friendly cabinet number instead of raw seed
+                                val cabinetNo = (currentSeed % 9999).let { if (it < 0) it + 9999 else it }
+                                Text(
+                                    "Cabinet #$cabinetNo · ${players}p · ${difficulty.name}",
+                                    style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
+                                    color = KursiNeutrals.TextMuted,
+                                )
+                            }
+                            // "Tap any row" discovery hint
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(BrandTokens.BrassAged.copy(alpha = 0.12f))
+                                        .border(0.7.dp, BrandTokens.BrassAged.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
+                                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                            ) {
+                                Text(
+                                    "Tap a row for their voice →",
+                                    style = KursiType.caption.copy(fontSize = 9.sp, fontStyle = FontStyle.Italic),
+                                    color = KursiNeutrals.TextSecondary,
+                                )
+                            }
+                        }
+                    }
+
+                    // M6e TEAM KHEL — alternating seat→team split (seat i → team i % teamCount). The human (seat
+                    // 0) anchors team 0; bots fill seats humanCount.. so their seat index is humanCount + i.
+                    val teams = teamCount >= 2
+                    if (teams) {
+                        Text(
+                            text = ls.lobbyTeamHeader,
+                            style = KursiType.label.copy(fontSize = 10.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold),
+                            color = BrandTokens.GoldAntique,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+
+                    // Human seat (fixed, seat 0)
+                    PersonaRegisterRow(
+                        name = ls.humanSeatName,
+                        title = ls.humanSeatTitle,
+                        archetype = ls.humanSeatArchetype,
+                        monogram = "AAP",
+                        seatColor = Color(0xFFE63946),
+                        personalityLine = ls.humanSeatPersonality,
+                        isHuman = true,
+                        sampleBark = ls.humanSeatBark,
+                        teamBadge = if (teams) ls.teamBadge(0 % teamCount) else null,
+                        teamId = if (teams) 0 % teamCount else -1,
+                    )
+
+                    // Bot seats (seat = humanCount + index)
+                    roster.forEachIndexed { index, (persona, _) ->
+                        val personalityLine = buildPersonalityLine(persona)
+                        val sampleBark = persona.barks.lines[BarkEvent.ACT]?.firstOrNull() ?: ""
+                        val seatIdx = humanCount + index
+                        val tId = if (teams) seatIdx % teamCount else -1
+                        PersonaRegisterRow(
+                            name = persona.name,
+                            title = persona.title,
+                            archetype = persona.archetype,
+                            monogram = persona.monogram,
+                            seatColor = Color(persona.seatColorArgb),
+                            personalityLine = personalityLine,
+                            sampleBark = sampleBark,
+                            teamBadge = if (teams) ls.teamBadge(tId) else null,
+                            teamId = tId,
+                        )
+                    }
+                }
+            }
+
+            // Footer with re-roll + commit
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(BrandTokens.TeakDark)
+                        .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.5f), RoundedCornerShape(0.dp))
+                        .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Column {
-                        Text(
-                            ls.lobbyHeader,
-                            style = KursiType.title.copy(fontSize = 14.sp, letterSpacing = 1.sp),
-                            color = BrandTokens.GoldAntique,
-                        )
-                        // Friendly cabinet number instead of raw seed
-                        val cabinetNo = (currentSeed % 9999).let { if (it < 0) it + 9999 else it }
-                        Text(
-                            "Cabinet #$cabinetNo · ${players}p · ${difficulty.name}",
-                            style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
-                            color = KursiNeutrals.TextMuted,
-                        )
-                    }
-                    // "Tap any row" discovery hint
+                    val lb = LocalKursiStrings.current
+                    // Reroll button
                     Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(BrandTokens.BrassAged.copy(alpha = 0.12f))
-                            .border(0.7.dp, BrandTokens.BrassAged.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(BrandTokens.TeakDark)
+                                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                                .clickable { currentSeed += 1L }
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            "Tap a row for their voice →",
-                            style = KursiType.caption.copy(fontSize = 9.sp, fontStyle = FontStyle.Italic),
-                            color = KursiNeutrals.TextSecondary,
+                            text = lb.lobbyReroll,
+                            style = KursiType.title.copy(fontSize = 13.sp),
+                            color = KursiNeutrals.TextPrimary,
+                            textAlign = TextAlign.Center,
                         )
                     }
-                }
-            }
 
-            // M6e TEAM KHEL — alternating seat→team split (seat i → team i % teamCount). The human (seat
-            // 0) anchors team 0; bots fill seats humanCount.. so their seat index is humanCount + i.
-            val teams = teamCount >= 2
-            if (teams) {
-                Text(
-                    text = ls.lobbyTeamHeader,
-                    style = KursiType.label.copy(fontSize = 10.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold),
-                    color = BrandTokens.GoldAntique,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
-
-            // Human seat (fixed, seat 0)
-            PersonaRegisterRow(
-                name = ls.humanSeatName,
-                title = ls.humanSeatTitle,
-                archetype = ls.humanSeatArchetype,
-                monogram = "AAP",
-                seatColor = Color(0xFFE63946),
-                personalityLine = ls.humanSeatPersonality,
-                isHuman = true,
-                sampleBark = ls.humanSeatBark,
-                teamBadge = if (teams) ls.teamBadge(0 % teamCount) else null,
-                teamId = if (teams) 0 % teamCount else -1,
-            )
-
-            // Bot seats (seat = humanCount + index)
-            roster.forEachIndexed { index, (persona, _) ->
-                val personalityLine = buildPersonalityLine(persona)
-                val sampleBark = persona.barks.lines[BarkEvent.ACT]?.firstOrNull() ?: ""
-                val seatIdx = humanCount + index
-                val tId = if (teams) seatIdx % teamCount else -1
-                PersonaRegisterRow(
-                    name = persona.name,
-                    title = persona.title,
-                    archetype = persona.archetype,
-                    monogram = persona.monogram,
-                    seatColor = Color(persona.seatColorArgb),
-                    personalityLine = personalityLine,
-                    sampleBark = sampleBark,
-                    teamBadge = if (teams) ls.teamBadge(tId) else null,
-                    teamId = tId,
-                )
-            }
-          }
-        }
-
-        // Footer with re-roll + commit
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(BrandTokens.TeakDark)
-                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.5f), RoundedCornerShape(0.dp))
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Row(
-                modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                val lb = LocalKursiStrings.current
-                // Reroll button
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(BrandTokens.TeakDark)
-                        .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
-                        .clickable { currentSeed += 1L }
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = lb.lobbyReroll,
-                        style = KursiType.title.copy(fontSize = 13.sp),
-                        color = KursiNeutrals.TextPrimary,
-                        textAlign = TextAlign.Center,
+                    // Deal In commit
+                    StampChit(
+                        label = lb.lobbyDealIn,
+                        sublabel = lb.lobbyDealInSub,
+                        isHero = true,
+                        onClick = {
+                            if (!committing) {
+                                committing = true
+                                momentHost.play(
+                                    KursiMoment.Tax(actorSeat = 0, roleHue = BrandTokens.GoldAntique),
+                                )
+                            }
+                        },
+                        modifier = Modifier.weight(1.5f),
                     )
                 }
-
-                // Deal In commit
-                StampChit(
-                    label = lb.lobbyDealIn,
-                    sublabel = lb.lobbyDealInSub,
-                    isHero = true,
-                    onClick = {
-                        if (!committing) {
-                            committing = true
-                            momentHost.play(
-                                KursiMoment.Tax(actorSeat = 0, roleHue = BrandTokens.GoldAntique),
-                            )
-                        }
-                    },
-                    modifier = Modifier.weight(1.5f),
-                )
             }
         }
-    }
 
         // ── Stamp moment overlay — above the register, plays MUHAR LAGAO ─────────
         ActionMomentOverlay(
@@ -281,7 +290,10 @@ fun LobbyScreen(
  * on-screen even on portrait phones (the old hardcoded 720×450 was off-screen on ~360dp
  * wide handsets at 3× density).
  */
-private fun centeredAnchors(screenWidthPx: Float, screenHeightPx: Float): TableAnchors {
+private fun centeredAnchors(
+    screenWidthPx: Float,
+    screenHeightPx: Float,
+): TableAnchors {
     val cx = screenWidthPx / 2f
     val cy = screenHeightPx * 0.42f
     return TableAnchors(
@@ -292,29 +304,32 @@ private fun centeredAnchors(screenWidthPx: Float, screenHeightPx: Float): TableA
 
 // ─────────────────────────── Helpers ─────────────────────────────────────────
 
-private fun Difficulty.toBotDifficulty(): BotDifficulty = when (this) {
-    Difficulty.Easy        -> BotDifficulty.EASY
-    Difficulty.Medium      -> BotDifficulty.MEDIUM
-    Difficulty.Hard        -> BotDifficulty.HARD
-    Difficulty.Expert      -> BotDifficulty.EXPERT
-    Difficulty.Grandmaster -> BotDifficulty.GRANDMASTER
-}
+private fun Difficulty.toBotDifficulty(): BotDifficulty =
+    when (this) {
+        Difficulty.Easy -> BotDifficulty.EASY
+        Difficulty.Medium -> BotDifficulty.MEDIUM
+        Difficulty.Hard -> BotDifficulty.HARD
+        Difficulty.Expert -> BotDifficulty.EXPERT
+        Difficulty.Grandmaster -> BotDifficulty.GRANDMASTER
+    }
 
 private fun buildPersonalityLine(persona: BotPersona): String {
     val p = persona.personality
     val bluffStr = "bluffs ${(p.bluffRate * 100).toInt()}%"
-    val challengeStr = when {
-        p.challengeAggression > 0.6f -> "challenge-hungry"
-        p.challengeAggression < 0.3f -> "lets things slide"
-        else -> "moderate challenger"
-    }
-    val targeting = when (p.targetingBias.name) {
-        "LEADER" -> "aankh leader pe"
-        "WEAKEST" -> "targets weakest"
-        "VINDICTIVE" -> "yaad rakhta hai"
-        "RANDOM" -> "unpredictable"
-        else -> p.targetingBias.name.lowercase()
-    }
+    val challengeStr =
+        when {
+            p.challengeAggression > 0.6f -> "challenge-hungry"
+            p.challengeAggression < 0.3f -> "lets things slide"
+            else -> "moderate challenger"
+        }
+    val targeting =
+        when (p.targetingBias.name) {
+            "LEADER" -> "aankh leader pe"
+            "WEAKEST" -> "targets weakest"
+            "VINDICTIVE" -> "yaad rakhta hai"
+            "RANDOM" -> "unpredictable"
+            else -> p.targetingBias.name.lowercase()
+        }
     return "$bluffStr · $challengeStr · $targeting"
 }
 
@@ -337,21 +352,26 @@ private fun PersonaRegisterRow(
     var flipped by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(
-                if (isHuman) BrandTokens.BrassAged.copy(alpha = 0.12f)
-                else Color(0xFF14110D),
-            )
-            .border(
-                1.dp,
-                if (isHuman) BrandTokens.GoldAntique.copy(alpha = 0.5f)
-                else seatColor.copy(alpha = 0.4f),
-                RoundedCornerShape(10.dp),
-            )
-            .clickable { flipped = !flipped }
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(
+                    if (isHuman) {
+                        BrandTokens.BrassAged.copy(alpha = 0.12f)
+                    } else {
+                        Color(0xFF14110D)
+                    },
+                ).border(
+                    1.dp,
+                    if (isHuman) {
+                        BrandTokens.GoldAntique.copy(alpha = 0.5f)
+                    } else {
+                        seatColor.copy(alpha = 0.4f)
+                    },
+                    RoundedCornerShape(10.dp),
+                ).clickable { flipped = !flipped }
+                .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         if (flipped && sampleBark.isNotEmpty()) {
             // Flipped — show sample bark
@@ -375,11 +395,12 @@ private fun PersonaRegisterRow(
             ) {
                 // Monogram roundel
                 Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(Brush.radialGradient(listOf(seatColor.copy(alpha = 0.9f), seatColor.copy(alpha = 0.4f))))
-                        .border(1.5.dp, BrandTokens.BrassAged.copy(alpha = 0.7f), CircleShape),
+                    modifier =
+                        Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(Brush.radialGradient(listOf(seatColor.copy(alpha = 0.9f), seatColor.copy(alpha = 0.4f))))
+                            .border(1.5.dp, BrandTokens.BrassAged.copy(alpha = 0.7f), CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -405,13 +426,18 @@ private fun PersonaRegisterRow(
                         if (teamBadge != null) {
                             val teamHue = if (teamId == 0) BrandTokens.GoldAntique else BrandTokens.StampRed
                             Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(teamHue.copy(alpha = 0.16f))
-                                    .border(0.7.dp, teamHue.copy(alpha = 0.6f), RoundedCornerShape(3.dp))
-                                    .padding(horizontal = 5.dp, vertical = 1.dp),
+                                modifier =
+                                    Modifier
+                                        .clip(RoundedCornerShape(3.dp))
+                                        .background(teamHue.copy(alpha = 0.16f))
+                                        .border(0.7.dp, teamHue.copy(alpha = 0.6f), RoundedCornerShape(3.dp))
+                                        .padding(horizontal = 5.dp, vertical = 1.dp),
                             ) {
-                                Text(teamBadge, style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.5.sp, fontWeight = FontWeight.Bold), color = teamHue)
+                                Text(
+                                    teamBadge,
+                                    style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.5.sp, fontWeight = FontWeight.Bold),
+                                    color = teamHue,
+                                )
                             }
                         }
                     }
@@ -433,11 +459,12 @@ private fun PersonaRegisterRow(
 
                 // Visible tap affordance — was 9sp at 50% alpha (invisible)
                 Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(BrandTokens.BrassDark.copy(alpha = 0.2f))
-                        .border(0.7.dp, BrandTokens.BrassAged.copy(alpha = 0.45f), RoundedCornerShape(4.dp))
-                        .padding(horizontal = 6.dp, vertical = 3.dp),
+                    modifier =
+                        Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(BrandTokens.BrassDark.copy(alpha = 0.2f))
+                            .border(0.7.dp, BrandTokens.BrassAged.copy(alpha = 0.45f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 3.dp),
                 ) {
                     Text(
                         "VOICE ▸",
@@ -451,25 +478,29 @@ private fun PersonaRegisterRow(
 }
 
 @Composable
-private fun LobbyHeader(seed: Long, onBack: () -> Unit) {
+private fun LobbyHeader(
+    seed: Long,
+    onBack: () -> Unit,
+) {
     val s = LocalKursiStrings.current
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(BrandTokens.TeakDark)
-            .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp)),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(BrandTokens.TeakDark)
+                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Back — 52dp minimum tap target
         Box(
-            modifier = Modifier
-                .defaultMinSize(minWidth = 64.dp, minHeight = 52.dp)
-                .semantics(mergeDescendants = true) {
-                    role = Role.Button
-                    contentDescription = s.back
-                }
-                .clickable(onClick = onBack)
-                .padding(horizontal = 20.dp),
+            modifier =
+                Modifier
+                    .defaultMinSize(minWidth = 64.dp, minHeight = 52.dp)
+                    .semantics(mergeDescendants = true) {
+                        role = Role.Button
+                        contentDescription = s.back
+                    }.clickable(onClick = onBack)
+                    .padding(horizontal = 20.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(s.back, style = KursiType.body.copy(fontSize = 13.sp), color = BrandTokens.BrassAged)

@@ -4,7 +4,6 @@ import com.kursi.ai.advisor.MoveAdvisor
 import com.kursi.ai.persona.BotPersona
 import com.kursi.ai.provider.AiMessage
 import com.kursi.ai.provider.AiProvider
-import com.kursi.engine.Action
 import com.kursi.engine.GameState
 import com.kursi.engine.Intent
 import com.kursi.engine.PlayerId
@@ -14,8 +13,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 private val QUICK_BUDGET = SearchBudget(maxMillis = 200L, maxIterations = 800, rolloutHorizon = 8)
 
-class AiBotDecisionEngine(seed: Long) {
-
+class AiBotDecisionEngine(
+    seed: Long,
+) {
     private val advisor = MoveAdvisor(seed, QUICK_BUDGET)
 
     suspend fun decide(
@@ -35,16 +35,18 @@ class AiBotDecisionEngine(seed: Long) {
         val context = GameContextSerializer.serialize(view, ranked)
         val systemPrompt = PersonaPrompts.systemPrompt(persona, arc)
 
-        val llmResponse = withTimeoutOrNull(5_000L) {
-            runCatching {
-                provider.complete(
-                    messages = listOf(
-                        AiMessage(AiMessage.Role.SYSTEM, systemPrompt),
-                        AiMessage(AiMessage.Role.USER, context),
+        val llmResponse =
+            withTimeoutOrNull(5_000L) {
+                runCatching {
+                    provider.complete(
+                        messages =
+                            listOf(
+                                AiMessage(AiMessage.Role.SYSTEM, systemPrompt),
+                                AiMessage(AiMessage.Role.USER, context),
+                            ),
                     )
-                )
-            }.getOrNull()
-        }
+                }.getOrNull()
+            }
 
         return resolveIntent(llmResponse?.trim(), ranked, legal, botId) ?: fallback
     }
@@ -57,9 +59,10 @@ class AiBotDecisionEngine(seed: Long) {
     ): Intent? {
         if (actionStr.isNullOrBlank()) return null
 
-        val candidate = ranked.firstOrNull { advice ->
-            GameContextSerializer.intentMatchesLabel(advice.intent, actionStr)
-        }
+        val candidate =
+            ranked.firstOrNull { advice ->
+                GameContextSerializer.intentMatchesLabel(advice.intent, actionStr)
+            }
         if (candidate != null) return candidate.intent
 
         return legal.firstOrNull { intent ->

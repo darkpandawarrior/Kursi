@@ -2,17 +2,13 @@ package com.kursi.feature.game
 
 import com.kursi.ai.EasyPolicy
 import com.kursi.engine.GameConfig
-import com.kursi.engine.Phase
 import com.kursi.engine.PlayerId
 import com.kursi.engine.Policy
-import com.kursi.engine.Role
 import com.kursi.engine.legalIntents
-import com.kursi.engine.whoActsNext
 import com.kursi.feature.game.session.GameSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -22,7 +18,6 @@ import kotlin.test.assertTrue
  *     see another human seat's hidden (face-down) cards.
  */
 class PassAndPlaySessionTest {
-
     /** A 2-human (seats 0 & 1) + bots session for [playerCount] seats. */
     private fun makePassAndPlay(
         playerCount: Int,
@@ -31,9 +26,10 @@ class PassAndPlaySessionTest {
     ): GameSession {
         val config = GameConfig.forPlayers(playerCount)
         val humans = humanSeats.map { PlayerId(it) }.toSet()
-        val bots = (0 until playerCount)
-            .filter { PlayerId(it) !in humans }
-            .associate { seat -> PlayerId(seat) to EasyPolicy(seed * 31L + seat) as Policy }
+        val bots =
+            (0 until playerCount)
+                .filter { PlayerId(it) !in humans }
+                .associate { seat -> PlayerId(seat) to EasyPolicy(seed * 31L + seat) as Policy }
         return GameSession(
             config = config,
             seed = seed,

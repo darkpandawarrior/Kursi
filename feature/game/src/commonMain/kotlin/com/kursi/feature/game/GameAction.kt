@@ -16,7 +16,9 @@ sealed interface GameAction {
      * Submit an [intent] on behalf of the human player.
      * The ViewModel delegates to [session.GameSession.submitHuman].
      */
-    data class Submit(val intent: Intent) : GameAction
+    data class Submit(
+        val intent: Intent,
+    ) : GameAction
 
     /**
      * Start (or restart) a game.
@@ -74,7 +76,9 @@ sealed interface GameAction {
      * DARBAR — the human says something in chat (taps an arc/table-talk chip). Drives the social
      * fabric + story arcs and is logged for deterministic resume.
      */
-    data class SendChat(val input: HumanChatInput) : GameAction
+    data class SendChat(
+        val input: HumanChatInput,
+    ) : GameAction
 
     /** DARBAR — the player opened the Darbar; clears the unread badge. */
     data object MarkChatRead : GameAction

@@ -6,7 +6,6 @@ import kotlin.test.assertTrue
 
 /** §2 + §6.3 — the deck-scaling table, golden determinism, and a SimHarness balance smoke. */
 class ScalingGoldenTest {
-
     /**
      * THE SINGLE SOURCE OF TRUTH for the deck-scaling ladder (docs/02 reconciled here).
      *
@@ -20,17 +19,18 @@ class ScalingGoldenTest {
     @Test
     fun deck_composition_ladder_2_to_10() {
         // N -> (roleCount, copiesPerRole, deckSize). PATRAKAAR (6th role) enters at N>=9.
-        val expected = mapOf(
-            2 to Triple(5, 4, 20),
-            3 to Triple(5, 5, 25),
-            4 to Triple(5, 5, 25),
-            5 to Triple(5, 5, 25),
-            6 to Triple(5, 5, 25),
-            7 to Triple(5, 5, 25),
-            8 to Triple(5, 5, 25),
-            9 to Triple(6, 5, 30),   // 6th role enters; copies stay capped at 5
-            10 to Triple(6, 5, 30),
-        )
+        val expected =
+            mapOf(
+                2 to Triple(5, 4, 20),
+                3 to Triple(5, 5, 25),
+                4 to Triple(5, 5, 25),
+                5 to Triple(5, 5, 25),
+                6 to Triple(5, 5, 25),
+                7 to Triple(5, 5, 25),
+                8 to Triple(5, 5, 25),
+                9 to Triple(6, 5, 30), // 6th role enters; copies stay capped at 5
+                10 to Triple(6, 5, 30),
+            )
         for ((n, exp) in expected) {
             val (roles, copies, deck) = exp
             val c = GameConfig.forPlayers(n)
@@ -80,10 +80,12 @@ class ScalingGoldenTest {
     @Test
     fun golden_game_completes_n10_big_table() {
         val config = GameConfig.forPlayers(10)
-        val result = SimHarness.playOut(
-            config, seed = 555L,
-            policies = (0 until 10).associate { PlayerId(it) to RandomLegalPolicy(it * 7L + 3) },
-        )
+        val result =
+            SimHarness.playOut(
+                config,
+                seed = 555L,
+                policies = (0 until 10).associate { PlayerId(it) to RandomLegalPolicy(it * 7L + 3) },
+            )
         assertTrue(result.turns >= 1)
         assertTrue(result.winner.raw in 0..9)
     }
@@ -91,11 +93,12 @@ class ScalingGoldenTest {
     @Test
     fun sim_harness_balance_smoke() {
         // Not the full 10k/N gate — a fast sanity run proving every game terminates with exactly one winner.
-        val stats = SimHarness.playMany(
-            GameConfig.forPlayers(4),
-            seeds = 1L..120L,
-            policyFactory = { _, seed -> RandomLegalPolicy(seed) },
-        )
+        val stats =
+            SimHarness.playMany(
+                GameConfig.forPlayers(4),
+                seeds = 1L..120L,
+                policyFactory = { _, seed -> RandomLegalPolicy(seed) },
+            )
         assertEquals(120, stats.games)
         assertEquals(120, stats.winsBySeat.values.sum())
         assertTrue(stats.avgTurns > 0.0)

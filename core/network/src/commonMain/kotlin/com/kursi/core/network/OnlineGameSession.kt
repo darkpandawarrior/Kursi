@@ -67,16 +67,17 @@ class OnlineGameSession(
      * Starts collecting [ServerMessage]s from the underlying [KursiSession] inside [scope].
      * Returns the [Job] so the caller can cancel/join if needed.
      */
-    fun start(): Job = scope.launch {
-        session.incoming.collect { msg ->
-            when (msg) {
-                is ServerMessage.StateUpdate -> _playerView.value = msg.view
-                is ServerMessage.RoomJoined -> _roomJoined.value = msg
-                is ServerMessage.GameOver -> _gameOver.value = msg
-                is ServerMessage.Error -> _lastError.value = msg
+    fun start(): Job =
+        scope.launch {
+            session.incoming.collect { msg ->
+                when (msg) {
+                    is ServerMessage.StateUpdate -> _playerView.value = msg.view
+                    is ServerMessage.RoomJoined -> _roomJoined.value = msg
+                    is ServerMessage.GameOver -> _gameOver.value = msg
+                    is ServerMessage.Error -> _lastError.value = msg
+                }
             }
         }
-    }
 
     /**
      * Converts the engine [Intent] to [WireIntent] and sends it as a [ClientMessage.SubmitIntent].
@@ -84,13 +85,17 @@ class OnlineGameSession(
      * [matchId] defaults to the empty string; callers should supply the matchId received in
      * [ServerMessage.RoomJoined.matchId] for correct server-side routing.
      */
-    suspend fun submit(intent: Intent, matchId: String = "") {
+    suspend fun submit(
+        intent: Intent,
+        matchId: String = "",
+    ) {
         val wireIntent = intent.toWire()
-        val msg = ClientMessage.SubmitIntent(
-            matchId = matchId,
-            seq = ++seqCounter,
-            intent = wireIntent,
-        )
+        val msg =
+            ClientMessage.SubmitIntent(
+                matchId = matchId,
+                seq = ++seqCounter,
+                intent = wireIntent,
+            )
         session.send(msg)
     }
 

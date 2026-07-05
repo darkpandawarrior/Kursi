@@ -14,8 +14,9 @@ import kotlinx.serialization.json.Json
 private const val BASE_URL =
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent"
 
-class GeminiProvider(private val apiKey: String) : AiProvider {
-
+class GeminiProvider(
+    private val apiKey: String,
+) : AiProvider {
     override val id = "gemini"
     override val displayName = "Google Gemini (Flash Lite)"
 
@@ -29,43 +30,57 @@ class GeminiProvider(private val apiKey: String) : AiProvider {
 
     override suspend fun isAvailable() = apiKey.isNotBlank()
 
-    override suspend fun complete(messages: List<AiMessage>, config: AiConfig): String {
-        val systemInstruction = messages.firstOrNull { it.role == AiMessage.Role.SYSTEM }
-            ?.let { GeminiContent(parts = listOf(GeminiPart(it.content))) }
+    override suspend fun complete(
+        messages: List<AiMessage>,
+        config: AiConfig,
+    ): String {
+        val systemInstruction =
+            messages
+                .firstOrNull { it.role == AiMessage.Role.SYSTEM }
+                ?.let { GeminiContent(parts = listOf(GeminiPart(it.content))) }
 
-        val contents = messages.filter { it.role != AiMessage.Role.SYSTEM }.map {
-            GeminiContent(
-                role = it.role.toGeminiRole(),
-                parts = listOf(GeminiPart(it.content)),
-            )
-        }
+        val contents =
+            messages.filter { it.role != AiMessage.Role.SYSTEM }.map {
+                GeminiContent(
+                    role = it.role.toGeminiRole(),
+                    parts = listOf(GeminiPart(it.content)),
+                )
+            }
 
         return withTimeout(5_000) {
             runCatching {
-                val response: GeminiResponse = client.post(BASE_URL) {
-                    parameter("key", apiKey)
-                    contentType(ContentType.Application.Json)
-                    setBody(
-                        GeminiRequest(
-                            contents = contents,
-                            systemInstruction = systemInstruction,
-                            generationConfig = GeminiGenerationConfig(
-                                maxOutputTokens = config.maxTokens,
-                                temperature = config.temperature.toDouble(),
-                            ),
-                        )
-                    )
-                }.body()
-                response.candidates.firstOrNull()
-                    ?.content?.parts?.firstOrNull()?.text ?: ""
+                val response: GeminiResponse =
+                    client
+                        .post(BASE_URL) {
+                            parameter("key", apiKey)
+                            contentType(ContentType.Application.Json)
+                            setBody(
+                                GeminiRequest(
+                                    contents = contents,
+                                    systemInstruction = systemInstruction,
+                                    generationConfig =
+                                        GeminiGenerationConfig(
+                                            maxOutputTokens = config.maxTokens,
+                                            temperature = config.temperature.toDouble(),
+                                        ),
+                                ),
+                            )
+                        }.body()
+                response.candidates
+                    .firstOrNull()
+                    ?.content
+                    ?.parts
+                    ?.firstOrNull()
+                    ?.text ?: ""
             }.getOrElse { "" }
         }
     }
 
-    private fun AiMessage.Role.toGeminiRole() = when (this) {
-        AiMessage.Role.USER, AiMessage.Role.SYSTEM -> "user"
-        AiMessage.Role.ASSISTANT -> "model"
-    }
+    private fun AiMessage.Role.toGeminiRole() =
+        when (this) {
+            AiMessage.Role.USER, AiMessage.Role.SYSTEM -> "user"
+            AiMessage.Role.ASSISTANT -> "model"
+        }
 }
 
 @Serializable
@@ -82,7 +97,9 @@ private data class GeminiContent(
 )
 
 @Serializable
-private data class GeminiPart(val text: String)
+private data class GeminiPart(
+    val text: String,
+)
 
 @Serializable
 private data class GeminiGenerationConfig(
@@ -91,7 +108,11 @@ private data class GeminiGenerationConfig(
 )
 
 @Serializable
-private data class GeminiResponse(val candidates: List<GeminiCandidate>)
+private data class GeminiResponse(
+    val candidates: List<GeminiCandidate>,
+)
 
 @Serializable
-private data class GeminiCandidate(val content: GeminiContent)
+private data class GeminiCandidate(
+    val content: GeminiContent,
+)

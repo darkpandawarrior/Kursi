@@ -25,48 +25,64 @@ import kotlin.test.assertTrue
  * sees correct engine-typed state, synthesized personas, and the always-legible connection status.
  */
 class OnlineGameMappingTest {
+    private val cfg2 =
+        WireGameConfig(
+            seatCount = 2,
+            copiesPerRole = 3,
+            roleCount = 5,
+            influencePerPlayer = 2,
+            startingCoins = 2,
+            coupCost = 7,
+            assassinateCost = 3,
+            taxAmount = 3,
+            foreignAidAmount = 2,
+            stealAmount = 2,
+            incomeAmount = 1,
+            exchangeDrawCount = 2,
+            forcedCoupThreshold = 10,
+            coinSupply = 70,
+        )
 
-    private val cfg2 = WireGameConfig(
-        seatCount = 2, copiesPerRole = 3, roleCount = 5, influencePerPlayer = 2,
-        startingCoins = 2, coupCost = 7, assassinateCost = 3, taxAmount = 3, foreignAidAmount = 2,
-        stealAmount = 2, incomeAmount = 1, exchangeDrawCount = 2, forcedCoupThreshold = 10, coinSupply = 70,
-    )
-
-    private fun viewForSeat0OnTurn(): WirePlayerView = WirePlayerView(
-        viewer = 0,
-        config = cfg2,
-        treasury = 60,
-        deckCount = 11,
-        turnNumber = 1,
-        myCoins = 2,
-        myInfluence = listOf(WireRole.NETA, WireRole.BHAI),
-        myFaceUp = emptyList(),
-        myCards = listOf(
-            WireOwnCard(id = 0, role = WireRole.NETA, faceUp = false),
-            WireOwnCard(id = 1, role = WireRole.BHAI, faceUp = false),
-        ),
-        players = listOf(
-            WireOpponentView(id = 0, seatIndex = 0, coins = 2, faceUpRoles = emptyList(), faceDownCount = 2, eliminated = false),
-            WireOpponentView(id = 1, seatIndex = 1, coins = 2, faceUpRoles = emptyList(), faceDownCount = 2, eliminated = false),
-        ),
-        phase = WirePhaseView.Turn(actor = 0),
-    )
+    private fun viewForSeat0OnTurn(): WirePlayerView =
+        WirePlayerView(
+            viewer = 0,
+            config = cfg2,
+            treasury = 60,
+            deckCount = 11,
+            turnNumber = 1,
+            myCoins = 2,
+            myInfluence = listOf(WireRole.NETA, WireRole.BHAI),
+            myFaceUp = emptyList(),
+            myCards =
+                listOf(
+                    WireOwnCard(id = 0, role = WireRole.NETA, faceUp = false),
+                    WireOwnCard(id = 1, role = WireRole.BHAI, faceUp = false),
+                ),
+            players =
+                listOf(
+                    WireOpponentView(id = 0, seatIndex = 0, coins = 2, faceUpRoles = emptyList(), faceDownCount = 2, eliminated = false),
+                    WireOpponentView(id = 1, seatIndex = 1, coins = 2, faceUpRoles = emptyList(), faceDownCount = 2, eliminated = false),
+                ),
+            phase = WirePhaseView.Turn(actor = 0),
+        )
 
     @Test
     fun `maps connected in-game state to a renderable GameUiState with own hand and engine intents`() {
-        val online = OnlineUiState(
-            view = viewForSeat0OnTurn(),
-            legalIntents = listOf(
-                WireIntent.DeclareAction(0, com.kursi.protocol.wire.WireAction.Income),
-                WireIntent.DeclareAction(0, com.kursi.protocol.wire.WireAction.Tax),
-            ),
-            recentEvents = emptyList(),
-            isHumanTurn = true,
-            isGameOver = false,
-            winnerSeat = null,
-            mySeat = 0,
-            connection = ConnectionState.Connected(seat = 0),
-        )
+        val online =
+            OnlineUiState(
+                view = viewForSeat0OnTurn(),
+                legalIntents =
+                    listOf(
+                        WireIntent.DeclareAction(0, com.kursi.protocol.wire.WireAction.Income),
+                        WireIntent.DeclareAction(0, com.kursi.protocol.wire.WireAction.Tax),
+                    ),
+                recentEvents = emptyList(),
+                isHumanTurn = true,
+                isGameOver = false,
+                winnerSeat = null,
+                mySeat = 0,
+                connection = ConnectionState.Connected(seat = 0),
+            )
 
         val ui = online.toGameUiStateOrNull()
         assertTrue(ui != null, "a connected in-game state must produce a GameUiState")
@@ -105,8 +121,9 @@ class OnlineGameMappingTest {
             OnlineUiState(view = null, connection = ConnectionState.Connected(0)).toConnectionStatus(),
         )
         // Connected with a view ⇒ in game (inputs enabled).
-        val inGame = OnlineUiState(view = viewForSeat0OnTurn(), connection = ConnectionState.Connected(0))
-            .toConnectionStatus()
+        val inGame =
+            OnlineUiState(view = viewForSeat0OnTurn(), connection = ConnectionState.Connected(0))
+                .toConnectionStatus()
         assertEquals(OnlineConnectionStatus.InGame, inGame)
         assertTrue(inGame.inputsEnabled)
         // Reconnecting carries the attempt and disables inputs.
@@ -127,15 +144,16 @@ class OnlineGameMappingTest {
     @Test
     fun `game over maps winner and turns inputs off`() {
         val view = viewForSeat0OnTurn().copy(phase = WirePhaseView.Over(winner = 0))
-        val online = OnlineUiState(
-            view = view,
-            legalIntents = emptyList(),
-            isHumanTurn = false,
-            isGameOver = true,
-            winnerSeat = 0,
-            mySeat = 0,
-            connection = ConnectionState.Closed,
-        )
+        val online =
+            OnlineUiState(
+                view = view,
+                legalIntents = emptyList(),
+                isHumanTurn = false,
+                isGameOver = true,
+                winnerSeat = 0,
+                mySeat = 0,
+                connection = ConnectionState.Closed,
+            )
         val ui = online.toGameUiStateOrNull()!!
         assertTrue(ui.isGameOver)
         assertEquals(0, ui.winnerSeat)

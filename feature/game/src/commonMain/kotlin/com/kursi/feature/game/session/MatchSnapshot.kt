@@ -45,7 +45,11 @@ data class MatchSnapshot(
     companion object {
         // v2 adds the DARBAR chat log. encodeDefaults + ignoreUnknownKeys keep v1<->v2 cross-readable.
         const val CURRENT_VERSION = 2
-        private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+        private val json =
+            Json {
+                ignoreUnknownKeys = true
+                encodeDefaults = true
+            }
 
         /** Decode a persisted snapshot string; returns null on corruption or a newer-than-known version. */
         fun decode(raw: String?): MatchSnapshot? {
@@ -64,15 +68,16 @@ data class MatchSnapshot(
             humanCount: Int = 1,
             narrativeEnabled: Boolean = false,
             chatLog: List<Pair<Int, HumanChatInput>> = emptyList(),
-        ): MatchSnapshot = MatchSnapshot(
-            seed = seed,
-            players = players,
-            difficulty = difficulty.name,
-            humanLog = humanLog.map { it.toSnap() },
-            humanCount = humanCount,
-            narrativeEnabled = narrativeEnabled,
-            chatLog = chatLog.map { (after, input) -> input.toSnap(after) },
-        )
+        ): MatchSnapshot =
+            MatchSnapshot(
+                seed = seed,
+                players = players,
+                difficulty = difficulty.name,
+                humanLog = humanLog.map { it.toSnap() },
+                humanCount = humanCount,
+                narrativeEnabled = narrativeEnabled,
+                chatLog = chatLog.map { (after, input) -> input.toSnap(after) },
+            )
     }
 }
 
@@ -87,22 +92,24 @@ data class SnapChat(
     val freeText: String? = null,
 )
 
-fun HumanChatInput.toSnap(afterHumanMoves: Int): SnapChat = SnapChat(
-    afterHumanMoves = afterHumanMoves,
-    suggestionId = suggestionId,
-    kind = kind.name,
-    arc = arc?.name,
-    targetSeat = targetSeat,
-    freeText = freeText,
-)
+fun HumanChatInput.toSnap(afterHumanMoves: Int): SnapChat =
+    SnapChat(
+        afterHumanMoves = afterHumanMoves,
+        suggestionId = suggestionId,
+        kind = kind.name,
+        arc = arc?.name,
+        targetSeat = targetSeat,
+        freeText = freeText,
+    )
 
-fun SnapChat.toInput(): HumanChatInput = HumanChatInput(
-    suggestionId = suggestionId,
-    kind = ChatActionKind.entries.firstOrNull { it.name == kind } ?: ChatActionKind.TAUNT,
-    arc = arc?.let { a -> ArcId.entries.firstOrNull { it.name == a } },
-    targetSeat = targetSeat,
-    freeText = freeText,
-)
+fun SnapChat.toInput(): HumanChatInput =
+    HumanChatInput(
+        suggestionId = suggestionId,
+        kind = ChatActionKind.entries.firstOrNull { it.name == kind } ?: ChatActionKind.TAUNT,
+        arc = arc?.let { a -> ArcId.entries.firstOrNull { it.name == a } },
+        targetSeat = targetSeat,
+        freeText = freeText,
+    )
 
 /** Serializable mirror of the engine [Role]. PATRAKAAR appended LAST to keep prior ordinals stable. */
 @Serializable
@@ -112,89 +119,136 @@ enum class SnapRole { NETA, BHAI, BABU, JUGAADU, VAKIL, PATRAKAAR }
 @Serializable
 sealed interface SnapAction {
     @Serializable data object Income : SnapAction
+
     @Serializable data object ForeignAid : SnapAction
-    @Serializable data class Coup(val target: Int) : SnapAction
+
+    @Serializable data class Coup(
+        val target: Int,
+    ) : SnapAction
+
     @Serializable data object Tax : SnapAction
-    @Serializable data class Assassinate(val target: Int) : SnapAction
-    @Serializable data class Steal(val target: Int) : SnapAction
+
+    @Serializable data class Assassinate(
+        val target: Int,
+    ) : SnapAction
+
+    @Serializable data class Steal(
+        val target: Int,
+    ) : SnapAction
+
     @Serializable data object Exchange : SnapAction
-    @Serializable data class Investigate(val target: Int) : SnapAction
+
+    @Serializable data class Investigate(
+        val target: Int,
+    ) : SnapAction
 }
 
 /** Serializable mirror of [Intent] — the only thing the human ever contributes to the replay. */
 @Serializable
 sealed interface SnapIntent {
     val actor: Int
-    @Serializable data class DeclareAction(override val actor: Int, val action: SnapAction) : SnapIntent
-    @Serializable data class Challenge(override val actor: Int) : SnapIntent
-    @Serializable data class Block(override val actor: Int, val role: SnapRole) : SnapIntent
-    @Serializable data class Pass(override val actor: Int) : SnapIntent
-    @Serializable data class ChooseInfluenceToLose(override val actor: Int, val card: Int) : SnapIntent
-    @Serializable data class ChooseExchange(override val actor: Int, val keep: List<Int>) : SnapIntent
-    @Serializable data class ResolveInvestigate(override val actor: Int, val forceRedraw: Boolean) : SnapIntent
+
+    @Serializable data class DeclareAction(
+        override val actor: Int,
+        val action: SnapAction,
+    ) : SnapIntent
+
+    @Serializable data class Challenge(
+        override val actor: Int,
+    ) : SnapIntent
+
+    @Serializable data class Block(
+        override val actor: Int,
+        val role: SnapRole,
+    ) : SnapIntent
+
+    @Serializable data class Pass(
+        override val actor: Int,
+    ) : SnapIntent
+
+    @Serializable data class ChooseInfluenceToLose(
+        override val actor: Int,
+        val card: Int,
+    ) : SnapIntent
+
+    @Serializable data class ChooseExchange(
+        override val actor: Int,
+        val keep: List<Int>,
+    ) : SnapIntent
+
+    @Serializable data class ResolveInvestigate(
+        override val actor: Int,
+        val forceRedraw: Boolean,
+    ) : SnapIntent
 }
 
 // ─────────────────────────── codecs ───────────────────────────
 
-private fun Role.toSnap(): SnapRole = when (this) {
-    Role.NETA -> SnapRole.NETA
-    Role.BHAI -> SnapRole.BHAI
-    Role.BABU -> SnapRole.BABU
-    Role.JUGAADU -> SnapRole.JUGAADU
-    Role.VAKIL -> SnapRole.VAKIL
-    Role.PATRAKAAR -> SnapRole.PATRAKAAR
-}
+private fun Role.toSnap(): SnapRole =
+    when (this) {
+        Role.NETA -> SnapRole.NETA
+        Role.BHAI -> SnapRole.BHAI
+        Role.BABU -> SnapRole.BABU
+        Role.JUGAADU -> SnapRole.JUGAADU
+        Role.VAKIL -> SnapRole.VAKIL
+        Role.PATRAKAAR -> SnapRole.PATRAKAAR
+    }
 
-private fun SnapRole.toEngine(): Role = when (this) {
-    SnapRole.NETA -> Role.NETA
-    SnapRole.BHAI -> Role.BHAI
-    SnapRole.BABU -> Role.BABU
-    SnapRole.JUGAADU -> Role.JUGAADU
-    SnapRole.VAKIL -> Role.VAKIL
-    SnapRole.PATRAKAAR -> Role.PATRAKAAR
-}
+private fun SnapRole.toEngine(): Role =
+    when (this) {
+        SnapRole.NETA -> Role.NETA
+        SnapRole.BHAI -> Role.BHAI
+        SnapRole.BABU -> Role.BABU
+        SnapRole.JUGAADU -> Role.JUGAADU
+        SnapRole.VAKIL -> Role.VAKIL
+        SnapRole.PATRAKAAR -> Role.PATRAKAAR
+    }
 
-private fun Action.toSnap(): SnapAction = when (this) {
-    Action.Income -> SnapAction.Income
-    Action.ForeignAid -> SnapAction.ForeignAid
-    is Action.Coup -> SnapAction.Coup(target.raw)
-    Action.Tax -> SnapAction.Tax
-    is Action.Assassinate -> SnapAction.Assassinate(target.raw)
-    is Action.Steal -> SnapAction.Steal(target.raw)
-    Action.Exchange -> SnapAction.Exchange
-    is Action.Investigate -> SnapAction.Investigate(target.raw)
-    // Variant actions — no dedicated SnapAction type; map to Income as a no-op placeholder.
-    // These actions are not replayed in the classic sense; MatchSnapshot is for the classic path.
-    Action.BailPe, Action.Sabotage, is Action.Hawala, Action.Emergency -> SnapAction.Income
-}
+private fun Action.toSnap(): SnapAction =
+    when (this) {
+        Action.Income -> SnapAction.Income
+        Action.ForeignAid -> SnapAction.ForeignAid
+        is Action.Coup -> SnapAction.Coup(target.raw)
+        Action.Tax -> SnapAction.Tax
+        is Action.Assassinate -> SnapAction.Assassinate(target.raw)
+        is Action.Steal -> SnapAction.Steal(target.raw)
+        Action.Exchange -> SnapAction.Exchange
+        is Action.Investigate -> SnapAction.Investigate(target.raw)
+        // Variant actions — no dedicated SnapAction type; map to Income as a no-op placeholder.
+        // These actions are not replayed in the classic sense; MatchSnapshot is for the classic path.
+        Action.BailPe, Action.Sabotage, is Action.Hawala, Action.Emergency -> SnapAction.Income
+    }
 
-private fun SnapAction.toEngine(): Action = when (this) {
-    SnapAction.Income -> Action.Income
-    SnapAction.ForeignAid -> Action.ForeignAid
-    is SnapAction.Coup -> Action.Coup(PlayerId(target))
-    SnapAction.Tax -> Action.Tax
-    is SnapAction.Assassinate -> Action.Assassinate(PlayerId(target))
-    is SnapAction.Steal -> Action.Steal(PlayerId(target))
-    SnapAction.Exchange -> Action.Exchange
-    is SnapAction.Investigate -> Action.Investigate(PlayerId(target))
-}
+private fun SnapAction.toEngine(): Action =
+    when (this) {
+        SnapAction.Income -> Action.Income
+        SnapAction.ForeignAid -> Action.ForeignAid
+        is SnapAction.Coup -> Action.Coup(PlayerId(target))
+        SnapAction.Tax -> Action.Tax
+        is SnapAction.Assassinate -> Action.Assassinate(PlayerId(target))
+        is SnapAction.Steal -> Action.Steal(PlayerId(target))
+        SnapAction.Exchange -> Action.Exchange
+        is SnapAction.Investigate -> Action.Investigate(PlayerId(target))
+    }
 
-fun Intent.toSnap(): SnapIntent = when (this) {
-    is Intent.DeclareAction -> SnapIntent.DeclareAction(actor.raw, action.toSnap())
-    is Intent.Challenge -> SnapIntent.Challenge(actor.raw)
-    is Intent.Block -> SnapIntent.Block(actor.raw, role.toSnap())
-    is Intent.Pass -> SnapIntent.Pass(actor.raw)
-    is Intent.ChooseInfluenceToLose -> SnapIntent.ChooseInfluenceToLose(actor.raw, card.raw)
-    is Intent.ChooseExchange -> SnapIntent.ChooseExchange(actor.raw, keep.map { it.raw })
-    is Intent.ResolveInvestigate -> SnapIntent.ResolveInvestigate(actor.raw, forceRedraw)
-}
+fun Intent.toSnap(): SnapIntent =
+    when (this) {
+        is Intent.DeclareAction -> SnapIntent.DeclareAction(actor.raw, action.toSnap())
+        is Intent.Challenge -> SnapIntent.Challenge(actor.raw)
+        is Intent.Block -> SnapIntent.Block(actor.raw, role.toSnap())
+        is Intent.Pass -> SnapIntent.Pass(actor.raw)
+        is Intent.ChooseInfluenceToLose -> SnapIntent.ChooseInfluenceToLose(actor.raw, card.raw)
+        is Intent.ChooseExchange -> SnapIntent.ChooseExchange(actor.raw, keep.map { it.raw })
+        is Intent.ResolveInvestigate -> SnapIntent.ResolveInvestigate(actor.raw, forceRedraw)
+    }
 
-fun SnapIntent.toEngine(): Intent = when (this) {
-    is SnapIntent.DeclareAction -> Intent.DeclareAction(PlayerId(actor), action.toEngine())
-    is SnapIntent.Challenge -> Intent.Challenge(PlayerId(actor))
-    is SnapIntent.Block -> Intent.Block(PlayerId(actor), role.toEngine())
-    is SnapIntent.Pass -> Intent.Pass(PlayerId(actor))
-    is SnapIntent.ChooseInfluenceToLose -> Intent.ChooseInfluenceToLose(PlayerId(actor), CardId(card))
-    is SnapIntent.ChooseExchange -> Intent.ChooseExchange(PlayerId(actor), keep.map { CardId(it) })
-    is SnapIntent.ResolveInvestigate -> Intent.ResolveInvestigate(PlayerId(actor), forceRedraw)
-}
+fun SnapIntent.toEngine(): Intent =
+    when (this) {
+        is SnapIntent.DeclareAction -> Intent.DeclareAction(PlayerId(actor), action.toEngine())
+        is SnapIntent.Challenge -> Intent.Challenge(PlayerId(actor))
+        is SnapIntent.Block -> Intent.Block(PlayerId(actor), role.toEngine())
+        is SnapIntent.Pass -> Intent.Pass(PlayerId(actor))
+        is SnapIntent.ChooseInfluenceToLose -> Intent.ChooseInfluenceToLose(PlayerId(actor), CardId(card))
+        is SnapIntent.ChooseExchange -> Intent.ChooseExchange(PlayerId(actor), keep.map { CardId(it) })
+        is SnapIntent.ResolveInvestigate -> Intent.ResolveInvestigate(PlayerId(actor), forceRedraw)
+    }

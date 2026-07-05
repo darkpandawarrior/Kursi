@@ -12,7 +12,6 @@ import kotlin.test.assertTrue
  * thing survives a fresh AppPrefs over the same backing store.
  */
 class GauntletProgressTest {
-
     @Test
     fun freshProgress_isAtBottom() {
         val prefs = AppPrefs(MapSettings())
@@ -44,7 +43,7 @@ class GauntletProgressTest {
         prefs.recordGauntletResult(rung = 0, won = true) // cleared 0
         val afterLoss = prefs.recordGauntletResult(rung = 1, won = false)
         assertEquals(0, afterLoss.clearedRung) // still cleared 0, target stays 1
-        assertEquals(1, afterLoss.wins)        // a loss doesn't bump wins
+        assertEquals(1, afterLoss.wins) // a loss doesn't bump wins
         // Re-attempt rung 1 and win → promotes.
         val afterWin = prefs.recordGauntletResult(rung = 1, won = true)
         assertEquals(1, afterWin.clearedRung)
@@ -58,7 +57,7 @@ class GauntletProgressTest {
         prefs.recordGauntletResult(rung = 1, won = true) // cleared 1
         val reWin = prefs.recordGauntletResult(rung = 0, won = true) // replay an old rung
         assertEquals(1, reWin.clearedRung) // unchanged
-        assertEquals(3, reWin.wins)        // still counts as a win
+        assertEquals(3, reWin.wins) // still counts as a win
     }
 
     @Test

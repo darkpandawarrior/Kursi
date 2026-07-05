@@ -15,8 +15,9 @@ import kotlin.random.Random
  *
  * [scope] is the [Application]'s own coroutine scope so all actors are cancelled on shutdown/test-teardown.
  */
-class RoomRegistry(private val scope: CoroutineScope) {
-
+class RoomRegistry(
+    private val scope: CoroutineScope,
+) {
     private val rooms = ConcurrentHashMap<String, MatchActor>()
     private val seedCounter = AtomicLong(System.currentTimeMillis())
 
@@ -46,21 +47,25 @@ class RoomRegistry(private val scope: CoroutineScope) {
      * Atomic so two simultaneous quick-match requests for the same size land in the SAME room (and pair)
      * rather than each spawning its own half-empty room.
      */
-    fun quickMatch(playerCount: Int): String = synchronized(queueLock) {
-        val waiting = openQuickMatchRooms.entries.firstOrNull { it.value == playerCount }?.key
-        if (waiting != null && rooms.containsKey(waiting)) return waiting
-        val code = generateRoomCode()
-        newActor(code, playerCount)
-        openQuickMatchRooms[code] = playerCount
-        code
-    }
+    fun quickMatch(playerCount: Int): String =
+        synchronized(queueLock) {
+            val waiting = openQuickMatchRooms.entries.firstOrNull { it.value == playerCount }?.key
+            if (waiting != null && rooms.containsKey(waiting)) return waiting
+            val code = generateRoomCode()
+            newActor(code, playerCount)
+            openQuickMatchRooms[code] = playerCount
+            code
+        }
 
     /** Called by the routing layer once a quick-match room fills, so later requests open a new room. */
     fun markFilled(roomCode: String) {
         openQuickMatchRooms.remove(roomCode.uppercase())
     }
 
-    private fun newActor(code: String, playerCount: Int): MatchActor {
+    private fun newActor(
+        code: String,
+        playerCount: Int,
+    ): MatchActor {
         val config = GameConfig.forPlayers(playerCount)
         val seed = seedCounter.getAndIncrement()
         val actor = MatchActor(matchId = code, config = config, seed = seed, scope = scope)

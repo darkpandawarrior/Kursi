@@ -44,14 +44,18 @@ class GrandmasterPolicy(
     private val fallback = HardPolicy(seed + 31337L)
     val memory = BotMemory()
     private val determinizer = Determinizer(BeliefModel())
-    private val search = IsmctsSearch(
-        determinizer = determinizer,
-        budget = budget,
-        rolloutSeed = seed + 424242L,
-        exploitGain = exploitGain,
-    )
+    private val search =
+        IsmctsSearch(
+            determinizer = determinizer,
+            budget = budget,
+            rolloutSeed = seed + 424242L,
+            exploitGain = exploitGain,
+        )
 
-    override fun decide(view: PlayerView, legal: List<Intent>): Intent {
+    override fun decide(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent {
         require(legal.isNotEmpty()) { "no legal intents supplied" }
         if (legal.size == 1) return legal.single()
 
@@ -61,7 +65,8 @@ class GrandmasterPolicy(
         // 2. Deep ISMCTS with exploit-tuned leaf evaluation.
         return try {
             val chosen = search.chooseIntent(view, legal, memory, rng)
-            val (_, r) = rng.nextLong(); rng = r
+            val (_, r) = rng.nextLong()
+            rng = r
             if (chosen in legal) chosen else fallback.decide(view, legal)
         } catch (t: Throwable) {
             fallback.decide(view, legal)
@@ -69,7 +74,10 @@ class GrandmasterPolicy(
     }
 
     /** Feed game events into the belief model so the exploitation layer has a read to exploit. */
-    fun observe(event: GameEvent, turnNumber: Int) = memory.observe(event, turnNumber)
+    fun observe(
+        event: GameEvent,
+        turnNumber: Int,
+    ) = memory.observe(event, turnNumber)
 
     // ── Exploitation override ───────────────────────────────────────────────────
 
@@ -78,11 +86,15 @@ class GrandmasterPolicy(
      * Fires only on a confident read (enough observed actions/claims), so it is a no-op early-game and
      * in the seeded sims where no events are fed back — keeping Grandmaster ≥ Expert unconditionally.
      */
-    private fun exploitOverride(view: PlayerView, legal: List<Intent>): Intent? = when (view.phase) {
-        is PhaseView.Reactions -> challengeExploit(view, legal, view.phase as PhaseView.Reactions)
-        is PhaseView.Turn      -> turnExploit(view, legal)
-        else                   -> null
-    }
+    private fun exploitOverride(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent? =
+        when (view.phase) {
+            is PhaseView.Reactions -> challengeExploit(view, legal, view.phase as PhaseView.Reactions)
+            is PhaseView.Turn -> turnExploit(view, legal)
+            else -> null
+        }
 
     /**
      * CHALLENGE-side exploit: if the claimant is one we've watched bluff often (high inferred bluffRate)
@@ -90,13 +102,18 @@ class GrandmasterPolicy(
      * the deck odds alone would justify. Conversely we never override a Pass into a Challenge against a
      * claimant with a *low* bluffRate — that is left to the search/material logic.
      */
-    private fun challengeExploit(view: PlayerView, legal: List<Intent>, phase: PhaseView.Reactions): Intent? {
+    private fun challengeExploit(
+        view: PlayerView,
+        legal: List<Intent>,
+        phase: PhaseView.Reactions,
+    ): Intent? {
         val challenge = legal.firstOrNull { it is Intent.Challenge } ?: return null
-        val claimedRole = when (phase.step) {
-            ReactionStep.CHALLENGE_BLOCK -> phase.blockRole
-            ReactionStep.CHALLENGE_ACTION -> phase.claimedRole
-            else -> null
-        } ?: return null
+        val claimedRole =
+            when (phase.step) {
+                ReactionStep.CHALLENGE_BLOCK -> phase.blockRole
+                ReactionStep.CHALLENGE_ACTION -> phase.claimedRole
+                else -> null
+            } ?: return null
         val claimant = if (phase.step == ReactionStep.CHALLENGE_BLOCK) phase.blocker else phase.actor
         claimant ?: return null
 
@@ -128,17 +145,24 @@ class GrandmasterPolicy(
      *     the table never challenges. Only when we don't hold the role (a truthful claim needs no help)
      *     and only when a read exists.
      */
-    private fun turnExploit(view: PlayerView, legal: List<Intent>): Intent? {
+    private fun turnExploit(
+        view: PlayerView,
+        legal: List<Intent>,
+    ): Intent? {
         // a. Investigate the strongest opponent with a truthful (uncatchable) Jaanch.
         if (view.myInfluence.contains(Role.PATRAKAAR)) {
-            val investigates = legal.filterIsInstance<Intent.DeclareAction>()
-                .filter { it.action is Action.Investigate }
+            val investigates =
+                legal
+                    .filterIsInstance<Intent.DeclareAction>()
+                    .filter { it.action is Action.Investigate }
             if (investigates.isNotEmpty()) {
-                val strongest = view.targetableOpponents
-                    .maxByOrNull { threatScore(it) }
-                val onStrongest = investigates.firstOrNull {
-                    (it.action as Action.Investigate).target == strongest?.id
-                }
+                val strongest =
+                    view.targetableOpponents
+                        .maxByOrNull { threatScore(it) }
+                val onStrongest =
+                    investigates.firstOrNull {
+                        (it.action as Action.Investigate).target == strongest?.id
+                    }
                 if (onStrongest != null) return onStrongest
             }
         }
@@ -149,9 +173,11 @@ class GrandmasterPolicy(
 
         // Prefer a Tax bluff (best economy), else Steal from the richest, but only as a *bluff*
         // (we don't already hold the role) and only if the search isn't already taking it.
-        val taxBluff = legal.firstOrNull {
-            it is Intent.DeclareAction && it.action == Action.Tax
-        }?.takeIf { !view.myInfluence.contains(Role.NETA) && remaining(view, Role.NETA) > 0 }
+        val taxBluff =
+            legal
+                .firstOrNull {
+                    it is Intent.DeclareAction && it.action == Action.Tax
+                }?.takeIf { !view.myInfluence.contains(Role.NETA) && remaining(view, Role.NETA) > 0 }
         if (taxBluff != null) return taxBluff
         return null
     }
@@ -163,20 +189,27 @@ class GrandmasterPolicy(
     /** Mean inferred challengeRate across opponents we have a confident read on; null if no read. */
     private fun tableChallengeRead(view: PlayerView): Double? {
         val opponents = view.players.filter { !it.eliminated && it.id != view.viewer }
-        val read = opponents.mapNotNull { opp ->
-            val b = memory.beliefs[opp.id] ?: return@mapNotNull null
-            // challengeRate is denominated on table-wide claim opportunities; require some history.
-            if (b.actionCount + b.claimCount < MIN_CLAIMS_FOR_READ) null else b.style.challengeRate
-        }
+        val read =
+            opponents.mapNotNull { opp ->
+                val b = memory.beliefs[opp.id] ?: return@mapNotNull null
+                // challengeRate is denominated on table-wide claim opportunities; require some history.
+                if (b.actionCount + b.claimCount < MIN_CLAIMS_FOR_READ) null else b.style.challengeRate
+            }
         return if (read.isEmpty()) null else read.average()
     }
 
-    private fun remaining(view: PlayerView, role: Role): Int {
+    private fun remaining(
+        view: PlayerView,
+        role: Role,
+    ): Int {
         val gone = view.players.sumOf { opp -> opp.faceUpRoles.count { it == role } }
         return view.config.copiesPerRole - gone
     }
 
-    private fun pSlot(view: PlayerView, role: Role): Double {
+    private fun pSlot(
+        view: PlayerView,
+        role: Role,
+    ): Double {
         val faceUpGone = view.players.sumOf { it.faceUpRoles.size }
         val unseenR = remaining(view, role) - view.myInfluence.count { it == role }
         if (unseenR <= 0) return 0.0
@@ -206,8 +239,9 @@ class GrandmasterPolicy(
  * More iterations, a longer wall-clock cap, and a deeper base rollout horizon so longer tactical lines
  * resolve. Distinct from the strength-test budgets (defined in test files) so CI stays bounded.
  */
-val GRANDMASTER_DEFAULT_BUDGET = SearchBudget(
-    maxMillis = 1_400L,
-    maxIterations = 16_000,
-    rolloutHorizon = 22,
-)
+val GRANDMASTER_DEFAULT_BUDGET =
+    SearchBudget(
+        maxMillis = 1_400L,
+        maxIterations = 16_000,
+        rolloutHorizon = 22,
+    )

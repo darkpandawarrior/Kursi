@@ -29,30 +29,44 @@ fun installLanContext(context: Context) {
     appContextHolder = context.applicationContext
 }
 
-private fun nsdManager(): NsdManager? =
-    (appContextHolder?.getSystemService(Context.NSD_SERVICE)) as? NsdManager
+private fun nsdManager(): NsdManager? = (appContextHolder?.getSystemService(Context.NSD_SERVICE)) as? NsdManager
 
 actual class LanAdvertiser actual constructor() {
     private var manager: NsdManager? = null
     private var listener: NsdManager.RegistrationListener? = null
 
-    actual fun start(serviceName: String, roomCode: String, port: Int) {
+    actual fun start(
+        serviceName: String,
+        roomCode: String,
+        port: Int,
+    ) {
         val mgr = nsdManager() ?: return
         manager = mgr
-        val info = NsdServiceInfo().apply {
-            this.serviceName = serviceName
-            // NSD service types are of the form "_kursi._tcp." — append the trailing dot NSD expects.
-            this.serviceType = "$KURSI_LAN_SERVICE_TYPE."
-            this.port = port
-            // The room code travels as a TXT attribute so a discovering peer learns where to join.
-            setAttribute(TXT_ROOM_CODE, roomCode)
-        }
-        val reg = object : NsdManager.RegistrationListener {
-            override fun onServiceRegistered(info: NsdServiceInfo) {}
-            override fun onRegistrationFailed(info: NsdServiceInfo, errorCode: Int) {}
-            override fun onServiceUnregistered(info: NsdServiceInfo) {}
-            override fun onUnregistrationFailed(info: NsdServiceInfo, errorCode: Int) {}
-        }
+        val info =
+            NsdServiceInfo().apply {
+                this.serviceName = serviceName
+                // NSD service types are of the form "_kursi._tcp." — append the trailing dot NSD expects.
+                this.serviceType = "$KURSI_LAN_SERVICE_TYPE."
+                this.port = port
+                // The room code travels as a TXT attribute so a discovering peer learns where to join.
+                setAttribute(TXT_ROOM_CODE, roomCode)
+            }
+        val reg =
+            object : NsdManager.RegistrationListener {
+                override fun onServiceRegistered(info: NsdServiceInfo) {}
+
+                override fun onRegistrationFailed(
+                    info: NsdServiceInfo,
+                    errorCode: Int,
+                ) {}
+
+                override fun onServiceUnregistered(info: NsdServiceInfo) {}
+
+                override fun onUnregistrationFailed(
+                    info: NsdServiceInfo,
+                    errorCode: Int,
+                ) {}
+            }
         listener = reg
         runCatching { mgr.registerService(info, NsdManager.PROTOCOL_DNS_SD, reg) }
     }
@@ -72,44 +86,67 @@ actual class LanAdvertiser actual constructor() {
 
 actual class LanDiscoverer actual constructor() {
     @SuppressLint("MissingPermission")
-    actual fun discover(): Flow<LanHost> = callbackFlow {
-        val mgr = nsdManager() ?: run { close(); return@callbackFlow }
+    actual fun discover(): Flow<LanHost> =
+        callbackFlow {
+            val mgr =
+                nsdManager() ?: run {
+                    close()
+                    return@callbackFlow
+                }
 
-        val resolveListener = object : NsdManager.ResolveListener {
-            override fun onResolveFailed(info: NsdServiceInfo, errorCode: Int) {}
-            override fun onServiceResolved(info: NsdServiceInfo) {
-                val host = info.host?.hostAddress ?: return
-                val roomCode = info.attributes[LanAdvertiser.TXT_ROOM_CODE]
-                    ?.toString(Charsets.UTF_8) ?: ""
-                trySend(
-                    LanHost(
-                        host = host,
-                        port = info.port,
-                        roomCode = roomCode,
-                        name = info.serviceName ?: "",
-                    ),
-                )
+            val resolveListener =
+                object : NsdManager.ResolveListener {
+                    override fun onResolveFailed(
+                        info: NsdServiceInfo,
+                        errorCode: Int,
+                    ) {}
+
+                    override fun onServiceResolved(info: NsdServiceInfo) {
+                        val host = info.host?.hostAddress ?: return
+                        val roomCode =
+                            info.attributes[LanAdvertiser.TXT_ROOM_CODE]
+                                ?.toString(Charsets.UTF_8) ?: ""
+                        trySend(
+                            LanHost(
+                                host = host,
+                                port = info.port,
+                                roomCode = roomCode,
+                                name = info.serviceName ?: "",
+                            ),
+                        )
+                    }
+                }
+
+            val discoveryListener =
+                object : NsdManager.DiscoveryListener {
+                    override fun onStartDiscoveryFailed(
+                        serviceType: String,
+                        errorCode: Int,
+                    ) {}
+
+                    override fun onStopDiscoveryFailed(
+                        serviceType: String,
+                        errorCode: Int,
+                    ) {}
+
+                    override fun onDiscoveryStarted(serviceType: String) {}
+
+                    override fun onDiscoveryStopped(serviceType: String) {}
+
+                    override fun onServiceFound(info: NsdServiceInfo) {
+                        // Each found service must be resolved to obtain its host/port/TXT records.
+                        runCatching { mgr.resolveService(info, resolveListener) }
+                    }
+
+                    override fun onServiceLost(info: NsdServiceInfo) {}
+                }
+
+            runCatching {
+                mgr.discoverServices("$KURSI_LAN_SERVICE_TYPE.", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+            }
+
+            awaitClose {
+                runCatching { mgr.stopServiceDiscovery(discoveryListener) }
             }
         }
-
-        val discoveryListener = object : NsdManager.DiscoveryListener {
-            override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {}
-            override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {}
-            override fun onDiscoveryStarted(serviceType: String) {}
-            override fun onDiscoveryStopped(serviceType: String) {}
-            override fun onServiceFound(info: NsdServiceInfo) {
-                // Each found service must be resolved to obtain its host/port/TXT records.
-                runCatching { mgr.resolveService(info, resolveListener) }
-            }
-            override fun onServiceLost(info: NsdServiceInfo) {}
-        }
-
-        runCatching {
-            mgr.discoverServices("$KURSI_LAN_SERVICE_TYPE.", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
-        }
-
-        awaitClose {
-            runCatching { mgr.stopServiceDiscovery(discoveryListener) }
-        }
-    }
 }

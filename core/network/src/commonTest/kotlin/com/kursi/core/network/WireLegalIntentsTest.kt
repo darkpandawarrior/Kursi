@@ -19,29 +19,59 @@ import kotlin.test.assertTrue
  * the correct move-set from ONLY its redacted [WirePlayerView] — the same projection the UI relies on.
  */
 class WireLegalIntentsTest {
+    private fun config(roleCount: Int = 5) =
+        WireGameConfig(
+            seatCount = 2,
+            copiesPerRole = 3,
+            roleCount = roleCount,
+            influencePerPlayer = 2,
+            startingCoins = 2,
+            coupCost = 7,
+            assassinateCost = 3,
+            taxAmount = 3,
+            foreignAidAmount = 2,
+            stealAmount = 2,
+            incomeAmount = 1,
+            exchangeDrawCount = 2,
+            forcedCoupThreshold = 10,
+            coinSupply = 50,
+        )
 
-    private fun config(roleCount: Int = 5) = WireGameConfig(
-        seatCount = 2, copiesPerRole = 3, roleCount = roleCount, influencePerPlayer = 2,
-        startingCoins = 2, coupCost = 7, assassinateCost = 3, taxAmount = 3, foreignAidAmount = 2,
-        stealAmount = 2, incomeAmount = 1, exchangeDrawCount = 2, forcedCoupThreshold = 10, coinSupply = 50,
+    private fun opp(
+        id: Int,
+        coins: Int = 2,
+        faceDown: Int = 2,
+        eliminated: Boolean = false,
+    ) = WireOpponentView(
+        id = id,
+        seatIndex = id,
+        coins = coins,
+        faceUpRoles = emptyList(),
+        faceDownCount = faceDown,
+        eliminated = eliminated,
     )
 
-    private fun opp(id: Int, coins: Int = 2, faceDown: Int = 2, eliminated: Boolean = false) =
-        WireOpponentView(id = id, seatIndex = id, coins = coins, faceUpRoles = emptyList(),
-            faceDownCount = faceDown, eliminated = eliminated)
-
     private fun turnView(
-        viewer: Int = 0, myCoins: Int = 2, actor: Int = 0, roleCount: Int = 5,
-        opponentCoins: Int = 2, opponentFaceDown: Int = 2,
+        viewer: Int = 0,
+        myCoins: Int = 2,
+        actor: Int = 0,
+        roleCount: Int = 5,
+        opponentCoins: Int = 2,
+        opponentFaceDown: Int = 2,
     ) = WirePlayerView(
-        viewer = viewer, config = config(roleCount), treasury = 30, deckCount = 10, turnNumber = 1,
+        viewer = viewer,
+        config = config(roleCount),
+        treasury = 30,
+        deckCount = 10,
+        turnNumber = 1,
         myCoins = myCoins,
         myInfluence = listOf(WireRole.NETA, WireRole.BHAI),
         myFaceUp = emptyList(),
-        myCards = listOf(
-            WireOwnCard(0, WireRole.NETA, faceUp = false),
-            WireOwnCard(1, WireRole.BHAI, faceUp = false),
-        ),
+        myCards =
+            listOf(
+                WireOwnCard(0, WireRole.NETA, faceUp = false),
+                WireOwnCard(1, WireRole.BHAI, faceUp = false),
+            ),
         players = listOf(opp(viewer, myCoins), opp(1 - viewer, opponentCoins, opponentFaceDown)),
         phase = WirePhaseView.Turn(actor = actor),
     )
@@ -85,23 +115,36 @@ class WireLegalIntentsTest {
 
     @Test
     fun `investigate offered only when the sixth role is in the deck`() {
-        val without = turnView(viewer = 0, actor = 0, roleCount = 5).legalIntents()
-            .filterIsInstance<WireIntent.DeclareAction>().map { it.action }
+        val without =
+            turnView(viewer = 0, actor = 0, roleCount = 5)
+                .legalIntents()
+                .filterIsInstance<WireIntent.DeclareAction>()
+                .map { it.action }
         assertFalse(without.any { it is WireAction.Investigate }, "no PATRAKAAR in a 5-role deck → no Jaanch")
 
-        val with = turnView(viewer = 0, actor = 0, roleCount = 6, opponentFaceDown = 2).legalIntents()
-            .filterIsInstance<WireIntent.DeclareAction>().map { it.action }
+        val with =
+            turnView(viewer = 0, actor = 0, roleCount = 6, opponentFaceDown = 2)
+                .legalIntents()
+                .filterIsInstance<WireIntent.DeclareAction>()
+                .map { it.action }
         assertTrue(with.any { it is WireAction.Investigate }, "6-role deck → Jaanch offered against a face-down target")
     }
 
     @Test
     fun `reactions challenge step offers challenge and pass`() {
-        val view = turnView(viewer = 1).copy(
-            phase = WirePhaseView.Reactions(
-                actor = 0, action = WireAction.Tax, claimedRole = WireRole.JUGAADU,
-                step = WireReactionStep.CHALLENGE_ACTION, toRespond = 1, blocker = null, blockRole = null,
-            ),
-        )
+        val view =
+            turnView(viewer = 1).copy(
+                phase =
+                    WirePhaseView.Reactions(
+                        actor = 0,
+                        action = WireAction.Tax,
+                        claimedRole = WireRole.JUGAADU,
+                        step = WireReactionStep.CHALLENGE_ACTION,
+                        toRespond = 1,
+                        blocker = null,
+                        blockRole = null,
+                    ),
+            )
         val intents = view.legalIntents()
         assertTrue(intents.any { it is WireIntent.Challenge })
         assertTrue(intents.any { it is WireIntent.Pass })
@@ -111,12 +154,19 @@ class WireLegalIntentsTest {
     @Test
     fun `block step offers pass plus the roles that block the action`() {
         // ForeignAid is blocked by NETA.
-        val view = turnView(viewer = 1).copy(
-            phase = WirePhaseView.Reactions(
-                actor = 0, action = WireAction.ForeignAid, claimedRole = null,
-                step = WireReactionStep.BLOCK, toRespond = 1, blocker = null, blockRole = null,
-            ),
-        )
+        val view =
+            turnView(viewer = 1).copy(
+                phase =
+                    WirePhaseView.Reactions(
+                        actor = 0,
+                        action = WireAction.ForeignAid,
+                        claimedRole = null,
+                        step = WireReactionStep.BLOCK,
+                        toRespond = 1,
+                        blocker = null,
+                        blockRole = null,
+                    ),
+            )
         val intents = view.legalIntents()
         assertTrue(intents.any { it is WireIntent.Pass })
         val blockRoles = intents.filterIsInstance<WireIntent.Block>().map { it.role }
@@ -125,9 +175,10 @@ class WireLegalIntentsTest {
 
     @Test
     fun `influence loss enumerates own face-down cards by id`() {
-        val view = turnView(viewer = 0).copy(
-            phase = WirePhaseView.InfluenceLoss(loser = 0, reason = com.kursi.protocol.wire.WireLossReason.COUPED),
-        )
+        val view =
+            turnView(viewer = 0).copy(
+                phase = WirePhaseView.InfluenceLoss(loser = 0, reason = com.kursi.protocol.wire.WireLossReason.COUPED),
+            )
         val choices = view.legalIntents().filterIsInstance<WireIntent.ChooseInfluenceToLose>().map { it.card }
         assertEquals(setOf(0, 1), choices.toSet(), "must offer each own face-down CardId exactly once")
     }
@@ -135,12 +186,14 @@ class WireLegalIntentsTest {
     @Test
     fun `exchange enumerates keep-combinations from own plus drawn cards`() {
         // Own 2 face-down (ids 0,1) + 2 drawn (ids 5,6); keep 2 → C(4,2) = 6 combinations.
-        val view = turnView(viewer = 0).copy(
-            phase = WirePhaseView.Exchange(
-                actor = 0,
-                drawn = listOf(WireOwnCard(5, WireRole.VAKIL, false), WireOwnCard(6, WireRole.BABU, false)),
-            ),
-        )
+        val view =
+            turnView(viewer = 0).copy(
+                phase =
+                    WirePhaseView.Exchange(
+                        actor = 0,
+                        drawn = listOf(WireOwnCard(5, WireRole.VAKIL, false), WireOwnCard(6, WireRole.BABU, false)),
+                    ),
+            )
         val keeps = view.legalIntents().filterIsInstance<WireIntent.ChooseExchange>().map { it.keep.toSet() }
         assertEquals(6, keeps.size, "C(4,2) keep-combinations")
         assertTrue(keeps.all { it.size == 2 })
@@ -149,15 +202,17 @@ class WireLegalIntentsTest {
 
     @Test
     fun `investigate peek offers resolve with and without redraw for the examiner only`() {
-        val examinerView = turnView(viewer = 0).copy(
-            phase = WirePhaseView.InvestigatePeek(examiner = 0, target = 1),
-        )
+        val examinerView =
+            turnView(viewer = 0).copy(
+                phase = WirePhaseView.InvestigatePeek(examiner = 0, target = 1),
+            )
         val forced = examinerView.legalIntents().filterIsInstance<WireIntent.ResolveInvestigate>().map { it.forceRedraw }
         assertEquals(setOf(false, true), forced.toSet())
 
-        val targetView = turnView(viewer = 1).copy(
-            phase = WirePhaseView.InvestigatePeek(examiner = 0, target = 1),
-        )
+        val targetView =
+            turnView(viewer = 1).copy(
+                phase = WirePhaseView.InvestigatePeek(examiner = 0, target = 1),
+            )
         assertTrue(targetView.legalIntents().isEmpty(), "the examined target has no input here")
     }
 }

@@ -15,12 +15,20 @@ plugins {
 val versionCodeBase = 1
 
 fun readVersionName(): String =
-    rootProject.file("VERSION").takeIf { it.exists() }
-        ?.readText()?.trim()?.ifEmpty { "1.0.0" } ?: "1.0.0"
+    rootProject
+        .file("VERSION")
+        .takeIf { it.exists() }
+        ?.readText()
+        ?.trim()
+        ?.ifEmpty { "1.0.0" } ?: "1.0.0"
 
 fun readBuildNumber(): Int =
-    rootProject.file("BUILD_NUMBER").takeIf { it.exists() }
-        ?.readText()?.trim()?.toIntOrNull() ?: 0
+    rootProject
+        .file("BUILD_NUMBER")
+        .takeIf { it.exists() }
+        ?.readText()
+        ?.trim()
+        ?.toIntOrNull() ?: 0
 
 // ── Release signing ────────────────────────────────────────────────────────────
 // Reads from keystore.properties (copy keystore.properties.template and fill in).
@@ -28,11 +36,12 @@ fun readBuildNumber(): Int =
 // Falls back to debug signing if neither is present so `assembleRelease` still
 // works locally and in CI without secrets configured.
 val keystorePropertiesFile = rootProject.file("keystore.properties")
-val keystoreProperties = Properties().apply {
-    if (keystorePropertiesFile.exists()) {
-        FileInputStream(keystorePropertiesFile).use { load(it) }
+val keystoreProperties =
+    Properties().apply {
+        if (keystorePropertiesFile.exists()) {
+            FileInputStream(keystorePropertiesFile).use { load(it) }
+        }
     }
-}
 val hasReleaseSigning =
     keystorePropertiesFile.exists() || System.getenv("RELEASE_STORE_FILE") != null
 
@@ -68,10 +77,11 @@ android {
     signingConfigs {
         if (hasReleaseSigning) {
             create("release") {
-                storeFile = file(
-                    keystoreProperties.getProperty("storeFile")
-                        ?: System.getenv("RELEASE_STORE_FILE")
-                )
+                storeFile =
+                    file(
+                        keystoreProperties.getProperty("storeFile")
+                            ?: System.getenv("RELEASE_STORE_FILE"),
+                    )
                 storePassword =
                     keystoreProperties.getProperty("storePassword")
                         ?: System.getenv("RELEASE_STORE_PASSWORD")
@@ -103,7 +113,7 @@ android {
             matchingFallbacks += "release"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             signingConfig = signingConfigs.getByName("debug")
         }
@@ -112,13 +122,14 @@ android {
             isShrinkResources = !fdroidBuild
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
-            signingConfig = if (hasReleaseSigning) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            signingConfig =
+                if (hasReleaseSigning) {
+                    signingConfigs.getByName("release")
+                } else {
+                    signingConfigs.getByName("debug")
+                }
         }
     }
 

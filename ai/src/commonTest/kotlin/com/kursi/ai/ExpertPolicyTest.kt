@@ -16,25 +16,26 @@ import kotlin.test.assertTrue
  *   4-way ordering:  EXPERT > Hard > Medium > Easy
  */
 class ExpertPolicyTest {
-
     // Compact budget: fast enough for CI but enough signal
-    private val testBudget = SearchBudget(
-        maxMillis = 10_000L, // generous wall-clock for CI
-        maxIterations = 1000,
-        rolloutHorizon = 12,
-    )
+    private val testBudget =
+        SearchBudget(
+            maxMillis = 10_000L, // generous wall-clock for CI
+            maxIterations = 1000,
+            rolloutHorizon = 12,
+        )
 
     // ── Smoke ─────────────────────────────────────────────────────────────────
 
     @Test
     fun expertPolicy_completesGames_2to4Players() {
-        if (!heavyAiSimsEnabled()) return  // skip: 9 full Expert-vs-Expert games starve Karma ping on wasm
+        if (!heavyAiSimsEnabled()) return // skip: 9 full Expert-vs-Expert games starve Karma ping on wasm
         for (n in 2..4) {
             val config = GameConfig.forPlayers(n)
             repeat(3) { gameIdx ->
-                val policies: Map<PlayerId, Policy> = (0 until n).associate { seat ->
-                    PlayerId(seat) to ExpertPolicy(seed = gameIdx.toLong() * 100L + seat, budget = testBudget)
-                }
+                val policies: Map<PlayerId, Policy> =
+                    (0 until n).associate { seat ->
+                        PlayerId(seat) to ExpertPolicy(seed = gameIdx.toLong() * 100L + seat, budget = testBudget)
+                    }
                 val result = SimHarness.playOut(config, seed = gameIdx.toLong() * 13L + n, policies, checkInv = false)
                 assertTrue(result.winner.raw in 0 until n, "n=$n game=$gameIdx: winner out of range")
                 assertTrue(result.turns > 0)
@@ -44,16 +45,17 @@ class ExpertPolicyTest {
 
     @Test
     fun expertPolicy_fallsBackCorrectly_neverCrashes() {
-        if (!heavyAiSimsEnabled()) return  // skip: 5 full games with Expert search starve Karma ping on wasm
+        if (!heavyAiSimsEnabled()) return // skip: 5 full games with Expert search starve Karma ping on wasm
         // Mix Expert with Hard and Medium — should complete without exception
         val config = GameConfig.forPlayers(4)
         repeat(5) { gameIdx ->
-            val policies: Map<PlayerId, Policy> = mapOf(
-                PlayerId(0) to ExpertPolicy(seed = gameIdx * 7L, budget = testBudget),
-                PlayerId(1) to HardPolicy(seed = gameIdx * 7L + 1),
-                PlayerId(2) to ExpertPolicy(seed = gameIdx * 7L + 2, budget = testBudget),
-                PlayerId(3) to MediumPolicy(seed = gameIdx * 7L + 3),
-            )
+            val policies: Map<PlayerId, Policy> =
+                mapOf(
+                    PlayerId(0) to ExpertPolicy(seed = gameIdx * 7L, budget = testBudget),
+                    PlayerId(1) to HardPolicy(seed = gameIdx * 7L + 1),
+                    PlayerId(2) to ExpertPolicy(seed = gameIdx * 7L + 2, budget = testBudget),
+                    PlayerId(3) to MediumPolicy(seed = gameIdx * 7L + 3),
+                )
             val result = SimHarness.playOut(config, seed = gameIdx.toLong() * 19L, policies, checkInv = false)
             assertTrue(result.winner.raw in 0 until 4)
         }
@@ -63,7 +65,7 @@ class ExpertPolicyTest {
 
     @Test
     fun hard_beats_medium_threshold_0_55() {
-        if (!heavyAiSimsEnabled()) return  // skip heavy sim on wasm/browser (Karma ping starvation)
+        if (!heavyAiSimsEnabled()) return // skip heavy sim on wasm/browser (Karma ping starvation)
         // Validates the Hard > Medium baseline (same seeds as HardPolicyTest, 200 games is sufficient).
         val games = 200
         val config = GameConfig.forPlayers(2)
@@ -72,10 +74,11 @@ class ExpertPolicyTest {
         for (gameIdx in 0 until games) {
             val hardSeat = gameIdx % 2
             val medSeat = 1 - hardSeat
-            val policies: Map<PlayerId, Policy> = mapOf(
-                PlayerId(hardSeat) to HardPolicy(seed = gameIdx.toLong() * 100L + hardSeat),
-                PlayerId(medSeat) to MediumPolicy(seed = gameIdx.toLong() * 100L + medSeat + 5000L),
-            )
+            val policies: Map<PlayerId, Policy> =
+                mapOf(
+                    PlayerId(hardSeat) to HardPolicy(seed = gameIdx.toLong() * 100L + hardSeat),
+                    PlayerId(medSeat) to MediumPolicy(seed = gameIdx.toLong() * 100L + medSeat + 5000L),
+                )
             val result = SimHarness.playOut(config, seed = gameIdx.toLong() * 17L + 2L, policies, checkInv = false)
             if (result.winner.raw == hardSeat) hardWins++
         }
@@ -84,13 +87,13 @@ class ExpertPolicyTest {
         val winRatePct = (winRate * 1000).roundToInt().toDouble() / 1000.0
         assertTrue(
             winRate > 0.55,
-            "Hard vs Medium win rate = $winRatePct ($hardWins/$games), expected > 0.55"
+            "Hard vs Medium win rate = $winRatePct ($hardWins/$games), expected > 0.55",
         )
     }
 
     @Test
     fun expert_beats_hard_threshold_0_60() {
-        if (!heavyAiSimsEnabled()) return  // skip heavy sim on wasm/browser (Karma ping starvation)
+        if (!heavyAiSimsEnabled()) return // skip heavy sim on wasm/browser (Karma ping starvation)
         val games = 600
         val config = GameConfig.forPlayers(2)
         var expertWins = 0
@@ -98,10 +101,11 @@ class ExpertPolicyTest {
         for (gameIdx in 0 until games) {
             val expertSeat = gameIdx % 2
             val hardSeat = 1 - expertSeat
-            val policies: Map<PlayerId, Policy> = mapOf(
-                PlayerId(expertSeat) to ExpertPolicy(seed = gameIdx.toLong() * 137L + expertSeat, budget = testBudget),
-                PlayerId(hardSeat) to HardPolicy(seed = gameIdx.toLong() * 137L + hardSeat + 9000L),
-            )
+            val policies: Map<PlayerId, Policy> =
+                mapOf(
+                    PlayerId(expertSeat) to ExpertPolicy(seed = gameIdx.toLong() * 137L + expertSeat, budget = testBudget),
+                    PlayerId(hardSeat) to HardPolicy(seed = gameIdx.toLong() * 137L + hardSeat + 9000L),
+                )
             val result = SimHarness.playOut(config, seed = gameIdx.toLong() * 23L + 1L, policies, checkInv = false)
             if (result.winner.raw == expertSeat) expertWins++
         }
@@ -110,13 +114,13 @@ class ExpertPolicyTest {
         val winRatePct = (winRate * 1000).roundToInt().toDouble() / 1000.0
         assertTrue(
             winRate > 0.60,
-            "Expert vs Hard win rate = $winRatePct ($expertWins/$games), expected > 0.60"
+            "Expert vs Hard win rate = $winRatePct ($expertWins/$games), expected > 0.60",
         )
     }
 
     @Test
     fun expert_beats_medium_threshold_0_68() {
-        if (!heavyAiSimsEnabled()) return  // skip heavy sim on wasm/browser (Karma ping starvation)
+        if (!heavyAiSimsEnabled()) return // skip heavy sim on wasm/browser (Karma ping starvation)
         val games = 400
         val config = GameConfig.forPlayers(2)
         var expertWins = 0
@@ -124,10 +128,11 @@ class ExpertPolicyTest {
         for (gameIdx in 0 until games) {
             val expertSeat = gameIdx % 2
             val medSeat = 1 - expertSeat
-            val policies: Map<PlayerId, Policy> = mapOf(
-                PlayerId(expertSeat) to ExpertPolicy(seed = gameIdx.toLong() * 211L + expertSeat, budget = testBudget),
-                PlayerId(medSeat) to MediumPolicy(seed = gameIdx.toLong() * 211L + medSeat + 7000L),
-            )
+            val policies: Map<PlayerId, Policy> =
+                mapOf(
+                    PlayerId(expertSeat) to ExpertPolicy(seed = gameIdx.toLong() * 211L + expertSeat, budget = testBudget),
+                    PlayerId(medSeat) to MediumPolicy(seed = gameIdx.toLong() * 211L + medSeat + 7000L),
+                )
             val result = SimHarness.playOut(config, seed = gameIdx.toLong() * 31L + 3L, policies, checkInv = false)
             if (result.winner.raw == expertSeat) expertWins++
         }
@@ -136,13 +141,13 @@ class ExpertPolicyTest {
         val winRatePct = (winRate * 1000).roundToInt().toDouble() / 1000.0
         assertTrue(
             winRate > 0.68,
-            "Expert vs Medium win rate = $winRatePct ($expertWins/$games), expected > 0.68"
+            "Expert vs Medium win rate = $winRatePct ($expertWins/$games), expected > 0.68",
         )
     }
 
     @Test
     fun roundRobin_4way_ordering() {
-        if (!heavyAiSimsEnabled()) return  // skip heavy sim on wasm/browser (Karma ping starvation)
+        if (!heavyAiSimsEnabled()) return // skip heavy sim on wasm/browser (Karma ping starvation)
         // 4-player game: Easy(0) Medium(1) Hard(2) Expert(3)
         //
         // games=400 (was 200): with the strengthened Expert (information-asymmetry eval term) the
@@ -156,19 +161,22 @@ class ExpertPolicyTest {
         val games = 400
 
         for (gameIdx in 0 until games) {
-            val policies: Map<PlayerId, Policy> = mapOf(
-                PlayerId(0) to EasyPolicy(seed = gameIdx.toLong() * 41L),
-                PlayerId(1) to MediumPolicy(seed = gameIdx.toLong() * 41L + 1000L),
-                PlayerId(2) to HardPolicy(seed = gameIdx.toLong() * 41L + 2000L),
-                PlayerId(3) to ExpertPolicy(seed = gameIdx.toLong() * 41L + 3000L, budget = testBudget),
-            )
+            val policies: Map<PlayerId, Policy> =
+                mapOf(
+                    PlayerId(0) to EasyPolicy(seed = gameIdx.toLong() * 41L),
+                    PlayerId(1) to MediumPolicy(seed = gameIdx.toLong() * 41L + 1000L),
+                    PlayerId(2) to HardPolicy(seed = gameIdx.toLong() * 41L + 2000L),
+                    PlayerId(3) to ExpertPolicy(seed = gameIdx.toLong() * 41L + 3000L, budget = testBudget),
+                )
             val result = SimHarness.playOut(config, seed = gameIdx.toLong() * 53L, policies, checkInv = false)
             wins[result.winner.raw]++
         }
 
         val rates = wins.map { it.toDouble() / games }
+
         fun Double.fmt3() = ((this * 1000).roundToInt().toDouble() / 1000.0).toString()
-        val msg = "4-way wins: Easy=${wins[0]}(${rates[0].fmt3()}), Med=${wins[1]}(${rates[1].fmt3()}), " +
+        val msg =
+            "4-way wins: Easy=${wins[0]}(${rates[0].fmt3()}), Med=${wins[1]}(${rates[1].fmt3()}), " +
                 "Hard=${wins[2]}(${rates[2].fmt3()}), Expert=${wins[3]}(${rates[3].fmt3()})"
 
         // Assert ladder ordering that THIS format can resolve.

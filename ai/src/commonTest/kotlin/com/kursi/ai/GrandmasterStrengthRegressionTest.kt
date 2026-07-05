@@ -25,27 +25,28 @@ import kotlin.test.assertTrue
  * the iteration cap (not the wall clock) so the result is deterministic across machines.
  */
 class GrandmasterStrengthRegressionTest {
-
     // Expert opponent budget — the in-game-ish strength we must beat.
-    private val expertBudget = SearchBudget(
-        maxMillis = 8_000L,
-        maxIterations = 600,
-        rolloutHorizon = 12,
-    )
+    private val expertBudget =
+        SearchBudget(
+            maxMillis = 8_000L,
+            maxIterations = 600,
+            rolloutHorizon = 12,
+        )
 
     // Grandmaster budget — strictly DEEPER: more iterations and a longer rollout horizon. This is the
     // search-depth edge that must show up as a higher win rate even with no opponent read.
-    private val gmBudget = SearchBudget(
-        maxMillis = 14_000L,
-        maxIterations = 2_000,
-        rolloutHorizon = 22,
-    )
+    private val gmBudget =
+        SearchBudget(
+            maxMillis = 14_000L,
+            maxIterations = 2_000,
+            rolloutHorizon = 22,
+        )
 
     private fun Double.fmt3() = ((this * 1000).roundToInt().toDouble() / 1000.0).toString()
 
     @Test
     fun grandmaster_beats_expert_2player_floor() {
-        if (!heavyAiSimsEnabled()) return  // skip heavy ISMCTS sim on wasm/browser (Karma ping starvation)
+        if (!heavyAiSimsEnabled()) return // skip heavy ISMCTS sim on wasm/browser (Karma ping starvation)
         val games = 120
         val config = GameConfig.forPlayers(2)
         var gmWins = 0
@@ -53,10 +54,11 @@ class GrandmasterStrengthRegressionTest {
         for (gameIdx in 0 until games) {
             val gmSeat = gameIdx % 2
             val expertSeat = 1 - gmSeat
-            val policies: Map<PlayerId, Policy> = mapOf(
-                PlayerId(gmSeat) to GrandmasterPolicy(seed = gameIdx.toLong() * 151L + gmSeat, budget = gmBudget),
-                PlayerId(expertSeat) to ExpertPolicy(seed = gameIdx.toLong() * 151L + expertSeat + 7700L, budget = expertBudget),
-            )
+            val policies: Map<PlayerId, Policy> =
+                mapOf(
+                    PlayerId(gmSeat) to GrandmasterPolicy(seed = gameIdx.toLong() * 151L + gmSeat, budget = gmBudget),
+                    PlayerId(expertSeat) to ExpertPolicy(seed = gameIdx.toLong() * 151L + expertSeat + 7700L, budget = expertBudget),
+                )
             val result = SimHarness.playOut(config, seed = gameIdx.toLong() * 31L + 5L, policies, checkInv = false)
             if (result.winner.raw == gmSeat) gmWins++
         }
@@ -65,13 +67,13 @@ class GrandmasterStrengthRegressionTest {
         // Heads-up fair share = 0.50; Grandmaster must clear the required 0.55 floor over Expert.
         assertTrue(
             winRate > 0.55,
-            "REGRESSION: Grandmaster vs Expert (2p) win rate = ${winRate.fmt3()} ($gmWins/$games), floor 0.55"
+            "REGRESSION: Grandmaster vs Expert (2p) win rate = ${winRate.fmt3()} ($gmWins/$games), floor 0.55",
         )
     }
 
     @Test
     fun grandmaster_beats_expert_4player_floor() {
-        if (!heavyAiSimsEnabled()) return  // skip heavy ISMCTS sim on wasm/browser (Karma ping starvation)
+        if (!heavyAiSimsEnabled()) return // skip heavy ISMCTS sim on wasm/browser (Karma ping starvation)
         // One Grandmaster (seat rotates) vs three Expert. Fair share = 0.25; the floor is a clear edge.
         val games = 140
         val config = GameConfig.forPlayers(4)
@@ -79,14 +81,16 @@ class GrandmasterStrengthRegressionTest {
 
         for (gameIdx in 0 until games) {
             val gmSeat = gameIdx % 4
-            val policies: Map<PlayerId, Policy> = (0 until 4).associate { seat ->
-                val seed = gameIdx.toLong() * 89L + seat
-                PlayerId(seat) to if (seat == gmSeat) {
-                    GrandmasterPolicy(seed = seed, budget = gmBudget)
-                } else {
-                    ExpertPolicy(seed = seed + 5300L, budget = expertBudget)
+            val policies: Map<PlayerId, Policy> =
+                (0 until 4).associate { seat ->
+                    val seed = gameIdx.toLong() * 89L + seat
+                    PlayerId(seat) to
+                        if (seat == gmSeat) {
+                            GrandmasterPolicy(seed = seed, budget = gmBudget)
+                        } else {
+                            ExpertPolicy(seed = seed + 5300L, budget = expertBudget)
+                        }
                 }
-            }
             val result = SimHarness.playOut(config, seed = gameIdx.toLong() * 47L + 3L, policies, checkInv = false)
             if (result.winner.raw == gmSeat) gmWins++
         }
@@ -98,7 +102,7 @@ class GrandmasterStrengthRegressionTest {
         // run-to-run variance over 140 games never flakes it.
         assertTrue(
             winRate > 0.29,
-            "REGRESSION: Grandmaster vs 3xExpert (4p) win rate = ${winRate.fmt3()} ($gmWins/$games), floor 0.29 (fair=0.25)"
+            "REGRESSION: Grandmaster vs 3xExpert (4p) win rate = ${winRate.fmt3()} ($gmWins/$games), floor 0.29 (fair=0.25)",
         )
     }
 }

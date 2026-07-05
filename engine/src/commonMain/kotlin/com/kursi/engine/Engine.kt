@@ -3,7 +3,10 @@ package com.kursi.engine
 // ─────────────────────────── Public engine API ───────────────────────────
 
 /** Deterministic initial state: shuffle + deal via the seeded RNG. (config, seed) fully determines this. */
-fun initialState(config: GameConfig, seed: Long): GameState {
+fun initialState(
+    config: GameConfig,
+    seed: Long,
+): GameState {
     val cards = LinkedHashMap<CardId, Role>()
     var id = 0
     // Deck is a uniform multiset over the ACTIVE roles only (PATRAKAAR is absent below the big-table threshold).
@@ -16,7 +19,9 @@ fun initialState(config: GameConfig, seed: Long): GameState {
     for (seat in 0 until config.seatCount) {
         val pid = PlayerId(seat)
         repeat(config.influencePerPlayer) {
-            val (c, rem, r) = rng.draw(pool); pool = rem; rng = r
+            val (c, rem, r) = rng.draw(pool)
+            pool = rem
+            rng = r
             locations[c] = CardLocation.Hand(pid, faceUp = false)
         }
         players.add(PlayerState(pid, seat, config.startingCoins))
@@ -51,17 +56,21 @@ fun winnerOrNull(state: GameState): PlayerId? {
 private fun List<PlayerState>.minBySeat(): PlayerId = this.minBy { it.seatIndex }.id
 
 /** The single player whose input is needed next, or null at game over. */
-fun whoActsNext(state: GameState): PlayerId? = when (val ph = state.phase) {
-    is Phase.AwaitingAction -> state.playerAtSeat(ph.actorSeat).id
-    is Phase.AwaitingReactions -> ph.ctx.eligible.firstOrNull { it !in ph.ctx.responded.keys }
-    is Phase.AwaitingInfluenceLoss -> ph.loser
-    is Phase.AwaitingExchange -> ph.actor
-    is Phase.AwaitingInvestigatePeek -> ph.examiner
-    is Phase.GameOver -> null
-}
+fun whoActsNext(state: GameState): PlayerId? =
+    when (val ph = state.phase) {
+        is Phase.AwaitingAction -> state.playerAtSeat(ph.actorSeat).id
+        is Phase.AwaitingReactions -> ph.ctx.eligible.firstOrNull { it !in ph.ctx.responded.keys }
+        is Phase.AwaitingInfluenceLoss -> ph.loser
+        is Phase.AwaitingExchange -> ph.actor
+        is Phase.AwaitingInvestigatePeek -> ph.examiner
+        is Phase.GameOver -> null
+    }
 
 /** Legal turn actions for [pid] (only non-empty when it is pid's turn to declare). Bluffing is allowed: not role-gated. */
-fun legalActions(state: GameState, pid: PlayerId): Set<Action> {
+fun legalActions(
+    state: GameState,
+    pid: PlayerId,
+): Set<Action> {
     val ph = state.phase as? Phase.AwaitingAction ?: return emptySet()
     if (state.playerAtSeat(ph.actorSeat).id != pid || !state.isAlive(pid)) return emptySet()
     val cfg = state.config
@@ -69,7 +78,7 @@ fun legalActions(state: GameState, pid: PlayerId): Set<Action> {
     val targets = state.alivePlayers().filter { it.id != pid }.map { it.id }
     val out = LinkedHashSet<Action>()
 
-    if (me.coins >= cfg.forcedCoupThreshold) {                 // I5: forced Khela
+    if (me.coins >= cfg.forcedCoupThreshold) { // I5: forced Khela
         for (t in targets) out.add(Action.Coup(t))
         return out
     }
@@ -82,65 +91,87 @@ fun legalActions(state: GameState, pid: PlayerId): Set<Action> {
     out.add(Action.Exchange)
     // Jaanch (claims PATRAKAAR) — only offered when the 6th role is in this deck (otherwise it is a
     // guaranteed-losing bluff). Free action, no cost; target must have a face-down card to examine.
-    if (Role.PATRAKAAR in cfg.activeRoles)
+    if (Role.PATRAKAAR in cfg.activeRoles) {
         for (t in targets) if (state.faceDownInfluence(t).isNotEmpty()) out.add(Action.Investigate(t))
+    }
 
     // ── Variant actions (only when their flag is enabled) ──────────────────────────────────────────────
     // BAIL PE BAHAR: must have a revealed card to restore and enough coins.
-    if (cfg.bailEnabled && me.coins >= cfg.bailCost && state.faceUpCards(pid).isNotEmpty())
+    if (cfg.bailEnabled && me.coins >= cfg.bailCost && state.faceUpCards(pid).isNotEmpty()) {
         out.add(Action.BailPe)
+    }
     // BALI KHEL: must have 2+ face-down cards — cannot sacrifice last influence.
-    if (cfg.sabotageEnabled && state.faceDownInfluence(pid).size >= 2)
+    if (cfg.sabotageEnabled && state.faceDownInfluence(pid).size >= 2) {
         out.add(Action.Sabotage)
+    }
     // HAWALA: gift coins to any alive opponent (must have coins to give).
-    if (cfg.hawalaEnabled && me.coins >= 1)
+    if (cfg.hawalaEnabled && me.coins >= 1) {
         for (t in targets) out.add(Action.Hawala(t))
+    }
     // ADHYADESH (Emergency): lifetime coins ≥ threshold AND current coins ≥ 7 (must pay something meaningful).
     if (cfg.emergencyEnabled &&
         (state.lifetimeCoins[pid] ?: 0) >= cfg.emergencyThreshold &&
-        me.coins >= 7)
+        me.coins >= 7
+    ) {
         out.add(Action.Emergency)
+    }
 
     return out
 }
 
 /** Concrete legal intents for [pid] given the current phase (used by both the UI and the bots). */
-fun legalIntents(state: GameState, pid: PlayerId): List<Intent> = when (val ph = state.phase) {
-    is Phase.AwaitingAction ->
-        if (state.playerAtSeat(ph.actorSeat).id == pid)
-            legalActions(state, pid).map { Intent.DeclareAction(pid, it) }
-        else emptyList()
+fun legalIntents(
+    state: GameState,
+    pid: PlayerId,
+): List<Intent> =
+    when (val ph = state.phase) {
+        is Phase.AwaitingAction ->
+            if (state.playerAtSeat(ph.actorSeat).id == pid) {
+                legalActions(state, pid).map { Intent.DeclareAction(pid, it) }
+            } else {
+                emptyList()
+            }
 
-    is Phase.AwaitingReactions -> {
-        if (whoActsNext(state) != pid) emptyList()
-        else when (ph.ctx.step) {
-            ReactionStep.CHALLENGE_ACTION, ReactionStep.CHALLENGE_BLOCK ->
-                listOf(Intent.Challenge(pid), Intent.Pass(pid))
-            ReactionStep.BLOCK ->
-                listOf(Intent.Pass(pid)) + Rules.rolesThatBlock(ph.ctx.pending.action).map { Intent.Block(pid, it) }
+        is Phase.AwaitingReactions -> {
+            if (whoActsNext(state) != pid) {
+                emptyList()
+            } else {
+                when (ph.ctx.step) {
+                    ReactionStep.CHALLENGE_ACTION, ReactionStep.CHALLENGE_BLOCK ->
+                        listOf(Intent.Challenge(pid), Intent.Pass(pid))
+                    ReactionStep.BLOCK ->
+                        listOf(Intent.Pass(pid)) + Rules.rolesThatBlock(ph.ctx.pending.action).map { Intent.Block(pid, it) }
+                }
+            }
         }
+
+        is Phase.AwaitingInfluenceLoss ->
+            if (ph.loser == pid) {
+                state.faceDownInfluence(pid).map { Intent.ChooseInfluenceToLose(pid, it) }
+            } else {
+                emptyList()
+            }
+
+        is Phase.AwaitingExchange ->
+            if (ph.actor == pid) {
+                val pool = state.faceDownInfluence(pid) + ph.drawn
+                val keepSize = state.faceDownInfluence(pid).size
+                combinations(pool, keepSize).map { Intent.ChooseExchange(pid, it) }
+            } else {
+                emptyList()
+            }
+
+        is Phase.AwaitingInvestigatePeek ->
+            if (ph.examiner == pid) {
+                listOf(Intent.ResolveInvestigate(pid, forceRedraw = false), Intent.ResolveInvestigate(pid, forceRedraw = true))
+            } else {
+                emptyList()
+            }
+
+        is Phase.GameOver -> emptyList()
+        // Variant phases: BailPe auto-picks (no player choice); Sabotage/Emergency use existing InfluenceLoss.
+        // No additional legalIntents branches needed — they resolve through existing phase machinery.
     }
-
-    is Phase.AwaitingInfluenceLoss ->
-        if (ph.loser == pid) state.faceDownInfluence(pid).map { Intent.ChooseInfluenceToLose(pid, it) }
-        else emptyList()
-
-    is Phase.AwaitingExchange ->
-        if (ph.actor == pid) {
-            val pool = state.faceDownInfluence(pid) + ph.drawn
-            val keepSize = state.faceDownInfluence(pid).size
-            combinations(pool, keepSize).map { Intent.ChooseExchange(pid, it) }
-        } else emptyList()
-
-    is Phase.AwaitingInvestigatePeek ->
-        if (ph.examiner == pid)
-            listOf(Intent.ResolveInvestigate(pid, forceRedraw = false), Intent.ResolveInvestigate(pid, forceRedraw = true))
-        else emptyList()
-
-    is Phase.GameOver -> emptyList()
-    // Variant phases: BailPe auto-picks (no player choice); Sabotage/Emergency use existing InfluenceLoss.
-    // No additional legalIntents branches needed — they resolve through existing phase machinery.
-}
 
 /**
  * TEAM-AWARE legal-intent filter for BOTS. Returns [legalIntents] with every teammate-hostile choice removed
@@ -155,21 +186,29 @@ fun legalIntents(state: GameState, pid: PlayerId): List<Intent> = when (val ph =
  * Safety: if filtering would leave NO legal action (e.g. a forced coup where every alive target is a teammate),
  * the unfiltered list is returned — the engine's forced-move guarantee always wins over team etiquette.
  */
-fun teamSafeIntents(state: GameState, pid: PlayerId, legal: List<Intent> = legalIntents(state, pid)): List<Intent> {
+fun teamSafeIntents(
+    state: GameState,
+    pid: PlayerId,
+    legal: List<Intent> = legalIntents(state, pid),
+): List<Intent> {
     if (!state.config.isTeamGame) return legal
     if (state.phase !is Phase.AwaitingAction) return legal
     val mates = state.teammatesOf(pid).toSet()
     if (mates.isEmpty()) return legal
-    val filtered = legal.filter { intent ->
-        if (intent !is Intent.DeclareAction) return@filter true
-        val target = Rules.targetOf(intent.action) ?: return@filter true
-        target !in mates
-    }
+    val filtered =
+        legal.filter { intent ->
+            if (intent !is Intent.DeclareAction) return@filter true
+            val target = Rules.targetOf(intent.action) ?: return@filter true
+            target !in mates
+        }
     return filtered.ifEmpty { legal }
 }
 
 /** Validate [intent] and produce the next state + descriptive events, or reject it. */
-fun applyIntent(state: GameState, intent: Intent): ApplyOutcome {
+fun applyIntent(
+    state: GameState,
+    intent: Intent,
+): ApplyOutcome {
     val expected = whoActsNext(state) ?: return ApplyOutcome.Rejected("game over: no actor pending")
     if (intent.actor != expected) return ApplyOutcome.Rejected("expected $expected to act, got ${intent.actor}")
     val e = EngineStep(state)
@@ -181,11 +220,15 @@ fun applyIntent(state: GameState, intent: Intent): ApplyOutcome {
     }
 }
 
-private class IllegalIntent(message: String) : Exception(message)
+private class IllegalIntent(
+    message: String,
+) : Exception(message)
 
 // ─────────────────────────── Resolution engine ───────────────────────────
 
-private class EngineStep(start: GameState) {
+private class EngineStep(
+    start: GameState,
+) {
     var state: GameState = start
     var rng: Rng = start.rngEngine()
     val events = ArrayList<GameEvent>()
@@ -215,10 +258,17 @@ private class EngineStep(start: GameState) {
     }
 
     // ── coin / card mutators ──
-    private fun setCoins(pid: PlayerId, coins: Int) {
+    private fun setCoins(
+        pid: PlayerId,
+        coins: Int,
+    ) {
         state = state.copy(players = state.players.map { if (it.id == pid) it.copy(coins = coins) else it })
     }
-    private fun gain(pid: PlayerId, amount: Int) {
+
+    private fun gain(
+        pid: PlayerId,
+        amount: Int,
+    ) {
         val take = minOf(amount, state.treasury)
         if (take <= 0) return
         setCoins(pid, state.player(pid).coins + take)
@@ -233,12 +283,17 @@ private class EngineStep(start: GameState) {
         }
     }
 
-    private fun checkKhazanaMilestones(pid: PlayerId, prev: Int, next: Int) {
+    private fun checkKhazanaMilestones(
+        pid: PlayerId,
+        prev: Int,
+        next: Int,
+    ) {
         if (!cfg.khazanaEnabled) return
         // Emit Darja milestone events when a threshold is crossed for the first time.
         for ((threshold, level) in listOf(8 to 1, 12 to 2, 16 to 3, 20 to 4)) {
-            if (prev < threshold && next >= threshold)
+            if (prev < threshold && next >= threshold) {
                 events.add(GameEvent.DarjaReached(pid, level, next))
+            }
         }
         // Khazana win: first to reach target lifetime coins wins, even with multiple players still alive.
         if (next >= cfg.khazanaTarget && state.phase !is Phase.GameOver) {
@@ -247,41 +302,67 @@ private class EngineStep(start: GameState) {
             events.add(GameEvent.GameEnded(pid))
         }
     }
-    private fun pay(pid: PlayerId, amount: Int) {
+
+    private fun pay(
+        pid: PlayerId,
+        amount: Int,
+    ) {
         if (state.player(pid).coins < amount) throw IllegalIntent("not enough coins")
         setCoins(pid, state.player(pid).coins - amount)
         state = state.copy(treasury = state.treasury + amount)
         events.add(GameEvent.CoinsChanged(pid, -amount))
     }
-    private fun transfer(from: PlayerId, to: PlayerId, amount: Int) {
+
+    private fun transfer(
+        from: PlayerId,
+        to: PlayerId,
+        amount: Int,
+    ) {
         val take = minOf(amount, state.player(from).coins)
         setCoins(from, state.player(from).coins - take)
         setCoins(to, state.player(to).coins + take)
         events.add(GameEvent.CoinsTransferred(from, to, take))
     }
-    private fun setLoc(card: CardId, loc: CardLocation) {
+
+    private fun setLoc(
+        card: CardId,
+        loc: CardLocation,
+    ) {
         state = state.copy(locations = state.locations + (card to loc))
     }
+
     private fun drawFromDeck(): CardId {
         val pool = state.deckCards
         if (pool.isEmpty()) throw IllegalIntent("deck exhausted")
-        val (c, _, r) = rng.draw(pool); rng = r; return c
+        val (c, _, r) = rng.draw(pool)
+        rng = r
+        return c
     }
-    private fun revealCardOfRole(pid: PlayerId, role: Role): CardId? =
-        state.faceDownInfluence(pid).firstOrNull { state.cards[it] == role }
-    private fun replaceProvenCard(pid: PlayerId, card: CardId) {
-        setLoc(card, CardLocation.Deck)                 // shuffle proven card back…
-        val fresh = drawFromDeck()                      // …draw a replacement (may redraw the same card)
+
+    private fun revealCardOfRole(
+        pid: PlayerId,
+        role: Role,
+    ): CardId? = state.faceDownInfluence(pid).firstOrNull { state.cards[it] == role }
+
+    private fun replaceProvenCard(
+        pid: PlayerId,
+        card: CardId,
+    ) {
+        setLoc(card, CardLocation.Deck) // shuffle proven card back…
+        val fresh = drawFromDeck() // …draw a replacement (may redraw the same card)
         setLoc(fresh, CardLocation.Hand(pid, faceUp = false))
         events.add(GameEvent.CardReplaced(pid, card, fresh))
     }
 
     // ── declaration ──
-    private fun declareAction(actor: PlayerId, action: Action) {
+    private fun declareAction(
+        actor: PlayerId,
+        action: Action,
+    ) {
         if (action !in legalActions(state, actor)) throw IllegalIntent("illegal action $action")
         val claimed = Rules.claimedRole(action)
         events.add(GameEvent.ActionDeclared(actor, action, claimed))
-        when (action) {                                  // E4/E10: coup & assassinate cost paid at declaration
+        when (action) { // E4/E10: coup & assassinate cost paid at declaration
             is Action.Coup -> pay(actor, cfg.effectiveCoupCost(state.turnNumber))
             is Action.Assassinate -> pay(actor, cfg.effectiveAssassinateCost(state.turnNumber)) // INFLATION: cost varies
             else -> {}
@@ -294,56 +375,78 @@ private class EngineStep(start: GameState) {
         when {
             Rules.isChallengeable(a) -> enterStep(ReactionStep.CHALLENGE_ACTION, pending, null)
             Rules.isBlockable(a) -> enterStep(ReactionStep.BLOCK, pending, null)
-            else -> resolveEffect(pending)              // Income / Coup
+            else -> resolveEffect(pending) // Income / Coup
         }
     }
 
     // ── reaction windows ──
-    private fun eligibleFor(step: ReactionStep, pending: PendingAction, block: BlockClaim?): List<PlayerId> {
+    private fun eligibleFor(
+        step: ReactionStep,
+        pending: PendingAction,
+        block: BlockClaim?,
+    ): List<PlayerId> {
         val actorSeat = state.seatOf(pending.actor)
         return when (step) {
             // Everyone-but-the-actor, clockwise from the actor's left.
             ReactionStep.CHALLENGE_ACTION -> state.aliveFromLeftOf(actorSeat, setOf(pending.actor))
-            ReactionStep.BLOCK -> if (pending.action == Action.ForeignAid) {
-                state.aliveFromLeftOf(actorSeat, setOf(pending.actor))
-            } else {
-                val t = Rules.targetOf(pending.action)
-                if (t != null && state.isAlive(t)) listOf(t) else emptyList()
-            }
+            ReactionStep.BLOCK ->
+                if (pending.action == Action.ForeignAid) {
+                    state.aliveFromLeftOf(actorSeat, setOf(pending.actor))
+                } else {
+                    val t = Rules.targetOf(pending.action)
+                    if (t != null && state.isAlive(t)) listOf(t) else emptyList()
+                }
             // Everyone-but-the-blocker (the ACTOR may challenge their own action's block), clockwise.
             ReactionStep.CHALLENGE_BLOCK -> state.aliveFromLeftOf(actorSeat, setOf(block!!.blocker))
         }
     }
 
-    private fun enterStep(step: ReactionStep, pending: PendingAction, block: BlockClaim?) {
+    private fun enterStep(
+        step: ReactionStep,
+        pending: PendingAction,
+        block: BlockClaim?,
+    ) {
         val eligible = eligibleFor(step, pending, block)
         val ctx = ReactionCtx(pending, step, eligible, emptyMap(), block)
-        if (eligible.isEmpty()) resolveStep(ctx)
-        else state = state.copy(phase = Phase.AwaitingReactions(ctx))
+        if (eligible.isEmpty()) {
+            resolveStep(ctx)
+        } else {
+            state = state.copy(phase = Phase.AwaitingReactions(ctx))
+        }
     }
 
-    private fun reaction(ctx: ReactionCtx, intent: Intent) {
+    private fun reaction(
+        ctx: ReactionCtx,
+        intent: Intent,
+    ) {
         val responder = intent.actor
-        val r: Reaction = when (ctx.step) {
-            ReactionStep.CHALLENGE_ACTION, ReactionStep.CHALLENGE_BLOCK -> when (intent) {
-                is Intent.Challenge -> Reaction.Challenge
-                is Intent.Pass -> Reaction.Pass
-                else -> throw IllegalIntent("expected Challenge/Pass")
+        val r: Reaction =
+            when (ctx.step) {
+                ReactionStep.CHALLENGE_ACTION, ReactionStep.CHALLENGE_BLOCK ->
+                    when (intent) {
+                        is Intent.Challenge -> Reaction.Challenge
+                        is Intent.Pass -> Reaction.Pass
+                        else -> throw IllegalIntent("expected Challenge/Pass")
+                    }
+                ReactionStep.BLOCK ->
+                    when (intent) {
+                        is Intent.Block -> {
+                            if (intent.role !in Rules.rolesThatBlock(ctx.pending.action)) {
+                                throw IllegalIntent("${intent.role} cannot block ${ctx.pending.action}")
+                            }
+                            Reaction.Block(intent.role)
+                        }
+                        is Intent.Pass -> Reaction.Pass
+                        else -> throw IllegalIntent("expected Block/Pass")
+                    }
             }
-            ReactionStep.BLOCK -> when (intent) {
-                is Intent.Block -> {
-                    if (intent.role !in Rules.rolesThatBlock(ctx.pending.action))
-                        throw IllegalIntent("${intent.role} cannot block ${ctx.pending.action}")
-                    Reaction.Block(intent.role)
-                }
-                is Intent.Pass -> Reaction.Pass
-                else -> throw IllegalIntent("expected Block/Pass")
-            }
-        }
         val responded = ctx.responded + (responder to r)
         val next = ctx.copy(responded = responded)
-        if (responded.size >= ctx.eligible.size) resolveStep(next)
-        else state = state.copy(phase = Phase.AwaitingReactions(next))
+        if (responded.size >= ctx.eligible.size) {
+            resolveStep(next)
+        } else {
+            state = state.copy(phase = Phase.AwaitingReactions(next))
+        }
     }
 
     private fun resolveStep(ctx: ReactionCtx) {
@@ -362,12 +465,15 @@ private class EngineStep(start: GameState) {
                     val role = (ctx.responded.getValue(blocker) as Reaction.Block).role
                     events.add(GameEvent.Blocked(blocker, role, ctx.pending.action))
                     enterStep(ReactionStep.CHALLENGE_BLOCK, ctx.pending, BlockClaim(blocker, role))
-                } else resolveEffect(ctx.pending)
+                } else {
+                    resolveEffect(ctx.pending)
+                }
             }
             ReactionStep.CHALLENGE_BLOCK -> {
                 val challenger = ctx.eligible.firstOrNull { ctx.responded[it] is Reaction.Challenge }
-                if (challenger != null) resolveBlockChallenge(ctx.pending, ctx.block!!, challenger)
-                else {                                   // block stands → action negated
+                if (challenger != null) {
+                    resolveBlockChallenge(ctx.pending, ctx.block!!, challenger)
+                } else { // block stands → action negated
                     events.add(GameEvent.ActionNegated(ctx.pending.actor, ctx.pending.action))
                     endTurn(ctx.pending.actor)
                 }
@@ -375,29 +481,36 @@ private class EngineStep(start: GameState) {
         }
     }
 
-    private fun resolveActionChallenge(pending: PendingAction, challenger: PlayerId) {
+    private fun resolveActionChallenge(
+        pending: PendingAction,
+        challenger: PlayerId,
+    ) {
         val role = pending.claimedRole!!
         events.add(GameEvent.Challenged(challenger, pending.actor, role))
         val card = revealCardOfRole(pending.actor, role)
-        if (card != null) {                              // truthful → challenger loses, THEN action survives
+        if (card != null) { // truthful → challenger loses, THEN action survives
             events.add(GameEvent.ChallengeRevealed(pending.actor, card, role, true))
             // Spec A.5 step 3: remove challenger's penalty card → reshuffle prover's proven card → prover draws.
             // The reveal-replace is deferred into the continuation so InfluenceLost precedes CardReplaced.
             requireLoss(challenger, LossReason.LOST_CHALLENGE, AfterLoss.AfterActionSurvived(pending, card))
-        } else {                                         // bluff → actor loses, action fails (cost NOT refunded — E4)
+        } else { // bluff → actor loses, action fails (cost NOT refunded — E4)
             events.add(GameEvent.ActionNegated(pending.actor, pending.action))
             requireLoss(pending.actor, LossReason.LOST_CHALLENGE, AfterLoss.EndTurn(pending.actor))
         }
     }
 
-    private fun resolveBlockChallenge(pending: PendingAction, block: BlockClaim, challenger: PlayerId) {
+    private fun resolveBlockChallenge(
+        pending: PendingAction,
+        block: BlockClaim,
+        challenger: PlayerId,
+    ) {
         events.add(GameEvent.Challenged(challenger, block.blocker, block.role))
         val card = revealCardOfRole(block.blocker, block.role)
-        if (card != null) {                              // block truthful → challenger loses, THEN block stands
+        if (card != null) { // block truthful → challenger loses, THEN block stands
             events.add(GameEvent.ChallengeRevealed(block.blocker, card, block.role, true))
             // Spec A.5 step 3 order: challenger's penalty card removed first, then blocker reveal-replaces.
             requireLoss(challenger, LossReason.LOST_BLOCK_CHALLENGE, AfterLoss.BlockProven(pending, block.blocker, card))
-        } else {                                         // block bluffed → block fails, action resolves
+        } else { // block bluffed → block fails, action resolves
             requireLoss(block.blocker, LossReason.LOST_BLOCK_CHALLENGE, AfterLoss.ResolveEffect(pending))
         }
     }
@@ -408,9 +521,18 @@ private class EngineStep(start: GameState) {
         val actor = pending.actor
         if (a != Action.Exchange) events.add(GameEvent.ActionResolved(actor, a))
         when (a) {
-            Action.Income -> { gain(actor, cfg.incomeAmount); if (state.phase !is Phase.GameOver) endTurn(actor) }
-            Action.ForeignAid -> { gain(actor, cfg.foreignAidAmount); if (state.phase !is Phase.GameOver) endTurn(actor) }
-            Action.Tax -> { gain(actor, cfg.taxAmount); if (state.phase !is Phase.GameOver) endTurn(actor) }
+            Action.Income -> {
+                gain(actor, cfg.incomeAmount)
+                if (state.phase !is Phase.GameOver) endTurn(actor)
+            }
+            Action.ForeignAid -> {
+                gain(actor, cfg.foreignAidAmount)
+                if (state.phase !is Phase.GameOver) endTurn(actor)
+            }
+            Action.Tax -> {
+                gain(actor, cfg.taxAmount)
+                if (state.phase !is Phase.GameOver) endTurn(actor)
+            }
             is Action.Steal -> {
                 if (state.isAlive(a.target)) transfer(a.target, actor, cfg.stealAmount)
                 if (state.phase !is Phase.GameOver) endTurn(actor)
@@ -429,16 +551,22 @@ private class EngineStep(start: GameState) {
 
     private fun resolveBailPe(actor: PlayerId) {
         val faceUp = state.faceUpCards(actor)
-        if (faceUp.isEmpty()) { endTurn(actor); return }
+        if (faceUp.isEmpty()) {
+            endTurn(actor)
+            return
+        }
         pay(actor, cfg.bailCost)
-        val card = faceUp.first()  // restore the first revealed card (auto-pick, lowest card id)
+        val card = faceUp.first() // restore the first revealed card (auto-pick, lowest card id)
         val role = state.cards.getValue(card)
         setLoc(card, CardLocation.Hand(actor, faceUp = false))
         events.add(GameEvent.InfluenceRestored(actor, card, role))
         endTurn(actor)
     }
 
-    private fun resolveHawala(actor: PlayerId, to: PlayerId) {
+    private fun resolveHawala(
+        actor: PlayerId,
+        to: PlayerId,
+    ) {
         val amount = minOf(cfg.hawalaMaxGift, state.player(actor).coins)
         if (amount > 0 && state.isAlive(to)) {
             // Hawala bypasses treasury — direct peer-to-peer transfer.
@@ -455,24 +583,39 @@ private class EngineStep(start: GameState) {
         events.add(GameEvent.EmergencyDeclared(actor))
         val currentCoins = state.player(actor).coins
         if (currentCoins > 0) pay(actor, currentCoins)
-        val targets = state.alivePlayers()
-            .filter { it.id != actor }
-            .sortedBy { it.seatIndex }
-            .map { it.id }
-        if (targets.isEmpty()) { endTurn(actor); return }
+        val targets =
+            state
+                .alivePlayers()
+                .filter { it.id != actor }
+                .sortedBy { it.seatIndex }
+                .map { it.id }
+        if (targets.isEmpty()) {
+            endTurn(actor)
+            return
+        }
         requireLoss(targets.first(), LossReason.EMERGENCY_COUPED, AfterLoss.EmergencyNext(actor, targets.drop(1)))
     }
 
-    private fun startInvestigate(examiner: PlayerId, target: PlayerId) {
+    private fun startInvestigate(
+        examiner: PlayerId,
+        target: PlayerId,
+    ) {
         // Target may have lost their last influence in an interleaving — if so, nothing to examine; end turn.
         val peeked = state.faceDownInfluence(target).firstOrNull()
-        if (peeked == null) { events.add(GameEvent.Investigated(examiner, target)); endTurn(examiner); return }
+        if (peeked == null) {
+            events.add(GameEvent.Investigated(examiner, target))
+            endTurn(examiner)
+            return
+        }
         events.add(GameEvent.Investigated(examiner, target))
         // The examiner now privately knows [peeked] (surfaced only to them in redact) and decides force-redraw.
         state = state.copy(phase = Phase.AwaitingInvestigatePeek(examiner, target, peeked))
     }
 
-    private fun resolveInvestigatePeek(ph: Phase.AwaitingInvestigatePeek, forceRedraw: Boolean) {
+    private fun resolveInvestigatePeek(
+        ph: Phase.AwaitingInvestigatePeek,
+        forceRedraw: Boolean,
+    ) {
         if (forceRedraw && state.faceDownInfluence(ph.target).contains(ph.peeked)) {
             // Shuffle the examined card back into the deck and have the target redraw a fresh one.
             // Reuses the canonical reveal-replace: returns role to deck, draws a new face-down card.
@@ -485,12 +628,17 @@ private class EngineStep(start: GameState) {
     private fun startExchange(actor: PlayerId) {
         val drawn = ArrayList<CardId>(cfg.exchangeDrawCount)
         repeat(cfg.exchangeDrawCount) {
-            val c = drawFromDeck(); setLoc(c, CardLocation.ExchangeHeld(actor)); drawn.add(c)
+            val c = drawFromDeck()
+            setLoc(c, CardLocation.ExchangeHeld(actor))
+            drawn.add(c)
         }
         state = state.copy(phase = Phase.AwaitingExchange(actor, drawn))
     }
 
-    private fun chooseExchange(ph: Phase.AwaitingExchange, keep: List<CardId>) {
+    private fun chooseExchange(
+        ph: Phase.AwaitingExchange,
+        keep: List<CardId>,
+    ) {
         val actor = ph.actor
         val hand = state.faceDownInfluence(actor)
         val pool = (hand + ph.drawn).toSet()
@@ -507,12 +655,22 @@ private class EngineStep(start: GameState) {
     }
 
     // ── influence loss ──
-    private fun requireLoss(loser: PlayerId, reason: LossReason, after: AfterLoss) {
-        if (state.faceDownInfluence(loser).isEmpty()) { resolveAfter(after); return } // nothing left to lose
+    private fun requireLoss(
+        loser: PlayerId,
+        reason: LossReason,
+        after: AfterLoss,
+    ) {
+        if (state.faceDownInfluence(loser).isEmpty()) {
+            resolveAfter(after)
+            return
+        } // nothing left to lose
         state = state.copy(phase = Phase.AwaitingInfluenceLoss(loser, reason, after))
     }
 
-    private fun chooseLoss(ph: Phase.AwaitingInfluenceLoss, card: CardId) {
+    private fun chooseLoss(
+        ph: Phase.AwaitingInfluenceLoss,
+        card: CardId,
+    ) {
         if (card !in state.faceDownInfluence(ph.loser)) throw IllegalIntent("not a face-down card of ${ph.loser}")
         val role = state.cards.getValue(card)
         setLoc(card, CardLocation.Hand(ph.loser, faceUp = true))
@@ -523,7 +681,9 @@ private class EngineStep(start: GameState) {
         // KhazanaRaj may have fired inside gain(); if so, the game is already over.
         if (state.phase is Phase.GameOver) return
         winnerOrNull(state)?.let { w ->
-            state = state.copy(phase = Phase.GameOver(w)); events.add(GameEvent.GameEnded(w)); return
+            state = state.copy(phase = Phase.GameOver(w))
+            events.add(GameEvent.GameEnded(w))
+            return
         }
         resolveAfter(ph.after)
     }
@@ -534,8 +694,11 @@ private class EngineStep(start: GameState) {
             is AfterLoss.AfterActionSurvived -> {
                 // Reveal-replace happens AFTER the challenger's loss (spec A.5 step 3).
                 replaceProvenCard(after.pending.actor, after.provenCard)
-                if (Rules.isBlockable(after.pending.action)) enterStep(ReactionStep.BLOCK, after.pending, null)
-                else resolveEffect(after.pending)
+                if (Rules.isBlockable(after.pending.action)) {
+                    enterStep(ReactionStep.BLOCK, after.pending, null)
+                } else {
+                    resolveEffect(after.pending)
+                }
             }
             is AfterLoss.BlockProven -> {
                 // Reveal-replace happens AFTER the challenger's loss (spec A.5 step 3), then the block stands.
@@ -564,7 +727,8 @@ private class EngineStep(start: GameState) {
         // KhazanaRaj (or a previous EmergencyNext step) may have already set GameOver inside gain().
         if (state.phase is Phase.GameOver) return
         winnerOrNull(state)?.let { w ->
-            state = state.copy(phase = Phase.GameOver(w)); events.add(GameEvent.GameEnded(w))
+            state = state.copy(phase = Phase.GameOver(w))
+            events.add(GameEvent.GameEnded(w))
             return
         }
         val seat = state.seatOf(turnActor)
@@ -598,7 +762,11 @@ data class OpponentView(
  * its role (needed for Exchange keep-choices, influence-loss selection, and inspect UIs) without
  * exposing CardIds that the viewer is not entitled to see.
  */
-data class OwnCard(val id: CardId, val role: Role, val faceUp: Boolean)
+data class OwnCard(
+    val id: CardId,
+    val role: Role,
+    val faceUp: Boolean,
+)
 
 /**
  * A card belonging to ANOTHER player whose [role] the viewer is privately entitled to see right now —
@@ -607,15 +775,32 @@ data class OwnCard(val id: CardId, val role: Role, val faceUp: Boolean)
  * channel through which a viewer ever learns an opponent's hidden role, and it is populated solely for
  * the examiner during [Phase.AwaitingInvestigatePeek].
  */
-data class PeekedCard(val id: CardId, val owner: PlayerId, val role: Role)
+data class PeekedCard(
+    val id: CardId,
+    val owner: PlayerId,
+    val role: Role,
+)
 
 sealed interface PhaseView {
-    data class Turn(val actor: PlayerId) : PhaseView
-    data class Reactions(
-        val actor: PlayerId, val action: Action, val claimedRole: Role?,
-        val step: ReactionStep, val toRespond: PlayerId?, val blocker: PlayerId?, val blockRole: Role?,
+    data class Turn(
+        val actor: PlayerId,
     ) : PhaseView
-    data class InfluenceLoss(val loser: PlayerId, val reason: LossReason) : PhaseView
+
+    data class Reactions(
+        val actor: PlayerId,
+        val action: Action,
+        val claimedRole: Role?,
+        val step: ReactionStep,
+        val toRespond: PlayerId?,
+        val blocker: PlayerId?,
+        val blockRole: Role?,
+    ) : PhaseView
+
+    data class InfluenceLoss(
+        val loser: PlayerId,
+        val reason: LossReason,
+    ) : PhaseView
+
     /**
      * The exchanging [actor] is choosing which cards to keep.
      * [drawn] holds the cards the actor drew from the deck — populated with the actual [OwnCard]s ONLY
@@ -623,7 +808,11 @@ sealed interface PhaseView {
      * card is the actor's private information until kept/returned). This makes Exchange evaluable for
      * the acting viewer's UI and AI without leaking the drawn roles to anyone else.
      */
-    data class Exchange(val actor: PlayerId, val drawn: List<OwnCard> = emptyList()) : PhaseView
+    data class Exchange(
+        val actor: PlayerId,
+        val drawn: List<OwnCard> = emptyList(),
+    ) : PhaseView
+
     /**
      * The Jaanch examiner is deciding whether to force a redraw.
      * SECRECY-CRITICAL: [examinedCard] (the role the examiner privately learned) is non-null ONLY in the
@@ -635,7 +824,10 @@ sealed interface PhaseView {
         val target: PlayerId,
         val examinedCard: PeekedCard? = null,
     ) : PhaseView
-    data class Over(val winner: PlayerId) : PhaseView
+
+    data class Over(
+        val winner: PlayerId,
+    ) : PhaseView
 }
 
 data class PlayerView(
@@ -645,7 +837,7 @@ data class PlayerView(
     val deckCount: Int,
     val turnNumber: Int,
     val myCoins: Int,
-    val myInfluence: List<Role>,   // viewer's own face-down roles — secret to everyone else
+    val myInfluence: List<Role>, // viewer's own face-down roles — secret to everyone else
     val myFaceUp: List<Role>,
     /**
      * The viewer's OWN cards as (CardId, role, faceUp) — covers both face-down influence and face-up
@@ -664,8 +856,12 @@ data class PlayerView(
      * use this to avoid targeting allies. Team membership is open information, so this leaks nothing secret.
      */
     val teammates: List<PlayerId>
-        get() = if (myTeam == null) emptyList()
-        else players.filter { it.id != viewer && it.team == myTeam }.map { it.id }
+        get() =
+            if (myTeam == null) {
+                emptyList()
+            } else {
+                players.filter { it.id != viewer && it.team == myTeam }.map { it.id }
+            }
 
     /**
      * Alive players a team-aware bot may legitimately TARGET — every alive player except the viewer and,
@@ -684,16 +880,22 @@ data class PlayerView(
  * Project [state] to what [viewer] is allowed to see. The strict-subset secrecy boundary: a player's
  * own face-down roles never appear except in their own [PlayerView.myInfluence].
  */
-fun redact(state: GameState, viewer: PlayerId): PlayerView {
-    val pub = state.players.sortedBy { it.seatIndex }.map { p ->
-        OpponentView(
-            id = p.id, seatIndex = p.seatIndex, coins = p.coins,
-            faceUpRoles = state.faceUpCards(p.id).map { state.cards.getValue(it) }.sorted(),
-            faceDownCount = state.faceDownInfluence(p.id).size,
-            eliminated = !state.isAlive(p.id),
-            team = state.config.teamOfSeat(p.seatIndex),
-        )
-    }
+fun redact(
+    state: GameState,
+    viewer: PlayerId,
+): PlayerView {
+    val pub =
+        state.players.sortedBy { it.seatIndex }.map { p ->
+            OpponentView(
+                id = p.id,
+                seatIndex = p.seatIndex,
+                coins = p.coins,
+                faceUpRoles = state.faceUpCards(p.id).map { state.cards.getValue(it) }.sorted(),
+                faceDownCount = state.faceDownInfluence(p.id).size,
+                eliminated = !state.isAlive(p.id),
+                team = state.config.teamOfSeat(p.seatIndex),
+            )
+        }
     // The viewer's OWN cards only — face-down influence + face-up reveals. NEVER any opponent's card.
     val myCards =
         state.faceDownInfluence(viewer).map { OwnCard(it, state.cards.getValue(it), faceUp = false) } +
@@ -714,34 +916,50 @@ fun redact(state: GameState, viewer: PlayerId): PlayerView {
     )
 }
 
-private fun phaseView(state: GameState, viewer: PlayerId): PhaseView = when (val ph = state.phase) {
-    is Phase.AwaitingAction -> PhaseView.Turn(state.playerAtSeat(ph.actorSeat).id)
-    is Phase.AwaitingReactions -> PhaseView.Reactions(
-        actor = ph.ctx.pending.actor, action = ph.ctx.pending.action, claimedRole = ph.ctx.pending.claimedRole,
-        step = ph.ctx.step, toRespond = whoActsNext(state),
-        blocker = ph.ctx.block?.blocker, blockRole = ph.ctx.block?.role,
-    )
-    is Phase.AwaitingInfluenceLoss -> PhaseView.InfluenceLoss(ph.loser, ph.reason)
-    is Phase.AwaitingExchange -> {
-        // The drawn cards are the actor's private info: surface them ONLY to the actor's own view.
-        val drawn = if (viewer == ph.actor)
-            ph.drawn.map { OwnCard(it, state.cards.getValue(it), faceUp = false) }
-        else emptyList()
-        PhaseView.Exchange(ph.actor, drawn)
+private fun phaseView(
+    state: GameState,
+    viewer: PlayerId,
+): PhaseView =
+    when (val ph = state.phase) {
+        is Phase.AwaitingAction -> PhaseView.Turn(state.playerAtSeat(ph.actorSeat).id)
+        is Phase.AwaitingReactions ->
+            PhaseView.Reactions(
+                actor = ph.ctx.pending.actor,
+                action = ph.ctx.pending.action,
+                claimedRole = ph.ctx.pending.claimedRole,
+                step = ph.ctx.step,
+                toRespond = whoActsNext(state),
+                blocker = ph.ctx.block?.blocker,
+                blockRole = ph.ctx.block?.role,
+            )
+        is Phase.AwaitingInfluenceLoss -> PhaseView.InfluenceLoss(ph.loser, ph.reason)
+        is Phase.AwaitingExchange -> {
+            // The drawn cards are the actor's private info: surface them ONLY to the actor's own view.
+            val drawn =
+                if (viewer == ph.actor) {
+                    ph.drawn.map { OwnCard(it, state.cards.getValue(it), faceUp = false) }
+                } else {
+                    emptyList()
+                }
+            PhaseView.Exchange(ph.actor, drawn)
+        }
+        is Phase.AwaitingInvestigatePeek -> {
+            // The examined card's identity is the examiner's PRIVATE knowledge: surface it ONLY to the examiner.
+            // The target must NOT learn which of their cards was peeked (it is one of their own face-down cards,
+            // but they don't know the engine examined THAT specific one vs another), and no third party learns it.
+            val examined =
+                if (viewer == ph.examiner) {
+                    PeekedCard(ph.peeked, ph.target, state.cards.getValue(ph.peeked))
+                } else {
+                    null
+                }
+            PhaseView.InvestigatePeek(ph.examiner, ph.target, examined)
+        }
+        is Phase.GameOver -> PhaseView.Over(ph.winner)
     }
-    is Phase.AwaitingInvestigatePeek -> {
-        // The examined card's identity is the examiner's PRIVATE knowledge: surface it ONLY to the examiner.
-        // The target must NOT learn which of their cards was peeked (it is one of their own face-down cards,
-        // but they don't know the engine examined THAT specific one vs another), and no third party learns it.
-        val examined = if (viewer == ph.examiner)
-            PeekedCard(ph.peeked, ph.target, state.cards.getValue(ph.peeked))
-        else null
-        PhaseView.InvestigatePeek(ph.examiner, ph.target, examined)
-    }
-    is Phase.GameOver -> PhaseView.Over(ph.winner)
-}
 
 private fun Role.sorted(): Role = this
+
 private fun List<Role>.sorted(): List<Role> = this.sortedBy { it.ordinal }
 
 // ─────────────────────────── Invariants ───────────────────────────
@@ -799,12 +1017,22 @@ fun checkInvariants(state: GameState) {
 
 // ─────────────────────────── Small utilities ───────────────────────────
 
-fun <T> combinations(items: List<T>, k: Int): List<List<T>> {
+fun <T> combinations(
+    items: List<T>,
+    k: Int,
+): List<List<T>> {
     if (k == 0) return listOf(emptyList())
     if (k > items.size) return emptyList()
     val res = ArrayList<List<T>>()
-    fun rec(start: Int, acc: List<T>) {
-        if (acc.size == k) { res.add(acc); return }
+
+    fun rec(
+        start: Int,
+        acc: List<T>,
+    ) {
+        if (acc.size == k) {
+            res.add(acc)
+            return
+        }
         for (i in start until items.size) rec(i + 1, acc + items[i])
     }
     rec(0, emptyList())
