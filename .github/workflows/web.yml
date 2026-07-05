@@ -89,4 +89,4 @@ jobs:
           path: cmp-web/build/dist/wasmJs/productionExecutable/
 
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
