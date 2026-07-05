@@ -1,6 +1,3 @@
-build:
-  maxIssues: 0
-
 config:
   validation: true
   warningsAsErrors: false
@@ -37,27 +34,33 @@ style:
   ReturnCount:
     active: true
     max: 4            # Compose screens use early return for loading/error states
-  UnusedPrivateMember:
+  UnusedPrivateClass:
+    active: true
+  UnusedPrivateFunction:
+    active: true
+    allowedNames: "(_|ignored|expected|serialVersionUID)"
+  UnusedPrivateProperty:
     active: true
     allowedNames: "(_|ignored|expected|serialVersionUID)"
 
 complexity:
   LongMethod:
-    threshold: 80     # Compose screens are long but readable; engine state machines need depth
+    allowedLines: 80  # Compose screens are long but readable; engine state machines need depth
     ignoreAnnotated:
       - 'androidx.compose.runtime.Composable'
   LongParameterList:
-    threshold: 8
+    allowedFunctionParameters: 8
+    allowedConstructorParameters: 8
     ignoreAnnotated:
       - 'androidx.compose.runtime.Composable'
   CyclomaticComplexMethod:
-    threshold: 20     # Engine.applyIntent() is inherently complex by design (game rules)
+    allowedComplexity: 20  # Engine.applyIntent() is inherently complex by design (game rules)
   TooManyFunctions:
-    thresholdInFiles: 40
-    thresholdInClasses: 20
-    thresholdInInterfaces: 15
-    thresholdInObjects: 20
-    thresholdInEnums: 10
+    allowedFunctionsPerFile: 40
+    allowedFunctionsPerClass: 20
+    allowedFunctionsPerInterface: 15
+    allowedFunctionsPerObject: 20
+    allowedFunctionsPerEnum: 10
 
 naming:
   FunctionNaming:

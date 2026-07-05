@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>EmptyFunctionBlock:ShareResult.ios.kt:{}</ID>
+    <ID>EmptyFunctionBlock:ShareResult.jvm.kt:{}</ID>
+    <ID>EmptyFunctionBlock:ShareResult.wasmJs.kt:{}</ID>
+    <ID>MagicNumber:Feedback.android.kt:32767</ID>
+    <ID>MagicNumber:Feedback.android.kt:32768</ID>
+    <ID>MagicNumber:Feedback.android.kt:AndroidSoundPlayer$60L</ID>
+    <ID>MagicNumber:Feedback.ios.kt:0xFF</ID>
+    <ID>MagicNumber:Feedback.ios.kt:0xFFFF</ID>
+    <ID>MagicNumber:Feedback.ios.kt:16</ID>
+    <ID>MagicNumber:Feedback.ios.kt:36</ID>
+    <ID>MagicNumber:Feedback.jvm.kt:0xFF</ID>
+    <ID>MagicNumber:Feedback.wasmJs.kt:WasmSoundPlayer$0.3</ID>
+    <ID>MagicNumber:Feedback.wasmJs.kt:WasmSoundPlayer$0.35</ID>
+    <ID>MagicNumber:Feedback.wasmJs.kt:WasmSoundPlayer$0.4</ID>
+    <ID>MagicNumber:Feedback.wasmJs.kt:WasmSoundPlayer$0.45</ID>
+    <ID>MagicNumber:Feedback.wasmJs.kt:WasmSoundPlayer$110.0</ID>
+    <ID>MagicNumber:Feedback.wasmJs.kt:WasmSoundPlayer$120.0</ID>
+    <ID>MagicNumber:Feedback.wasmJs.kt:WasmSoundPlayer$1320.0</ID>
+    <ID>MagicNumber:Feedback.wasmJs.kt:WasmSoundPlayer$160.0</ID>
+    <ID>MagicNumber:Feedback.wasmJs.kt:WasmSoundPlayer$196.0</ID>
+    <ID>MagicNumber:Feedback.wasmJs.kt:WasmSoundPlayer$220.0</ID>
+    <ID>MagicNumber:Feedback.wasmJs.kt:WasmSoundPlayer$523.25</ID>
+    <ID>MagicNumber:Feedback.wasmJs.kt:WasmSoundPlayer$659.25</ID>
+    <ID>MagicNumber:Feedback.wasmJs.kt:WasmSoundPlayer$783.99</ID>
+    <ID>MagicNumber:Feedback.wasmJs.kt:WasmSoundPlayer$90.0</ID>
+    <ID>MatchingDeclarationName:Feedback.android.kt:FeedbackAndroid</ID>
+    <ID>UnusedParameter:Feedback.wasmJs.kt:amplitude: Double</ID>
+    <ID>UnusedParameter:Feedback.wasmJs.kt:durationMs: Double</ID>
+    <ID>UnusedParameter:Feedback.wasmJs.kt:freqHz: Double</ID>
+    <ID>UnusedParameter:Feedback.wasmJs.kt:ms: Int</ID>
+  </CurrentIssues>
+</SmellBaseline>

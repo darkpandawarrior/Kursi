@@ -26,11 +26,14 @@ subprojects {
     }
 
     // detekt: static analysis
-    apply(plugin = "io.gitlab.arturbosch.detekt")
-    configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
+    apply(plugin = "dev.detekt")
+    configure<dev.detekt.gradle.extensions.DetektExtension> {
         config.setFrom(rootProject.files("config/detekt/detekt.yml"))
         buildUponDefaultConfig = true
         parallel = true
+        // detekt 2.x's default ruleset + renamed rules surfaced pre-existing findings that
+        // 1.23.x's config didn't catch; baseline grandfathers those in, new code is still gated.
+        baseline = file("detekt-baseline.xml")
         // Only scan hand-authored source; skip generated + build output
         source.setFrom(
             "src/commonMain/kotlin",
