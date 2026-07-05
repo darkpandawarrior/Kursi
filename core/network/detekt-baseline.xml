@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:WireToEngine.kt:fun WireGameEvent.toEngineEvent: GameEvent</ID>
+    <ID>EmptyFunctionBlock:LanDiscovery.android.kt:LanAdvertiser.&lt;no name provided&gt;${}</ID>
+    <ID>EmptyFunctionBlock:LanDiscovery.android.kt:LanDiscoverer.&lt;no name provided&gt;${}</ID>
+    <ID>LoopWithTooManyJumpStatements:KursiClient.kt:KursiClient$for</ID>
+    <ID>LoopWithTooManyJumpStatements:LanDiscovery.jvm.kt:LanDiscoverer$while</ID>
+    <ID>MatchingDeclarationName:Standings.kt:RemoteStanding</ID>
+    <ID>ReturnCount:WireLegalIntents.kt:fun WirePlayerView.legalIntents: List&lt;WireIntent&gt;</ID>
+    <ID>TooGenericExceptionCaught:OnlineKursiClient.kt:OnlineKursiClient$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:RoomApi.kt:RoomApi$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>
