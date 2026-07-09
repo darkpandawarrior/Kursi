@@ -71,6 +71,7 @@ import com.kursi.shared.screen.LobbyScreen
 import com.kursi.shared.screen.OnlineHubScreen
 import com.kursi.shared.screen.OnlineStandingRow
 import com.kursi.shared.screen.OnlineStandings
+import com.kursi.shared.screen.ProfileSetupScreen
 import com.kursi.shared.screen.RecentMatchesList
 import com.kursi.shared.screen.ResultsScreen
 import com.kursi.shared.screen.ReviewScreen
@@ -389,6 +390,20 @@ fun main() {
         )
     }
     println("  wrote settings.png")
+
+    // ── PEHLI HAZRI — first-run profile setup (name, avatar, seat colour) ──
+    // Seeded with a populated identity so the live-preview monogram + selected avatar/swatch
+    // render filled-in rather than the blank default state.
+    renderComposable(outDir, "profile_setup") {
+        val prefs =
+            AppPrefs().apply {
+                playerName = "Siddharth"
+                playerAvatarIdx = 1
+                playerColorArgb = 0xFFE63946L
+            }
+        ProfileSetupScreen(prefs = prefs, onDone = {})
+    }
+    println("  wrote profile_setup.png")
 
     // M3 §4 — honest "record expired" empty state (MatchSummary cache miss → null).
     renderComposable(outDir, "results_expired") {
