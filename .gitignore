@@ -10,6 +10,11 @@ local.properties
 # Build outputs (generated artifacts, not source)
 outputs/
 
+# Render byproduct — the screenshot harness writes cropped region variants to a
+# crop/ subdir; only the top-level PNGs are tracked baselines. Keep crop/ out of
+# the committed gallery (CI copies build/shots/. into docs/screenshots/).
+docs/screenshots/crop/
+
 # Signing secrets — NEVER commit these
 keystore.properties
 *.keystore
