@@ -7,8 +7,8 @@
 
 [![CI](https://github.com/darkpandawarrior/Kursi/actions/workflows/ci.yml/badge.svg)](https://github.com/darkpandawarrior/Kursi/actions/workflows/ci.yml)
 [![Quality](https://github.com/darkpandawarrior/Kursi/actions/workflows/quality.yml/badge.svg)](https://github.com/darkpandawarrior/Kursi/actions/workflows/quality.yml)
-![Kotlin](https://img.shields.io/badge/Kotlin-2.4-7F52FF?logo=kotlin&logoColor=white)
-![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.11-4285F4?logo=jetpackcompose&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.4.20--Beta1-7F52FF?logo=kotlin&logoColor=white)
+![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.12-4285F4?logo=jetpackcompose&logoColor=white)
 ![Platforms](https://img.shields.io/badge/Android%20%7C%20iOS%20%7C%20Desktop%20%7C%20Web-3DDC84)
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-blue)](LICENSE)
 
@@ -39,17 +39,9 @@ The chair at the head is empty.
 
 ## Home
 
-| Fresh install | In a career — ranked + daily + gauntlet strips |
-|:-:|:-:|
-| ![](docs/screenshots/home.png) | ![](docs/screenshots/home_ranked.png) |
+![Home flow — fresh install, GAUNTLET and KISSA tile previews, then a full career with ranked, daily and gauntlet strips](docs/gifs/home.gif)
 
-| Mid-game resume strip + all progression | GAUNTLET tile selected — right panel shows mode preview |
-|:-:|:-:|
-| ![](docs/screenshots/home_resume.png) | ![](docs/screenshots/home_mode_gauntlet.png) |
-
-| KISSA (story mode) tile selected |
-|:-:|
-| ![](docs/screenshots/home_mode_story.png) |
+*Fresh install → GAUNTLET preview → KISSA preview → a loaded career (ranked + daily + gauntlet) → mid-match resume.*
 
 The home screen has eight mode tiles across two columns — **New Game**, **KISSA** (story campaign), **GAUNTLET** (rung ladder), **TAMASHA** (spectate AI), **Tutorial**, **Rules / Gazette**, **Settings**, and **Multiplayer** (online, flagged PENDING SANCTION until server key is present). Selecting any tile opens a mode preview in the right panel with a full description, key details, and an ENTER button.
 
@@ -123,9 +115,9 @@ Does **JAANCH** — privately examines one of a target's face-down cards. The Pa
 
 ## How you play
 
-| Your turn — pick an action | Declare, then confirm | Block, challenge, or let it pass? |
-|:-:|:-:|:-:|
-| ![](docs/screenshots/4p_pick_action.png) | ![](docs/screenshots/4p_confirm.png) | ![](docs/screenshots/4p_reaction.png) |
+![A full turn — pick an action, declare and confirm, survive the reaction window, block, exchange, lose influence, and reach game over and the results certificate](docs/gifs/turn.gif)
+
+*One turn end-to-end: pick an action → confirm the claim → the table reacts → a block with live odds → an exchange → influence lost → game over → the stamped result.*
 
 Everyone starts with 2 Khokha and 2 cards. On your turn:
 
@@ -142,17 +134,15 @@ Everyone starts with 2 Khokha and 2 cards. On your turn:
 
 **Block:** Claim the blocking role. The original actor can challenge your block — same rules apply. If no one challenges, the block stands.
 
-| Block step with odds | Exchange — keep your roles | Influence lost |
-|:-:|:-:|:-:|
-| ![](docs/screenshots/4p_reaction_block.png) | ![](docs/screenshots/4p_exchange.png) | ![](docs/screenshots/4p_lose_influence.png) |
-
 Last player with influence wins the **Gaddi**.
 
 ---
 
 ## DARBAR — the social layer
 
-![DARBAR — Afwaah arc at a live table. The player fuels the rumour or lets it burn.](docs/screenshots/darbar_table.png)
+![DARBAR flow — the KISSA arc picker, then an Afwaah rumour unfolding at a live table with bot speech and the player's chat suggestions](docs/gifs/darbar.gif)
+
+*Pick a KISSA arc → a live Darbar table with an Afwaah in flight: bots pile on, the tray shows what you can say to fuel it or let it burn.*
 
 DARBAR is the layer above the engine. Bots have memory, moods, and grudges. They talk to each other. They form pacts. They spread stories. And you can intervene — strategically.
 
@@ -173,8 +163,6 @@ The social layer runs on a **deterministic narrative RNG** — separate from the
 ---
 
 ## KISSA — story arcs mode
-
-![KISSA story mode — pick your arc and start](docs/screenshots/story.png)
 
 KISSA is the story-mode entry point to DARBAR. Pick a narrative arc to start with: run a Gathbandhan from turn one, or seed an Afwaah before the first GHOTALA. The bots have backstories and the table has a script. What you do with it is up to you.
 
@@ -207,9 +195,9 @@ Each persona plays a statistically distinct policy. Didi's retaliation timing, M
 
 The coach runs **ISMCTS** (Information Set Monte Carlo Tree Search) in the background — the same algorithm running the bots, turned toward advising you. It has only the information you have: the table-visible event log, standing claims, who got caught bluffing and when.
 
-| Coach on your action — move starred, odds on claims | Opponent dossier — posterior + claim history | Bluff risk on your own action |
-|:-:|:-:|:-:|
-| ![](docs/screenshots/4p_coach_action.png) | ![](docs/screenshots/4p_chit_dossier.png) | ![](docs/screenshots/4p_chit_risk.png) |
+![Decision Coach flow — recommended move starred with odds on claims, an opponent dossier chit, a bluff-risk chit, the reaction-window read, and the same table with coach off](docs/gifs/coach.gif)
+
+*Coach on the action dock → long-press an opponent for their dossier → long-press your move for the bluff-risk chit → coach on the reaction window → coach off, table silent → rival claims still visible on every plate.*
 
 Every action chip gets annotated: the **recommended move** gets a brass star. Claim-bearing actions get a **REAL** or **BLUFF** badge and a **P(it flies)** odds pill. On the target-pick dock, the **weakest target** gets flagged.
 
@@ -217,15 +205,15 @@ Long-press an opponent's plate to open their **dossier chit**: posterior probabi
 
 Long-press your pending action to open the **risk chit**: the probability your claim gets challenged, and the EV impact if it does.
 
-| Coach on the reaction window | Coach off — play the table unaided | Rival claims visible on every plate |
-|:-:|:-:|:-:|
-| ![](docs/screenshots/4p_coach_reaction.png) | ![](docs/screenshots/4p_pick_action_nocoach.png) | ![](docs/screenshots/4p_mid_claim.png) |
-
 Coach can be toggled off in Settings. When off, the table is silent — no odds, no stars, no badges. All observational tools (dossier chit, risk chit, standing claims, suspicion pips, event log) remain visible regardless. Coach is advisory; the read is always yours.
 
 ---
 
 ## Game modes
+
+![Game modes flow — Setup, Team Khel toggle, the GAUNTLET ladder, a team table with faction badges, TAMASHA spectator mode, and the pass-and-play handoff guard](docs/gifs/modes.gif)
+
+*Setup → Team Khel toggle → GAUNTLET ladder → a 2v2 team table → TAMASHA watch-mode → the pass-and-play handoff guard.*
 
 ### vs AI
 1 human vs 1–9 bot opponents. Set player count, difficulty, and whether DARBAR is active.
@@ -235,8 +223,6 @@ Coach can be toggled off in Settings. When off, the table is silent — no odds,
 ---
 
 ### GAUNTLET — Tarakki ki Seedhi (Promotion Ladder)
-
-![GAUNTLET — mid-run: rungs 0–1 cleared, climbing to rung 2](docs/screenshots/gauntlet.png)
 
 Five rungs. Win to climb. Lose and stay. You keep your rung — no snakes, no falls.
 
@@ -254,10 +240,6 @@ Clear Rung 5 and the Gaddi is yours.
 
 ### Team Khel — Faction Play
 
-| Team table — faction badges on the plates | Team Khel in Setup |
-|:-:|:-:|
-| ![](docs/screenshots/team_table.png) | ![](docs/screenshots/setup_teams.png) |
-
 Two factions. **Allies are never legal targets** — engine rule, not convention. Targeting your own teammate is a structurally illegal move. Faction badges appear on every plate. Win as a team; the last surviving faction takes the table.
 
 ---
@@ -269,15 +251,11 @@ The full social-layer mode: all four arcs active, bots chat, player suggestions 
 
 ### TAMASHA — Watch Mode
 
-![TAMASHA — AI plays all seats; spectator banner, no controls](docs/screenshots/spectator_demo.png)
-
 AI plays every seat. Spectator banner, no action controls. Watch ten personas destroy each other, form pacts, break them, and fight over the Gaddi. Good for a demonstration or for understanding how the personas read the table differently.
 
 ---
 
 ### Pass-and-play — Hot-seat Multiplayer
-
-![Pass-and-play — handoff guard blanks the screen between turns](docs/screenshots/passandplay_handoff.png)
 
 Multiple humans, one device. After each turn, a **handoff guard** blanks the screen and prompts the next player to take the device — so face-down cards stay hidden between turns. No accounts, no network required.
 
@@ -301,9 +279,9 @@ Seven additive rule variants, toggleable per-match from the Setup screen. All de
 
 ### 2–10 players
 
-| 2-player duel | 10-player table |
-|:-:|:-:|
-| ![](docs/screenshots/2p_pick_action.png) | ![](docs/screenshots/10p_pick_action.png) |
+![Table sizes flow — the 2-player duel, a 4-player table, and the full 10-player table where the Patrakaar enters](docs/gifs/table_sizes.gif)
+
+*The same engine at 2, 4, and 10 seats — the table reshapes from a fast duel to a loud ten-hand darbar.*
 
 At 2 players, SUPARI + KHELA dynamics dominate — the coin race is fast. At 10 players, the PATRAKAAR (6th role) enters the deck; the Jaanch information-asymmetry and the social layer make the table genuinely loud.
 
@@ -311,9 +289,11 @@ At 2 players, SUPARI + KHELA dynamics dominate — the coin race is fast. At 10 
 
 ## Career, replay, and ranking
 
-### Results certificate
+![Career flow — the stamped results certificate, the empty-record state, the Roznamcha career dossier, local ELO, online standings, the replay scrubber and the recent-matches list](docs/gifs/career.gif)
 
-![Results certificate with decision-quality recap and share](docs/screenshots/results.png)
+*Results certificate → record-expired empty state → the Roznamcha career dossier → local ELO with spark-line → online standings → the replay scrubber with advisor annotation → recent matches.*
+
+### Results certificate
 
 After every game: a stamped certificate. Winner, final standings, bluffs held, bluffs caught, and a **decision-quality recap** — how closely your moves matched the ISMCTS best-move at each decision point, average EV bled, and challenge accuracy. Share it directly.
 
@@ -321,17 +301,11 @@ After every game: a stamped certificate. Winner, final standings, bluffs held, b
 
 ### Roznamcha — Career Dossier
 
-![Roznamcha — lifetime record, head-to-head, decision-quality ledger](docs/screenshots/career.png)
-
 Lifetime stats: games, wins, bluffs held, bluffs caught. Head-to-head records against each bot persona — who you've played, and who you've beaten. A **decision-quality ledger** that accumulates across all games: accuracy against ISMCTS best-move, average EV bled per decision, challenge accuracy %, bluff success rate.
 
 ---
 
 ### Darja-suchi — Local Ranking
-
-| Local ELO with spark-line | Online standings connected |
-|:-:|:-:|
-| ![](docs/screenshots/leaderboard.png) | ![](docs/screenshots/leaderboard_online.png) |
 
 Local ELO with a 14-game rating history spark-line. Daily challenge (Aaj ki Chunauti) that resets each day. Streak counter with best-streak history. When connected to the Ktor server, an **online standings board** appears alongside local — server-backed real-time rankings.
 
@@ -339,19 +313,15 @@ Local ELO with a 14-game rating history spark-line. Daily challenge (Aaj ki Chun
 
 ### Replay Scrubber
 
-| Replay with advisor annotation | Recent matches list |
-|:-:|:-:|
-| ![](docs/screenshots/review_replay.png) | ![](docs/screenshots/review_recent_list.png) |
-
 Every completed match is stored as `(seed, intentLog)`. The replay reconstructs the game state **byte-for-byte** from that pair — no snapshots required. Step through each decision. At annotated moments, see what the coach would have recommended and how your move compared. Available from the career screen for recent matches.
 
 ---
 
 ## Online play
 
-| Online hub — mode picker | LAN browse — discovered hosts | Waiting room — code + seats |
-|:-:|:-:|:-:|
-| ![](docs/screenshots/online_hub.png) | ![](docs/screenshots/online_hub_lan.png) | ![](docs/screenshots/online_lobby.png) |
+![Online flow — the mode picker, LAN browse with discovered hosts, the waiting room with room code and seats, and the reconnect banner after a dropped connection](docs/gifs/online.gif)
+
+*Mode picker → LAN browse (discovered hosts) → waiting room with code + seats → a dropped connection and its reconnect banner.*
 
 **Private room by code** — create a room, share the 4-letter code. Anyone with the code joins.
 
@@ -361,19 +331,15 @@ Every completed match is stored as `(seed, intentLog)`. The replay reconstructs 
 
 The authoritative server is **Ktor/Netty**. All game state lives server-side. Clients receive only their redacted `PlayerView` — the server never sends information a player shouldn't have. A disconnected player auto-passes on their turn until they reconnect.
 
-| Connection dropped — reconnect banner |
-|:-:|
-| ![](docs/screenshots/online_lobby_lost.png) |
-
 ---
 
 ## Onboarding
 
-### Pehli Hazri — Interactive Tutorial
+![Onboarding flow — Pehli Hazri profile setup, the scripted tutorial table, the guaranteed bluff-caught JHOOTH stamp, and arriving at Home](docs/gifs/onboarding.gif)
 
-| Intro — the scripted table | Beat 7 — bluff caught, JHOOTH stamp |
-|:-:|:-:|
-| ![](docs/screenshots/tutorial_intro.png) | ![](docs/screenshots/tutorial_bluff_caught.png) |
+*First run: set your name, avatar and seat colour (PEHLI HAZRI) → the scripted tutorial table → the guaranteed bluff-caught teaching beat → land on Home.*
+
+### Pehli Hazri — Interactive Tutorial
 
 Scripted table with guaranteed teaching beats. Beat 7 is the lesson that matters: a NETA claim gets challenged and the card flips to BHAI. The **JHOOTH** (liar) verdict stamp lands. The bluffer loses influence. You can't exit the tutorial without seeing it happen.
 
@@ -381,25 +347,21 @@ Scripted table with guaranteed teaching beats. Beat 7 is the lesson that matters
 
 ### Setup
 
-| Setup screen | Setup with Team Khel toggle |
-|:-:|:-:|
-| ![](docs/screenshots/setup.png) | ![](docs/screenshots/setup_teams.png) |
-
 Set player count (2–10), difficulty, play mode (vs AI / DARBAR / TAMASHA / Pass-and-play), and whether Team Khel is active. Team Khel appears when 4+ players are selected and is the only option that restructures the engine-level legality of targets.
 
 ---
 
 ### Niyam Gazette — Rule Reference
 
-![Niyam Gazette — roles tab open](docs/screenshots/gazette_roles.png)
-
 Pull up mid-game without leaving the table. Three tabs: roles and their powers, all actions with coin costs, and the DARBAR arc reference. Includes PATRAKAAR when the 6th role is in play.
 
 ---
 
-## Reduced-motion and accessibility
+## Reference & accessibility
 
-![Reduced-motion static frames — one per moment type](docs/screenshots/reduced_motion_frames.png)
+![Reference flow — the Niyam Gazette rule reference, the reduced-motion static-frame gallery, and the settings screen](docs/gifs/reference.gif)
+
+*The Niyam Gazette (roles / actions / arcs) → the reduced-motion static-frame gallery → Settings.*
 
 Every game moment (income, coin steal, role reveal, influence loss, elimination, coup, win) has a **tailored static end-frame** when reduced motion is on — not a generic fade. GHOTALA shows a held stamp. SUPARI shows the tipped chair. KHELA shows the KURSI crest. Okabe-Ito CVD-safe palette for all role colours. Full VoiceOver/TalkBack support with semantic properties and traversal order.
 
@@ -523,7 +485,7 @@ Not automatable, no CI job:
 
 ## Tech
 
-Kotlin Multiplatform 2.4 · Compose Multiplatform 1.11 · Ktor 3.5 · multiplatform-settings 1.3 · kotlinx.serialization 1.11 · detekt · ktlint · Fastlane · GitHub Actions
+Kotlin Multiplatform 2.4.20-Beta1 · Compose Multiplatform 1.12 · Gradle 9.7-milestone-2 · AGP 9.4-alpha · Ktor 3.5 · multiplatform-settings 1.3 · kotlinx.serialization 1.11 · detekt · ktlint · Fastlane · GitHub Actions
 
 ---
 
