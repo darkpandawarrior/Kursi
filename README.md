@@ -1,6 +1,6 @@
 <div align="center">
 
-# Kursi
+<img src="docs/assets/banner.svg" alt="Kursi — Kursi ke liye kuch bhi karega (he'll do anything for the chair)" width="900" />
 
 *Kursi ke liye kuch bhi karega.*  
 *He'll do anything for the chair.*
@@ -8,7 +8,7 @@
 [![CI](https://github.com/darkpandawarrior/Kursi/actions/workflows/ci.yml/badge.svg)](https://github.com/darkpandawarrior/Kursi/actions/workflows/ci.yml)
 [![Quality](https://github.com/darkpandawarrior/Kursi/actions/workflows/quality.yml/badge.svg)](https://github.com/darkpandawarrior/Kursi/actions/workflows/quality.yml)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.4.20--Beta1-7F52FF?logo=kotlin&logoColor=white)
-![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.12-4285F4?logo=jetpackcompose&logoColor=white)
+![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.12.0--beta01-4285F4?logo=jetpackcompose&logoColor=white)
 ![Platforms](https://img.shields.io/badge/Android%20%7C%20iOS%20%7C%20Desktop%20%7C%20Web-3DDC84)
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-blue)](LICENSE)
 
@@ -388,6 +388,71 @@ Kursi/
 └── cmp-web/          # Kotlin/Wasm browser + PWA manifest
 ```
 
+### Module dependency graph
+
+Direct `project(":...")` dependencies as declared in each module's `build.gradle.kts` — not aspirational, this is what actually resolves:
+
+```mermaid
+graph TD
+    subgraph domain["Domain core — pure Kotlin, zero UI deps"]
+        engine["engine<br/>(GameState, Intent) -&gt; GameState"]
+        shared_protocol["shared-protocol<br/>wire types"]
+        ai["ai<br/>ISMCTS + personas"]
+    end
+
+    subgraph coresvc["Core services"]
+        designsystem["core:designsystem"]
+        network["core:network"]
+        prefs["core:prefs"]
+        feedback["core:feedback"]
+    end
+
+    subgraph featui["Feature + shared UI"]
+        game["feature:game<br/>MVI GameViewModel"]
+        cmp_shared["cmp-shared<br/>NavHost + screens"]
+    end
+
+    subgraph shells["App shells"]
+        cmp_android["cmp-android"]
+        cmp_ios["cmp-ios"]
+        cmp_desktop["cmp-desktop"]
+        cmp_web["cmp-web"]
+    end
+
+    server["server<br/>Ktor/Netty authoritative"]
+
+    ai --> engine
+    shared_protocol --> engine
+    network --> engine
+    network --> shared_protocol
+    designsystem --> engine
+    designsystem --> feedback
+
+    game --> engine
+    game --> ai
+    game --> designsystem
+    game --> feedback
+    game --> network
+    game --> shared_protocol
+
+    cmp_shared --> game
+    cmp_shared --> designsystem
+    cmp_shared --> feedback
+    cmp_shared --> prefs
+    cmp_shared --> network
+
+    cmp_android --> cmp_shared
+    cmp_ios --> cmp_shared
+    cmp_desktop --> cmp_shared
+    cmp_web --> cmp_shared
+
+    server --> engine
+    server --> shared_protocol
+    server --> ai
+```
+
+Simplified for readability: a few app shells also take a direct `project()` dependency on `engine`/`ai`/`core:designsystem` for platform-specific wiring (e.g. `cmp-desktop`'s headless render harness) in addition to the path shown through `cmp-shared`/`feature:game`. `engine` itself has zero `project()` dependencies — every arrow in this graph ultimately terminates there.
+
 Things worth calling out:
 
 **Engine is a pure function.** `(GameState, Intent) → GameState` with a counter-based SplitMix64 RNG carried in state. No `Date.now()`, no global random. Any game replays byte-for-byte from `(seed, intentLog)`. Resume, replay, and server authority all work without snapshots — `MatchResumeTest` proves this.
@@ -399,6 +464,16 @@ Things worth calling out:
 **Design system is the enforcement layer.** Every surface routes through `BrassParchmentSurface`, `decoPopoverPaper`, `WaxSeal`, `drawRoleGlyph`. The License Raj Deco visual identity — 1950s–70s government-issue document aesthetic, teak `#1A1A2E` / brass `#C99A3B` / cream `#F4ECD8` — is structurally enforced, not left to per-screen taste.
 
 **AI layer is provider-agnostic.** The `AiProvider` interface abstracts Anthropic, OpenAI, and Gemini cloud calls, on-device Gemini Nano (Android), and Apple FoundationModels (iOS 26). ISMCTS is the offline fallback. BYOK (bring your own key) stored in EncryptedSharedPreferences / Keychain.
+
+---
+
+## Technical deep dive
+
+Two things worth reading the source for — not the callouts above, not generic KMP boilerplate.
+
+**The RNG is a value, not a service.** `engine/src/commonMain/kotlin/com/kursi/engine/Rng.kt` is 53 lines and carries the entire determinism guarantee. `Rng` wraps an immutable `RngState(seed, step)`; every draw (`nextLong`, `nextInt`, `draw`) takes the current `Rng` and returns `(value, advancedRng)` — nothing mutates, and there's no `kotlin.random.Random` anywhere in `engine`. The mixer is a plain SplitMix64 (`z = (z xor (z ushr 30)) * 0xBF58476D1CE4E5B9`, integer-only), so `(seed, step)` produces identical output on every target the module compiles for — JVM, Android, iOS/Native, Wasm — with no floating point and no platform `Random` implementation to diverge between them. Because the RNG is state threaded through pure functions rather than a mutable service the engine holds onto, a whole match replays byte-for-byte from `(seed, intentLog)` alone — no snapshots. `ScalingGoldenTest` and `MatchResumeTest` (`engine/src/commonTest`, `feature/game/src/commonTest`) are what actually pin that guarantee down.
+
+**A vendored MVI core, not a copy-pasted one.** `GameViewModel` (`feature/game/src/commonMain/kotlin/com/kursi/feature/game/GameViewModel.kt`) is built on a plain `CoroutineScope`, not `androidx.lifecycle.ViewModel` — `cmp-ios` and `cmp-web` can't depend on AndroidX, so the MVI contract has to be platform-neutral. One-shot signals (`GameEffect.IllegalMove`, etc.) go through `EffectEmitter`, a 25-line class that lives in `external/kmp-mvi-core` — a *separate git repository*, vendored in as a submodule and wired through `includeBuild` in `settings.gradle.kts`, not a module of this repo. The composite build needs an explicit `dependencySubstitution` for `com.siddharth.kmp:mvi-core`: the submodule's own Gradle subproject is still named `:lib`, and only its *published* Kotlin Multiplatform root artifact is renamed to `mvi-core` at publish time — without the substitution Gradle would auto-resolve the coordinate to `com.siddharth.kmp:lib` and fail. Same MVI primitive, reused across projects, versioned once instead of copy-pasted per project.
 
 ---
 
@@ -476,6 +551,33 @@ Not automatable, no CI job:
 
 ---
 
+## Version history
+
+No release has been tagged yet. `git tag` returns exactly one entry — `backup/pre-scrub-2026-07-06`, a pre-scrub safety marker, not a version — so there's no `v1.0.0`-style tag history to show. `VERSION` currently reads `1.0.0` and `BUILD_NUMBER` reads `0`; both are bumped by `scripts/bump_version.sh`, but neither has been cut as a GitHub Release yet.
+
+What the 88 commits since the project's scaffold actually shipped, dated from `git log`:
+
+| Date | Milestone |
+|------|-----------|
+| 2026-01-06 | Project scaffold — KMP setup, Gradle wrapper, version catalog |
+| 2026-01-13 | `engine`: game types, the `redact` secrecy boundary, SplitMix64 counter RNG |
+| 2026-02-10 | `ai`: ISMCTS — determinizer, node sampling, belief model |
+| 2026-02-17 | Difficulty tiers Easy → Grandmaster and the 10 named bot personas |
+| 2026-03-05 | `core:designsystem`: License Raj Deco theme tokens, role glyphs |
+| 2026-03-19 | `feature:game`: game session with deterministic resume, MVI state |
+| 2026-04-02 | All 4 client shells (Android, iOS, desktop, web) building |
+| 2026-04-23 | `server`: Ktor authoritative game server, invite-code rooms |
+| 2026-05-07 | DARBAR: bot chat, social model, alliance system |
+| 2026-05-13 | Four DARBAR story arcs — Gathbandhan, Afwaah, Sting, Badla |
+| 2026-06-18 | Android FCM push, notification channels, in-app review/update |
+| 2026-06-26 | Seven Vishesh Modes (additive gameplay variants) |
+| 2026-07-05 | `kmp-mvi-core` vendored in; `GameViewModel` wired to `EffectEmitter` |
+| 2026-07-09 | Toolchain + dependencies bumped to the versions in the Tech section below |
+
+Full list: `git log --oneline`.
+
+---
+
 ## Docs
 
 - [Game rules PDF](docs/Kursi_Game_Rules-v2.pdf)
@@ -485,7 +587,7 @@ Not automatable, no CI job:
 
 ## Tech
 
-Kotlin Multiplatform 2.4.20-Beta1 · Compose Multiplatform 1.12 · Gradle 9.7-milestone-2 · AGP 9.4-alpha · Ktor 3.5 · multiplatform-settings 1.3 · kotlinx.serialization 1.11 · detekt · ktlint · Fastlane · GitHub Actions
+Kotlin Multiplatform 2.4.20-Beta1 · Compose Multiplatform 1.12.0-beta01 · Gradle 9.7.0-milestone-2 · AGP 9.4.0-alpha03 · Ktor 3.5.1 · multiplatform-settings 1.3.0 · kotlinx.serialization 1.11.0 · detekt 2.0.0-alpha.5 · ktlint 14.2.0 · Fastlane · GitHub Actions
 
 ---
 
