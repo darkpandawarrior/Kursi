@@ -196,7 +196,7 @@ fun ActionMomentOverlay(
     anchors: TableAnchors,
     reducedMotion: Boolean = false,
     soundEnabled: Boolean = false,
-    soundPlayer: com.kursi.core.feedback.SoundPlayer? = null,
+    soundPlayer: com.siddharth.kmp.feedback.SoundPlayer? = null,
     onMomentDone: (KursiMoment) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {

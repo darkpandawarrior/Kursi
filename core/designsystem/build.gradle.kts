@@ -34,7 +34,7 @@ kotlin {
             // under src/commonMain/composeResources/font/ (Rozha One, Marcellus, DM Mono)
             implementation(libs.components.resources)
             implementation(project(":engine"))
-            implementation(project(":core:feedback"))
+            implementation("com.siddharth.kmp:feedback:1.0.0")
         }
     }
 }

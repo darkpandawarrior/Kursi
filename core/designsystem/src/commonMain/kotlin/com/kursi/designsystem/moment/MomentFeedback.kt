@@ -3,10 +3,10 @@ package com.kursi.designsystem.moment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
-import com.kursi.core.feedback.HapticPattern
-import com.kursi.core.feedback.SoundKey
-import com.kursi.core.feedback.SoundPlayer
-import com.kursi.core.feedback.defaultSoundPlayer
+import com.siddharth.kmp.feedback.HapticPattern
+import com.siddharth.kmp.feedback.SoundKey
+import com.siddharth.kmp.feedback.SoundPlayer
+import com.siddharth.kmp.feedback.defaultSoundPlayer
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MomentFeedback.kt — M3 glue between the moment data model and the :core:feedback

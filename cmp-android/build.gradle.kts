@@ -154,7 +154,7 @@ dependencies {
     implementation(project(":cmp-shared"))
     implementation(project(":feature:game"))
     implementation(project(":core:designsystem"))
-    implementation(project(":core:feedback"))
+    implementation("com.siddharth.kmp:feedback:1.0.0")
     implementation(project(":core:prefs"))
 
     implementation(libs.activity.compose)

@@ -7,10 +7,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
-import com.kursi.core.feedback.FeedbackAndroid
-import com.kursi.core.feedback.NotificationChannelManager
-import com.kursi.core.feedback.NotificationPermission
-import com.kursi.core.feedback.NotificationPermissionState
+import com.siddharth.kmp.feedback.FeedbackAndroid
+import com.siddharth.kmp.feedback.NotificationChannelManager
+import com.siddharth.kmp.feedback.NotificationPermission
+import com.siddharth.kmp.feedback.NotificationPermissionState
 import com.kursi.core.prefs.AppPrefs
 import com.kursi.shared.KursiApp
 import kotlinx.coroutines.launch

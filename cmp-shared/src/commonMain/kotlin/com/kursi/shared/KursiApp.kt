@@ -19,7 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.kursi.core.feedback.shareGameResult
+import com.siddharth.kmp.feedback.shareGameResult
 import com.kursi.core.network.fetchStandings
 import com.kursi.core.prefs.AppPrefs
 import com.kursi.core.prefs.DecisionTally

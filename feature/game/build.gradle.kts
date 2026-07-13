@@ -53,7 +53,7 @@ kotlin {
             implementation(project(":engine"))
             implementation(project(":ai"))
             implementation(project(":core:designsystem"))
-            implementation(project(":core:feedback"))
+            implementation("com.siddharth.kmp:feedback:1.0.0")
             implementation(project(":core:network"))
             implementation(project(":shared-protocol"))
             implementation("com.siddharth.kmp:mvi-core:1.0.0")

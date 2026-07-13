@@ -67,6 +67,17 @@ includeBuild("external/kmp-mvi-core") {
     }
 }
 
+// Multiplatform sound/haptics/share-result primitives — vendored as a submodule, wired via
+// composite build so `com.siddharth.kmp:feedback:1.0.0` resolves to the local checkout instead
+// of a remote repo. Subproject is `:feedbacklib` (not `:lib`, unlike kmp-mvi-core) — two included
+// builds both naming their subproject `:lib` under the same `com.siddharth.kmp` group made Gradle's
+// composite dependency substitution ambiguous (mvi-core kept resolving to kmp-feedback's project).
+includeBuild("external/kmp-feedback") {
+    dependencySubstitution {
+        substitute(module("com.siddharth.kmp:feedback")).using(project(":feedbacklib"))
+    }
+}
+
 // ── M0: PURE DOMAIN CORE (JVM target only until an Android SDK + apps land in M1/M2) ──
 include(":engine")            // PURE deterministic reducer. LEAF — depends on nothing.
 include(":ai")                // Bot policies (Easy, Medium). Depends on :engine only.
@@ -80,7 +91,8 @@ include(":core:designsystem") // CMP theme engine, color tokens, reusable compos
 // ── CORE (T10: multiplatform Ktor WebSocket client — android/ios/jvm/wasmJs) ─────
 include(":core:network")      // KursiClient + OnlineGameSession: WS connect, encode/decode, reconnect.
 include(":core:prefs")        // Multiplatform key-value preferences (AppPrefs) backed by multiplatform-settings.
-include(":core:feedback")     // M3: expect/actual SoundPlayer + haptics (jvm tone synth, android AudioTrack/Vibrator, ios AVAudioPlayer, wasm Web Audio).
+// core:feedback extracted to external/kmp-feedback (composite build above) — expect/actual
+// SoundPlayer + haptics (jvm tone synth, android AudioTrack/Vibrator, ios AVAudioPlayer, wasm Web Audio).
 
 // ── FEATURES (T4: offline game-driving layer + MVI ViewModel + table composables) ──
 include(":feature:game")      // Offline game session, MVI GameViewModel, GameScreen composables.
