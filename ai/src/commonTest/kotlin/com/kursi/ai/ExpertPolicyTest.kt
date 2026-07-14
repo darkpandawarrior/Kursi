@@ -1,6 +1,7 @@
 package com.kursi.ai
 
 import com.kursi.engine.*
+import com.siddharth.kmp.botspolicy.SearchBudget
 import kotlin.math.roundToInt
 import kotlin.test.Test
 import kotlin.test.assertTrue

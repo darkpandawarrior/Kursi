@@ -6,9 +6,10 @@ package com.kursi.engine
  * policy that reads opponents' hidden cards is structurally impossible.
  *
  * Renamed from the former engine-hosted `Policy` (ai→engine inversion, kmp-toolkit-family bots-policy
- * lane): the app-facing bot-policy abstraction now lives as a generic `Policy<View, Move>` in `:ai`
- * (`com.kursi.ai.policy.abstraction`, aliased to `com.kursi.ai.Policy` for Kursi's concrete shape).
- * [SimPolicy] stays engine-local — it only serves [SimHarness]'s own tests, never consumed by `:ai`.
+ * lane): the app-facing bot-policy abstraction now lives as a generic `Policy<View, Move>` in the
+ * `com.siddharth.kmp:bots-policy` toolkit module (aliased to `com.kursi.ai.Policy` for Kursi's
+ * concrete shape). [SimPolicy] stays engine-local — it only serves [SimHarness]'s own tests, never
+ * consumed by `:ai`.
  */
 fun interface SimPolicy {
     fun decide(

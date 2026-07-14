@@ -1,24 +1,16 @@
 package com.kursi.ai
 
-import com.kursi.ai.policy.abstraction.Ismcts
-import com.kursi.ai.policy.abstraction.SearchNode
 import com.kursi.engine.*
+import com.siddharth.kmp.botspolicy.Ismcts
+import com.siddharth.kmp.botspolicy.SearchBudget
+import com.siddharth.kmp.botspolicy.SearchNode
 import kotlin.time.TimeSource
 
-data class SearchBudget(
-    val maxMillis: Long = 400L,
-    val maxIterations: Int = 1500,
-    /**
-     * Base rollout depth in plies. This is the *2-player* horizon; the effective horizon used during
-     * a rollout is scaled up with seat count (see [effectiveRolloutHorizon]) because a single round at
-     * a big table spans many more plies than at heads-up — a flat 12 never reaches a meaningful board
-     * state at 10p (one round alone can exceed it), so rollouts would terminate in the opening shuffle
-     * and feed [staticEval] near-initial positions with no signal.
-     */
-    val rolloutHorizon: Int = 12,
-)
-
-/** Advice budget: smaller than the bot game budget; targets ~200-400 ms on a human's turn. */
+/**
+ * Advice budget: smaller than the bot game budget; targets ~200-400 ms on a human's turn.
+ * [SearchBudget.rolloutHorizon] is the *2-player* base horizon — see [effectiveRolloutHorizon] for how
+ * it's scaled up per seat count before being handed to [Ismcts.search].
+ */
 val ADVICE_BUDGET = SearchBudget(maxMillis = 350L, maxIterations = 3000, rolloutHorizon = 10)
 
 /**

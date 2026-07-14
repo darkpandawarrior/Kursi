@@ -2,6 +2,7 @@ package com.kursi.ai.advisor
 
 import com.kursi.ai.*
 import com.kursi.engine.*
+import com.siddharth.kmp.botspolicy.SearchBudget
 import kotlin.test.*
 import kotlin.time.TimeSource
 

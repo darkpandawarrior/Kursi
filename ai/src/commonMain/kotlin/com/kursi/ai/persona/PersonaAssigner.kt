@@ -6,8 +6,8 @@ import com.kursi.ai.GRANDMASTER_DEFAULT_BUDGET
 import com.kursi.ai.GrandmasterPolicy
 import com.kursi.ai.HardPolicy
 import com.kursi.ai.MediumPolicy
-import com.kursi.ai.SearchBudget
 import com.kursi.engine.PlayerId
+import com.siddharth.kmp.botspolicy.SearchBudget
 
 /** Difficulty tiers available to the player. */
 enum class BotDifficulty {

@@ -122,7 +122,7 @@ class ReplaySession private constructor(
          * complete a different iteration count under CPU pressure and yield non-reproducible reads.
          */
         val REVIEW_ADVICE_BUDGET =
-            com.kursi.ai.SearchBudget(
+            com.siddharth.kmp.botspolicy.SearchBudget(
                 maxMillis = Long.MAX_VALUE,
                 maxIterations = 900,
                 rolloutHorizon = 10,
@@ -145,7 +145,7 @@ class ReplaySession private constructor(
              * review budget than live coaching so reconstructing a whole game's annotations stays snappy
              * (a dozen decisions × this budget). The read is still fair — just a touch coarser.
              */
-            adviceBudget: com.kursi.ai.SearchBudget = REVIEW_ADVICE_BUDGET,
+            adviceBudget: com.siddharth.kmp.botspolicy.SearchBudget = REVIEW_ADVICE_BUDGET,
         ): ReplaySession {
             val config = GameConfig.forPlayers(snapshot.players)
             val log: List<Intent> = snapshot.humanLog.map { it.toEngine() }

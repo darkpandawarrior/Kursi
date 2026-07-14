@@ -64,6 +64,7 @@ includeBuild("external/kmp-toolkit") {
     dependencySubstitution {
         substitute(module("com.siddharth.kmp:mvi-core")).using(project(":mvi-core"))
         substitute(module("com.siddharth.kmp:feedback")).using(project(":feedback"))
+        substitute(module("com.siddharth.kmp:bots-policy")).using(project(":bots-policy"))
     }
 }
 

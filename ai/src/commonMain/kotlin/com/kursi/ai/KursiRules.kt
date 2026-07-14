@@ -1,7 +1,5 @@
 package com.kursi.ai
 
-import com.kursi.ai.policy.abstraction.GameRules
-import com.kursi.ai.policy.abstraction.Outcome
 import com.kursi.engine.ApplyOutcome
 import com.kursi.engine.GameState
 import com.kursi.engine.Intent
@@ -10,7 +8,9 @@ import com.kursi.engine.PlayerId
 import com.kursi.engine.PlayerView
 import com.kursi.engine.applyIntent
 import com.kursi.engine.legalIntents
-import com.kursi.ai.policy.abstraction.Policy as GenericPolicy
+import com.siddharth.kmp.botspolicy.GameRules
+import com.siddharth.kmp.botspolicy.Outcome
+import com.siddharth.kmp.botspolicy.Policy as GenericPolicy
 
 /**
  * Kursi's concrete bot-policy shape: decide over the redacted [PlayerView] and legal [Intent]s. Every
@@ -22,7 +22,7 @@ typealias Policy = GenericPolicy<PlayerView, Intent>
 
 /**
  * Adapts the engine's free-function API (whoActsNext/legalIntents/applyIntent/redact) to the generic
- * [GameRules] contract, so [com.kursi.ai.policy.abstraction.Ismcts] can drive Kursi self-play without
+ * [GameRules] contract, so [com.siddharth.kmp.botspolicy.Ismcts] can drive Kursi self-play without
  * importing `com.kursi.engine.*` itself.
  *
  * Lives in `:ai`, NOT `:engine` — the sketch that kicked off this inversion suggested `:engine` host

@@ -14,6 +14,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":engine"))
+            // api, not implementation: SearchBudget/Policy from this module are part of :ai's own
+            // public surface (KursiRules.Policy typealias, IsmctsSearch/MoveAdvisor budget params),
+            // consumed transitively by :feature:game and :server.
+            api("com.siddharth.kmp:bots-policy:1.0.0")
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.contentNegotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
