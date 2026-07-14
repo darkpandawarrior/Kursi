@@ -1,11 +1,11 @@
 package com.kursi.feature.game.narrative
 
 import com.kursi.ai.EasyPolicy
+import com.kursi.ai.Policy
 import com.kursi.ai.persona.PersonalityProfile
 import com.kursi.ai.persona.TargetingBias
 import com.kursi.engine.GameConfig
 import com.kursi.engine.PlayerId
-import com.kursi.engine.Policy
 import com.kursi.feature.game.session.GameSession
 import kotlin.test.Test
 import kotlin.test.assertEquals

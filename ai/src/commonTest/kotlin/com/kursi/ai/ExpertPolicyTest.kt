@@ -32,7 +32,7 @@ class ExpertPolicyTest {
         for (n in 2..4) {
             val config = GameConfig.forPlayers(n)
             repeat(3) { gameIdx ->
-                val policies: Map<PlayerId, Policy> =
+                val policies: Map<PlayerId, SimPolicy> =
                     (0 until n).associate { seat ->
                         PlayerId(seat) to ExpertPolicy(seed = gameIdx.toLong() * 100L + seat, budget = testBudget)
                     }
@@ -49,7 +49,7 @@ class ExpertPolicyTest {
         // Mix Expert with Hard and Medium — should complete without exception
         val config = GameConfig.forPlayers(4)
         repeat(5) { gameIdx ->
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 mapOf(
                     PlayerId(0) to ExpertPolicy(seed = gameIdx * 7L, budget = testBudget),
                     PlayerId(1) to HardPolicy(seed = gameIdx * 7L + 1),
@@ -74,7 +74,7 @@ class ExpertPolicyTest {
         for (gameIdx in 0 until games) {
             val hardSeat = gameIdx % 2
             val medSeat = 1 - hardSeat
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 mapOf(
                     PlayerId(hardSeat) to HardPolicy(seed = gameIdx.toLong() * 100L + hardSeat),
                     PlayerId(medSeat) to MediumPolicy(seed = gameIdx.toLong() * 100L + medSeat + 5000L),
@@ -101,7 +101,7 @@ class ExpertPolicyTest {
         for (gameIdx in 0 until games) {
             val expertSeat = gameIdx % 2
             val hardSeat = 1 - expertSeat
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 mapOf(
                     PlayerId(expertSeat) to ExpertPolicy(seed = gameIdx.toLong() * 137L + expertSeat, budget = testBudget),
                     PlayerId(hardSeat) to HardPolicy(seed = gameIdx.toLong() * 137L + hardSeat + 9000L),
@@ -128,7 +128,7 @@ class ExpertPolicyTest {
         for (gameIdx in 0 until games) {
             val expertSeat = gameIdx % 2
             val medSeat = 1 - expertSeat
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 mapOf(
                     PlayerId(expertSeat) to ExpertPolicy(seed = gameIdx.toLong() * 211L + expertSeat, budget = testBudget),
                     PlayerId(medSeat) to MediumPolicy(seed = gameIdx.toLong() * 211L + medSeat + 7000L),
@@ -161,7 +161,7 @@ class ExpertPolicyTest {
         val games = 400
 
         for (gameIdx in 0 until games) {
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 mapOf(
                     PlayerId(0) to EasyPolicy(seed = gameIdx.toLong() * 41L),
                     PlayerId(1) to MediumPolicy(seed = gameIdx.toLong() * 41L + 1000L),

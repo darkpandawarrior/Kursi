@@ -1,10 +1,16 @@
 package com.kursi.engine
 
 /**
- * A bot. It sees ONLY a [PlayerView] (never [GameState]) and the concrete legal intents — so a cheating
- * policy that reads opponents' hidden cards is structurally impossible. Humans and bots share this exact path.
+ * A player decision-maker for [SimHarness]'s own deterministic self-play fuzzer/property/golden tests.
+ * It sees ONLY a [PlayerView] (never [GameState]) and the concrete legal intents — so a cheating
+ * policy that reads opponents' hidden cards is structurally impossible.
+ *
+ * Renamed from the former engine-hosted `Policy` (ai→engine inversion, kmp-toolkit-family bots-policy
+ * lane): the app-facing bot-policy abstraction now lives as a generic `Policy<View, Move>` in `:ai`
+ * (`com.kursi.ai.policy.abstraction`, aliased to `com.kursi.ai.Policy` for Kursi's concrete shape).
+ * [SimPolicy] stays engine-local — it only serves [SimHarness]'s own tests, never consumed by `:ai`.
  */
-fun interface Policy {
+fun interface SimPolicy {
     fun decide(
         view: PlayerView,
         legal: List<Intent>,
@@ -14,7 +20,7 @@ fun interface Policy {
 /** Picks a uniformly-random legal intent. Deterministic given its seed — the workhorse for property/fuzz tests. */
 class RandomLegalPolicy(
     seed: Long,
-) : Policy {
+) : SimPolicy {
     private var rng = Rng(seed)
 
     override fun decide(
@@ -48,7 +54,7 @@ object SimHarness {
     fun playOut(
         config: GameConfig,
         seed: Long,
-        policies: Map<PlayerId, Policy>,
+        policies: Map<PlayerId, SimPolicy>,
         maxSteps: Int = 200_000,
         checkInv: Boolean = true,
     ): GameResult {
@@ -78,7 +84,7 @@ object SimHarness {
     fun playMany(
         config: GameConfig,
         seeds: LongRange,
-        policyFactory: (PlayerId, Long) -> Policy,
+        policyFactory: (PlayerId, Long) -> SimPolicy,
     ): SimStats {
         val winsBySeat = HashMap<Int, Int>()
         var totalTurns = 0L

@@ -13,10 +13,16 @@ import com.kursi.engine.*
  * Exchange: keeps first keepSize cards from the pool (stable, deterministic).
  *
  * Deterministic given seed; holds its own Rng thread.
+ *
+ * Implements both [Policy] (the generic ai-hosted decide-shape) and [SimPolicy] (`:engine`'s
+ * self-play fuzzer contract) — this module's own strength/regression tests drive bot-vs-bot games
+ * through [SimHarness] directly, so every tier needs to satisfy both shapes. Both interfaces declare
+ * the identical `decide(view, legal): Intent` signature, so one override satisfies both.
  */
 class EasyPolicy(
     seed: Long,
-) : Policy {
+) : Policy,
+    SimPolicy {
     private var rng = Rng(seed)
 
     override fun decide(

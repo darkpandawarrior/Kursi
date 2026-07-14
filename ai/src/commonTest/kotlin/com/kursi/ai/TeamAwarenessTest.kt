@@ -16,10 +16,10 @@ class TeamAwarenessTest {
 
     private fun policies(
         seedBase: Long,
-        make: (Long) -> Policy,
-    ): Map<PlayerId, Policy> = (0 until 4).associate { seat -> PlayerId(seat) to make(seedBase + seat) }
+        make: (Long) -> SimPolicy,
+    ): Map<PlayerId, SimPolicy> = (0 until 4).associate { seat -> PlayerId(seat) to make(seedBase + seat) }
 
-    private val builders: List<Pair<String, (Long) -> Policy>> =
+    private val builders: List<Pair<String, (Long) -> SimPolicy>> =
         listOf(
             "Easy" to { s -> EasyPolicy(s) },
             "Medium" to { s -> MediumPolicy(s) },
@@ -75,7 +75,7 @@ class TeamAwarenessTest {
     fun mixed_policy_team_game_completes() {
         if (!heavyAiSimsEnabled()) return // skip: full game with default (heavy) Grandmaster/Expert budgets starves Karma ping on wasm
         val cfg = teamCfg4()
-        val mixed: Map<PlayerId, Policy> =
+        val mixed: Map<PlayerId, SimPolicy> =
             mapOf(
                 p0 to GrandmasterPolicy(1L),
                 p1 to HardPolicy(2L),
@@ -94,9 +94,9 @@ class TeamAwarenessTest {
     private val p2 = PlayerId(2)
     private val p3 = PlayerId(3)
 
-    /** Policy.decide is synchronous (Sim.Policy interface), so no coroutine plumbing needed. */
+    /** SimPolicy.decide is synchronous (Sim.SimPolicy interface), so no coroutine plumbing needed. */
     private fun runDecide(
-        p: Policy,
+        p: SimPolicy,
         view: PlayerView,
         legal: List<Intent>,
     ): Intent = p.decide(view, legal)

@@ -24,7 +24,7 @@ class PolicyStrengthTest {
         for (gameIdx in 0 until gamesPerConfig) {
             // Alternate which seats are Medium vs Easy.
             // For n=2: game 0 → seat 0=Medium, seat 1=Easy; game 1 → seat 0=Easy, seat 1=Medium
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 (0 until n).associate { seat ->
                     val isMedium = (seat + gameIdx) % 2 == 0
                     val seedOffset = gameIdx.toLong() * 100L + seat
@@ -59,7 +59,7 @@ class PolicyStrengthTest {
         val games = 100
         for (gameIdx in 0 until games) {
             // Seats 0,2 = Medium; seats 1,3 = Easy (then swap for next set).
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 mapOf(
                     PlayerId(0) to MediumPolicy(seed = gameIdx.toLong()),
                     PlayerId(1) to EasyPolicy(seed = gameIdx.toLong() + 1000L),

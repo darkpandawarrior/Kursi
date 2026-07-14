@@ -10,7 +10,7 @@ class PropertyTest {
     private fun policies(
         config: GameConfig,
         seed: Long,
-    ): Map<PlayerId, Policy> = (0 until config.seatCount).associate { PlayerId(it) to RandomLegalPolicy(seed * 131 + it) }
+    ): Map<PlayerId, SimPolicy> = (0 until config.seatCount).associate { PlayerId(it) to RandomLegalPolicy(seed * 131 + it) }
 
     /** Plays a fuzzed game, recording every intent and checking invariants after every transition. */
     private fun recordGame(

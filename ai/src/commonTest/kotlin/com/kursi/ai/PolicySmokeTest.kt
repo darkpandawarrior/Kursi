@@ -11,8 +11,8 @@ import kotlin.test.assertTrue
 class PolicySmokeTest {
     private fun makePolicies(
         n: Int,
-        factory: (Int, Long) -> Policy,
-    ): Map<PlayerId, Policy> = (0 until n).associate { seat -> PlayerId(seat) to factory(seat, seat.toLong() * 1000L + 42L) }
+        factory: (Int, Long) -> SimPolicy,
+    ): Map<PlayerId, SimPolicy> = (0 until n).associate { seat -> PlayerId(seat) to factory(seat, seat.toLong() * 1000L + 42L) }
 
     @Test
     fun easyPolicy_completesGames_2to6Players() {
@@ -44,7 +44,7 @@ class PolicySmokeTest {
     fun mixedPolicy_easyAndMedium_completesGames() {
         val config = GameConfig.forPlayers(4)
         repeat(5) { gameIdx ->
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 mapOf(
                     PlayerId(0) to EasyPolicy(seed = gameIdx * 10L),
                     PlayerId(1) to MediumPolicy(seed = gameIdx * 10L + 1),

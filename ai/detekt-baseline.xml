@@ -10,12 +10,11 @@
     <ID>CyclomaticComplexMethod:MediumPolicy.kt:MediumPolicy$private fun decideTurn: Intent</ID>
     <ID>CyclomaticComplexMethod:MoveAdvisor.kt:MoveAdvisor$private fun computeSuccessOdds: Double?</ID>
     <ID>CyclomaticComplexMethod:MoveAdvisor.kt:MoveAdvisor$private fun labelFor: String</ID>
-    <ID>FunctionParameterNaming:IsmctsSearch.kt:Node$C: Double</ID>
     <ID>LongMethod:Determinizer.kt:Determinizer$fun sample: Pair&lt;GameState, Rng&gt;</ID>
     <ID>LongMethod:HardPolicy.kt:HardPolicy$private fun decideTurn: Intent</ID>
     <ID>LongMethod:MediumPolicy.kt:MediumPolicy$private fun decideTurn: Intent</ID>
     <ID>LongMethod:PersonaPrompts.kt:PersonaPrompts$private fun voiceFor: String</ID>
-    <ID>LoopWithTooManyJumpStatements:IsmctsSearch.kt:IsmctsSearch$while</ID>
+    <ID>LoopWithTooManyJumpStatements:Ismcts.kt:Ismcts$while</ID>
     <ID>MagicNumber:AnthropicProvider.kt:AnthropicProvider$5_000</ID>
     <ID>MagicNumber:BeliefModel.kt:BotMemory$0.8</ID>
     <ID>MagicNumber:BeliefModel.kt:BotMemory$2.5</ID>
@@ -68,10 +67,11 @@
     <ID>ReturnCount:PersonaPolicy.kt:PersonaPolicy$private fun maybeRetarget: Intent</ID>
     <ID>SwallowedException:ExpertPolicy.kt:ExpertPolicy$t: Throwable</ID>
     <ID>SwallowedException:GrandmasterPolicy.kt:GrandmasterPolicy$t: Throwable</ID>
-    <ID>SwallowedException:IsmctsSearch.kt:IsmctsSearch$e: Exception</ID>
+    <ID>SwallowedException:Ismcts.kt:Ismcts$e: Exception</ID>
     <ID>SwallowedException:MoveAdvisor.kt:MoveAdvisor$t: Throwable</ID>
     <ID>TooGenericExceptionCaught:ExpertPolicy.kt:ExpertPolicy$t: Throwable</ID>
     <ID>TooGenericExceptionCaught:GrandmasterPolicy.kt:GrandmasterPolicy$t: Throwable</ID>
+    <ID>TooGenericExceptionCaught:Ismcts.kt:Ismcts$e: Exception</ID>
     <ID>TooGenericExceptionCaught:IsmctsSearch.kt:IsmctsSearch$e: Exception</ID>
     <ID>TooGenericExceptionCaught:MoveAdvisor.kt:MoveAdvisor$t: Throwable</ID>
     <ID>UnusedParameter:AiBotDecisionEngine.kt:AiBotDecisionEngine$botId: PlayerId</ID>

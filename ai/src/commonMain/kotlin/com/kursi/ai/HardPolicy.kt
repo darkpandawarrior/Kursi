@@ -32,10 +32,13 @@ import com.kursi.engine.*
  *   CHALLENGE_BLOCK: τ = 0.40 (more aggressive — lower cost of being wrong).
  *
  * Deterministic given seed.
+ *
+ * Implements both [Policy] and [SimPolicy] — see [EasyPolicy]'s KDoc for why.
  */
 class HardPolicy(
     seed: Long,
-) : Policy {
+) : Policy,
+    SimPolicy {
     private var rng = Rng(seed)
 
     // PATRAKAAR (Inquisitor / Jaanch): info-then-disrupt, no own counter — valued just under BABU.

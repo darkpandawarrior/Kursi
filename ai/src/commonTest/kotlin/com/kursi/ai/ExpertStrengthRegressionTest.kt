@@ -45,7 +45,7 @@ class ExpertStrengthRegressionTest {
         for (gameIdx in 0 until games) {
             val expertSeat = gameIdx % 2
             val hardSeat = 1 - expertSeat
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 mapOf(
                     PlayerId(expertSeat) to ExpertPolicy(seed = gameIdx.toLong() * 149L + expertSeat, budget = budget),
                     PlayerId(hardSeat) to HardPolicy(seed = gameIdx.toLong() * 149L + hardSeat + 8100L),
@@ -72,7 +72,7 @@ class ExpertStrengthRegressionTest {
 
         for (gameIdx in 0 until games) {
             val expertSeat = gameIdx % 4
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 (0 until 4).associate { seat ->
                     val seed = gameIdx.toLong() * 97L + seat
                     PlayerId(seat) to
@@ -106,7 +106,7 @@ class ExpertStrengthRegressionTest {
 
         for (gameIdx in 0 until games) {
             val expertSeat = gameIdx % 10
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 (0 until 10).associate { seat ->
                     val seed = gameIdx.toLong() * 113L + seat
                     PlayerId(seat) to

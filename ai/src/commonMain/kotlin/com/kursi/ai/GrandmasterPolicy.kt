@@ -33,13 +33,16 @@ import com.kursi.engine.*
  *
  * Like Expert, the caller should feed game events via [observe] so the belief model — and therefore the
  * exploitation — actually has a read to work with.
+ *
+ * Implements both [Policy] and [SimPolicy] — see [EasyPolicy]'s KDoc for why.
  */
 class GrandmasterPolicy(
     seed: Long,
     val budget: SearchBudget = GRANDMASTER_DEFAULT_BUDGET,
     /** Exploitation strength fed into the search leaf evaluation. >1 deviates harder from Nash. */
     private val exploitGain: Double = 2.0,
-) : Policy {
+) : Policy,
+    SimPolicy {
     private var rng = Rng(seed)
     private val fallback = HardPolicy(seed + 31337L)
     val memory = BotMemory()

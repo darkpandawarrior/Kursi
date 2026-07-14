@@ -13,11 +13,14 @@ import com.kursi.engine.*
  *  - Fallback to [HardPolicy] if search errors or returns an illegal move.
  *
  * The caller can optionally call [observe] after each game event to keep the belief model updated.
+ *
+ * Implements both [Policy] and [SimPolicy] — see [EasyPolicy]'s KDoc for why.
  */
 class ExpertPolicy(
     seed: Long,
     val budget: SearchBudget = SearchBudget(),
-) : Policy {
+) : Policy,
+    SimPolicy {
     private var rng = Rng(seed)
     private val fallback = HardPolicy(seed + 77777L)
     private val beliefModel = BeliefModel()

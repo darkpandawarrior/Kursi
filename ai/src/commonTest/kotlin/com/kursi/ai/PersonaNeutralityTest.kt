@@ -35,10 +35,10 @@ class PersonaNeutralityTest {
                     seed = gameSeed,
                 )
 
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 assignments
                     .mapIndexed { seat, pair ->
-                        PlayerId(seat) to (pair.second as Policy)
+                        PlayerId(seat) to (pair.second as SimPolicy)
                     }.toMap()
 
             val result = SimHarness.playOut(config, seed = gameSeed, policies)

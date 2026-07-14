@@ -18,7 +18,7 @@ class HardPolicyTest {
         for (n in 2..6) {
             val config = GameConfig.forPlayers(n)
             repeat(5) { gameIdx ->
-                val policies: Map<PlayerId, Policy> =
+                val policies: Map<PlayerId, SimPolicy> =
                     (0 until n).associate { seat ->
                         PlayerId(seat) to HardPolicy(seed = gameIdx.toLong() * 100L + seat)
                     }
@@ -33,7 +33,7 @@ class HardPolicyTest {
     fun hardPolicy_mixedWithMedium_completesGames() {
         val config = GameConfig.forPlayers(4)
         repeat(5) { gameIdx ->
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 mapOf(
                     PlayerId(0) to HardPolicy(seed = gameIdx * 10L),
                     PlayerId(1) to MediumPolicy(seed = gameIdx * 10L + 1),
@@ -59,7 +59,7 @@ class HardPolicyTest {
             // Odd gameIdx:  Hard = seat 1, Medium = seat 0.
             val hardSeat = gameIdx % 2
             val medSeat = 1 - hardSeat
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 mapOf(
                     PlayerId(hardSeat) to HardPolicy(seed = gameIdx.toLong() * 100L + hardSeat),
                     PlayerId(medSeat) to MediumPolicy(seed = gameIdx.toLong() * 100L + medSeat + 5000L),
@@ -85,7 +85,7 @@ class HardPolicyTest {
         val games = 200
 
         for (gameIdx in 0 until games) {
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 mapOf(
                     PlayerId(0) to HardPolicy(seed = gameIdx.toLong()),
                     PlayerId(1) to MediumPolicy(seed = gameIdx.toLong() + 1000L),

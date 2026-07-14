@@ -1,8 +1,8 @@
 package com.kursi.ai
 
+import com.kursi.ai.policy.abstraction.Ismcts
+import com.kursi.ai.policy.abstraction.SearchNode
 import com.kursi.engine.*
-import kotlin.math.ln
-import kotlin.math.sqrt
 import kotlin.time.TimeSource
 
 data class SearchBudget(
@@ -50,22 +50,6 @@ data class MoveValue(
     val visitShare: Double,
 )
 
-private class Node(
-    val intent: Intent?,
-) {
-    var visits: Int = 0
-    var totalReward: Double = 0.0
-    var availability: Int = 0
-    val children: MutableMap<String, Node> = linkedMapOf()
-
-    fun meanReward() = if (visits == 0) 0.0 else totalReward / visits
-
-    fun ucb(C: Double): Double {
-        if (visits == 0 || availability == 0) return Double.MAX_VALUE
-        return meanReward() + C * sqrt(ln(availability.toDouble()) / visits)
-    }
-}
-
 class IsmctsSearch(
     private val determinizer: Determinizer,
     private val budget: SearchBudget,
@@ -80,7 +64,11 @@ class IsmctsSearch(
      */
     private val exploitGain: Double = 1.0,
 ) {
-    private val ucbExplorationConstant = 0.7
+    // Dedicated RNG stream for rollout-policy seeding. The generic Ismcts shell calls the injected
+    // rollout-policy FACTORY once per rollout ply; we hand it a fresh HardPolicy(seed) each time,
+    // seeded from this stream — reproducing the pre-inversion per-ply reseeding EXACTLY. This is
+    // load-bearing for bot strength: a single shared rollout policy dropped Grandmaster 4p to 0.20
+    // (below its 0.29 floor). Deterministic given rolloutSeed.
     private var rolloutRng = Rng(rolloutSeed)
 
     fun chooseIntent(
@@ -97,13 +85,13 @@ class IsmctsSearch(
         }
 
         // Robust child: most visited
-        val bestKey =
+        val best =
             root.children.entries
                 .filter { it.value.visits > 0 }
                 .maxByOrNull { it.value.visits }
                 ?.key
                 ?: return legal.first()
-        return legal.firstOrNull { it.key() == bestKey } ?: legal.first()
+        return legal.firstOrNull { it == best } ?: legal.first()
     }
 
     /**
@@ -124,8 +112,6 @@ class IsmctsSearch(
         if (legal.isEmpty()) return emptyList()
         if (legal.size == 1) return listOf(MoveValue(legal.single(), winProb = 0.5, visitShare = 1.0))
 
-        // Temporarily use the advice budget for the search
-        val savedBudget = budget
         val root = runSearch(view, legal, memory, rng, overrideBudget = adviceBudget)
 
         val totalVisits =
@@ -134,7 +120,7 @@ class IsmctsSearch(
                 .coerceAtLeast(1)
 
         return legal.map { intent ->
-            val node = root.children[intent.key()]
+            val node = root.children[intent]
             if (node == null || node.visits == 0) {
                 MoveValue(intent, winProb = 0.0, visitShare = 0.0)
             } else {
@@ -147,149 +133,54 @@ class IsmctsSearch(
         }
     }
 
-    /** Runs ISMCTS and returns the root node with all children populated. */
+    /** Runs ISMCTS (via the generic [Ismcts] shell) and returns the root node with all children populated. */
     private fun runSearch(
         view: PlayerView,
         legal: List<Intent>,
         memory: BotMemory,
         rng: Rng,
         overrideBudget: SearchBudget = budget,
-    ): Node {
-        val root = Node(null)
-        // Pre-create children for all legal root moves
-        for (i in legal) root.children.getOrPut(i.key()) { Node(i) }
-
+    ): SearchNode<Intent> {
         // Snapshot opponent style once per search: aggression + challengeRate drive the leaf
         // evaluation (staticEval) so the *style* the belief model infers actually changes move choice,
         // not just the role posterior used for determinization. Captured here (not per-iterate) because
         // memory is immutable for the duration of a single decision.
         val style = StyleContext.from(view, memory, exploitGain)
-
+        val horizon = effectiveRolloutHorizon(overrideBudget.rolloutHorizon, view.config.seatCount)
         val timeMark = TimeSource.Monotonic.markNow()
         var r = rng
-        var iterations = 0
 
-        while (iterations < overrideBudget.maxIterations &&
-            timeMark.elapsedNow().inWholeMilliseconds < overrideBudget.maxMillis
-        ) {
-            val (detState, r1) =
+        val engine =
+            Ismcts<GameState, Intent, PlayerView, PlayerId>(
+                rules = KursiRules,
+                // Fresh HardPolicy per rollout ply, seeded from the dedicated rolloutRng — reproduces
+                // the pre-inversion per-ply reseeding that the strength floors depend on.
+                rolloutPolicy = {
+                    val (seed, r1) = rolloutRng.nextLong()
+                    rolloutRng = r1
+                    HardPolicy(seed)
+                },
+                staticEval = { state, viewer -> staticEval(state, viewer, style) },
+                budget = overrideBudget,
+            )
+
+        return engine.search(
+            determinize = {
                 try {
-                    determinizer.sample(view, memory, r)
+                    val (detState, r1) = determinizer.sample(view, memory, r)
+                    r = r1
+                    detState
                 } catch (e: Exception) {
                     val (_, r2) = r.nextLong()
                     r = r2
-                    continue
+                    throw e
                 }
-            r = r1
-            try {
-                iterate(root, detState, view.viewer, style)
-            } catch (e: Exception) {
-                // ignore — bad determinization; continue
-            }
-            iterations++
-        }
-
-        return root
-    }
-
-    private fun iterate(
-        root: Node,
-        initState: GameState,
-        viewer: PlayerId,
-        style: StyleContext,
-    ) {
-        val path = mutableListOf<Node>()
-        var currentNode = root
-        var currentState = initState
-
-        // Selection + Expansion
-        while (currentState.phase !is Phase.GameOver) {
-            val who = whoActsNext(currentState) ?: break
-            val legalNow = legalIntents(currentState, who)
-            if (legalNow.isEmpty()) break
-
-            // Update availability for all legal children in this determinization
-            for (intent in legalNow) {
-                currentNode.children.getOrPut(intent.key()) { Node(intent) }.availability++
-            }
-
-            // Find unvisited legal children
-            val unvisited =
-                legalNow.filter {
-                    val child = currentNode.children[it.key()]
-                    child == null || child.visits == 0
-                }
-
-            val chosenIntent: Intent
-            if (unvisited.isNotEmpty()) {
-                // Expand: pick one unvisited (first for determinism)
-                chosenIntent = unvisited.first()
-            } else {
-                // Select via UCB1
-                chosenIntent = legalNow.maxByOrNull { intent ->
-                    currentNode.children[intent.key()]?.ucb(ucbExplorationConstant) ?: Double.MAX_VALUE
-                } ?: legalNow.first()
-            }
-
-            path.add(currentNode)
-            val childNode = currentNode.children.getOrPut(chosenIntent.key()) { Node(chosenIntent) }
-
-            val outcome = applyIntent(currentState, chosenIntent)
-            when (outcome) {
-                is ApplyOutcome.Accepted -> currentState = outcome.state
-                is ApplyOutcome.Rejected -> {
-                    // This determinization is invalid at this point — break
-                    break
-                }
-            }
-            currentNode = childNode
-            // After visiting a new node, go to rollout
-            if (currentNode.visits == 0) break
-        }
-        path.add(currentNode)
-
-        // Rollout
-        val reward = rollout(currentState, viewer, style)
-
-        // Backpropagate
-        for (node in path) {
-            node.visits++
-            node.totalReward += reward
-        }
-    }
-
-    private fun rollout(
-        state: GameState,
-        viewer: PlayerId,
-        style: StyleContext,
-    ): Double {
-        if (state.phase is Phase.GameOver) {
-            return if ((state.phase as Phase.GameOver).winner == viewer) 1.0 else 0.0
-        }
-        var currentState = state
-        var plies = 0
-        val horizon = effectiveRolloutHorizon(budget.rolloutHorizon, state.config.seatCount)
-        while (plies < horizon && currentState.phase !is Phase.GameOver) {
-            val who = whoActsNext(currentState) ?: break
-            val legalNow = legalIntents(currentState, who)
-            if (legalNow.isEmpty()) break
-            val rolloutView = redact(currentState, who)
-            val (seed, r1) = rolloutRng.nextLong()
-            rolloutRng = r1
-            val hp = HardPolicy(seed)
-            val intent =
-                try {
-                    hp.decide(rolloutView, legalNow)
-                } catch (e: Exception) {
-                    legalNow.first()
-                }
-            when (val o = applyIntent(currentState, intent)) {
-                is ApplyOutcome.Accepted -> currentState = o.state
-                is ApplyOutcome.Rejected -> break
-            }
-            plies++
-        }
-        return staticEval(currentState, viewer, style)
+            },
+            legal = legal,
+            viewer = view.viewer,
+            rolloutHorizon = horizon,
+            elapsedMillis = { timeMark.elapsedNow().inWholeMilliseconds },
+        )
     }
 
     private fun staticEval(
@@ -432,6 +323,3 @@ internal class StyleContext private constructor(
         }
     }
 }
-
-/** Stable string key for grouping intents in ISMCTS tree nodes. */
-private fun Intent.key(): String = this.toString()

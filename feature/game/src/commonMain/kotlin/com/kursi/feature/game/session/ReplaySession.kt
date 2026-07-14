@@ -1,11 +1,11 @@
 package com.kursi.feature.game.session
 
+import com.kursi.ai.Policy
 import com.kursi.ai.advisor.MoveAdvisor
 import com.kursi.engine.GameConfig
 import com.kursi.engine.GameState
 import com.kursi.engine.Intent
 import com.kursi.engine.PlayerId
-import com.kursi.engine.Policy
 import com.kursi.engine.legalIntents
 import com.kursi.feature.game.GameUiState
 import com.kursi.feature.game.OpponentPersona

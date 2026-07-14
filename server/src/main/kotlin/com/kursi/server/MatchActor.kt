@@ -1,6 +1,7 @@
 package com.kursi.server
 
 import com.kursi.ai.EasyPolicy
+import com.kursi.ai.Policy
 import com.kursi.engine.*
 import com.kursi.protocol.wire.*
 import io.ktor.websocket.*

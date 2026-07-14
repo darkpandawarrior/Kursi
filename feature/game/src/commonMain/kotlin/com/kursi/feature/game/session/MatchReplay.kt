@@ -1,11 +1,11 @@
 package com.kursi.feature.game.session
 
+import com.kursi.ai.Policy
 import com.kursi.ai.persona.BotDifficulty
 import com.kursi.ai.persona.PersonaAssigner
 import com.kursi.ai.persona.PersonaPolicy
 import com.kursi.engine.GameConfig
 import com.kursi.engine.PlayerId
-import com.kursi.engine.Policy
 import com.kursi.feature.game.Difficulty
 import com.kursi.feature.game.OpponentPersona
 

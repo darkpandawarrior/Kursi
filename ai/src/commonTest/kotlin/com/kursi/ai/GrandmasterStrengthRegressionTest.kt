@@ -54,7 +54,7 @@ class GrandmasterStrengthRegressionTest {
         for (gameIdx in 0 until games) {
             val gmSeat = gameIdx % 2
             val expertSeat = 1 - gmSeat
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 mapOf(
                     PlayerId(gmSeat) to GrandmasterPolicy(seed = gameIdx.toLong() * 151L + gmSeat, budget = gmBudget),
                     PlayerId(expertSeat) to ExpertPolicy(seed = gameIdx.toLong() * 151L + expertSeat + 7700L, budget = expertBudget),
@@ -81,7 +81,7 @@ class GrandmasterStrengthRegressionTest {
 
         for (gameIdx in 0 until games) {
             val gmSeat = gameIdx % 4
-            val policies: Map<PlayerId, Policy> =
+            val policies: Map<PlayerId, SimPolicy> =
                 (0 until 4).associate { seat ->
                     val seed = gameIdx.toLong() * 89L + seat
                     PlayerId(seat) to

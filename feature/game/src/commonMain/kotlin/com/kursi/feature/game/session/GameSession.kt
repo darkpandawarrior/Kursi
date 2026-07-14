@@ -1,6 +1,7 @@
 package com.kursi.feature.game.session
 
 import com.kursi.ai.OpponentInsight
+import com.kursi.ai.Policy
 import com.kursi.ai.advisor.MoveAdvice
 import com.kursi.ai.advisor.MoveAdvisor
 import com.kursi.ai.persona.PersonaPolicy
@@ -11,7 +12,6 @@ import com.kursi.engine.GameState
 import com.kursi.engine.Intent
 import com.kursi.engine.Phase
 import com.kursi.engine.PlayerId
-import com.kursi.engine.Policy
 import com.kursi.engine.Rules
 import com.kursi.engine.applyIntent
 import com.kursi.engine.initialState

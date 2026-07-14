@@ -2,13 +2,13 @@ package com.kursi.feature.game
 
 import com.kursi.ai.ExpertPolicy
 import com.kursi.ai.GrandmasterPolicy
+import com.kursi.ai.Policy
 import com.kursi.ai.persona.BotDifficulty
 import com.kursi.ai.persona.PersonaAssigner
 import com.kursi.ai.persona.PersonaPolicy
 import com.kursi.engine.GameConfig
 import com.kursi.engine.GameEvent
 import com.kursi.engine.PlayerId
-import com.kursi.engine.Policy
 import com.kursi.feature.game.narrative.ChatVoice
 import com.kursi.feature.game.narrative.SeatInfo
 import com.kursi.feature.game.narrative.SocialDirector

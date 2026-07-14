@@ -1,9 +1,9 @@
 package com.kursi.feature.game
 
 import com.kursi.ai.EasyPolicy
+import com.kursi.ai.Policy
 import com.kursi.engine.GameConfig
 import com.kursi.engine.PlayerId
-import com.kursi.engine.Policy
 import com.kursi.feature.game.session.MatchSnapshot
 import com.kursi.feature.game.session.ReplayAnnotation
 import com.kursi.feature.game.session.ReplaySession

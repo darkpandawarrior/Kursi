@@ -4,6 +4,7 @@ import com.kursi.ai.BeliefModel
 import com.kursi.ai.BotMemory
 import com.kursi.ai.ExpertPolicy
 import com.kursi.ai.GrandmasterPolicy
+import com.kursi.ai.Policy
 import com.kursi.engine.*
 
 /**
@@ -44,7 +45,8 @@ class PersonaPolicy(
     val persona: BotPersona,
     val base: Policy,
     private val seed: Long,
-) : Policy {
+) : Policy,
+    SimPolicy {
     private val p = persona.personality
     private var rng = Rng(seed)
     private val grudge = GrudgeMap()

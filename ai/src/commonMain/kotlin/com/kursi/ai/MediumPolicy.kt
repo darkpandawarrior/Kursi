@@ -29,10 +29,13 @@ import com.kursi.engine.*
  * Exchange: keep the two highest-value roles by the same ranking.
  *
  * Deterministic given seed.
+ *
+ * Implements both [Policy] and [SimPolicy] — see [EasyPolicy]'s KDoc for why.
  */
 class MediumPolicy(
     seed: Long,
-) : Policy {
+) : Policy,
+    SimPolicy {
     private var rng = Rng(seed)
 
     // Role value ranking (higher = more valuable to keep).
