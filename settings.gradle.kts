@@ -65,6 +65,12 @@ includeBuild("external/kmp-toolkit") {
         substitute(module("com.siddharth.kmp:mvi-core")).using(project(":mvi-core"))
         substitute(module("com.siddharth.kmp:feedback")).using(project(":feedback"))
         substitute(module("com.siddharth.kmp:bots-policy")).using(project(":bots-policy"))
+        // NOTE: toolkit's :ai project path collides in name with Kursi's OWN root :ai module
+        // (Kursi's bot-policy/ISMCTS module, see include(":ai") below) — but they live in separate
+        // Gradle builds (this includeBuild's project(":ai") resolves inside external/kmp-toolkit
+        // only), so there is no path clash. Coordinate-only consume: routes the on-device-LLM arm
+        // of Kursi's own AiProvider through the toolkit's real OnDeviceLlm backends.
+        substitute(module("com.siddharth.kmp:ai")).using(project(":ai"))
     }
 }
 
