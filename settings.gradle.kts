@@ -56,25 +56,14 @@ dependencyResolutionManagement {
 
 rootProject.name = "Kursi"
 
-// Shared MVI primitives (EffectEmitter) — vendored as a submodule, wired via composite build so
-// `com.siddharth.kmp:mvi-core:1.0.0` resolves to the local checkout instead of a remote repo.
-// Explicit substitution needed: the KMP root publication is renamed to "mvi-core" only at publish
-// time (see external/kmp-mvi-core/lib/build.gradle.kts) — the subproject itself is still `:lib`,
-// which Gradle would otherwise auto-substitute as `com.siddharth.kmp:lib`, not `:mvi-core`.
-includeBuild("external/kmp-mvi-core") {
+// kmp-toolkit monorepo — vendored as one submodule, wired via composite build so the toolkit
+// coordinates resolve to the local checkout instead of remote repos. One included build replaces
+// the former per-leaf submodules (kmp-mvi-core, kmp-feedback); natural module paths (:mvi-core,
+// :feedback) mean no ":lib" substitution-collision workaround is needed anymore.
+includeBuild("external/kmp-toolkit") {
     dependencySubstitution {
-        substitute(module("com.siddharth.kmp:mvi-core")).using(project(":lib"))
-    }
-}
-
-// Multiplatform sound/haptics/share-result primitives — vendored as a submodule, wired via
-// composite build so `com.siddharth.kmp:feedback:1.0.0` resolves to the local checkout instead
-// of a remote repo. Subproject is `:feedbacklib` (not `:lib`, unlike kmp-mvi-core) — two included
-// builds both naming their subproject `:lib` under the same `com.siddharth.kmp` group made Gradle's
-// composite dependency substitution ambiguous (mvi-core kept resolving to kmp-feedback's project).
-includeBuild("external/kmp-feedback") {
-    dependencySubstitution {
-        substitute(module("com.siddharth.kmp:feedback")).using(project(":feedbacklib"))
+        substitute(module("com.siddharth.kmp:mvi-core")).using(project(":mvi-core"))
+        substitute(module("com.siddharth.kmp:feedback")).using(project(":feedback"))
     }
 }
 

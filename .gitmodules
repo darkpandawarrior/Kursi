@@ -1,6 +1,3 @@
-[submodule "external/kmp-mvi-core"]
-	path = external/kmp-mvi-core
-	url = https://github.com/darkpandawarrior/kmp-mvi-core
-[submodule "external/kmp-feedback"]
-	path = external/kmp-feedback
-	url = https://github.com/darkpandawarrior/kmp-feedback.git
+[submodule "external/kmp-toolkit"]
+	path = external/kmp-toolkit
+	url = https://github.com/darkpandawarrior/kmp-toolkit
