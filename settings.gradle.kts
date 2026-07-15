@@ -63,6 +63,7 @@ rootProject.name = "Kursi"
 includeBuild("external/kmp-toolkit") {
     dependencySubstitution {
         substitute(module("com.siddharth.kmp:mvi-core")).using(project(":mvi-core"))
+        substitute(module("com.siddharth.kmp:common")).using(project(":common"))
         substitute(module("com.siddharth.kmp:feedback")).using(project(":feedback"))
         substitute(module("com.siddharth.kmp:bots-policy")).using(project(":bots-policy"))
         // NOTE: toolkit's :ai project path collides in name with Kursi's OWN root :ai module

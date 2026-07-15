@@ -35,6 +35,7 @@ kotlin {
             implementation(libs.components.resources)
             implementation(project(":engine"))
             implementation("com.siddharth.kmp:feedback:1.0.0")
+            implementation("com.siddharth.kmp:common:1.0.0")
         }
     }
 }

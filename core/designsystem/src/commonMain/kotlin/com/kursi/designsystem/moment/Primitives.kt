@@ -25,6 +25,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kursi.designsystem.BrandTokens
+import com.siddharth.kmp.common.easeInQuart
+import com.siddharth.kmp.common.easeOutBack
+import com.siddharth.kmp.common.easeOutCubic
+import com.siddharth.kmp.common.lerp
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -41,29 +45,8 @@ import kotlin.math.sin
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────── Easing helpers ──────────────────────────────────
-
-/** Linear interpolation. */
-internal fun lerp(
-    a: Float,
-    b: Float,
-    t: Float,
-): Float = a + (b - a) * t.coerceIn(0f, 1f)
-
-/** EaseOutCubic — smooth deceleration. */
-internal fun easeOutCubic(t: Float): Float {
-    val c = t - 1f
-    return 1f + c * c * c
-}
-
-/** EaseInQuart — sharp initial acceleration. */
-internal fun easeInQuart(t: Float): Float = t * t * t * t
-
-/** EaseOutBack — slight overshoot settle. s=1.70158 */
-internal fun easeOutBack(t: Float): Float {
-    val s = 1.70158f
-    val c = t - 1f
-    return c * c * ((s + 1f) * c + s) + 1f
-}
+// lerp/easeInQuart/easeOutCubic/easeOutBack now come from :common (Backlog #25) —
+// pure Float math with zero Compose dependency, deduped with PaymentsLab's ShieldPulse.kt copy.
 
 // ─────────────────────────── 1. RubberStamp ──────────────────────────────────
 

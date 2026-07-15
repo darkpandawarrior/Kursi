@@ -27,6 +27,9 @@ import androidx.compose.ui.unit.sp
 import com.kursi.designsystem.BrandTokens
 import com.kursi.designsystem.KursiNeutrals
 import com.kursi.designsystem.KursiType
+import com.siddharth.kmp.common.easeInQuart
+import com.siddharth.kmp.common.easeOutCubic
+import com.siddharth.kmp.common.lerp
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
