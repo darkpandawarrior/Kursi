@@ -7,7 +7,6 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.siddharth.kmp.feedback.NotificationChannelManager
 
 class KursiFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
@@ -16,8 +15,8 @@ class KursiFirebaseMessagingService : FirebaseMessagingService() {
 
         val channelId =
             when (message.data["type"]) {
-                "game_invite" -> NotificationChannelManager.CHANNEL_GAME_INVITES
-                else -> NotificationChannelManager.CHANNEL_SYSTEM
+                "game_invite" -> KursiNotificationChannels.GAME_INVITES
+                else -> KursiNotificationChannels.SYSTEM
             }
 
         val pendingIntent =

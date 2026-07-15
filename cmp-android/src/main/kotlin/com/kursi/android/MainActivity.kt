@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FeedbackAndroid.install(applicationContext)
-        NotificationChannelManager.createChannels(this)
+        NotificationChannelManager.createChannels(this, KursiNotificationChannels.specs)
         updateNotificationPermissionState()
         scheduleInAppReview()
         PlayFeatures.checkForUpdate(this)

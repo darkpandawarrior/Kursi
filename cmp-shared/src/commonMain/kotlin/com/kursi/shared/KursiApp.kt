@@ -19,7 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.siddharth.kmp.feedback.shareGameResult
+import com.siddharth.kmp.feedback.shareText
 import com.kursi.core.network.fetchStandings
 import com.kursi.core.prefs.AppPrefs
 import com.kursi.core.prefs.DecisionTally
@@ -689,7 +689,7 @@ fun KursiApp() {
                             onShare =
                                 summary?.let { sm ->
                                     {
-                                        shareGameResult(buildShareText(sm.winnerName, sm.humanWon, sm.turnsTotal, sm.bluffsHeld))
+                                        shareText(buildShareText(sm.winnerName, sm.humanWon, sm.turnsTotal, sm.bluffsHeld))
                                     }
                                 },
                             onReview =

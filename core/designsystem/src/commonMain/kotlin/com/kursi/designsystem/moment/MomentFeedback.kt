@@ -18,15 +18,15 @@ import com.siddharth.kmp.feedback.defaultSoundPlayer
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * The SFX cue for a moment. Coins for economic actions, a heavy thud for losses/steals,
- * the win sting for victory, and a rubber-stamp slam for everything claim/reveal-shaped.
+ * The SFX cue for a moment. The reward clink for economic actions, a heavy thud for losses/steals,
+ * the success sting for victory, and a firm confirm slam for everything claim/reveal-shaped.
  */
 internal fun KursiMoment.soundKey(): SoundKey =
     when (this) {
         is KursiMoment.Income,
         is KursiMoment.ForeignAid,
         is KursiMoment.Tax,
-        -> SoundKey.Coin
+        -> SoundKey.Reward
 
         is KursiMoment.Steal,
         is KursiMoment.Assassinate,
@@ -35,14 +35,14 @@ internal fun KursiMoment.soundKey(): SoundKey =
         is KursiMoment.Elimination,
         -> SoundKey.Thud
 
-        is KursiMoment.Win -> SoundKey.Win
+        is KursiMoment.Win -> SoundKey.Success
 
         is KursiMoment.Exchange,
         is KursiMoment.Block,
         is KursiMoment.Challenge,
         is KursiMoment.Reveal,
         is KursiMoment.TurnHandoff,
-        -> SoundKey.Stamp
+        -> SoundKey.Confirm
     }
 
 /** Translate the moment-layer [HapticBeat] taxonomy into the device [HapticPattern]. */
