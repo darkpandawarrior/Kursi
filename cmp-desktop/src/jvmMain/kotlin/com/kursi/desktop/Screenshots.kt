@@ -28,7 +28,7 @@ import com.kursi.ai.advisor.MoveAdvisor
 import com.kursi.ai.persona.BotDifficulty
 import com.kursi.ai.persona.PersonaAssigner
 import com.kursi.core.network.ConnectionState
-import com.kursi.core.network.LanHost
+import com.siddharth.kmp.network.LanHost
 import com.kursi.core.prefs.AppPrefs
 import com.kursi.core.prefs.DailyStanding
 import com.kursi.core.prefs.DecisionLedger
@@ -502,8 +502,8 @@ fun main() {
                     lanBrowsing = true,
                     lanHosts =
                         listOf(
-                            LanHost(host = "192.168.1.21", port = 8080, roomCode = "TEAK", name = "Sid ki mez"),
-                            LanHost(host = "192.168.1.34", port = 8080, roomCode = "BRSS", name = "Daftar #2"),
+                            LanHost(host = "192.168.1.21", port = 8080, payload = "TEAK", name = "Sid ki mez"),
+                            LanHost(host = "192.168.1.34", port = 8080, payload = "BRSS", name = "Daftar #2"),
                         ),
                 ),
             onBack = {},

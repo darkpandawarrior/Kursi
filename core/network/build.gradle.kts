@@ -15,7 +15,9 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":engine"))
             implementation(project(":shared-protocol"))
-            implementation("com.siddharth.kmp:network:1.0.0")
+            // api (not implementation): LanHost/LanAdvertiser/LanDiscoverer moved into :network, so
+            // downstream modules (:feature:game, :cmp-shared, :cmp-desktop) need them transitively.
+            api("com.siddharth.kmp:network:1.0.0")
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.websockets)
             implementation(libs.ktor.client.contentNegotiation)

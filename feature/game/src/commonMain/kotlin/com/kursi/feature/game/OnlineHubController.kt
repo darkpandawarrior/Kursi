@@ -1,11 +1,11 @@
 package com.kursi.feature.game
 
 import com.kursi.core.network.ConnectionState
-import com.kursi.core.network.LanDiscoverer
-import com.kursi.core.network.LanHost
 import com.kursi.core.network.OnlineKursiClient
 import com.kursi.core.network.RoomApi
 import com.kursi.core.network.RoomResult
+import com.siddharth.kmp.network.LanDiscoverer
+import com.siddharth.kmp.network.LanHost
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -15,6 +15,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+/** Kursi's DNS-SD / beacon service type — the `serviceType` :network's LAN discovery is parameterized on. */
+private const val KURSI_LAN_SERVICE_TYPE = "_kursi._tcp"
 
 /**
  * ONLINE-HUB CONTROLLER — the pre-match orchestration the [com.kursi.feature.game] module owns so the
@@ -46,7 +49,7 @@ class OnlineHubController(
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     private val clientFactory: (CoroutineScope) -> OnlineKursiClient = { OnlineKursiClient(scope = it) },
     private val roomApiFactory: (host: String, port: Int) -> RoomApi = { host, port -> RoomApi(host, port) },
-    private val lanDiscovererFactory: () -> LanDiscoverer = { LanDiscoverer() },
+    private val lanDiscovererFactory: () -> LanDiscoverer = { LanDiscoverer(KURSI_LAN_SERVICE_TYPE) },
 ) {
     private val _uiState = MutableStateFlow(OnlineHubUiState())
 
@@ -118,10 +121,10 @@ class OnlineHubController(
         openLobby(host, port, trimmed, playerCount, LobbyKind.JoinByCode)
     }
 
-    /** JOIN a LAN-discovered [host] directly — its [LanHost.roomCode] is already a valid join code. */
+    /** JOIN a LAN-discovered [host] directly — its [LanHost.payload] carries the room code to join. */
     fun joinLanHost(lanHost: LanHost) {
         _uiState.update { it.copy(phase = HubPhase.Working, error = null) }
-        openLobby(lanHost.host, lanHost.port, lanHost.roomCode, playerCount = 0, LobbyKind.LanJoin)
+        openLobby(lanHost.host, lanHost.port, lanHost.payload, playerCount = 0, LobbyKind.LanJoin)
     }
 
     // ─────────────────────────── LAN browse ───────────────────────────
@@ -135,7 +138,7 @@ class OnlineHubController(
             scope.launch {
                 discoverer.discover().collect { found ->
                     _uiState.update { st ->
-                        if (st.lanHosts.any { it.host == found.host && it.port == found.port && it.roomCode == found.roomCode }) {
+                        if (st.lanHosts.any { it.host == found.host && it.port == found.port && it.payload == found.payload }) {
                             st
                         } else {
                             st.copy(lanHosts = st.lanHosts + found)

@@ -34,7 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kursi.core.network.LanHost
+import com.siddharth.kmp.network.LanHost
 import com.kursi.designsystem.*
 import com.kursi.feature.game.HubPhase
 import com.kursi.feature.game.LobbyState
@@ -446,7 +446,7 @@ private fun LanHostRow(
                 .clickable(onClick = onJoin)
                 .semantics(mergeDescendants = true) {
                     role = androidx.compose.ui.semantics.Role.Button
-                    contentDescription = "${host.name}, ${host.host} port ${host.port}, room ${host.roomCode}"
+                    contentDescription = "${host.name}, ${host.host} port ${host.port}, room ${host.payload}"
                 }.padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -460,7 +460,7 @@ private fun LanHostRow(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    "${host.host}:${host.port} · ${host.roomCode}",
+                    "${host.host}:${host.port} · ${host.payload}",
                     style = KursiType.caption.copy(fontSize = 9.sp),
                     color = KursiNeutrals.TextMuted,
                     maxLines = 1,
