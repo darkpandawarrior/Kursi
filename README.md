@@ -12,7 +12,56 @@
 ![Platforms](https://img.shields.io/badge/Android%20%7C%20iOS%20%7C%20Desktop%20%7C%20Web-3DDC84)
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-blue)](LICENSE)
 
+**[Why](#why-kursi)** · **[Features](#features-at-a-glance)** · **[Architecture](#architecture)** · **[Tech stack](#tech)** · **[Getting started](#getting-started)** · **[Roadmap](#roadmap)**
+
+Sibling repo: [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit) (vendored `mvi-core`/`feedback`) · Portfolio: [cv-siddharth.vercel.app](https://cv-siddharth.vercel.app/)
+
 </div>
+
+<details>
+<summary>Table of contents</summary>
+
+- [Why Kursi](#why-kursi)
+- [The world](#the-world)
+- [Home](#home)
+- [The six roles](#the-six-roles)
+- [How you play](#how-you-play)
+- [DARBAR — the social layer](#darbar--the-social-layer)
+- [KISSA — story arcs mode](#kissa--story-arcs-mode)
+- [The ten personas](#the-ten-personas)
+- [Decision Coach](#decision-coach)
+- [Game modes](#game-modes)
+- [Career, replay, and ranking](#career-replay-and-ranking)
+- [Online play](#online-play)
+- [Onboarding](#onboarding)
+- [Reference & accessibility](#reference--accessibility)
+- [Features at a glance](#features-at-a-glance)
+- [Architecture](#architecture)
+- [Technical deep dive](#technical-deep-dive)
+- [Getting started](#getting-started)
+- [Build targets](#build-targets)
+- [Roadmap](#roadmap)
+- [Docs](#docs)
+- [Tech](#tech)
+- [License](#license)
+
+</details>
+
+---
+
+## Why Kursi
+
+Coup (Indie Boards and Cards, 2012) is a tight bluffing game with almost no social layer — five roles, a handful of actions, and the table goes quiet between claims. Kursi keeps that deterministic core intact and builds a satirical India corporate-political skin plus a social layer (DARBAR) on top of it: bots that remember, gossip, form pacts and hold grudges, and an ISMCTS-powered coach that reads the table the way the bots do.
+
+It's also the KMP proving ground for reusable pieces that live in a separate repo: `mvi-core` and `feedback` are versioned once in [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit) and consumed here via `includeBuild` + dependency substitution, not copy-pasted. See [Technical deep dive](#technical-deep-dive) for exactly how.
+
+What's real vs. mocked, honestly:
+- **Engine, AI (ISMCTS), DARBAR, career/replay, offline modes** — fully implemented, covered by `commonTest` (`ScalingGoldenTest`, `MatchResumeTest`, `NarrativeResumeTest`).
+- **Online play (Ktor/Netty server, LAN discovery, reconnect)** — real server code and protocol, not a mock; gameplay-tested locally. Production deploy (`server-deploy.yml` → Fly.io) is wired but not yet running continuously.
+- **Cloud AI providers (Anthropic/OpenAI/Gemini)** — real `AiProvider` implementations, BYOK. On-device Gemini Nano / Apple FoundationModels are the no-network fallback path.
+- **Store distribution pipelines** (Play, F-Droid, Amazon, Huawei, Samsung, Aptoide) — real workflows, gated on repo secrets that aren't populated yet; no build has shipped to a store.
+
+---
 
 ![DARBAR — Afwaah arc live at a 4-player table](docs/screenshots/darbar_table.png)
 
@@ -367,6 +416,22 @@ Every game moment (income, coin steal, role reveal, influence loss, elimination,
 
 ---
 
+## Features at a glance
+
+| Area | What's inside |
+|---|---|
+| Core game | 5 roles (6th — Patrakaar — at 6+ players), 8 actions, challenge/block resolution, 2–10 players |
+| Social layer | DARBAR: 4 concurrent bot-driven story arcs (Gathbandhan, Afwaah, Sting, Badla), deterministic narrative RNG |
+| Bots | 10 named personas, 5 difficulty tiers (Easy → Grandmaster), ISMCTS-backed at Medium+ |
+| Coach | ISMCTS move recommendation, bluff-risk odds, opponent dossier, toggleable |
+| Modes | vs AI, GAUNTLET ladder, Team Khel (factions), DARBAR, TAMASHA spectate, pass-and-play, 7 optional Vishesh rule variants |
+| Career | Results certificate, Roznamcha dossier, local ELO + daily streak, byte-for-byte replay scrubber |
+| Online | Private room codes, quick-match, LAN/mDNS discovery, authoritative Ktor/Netty server, reconnect handling |
+| Accessibility | Reduced-motion tailored end-frames per event, Okabe-Ito CVD-safe palette, full VoiceOver/TalkBack |
+| Platforms | Android, iOS, JVM desktop, Kotlin/Wasm — one Compose Multiplatform codebase |
+
+---
+
 ## Architecture
 
 ```
@@ -551,6 +616,25 @@ Not automatable, no CI job:
 
 ---
 
+## Roadmap
+
+**Shipped**
+- [x] Deterministic engine + ISMCTS bots (Easy → Grandmaster), 10 personas
+- [x] DARBAR social layer — 4 story arcs, deterministic narrative RNG
+- [x] All 4 client shells building (Android, iOS, desktop, web)
+- [x] Ktor/Netty authoritative online server, LAN discovery, reconnect
+- [x] Career, ELO, daily challenge, byte-for-byte replay scrubber
+- [x] 7 Vishesh (optional) rule variants
+- [x] `mvi-core`/`feedback` extracted into the shared `kmp-toolkit` monorepo
+
+**Exploring**
+- [ ] First tagged release / GitHub Release (`VERSION` is `1.0.0`, `BUILD_NUMBER` is `0`, nothing cut yet)
+- [ ] Populate store-distribution secrets and run a real Play/F-Droid rollout
+- [ ] Keep `server-deploy.yml` (Fly.io) running continuously instead of on-demand
+- [ ] Online standings board parity with local ELO once the server sees sustained traffic
+
+---
+
 ## Version history
 
 No release has been tagged yet. `git tag` returns exactly one entry — `backup/pre-scrub-2026-07-06`, a pre-scrub safety marker, not a version — so there's no `v1.0.0`-style tag history to show. `VERSION` currently reads `1.0.0` and `BUILD_NUMBER` reads `0`; both are bumped by `scripts/bump_version.sh`, but neither has been cut as a GitHub Release yet.
@@ -587,7 +671,16 @@ Full list: `git log --oneline`.
 
 ## Tech
 
-Kotlin Multiplatform 2.4.20-Beta1 · Compose Multiplatform 1.12.0-beta01 · Gradle 9.7.0-milestone-2 · AGP 9.4.0-alpha03 · Ktor 3.5.1 · multiplatform-settings 1.3.0 · kotlinx.serialization 1.11.0 · detekt 2.0.0-alpha.5 · ktlint 14.2.0 · Fastlane · GitHub Actions
+| Layer | Technology |
+|---|---|
+| Language | Kotlin Multiplatform 2.4.20-Beta1 |
+| UI | Compose Multiplatform 1.12.0-beta01 |
+| Build | Gradle 9.7.0-milestone-2 · AGP 9.4.0-alpha04 |
+| Networking | Ktor 3.5.1 (client + server/Netty) |
+| Persistence | multiplatform-settings 1.3.0 |
+| Serialization | kotlinx.serialization 1.11.0 |
+| Static analysis | detekt 2.0.0-alpha.5 (baseline-gated) · ktlint 14.2.0 |
+| Distribution | Fastlane · GitHub Actions (`ci.yml`, `quality.yml` + 9 store-deploy workflows) |
 
 ---
 
@@ -601,3 +694,11 @@ Inspired by *Coup* (Rikki Tahta, Indie Boards and Cards, 2012). Game mechanics a
 
 *सारे पात्र काल्पनिक हैं।*  
 All characters and events are fictional. Satire only.
+
+---
+
+<div align="center">
+
+Sibling repo: [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit) · Portfolio: [cv-siddharth.vercel.app](https://cv-siddharth.vercel.app/)
+
+</div>
