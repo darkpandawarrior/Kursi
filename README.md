@@ -2,26 +2,35 @@
 
 <img src="docs/assets/banner.svg" alt="Kursi — Kursi ke liye kuch bhi karega (he'll do anything for the chair)" width="900" />
 
-*Kursi ke liye kuch bhi karega.*  
-*He'll do anything for the chair.*
+### Kursi ke liye kuch bhi karega — he'll do anything for the chair.
+
+A bluffing card game set in a satirical India corporate-political underworld — 2–10 players, five
+roles hidden face-down, everyone lying about what they hold. Built in Kotlin Multiplatform with
+Compose Multiplatform: one codebase, four targets. Coup's deterministic bluffing core, plus a bot
+social layer (DARBAR) and an ISMCTS-powered coach on top.
 
 [![CI](https://github.com/darkpandawarrior/Kursi/actions/workflows/ci.yml/badge.svg)](https://github.com/darkpandawarrior/Kursi/actions/workflows/ci.yml)
 [![Quality](https://github.com/darkpandawarrior/Kursi/actions/workflows/quality.yml/badge.svg)](https://github.com/darkpandawarrior/Kursi/actions/workflows/quality.yml)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.4.20--Beta1-7F52FF?logo=kotlin&logoColor=white)
-![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.12.0--beta01-4285F4?logo=jetpackcompose&logoColor=white)
-![Platforms](https://img.shields.io/badge/Android%20%7C%20iOS%20%7C%20Desktop%20%7C%20Web-3DDC84)
+![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.12.0--beta02-4285F4?logo=jetpackcompose&logoColor=white)
+![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS%20%7C%20Desktop%20%7C%20Web-3DDC84)
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-blue)](LICENSE)
+![Players](https://img.shields.io/badge/players-2--10-C99A3B)
 
-**[Why](#why-kursi)** · **[Features](#features-at-a-glance)** · **[Architecture](#architecture)** · **[Tech stack](#tech)** · **[Getting started](#getting-started)** · **[Roadmap](#roadmap)**
+**[Why](#why-kursi)** · **[Highlights](#highlights)** · **[Screenshots](#screenshots)** · **[Features](#features-at-a-glance)** · **[Architecture](#architecture)** · **[Tech stack](#tech)** · **[Getting started](#getting-started)** · **[Roadmap](#roadmap)**
 
-Sibling repo: [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit) (vendored `mvi-core`/`feedback`) · Portfolio: [cv-siddharth.vercel.app](https://cv-siddharth.vercel.app/)
+Sibling repos: [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit) (vendored `mvi-core`/`feedback`/`common`/`bots-policy`/`network`/`ai`/`llm-chat`) · [`kmp-build-logic`](https://github.com/darkpandawarrior/kmp-build-logic) (shared Gradle convention plugins) · Portfolio: [cv-siddharth.vercel.app](https://cv-siddharth.vercel.app/)
 
 </div>
 
+---
+
 <details>
-<summary>Table of contents</summary>
+<summary><b>Table of contents</b></summary>
 
 - [Why Kursi](#why-kursi)
+- [Highlights](#highlights)
+- [Screenshots](#screenshots)
 - [The world](#the-world)
 - [Home](#home)
 - [The six roles](#the-six-roles)
@@ -47,13 +56,17 @@ Sibling repo: [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit) (
 
 </details>
 
----
+> **At a glance** — **13-module** Kotlin Multiplatform architecture (`engine` · `ai` ·
+> `shared-protocol` · `core:designsystem`/`network`/`prefs` · `feature:game` · 4 app shells ·
+> `server`), 10 bot personas, 4 concurrent DARBAR story arcs, one vendored `kmp-toolkit` submodule
+> for `mvi-core`/`feedback`/`common`/`bots-policy`/`network`/`ai`/`llm-chat`. *Module list from
+> `settings.gradle.kts`.*
 
 ## Why Kursi
 
 Coup (Indie Boards and Cards, 2012) is a tight bluffing game with almost no social layer — five roles, a handful of actions, and the table goes quiet between claims. Kursi keeps that deterministic core intact and builds a satirical India corporate-political skin plus a social layer (DARBAR) on top of it: bots that remember, gossip, form pacts and hold grudges, and an ISMCTS-powered coach that reads the table the way the bots do.
 
-It's also the KMP proving ground for reusable pieces that live in a separate repo: `mvi-core` and `feedback` are versioned once in [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit) and consumed here via `includeBuild` + dependency substitution, not copy-pasted. See [Technical deep dive](#technical-deep-dive) for exactly how.
+It's also the KMP proving ground for reusable pieces that live in a separate repo: `mvi-core`, `feedback` and several other shared modules (`common`, `bots-policy`, `network`, the on-device-AI layer, `llm-chat`) are versioned once in [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit) and consumed here via `includeBuild` + dependency substitution, not copy-pasted — the same toolkit and the same [`kmp-build-logic`](https://github.com/darkpandawarrior/kmp-build-logic) convention plugins that back [Mileway](https://github.com/darkpandawarrior/Mileway) and [PaymentsLab](https://github.com/darkpandawarrior/PaymentsLab), the sibling projects under the same [portfolio](https://cv-siddharth.vercel.app/). See [Technical deep dive](#technical-deep-dive) for exactly how.
 
 What's real vs. mocked, honestly:
 - **Engine, AI (ISMCTS), DARBAR, career/replay, offline modes** — fully implemented, covered by `commonTest` (`ScalingGoldenTest`, `MatchResumeTest`, `NarrativeResumeTest`).
@@ -61,19 +74,35 @@ What's real vs. mocked, honestly:
 - **Cloud AI providers (Anthropic/OpenAI/Gemini)** — real `AiProvider` implementations, BYOK. On-device Gemini Nano / Apple FoundationModels are the no-network fallback path.
 - **Store distribution pipelines** (Play, F-Droid, Amazon, Huawei, Samsung, Aptoide) — real workflows, gated on repo secrets that aren't populated yet; no build has shipped to a store.
 
----
+Inspired by Coup (Indie Boards and Cards, 2012). Theme, characters, code, visuals — all wholly original.
+
+## Highlights
+
+- 🎲 **Deterministic engine.** `(GameState, Intent) → GameState`, a pure function with a counter-based SplitMix64 RNG carried in state — no wall-clock, no platform `Random`. Any match replays byte-for-byte from `(seed, intentLog)`.
+- 🕵️ **Structural secrecy, not convention.** `redact(state, viewer) → PlayerView` is a type-level projection — another player's face-down roles cannot structurally appear in the view bots or clients receive.
+- 🤖 **ISMCTS-backed bots and coach.** The same Information Set Monte Carlo Tree Search that drives the 10 named personas (Easy → Grandmaster) also powers the optional Decision Coach — recommended-move stars, bluff-risk odds, an opponent dossier.
+- 🗣️ **DARBAR social layer.** Four concurrent bot-driven story arcs (Gathbandhan, Afwaah, Sting, Badla) run on a separate deterministic narrative RNG that never touches game state, covered by `NarrativeResumeTest`.
+- 🌍 **One codebase, four targets.** Android, iOS, JVM desktop and Kotlin/Wasm all build from the same Compose Multiplatform `cmp-shared` UI over a platform-neutral `CoroutineScope`-based MVI core (no `androidx.lifecycle.ViewModel` — `cmp-ios`/`cmp-web` can't depend on AndroidX).
+- 🧱 **A vendored KMP toolkit, not copy-pasted code.** `mvi-core`, `feedback` and five other modules live once in [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit), pulled in as a submodule + `includeBuild` with explicit `dependencySubstitution`.
+- 🌐 **A real authoritative server.** Ktor/Netty holds all game state; clients get only their redacted `PlayerView`. LAN discovery via Bonjour/mDNS, room codes, quick-match, and reconnect with auto-pass for a dropped player.
+- ♿ **Accessibility as a first-class surface.** Every game event gets a tailored static end-frame for reduced motion (not a generic fade), an Okabe-Ito CVD-safe palette, and full VoiceOver/TalkBack support.
+
+## Screenshots
 
 ![DARBAR — Afwaah arc live at a 4-player table](docs/screenshots/darbar_table.png)
 
-*सब मिले हुए हैं।*  
-Everyone is in on it.
+*सब मिले हुए हैं।* — Everyone is in on it.
 
----
-
-Bluffing card game set in a satirical India corporate-political underworld. 2–10 players. Five roles — six at large tables. Every player hides two cards face-down. Every player lies about what they are.
-
-Inspired by Coup (Indie Boards and Cards, 2012). Theme, characters, code, visuals — all wholly original.  
-Built in Kotlin Multiplatform. One codebase, four targets: Android, iOS, JVM desktop, Kotlin/Wasm.
+Every screenshot in `docs/screenshots/` is rendered headlessly on the JVM by
+`:cmp-desktop:renderScreens` and committed back to `main` by `screenshots.yml` on every push, so
+baselines never drift from what's actually in the repo. The flow GIFs in `docs/gifs/` are stitched
+from those same PNG frames with `scripts/make_flow_gifs.sh` (ffmpeg). Rather than one static
+gallery, they're woven into the walkthrough below wherever they explain something better than
+prose: [Home](#home) · [The six roles](#the-six-roles) · [How you play](#how-you-play) ·
+[DARBAR](#darbar--the-social-layer) · [The ten personas](#the-ten-personas) ·
+[Decision Coach](#decision-coach) · [Game modes](#game-modes) ·
+[Career, replay, and ranking](#career-replay-and-ranking) · [Online play](#online-play) ·
+[Onboarding](#onboarding) · [Reference & accessibility](#reference--accessibility).
 
 ---
 
@@ -443,15 +472,20 @@ Kursi/
 ├── core/
 │   ├── designsystem/ # KursiTheme, RoleGlyph, all UI primitives
 │   ├── prefs/        # Career stats, gauntlet progress, resume snapshot, API key store
-│   ├── network/      # Ktor WS client + LAN discovery
-│   └── feedback/     # Haptics, notification channels, share sheet (expect/actual)
+│   └── network/      # Ktor WS client + LAN discovery
 ├── feature/game/     # GameScreen, GameViewModel, GameSession, DARBAR narrative engine
 ├── cmp-shared/       # NavHost + all screens (shared Compose UI)
 ├── cmp-android/      # Android shell — FCM, adaptive icons, in-app review/update
 ├── cmp-ios/          # iOS KMP framework — APNs, StoreKit review, App Store update check
 ├── cmp-desktop/      # JVM desktop + headless render harness
-└── cmp-web/          # Kotlin/Wasm browser + PWA manifest
+├── cmp-web/          # Kotlin/Wasm browser + PWA manifest
+└── external/         # kmp-toolkit (mvi-core, feedback, common, bots-policy, network, ai,
+                       # llm-chat) and kmp-build-logic, both submodules wired via includeBuild
 ```
+
+`feedback` (haptics, notification channels, share sheet — `expect`/`actual`) has no local
+`core/feedback` module; it's one of the modules vendored in from `external/kmp-toolkit`, same as
+`mvi-core` — see [Technical deep dive](#technical-deep-dive).
 
 ### Module dependency graph
 
@@ -637,9 +671,13 @@ Not automatable, no CI job:
 
 ## Version history
 
-No release has been tagged yet. `git tag` returns exactly one entry — `backup/pre-scrub-2026-07-06`, a pre-scrub safety marker, not a version — so there's no `v1.0.0`-style tag history to show. `VERSION` currently reads `1.0.0` and `BUILD_NUMBER` reads `0`; both are bumped by `scripts/bump_version.sh`, but neither has been cut as a GitHub Release yet.
+No release has been tagged yet. `git tag` returns three entries — `backup/pre-scrub-2026-07-06`,
+`pre-toolkit-extraction` and `pre-toolkit-extraction-v2` — all pre-refactor safety markers, not
+versions, so there's no `v1.0.0`-style tag history to show. `VERSION` currently reads `1.0.0` and
+`BUILD_NUMBER` reads `0`; both are bumped by `scripts/bump_version.sh`, but neither has been cut as
+a GitHub Release yet.
 
-What the 88 commits since the project's scaffold actually shipped, dated from `git log`:
+What the commits since the project's scaffold actually shipped, dated from `git log`:
 
 | Date | Milestone |
 |------|-----------|
@@ -674,7 +712,7 @@ Full list: `git log --oneline`.
 | Layer | Technology |
 |---|---|
 | Language | Kotlin Multiplatform 2.4.20-Beta1 |
-| UI | Compose Multiplatform 1.12.0-beta01 |
+| UI | Compose Multiplatform 1.12.0-beta02 |
 | Build | Gradle 9.7.0-milestone-2 · AGP 9.4.0-alpha04 |
 | Networking | Ktor 3.5.1 (client + server/Netty) |
 | Persistence | multiplatform-settings 1.3.0 |
@@ -688,7 +726,7 @@ Full list: `git log --oneline`.
 
 CC BY-NC-SA 4.0 — Source code is available for study and non-commercial modification at https://github.com/darkpandawarrior/Kursi. Commercial use requires explicit written permission. 
 
-Copyright (c) 2026 darkpandwarrior.
+Copyright (c) 2024–2025 Siddharth Pandalai.
 
 Inspired by *Coup* (Rikki Tahta, Indie Boards and Cards, 2012). Game mechanics are uncopyrightable; all original expression is wholly original. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
@@ -699,6 +737,6 @@ All characters and events are fictional. Satire only.
 
 <div align="center">
 
-Sibling repo: [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit) · Portfolio: [cv-siddharth.vercel.app](https://cv-siddharth.vercel.app/)
+Sibling repos: [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit) · [`kmp-build-logic`](https://github.com/darkpandawarrior/kmp-build-logic) · [Mileway](https://github.com/darkpandawarrior/Mileway) · [PaymentsLab](https://github.com/darkpandawarrior/PaymentsLab) · Portfolio: [cv-siddharth.vercel.app](https://cv-siddharth.vercel.app/)
 
 </div>
