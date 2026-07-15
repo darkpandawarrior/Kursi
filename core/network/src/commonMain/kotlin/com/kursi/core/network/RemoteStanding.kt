@@ -1,5 +1,6 @@
 package com.kursi.core.network
 
+import com.siddharth.kmp.network.httpClientEngine
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -35,7 +36,7 @@ suspend fun fetchStandings(
     port: Int,
 ): List<RemoteStanding> {
     val client =
-        HttpClient(defaultHttpClientEngine()) {
+        HttpClient(httpClientEngine()) {
             install(ContentNegotiation) {
                 json(Json { ignoreUnknownKeys = true })
             }

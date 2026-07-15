@@ -15,6 +15,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":engine"))
             implementation(project(":shared-protocol"))
+            implementation("com.siddharth.kmp:network:1.0.0")
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.websockets)
             implementation(libs.ktor.client.contentNegotiation)
@@ -22,25 +23,9 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
         }
 
-        // JVM: OkHttp engine (also used as the host-test engine for androidHostTest)
-        jvmMain.dependencies {
-            implementation(libs.ktor.client.okhttp)
-        }
-
-        // Android: OkHttp engine
-        androidMain.dependencies {
-            implementation(libs.ktor.client.okhttp)
-        }
-
-        // iOS: Darwin (NSURLSession-backed) engine
-        iosMain.dependencies {
-            implementation(libs.ktor.client.darwin)
-        }
-
-        // wasmJs: JS engine (ktor-client-js supports wasmJs in Ktor 3.x)
-        wasmJsMain.dependencies {
-            implementation(libs.ktor.client.js)
-        }
+        // Per-platform engine deps (okhttp/darwin/js) now come transitively via :network's
+        // httpClientEngine() — jvm moves OkHttp -> CIO via :network's jvmMain (both support
+        // WebSockets, so KursiClient/RemoteStanding are unaffected).
 
         commonTest.dependencies {
             implementation(kotlin("test"))

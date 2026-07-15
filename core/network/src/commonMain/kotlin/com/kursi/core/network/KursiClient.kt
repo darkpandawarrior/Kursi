@@ -3,6 +3,7 @@ package com.kursi.core.network
 import com.kursi.protocol.wire.ClientMessage
 import com.kursi.protocol.wire.KursiJson
 import com.kursi.protocol.wire.ServerMessage
+import com.siddharth.kmp.network.httpClientEngine
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.websocket.WebSockets
@@ -32,11 +33,11 @@ import kotlinx.serialization.encodeToString
  * ```
  *
  * The [HttpClient] is created lazily using the platform-appropriate engine
- * supplied by [defaultHttpClientEngine].
+ * supplied by [httpClientEngine].
  */
 class KursiClient : AutoCloseable {
     private val http: HttpClient =
-        HttpClient(defaultHttpClientEngine()) {
+        HttpClient(httpClientEngine()) {
             install(WebSockets)
             install(ContentNegotiation) {
                 json(KursiJson)

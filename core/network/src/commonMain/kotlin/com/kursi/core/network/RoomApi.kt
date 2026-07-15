@@ -1,5 +1,6 @@
 package com.kursi.core.network
 
+import com.siddharth.kmp.network.createHttpClient
 import io.ktor.client.HttpClient
 import io.ktor.client.request.post
 import io.ktor.client.statement.bodyAsText
@@ -24,13 +25,18 @@ import io.ktor.http.isSuccess
  *
  * @param host server host (loopback for desktop testing, a LAN IP, or the cloud host).
  * @param port server port (default 8080 per :server `App.kt`).
- * @param clientFactory builds the [HttpClient] used for the two POSTs. Defaults to a plain client on
- *                      the platform engine; a fresh client is created per [RoomApi] and closed by [close].
+ * @param clientFactory builds the [HttpClient] used for the two POSTs. Defaults to the shared
+ *                      client with expectSuccess/retry/timeout disabled — this method already does
+ *                      its own manual status-code handling (see [postForCode]) and can be long-lived
+ *                      like a socket, so the library defaults (throw-on-non-2xx, retry, 30s timeout)
+ *                      would fight that. A fresh client is created per [RoomApi] and closed by [close].
  */
 class RoomApi(
     private val host: String,
     private val port: Int = DEFAULT_PORT,
-    clientFactory: () -> HttpClient = { HttpClient(defaultHttpClientEngine()) },
+    clientFactory: () -> HttpClient = {
+        createHttpClient(expectSuccess = false, retry = false, requestTimeoutMillis = null)
+    },
 ) : AutoCloseable {
     private val http: HttpClient = clientFactory()
 

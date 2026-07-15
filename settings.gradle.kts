@@ -2,6 +2,11 @@
 
 pluginManagement {
     includeBuild("build-logic")
+    // kmp-toolkit's own settings.gradle.kts does includeBuild("../kmp-build-logic") — a relative
+    // path that only resolves if this repo also vendors kmp-build-logic as a sibling of
+    // external/kmp-toolkit (see includeBuild("external/kmp-toolkit") below) and includes it here
+    // too. Gradle then collapses both references into the same included build. Mirrors PaymentsLab.
+    includeBuild("external/kmp-build-logic")
     repositories {
         google {
             content {
@@ -66,6 +71,7 @@ includeBuild("external/kmp-toolkit") {
         substitute(module("com.siddharth.kmp:common")).using(project(":common"))
         substitute(module("com.siddharth.kmp:feedback")).using(project(":feedback"))
         substitute(module("com.siddharth.kmp:bots-policy")).using(project(":bots-policy"))
+        substitute(module("com.siddharth.kmp:network")).using(project(":network"))
         // NOTE: toolkit's :ai project path collides in name with Kursi's OWN root :ai module
         // (Kursi's bot-policy/ISMCTS module, see include(":ai") below) — but they live in separate
         // Gradle builds (this includeBuild's project(":ai") resolves inside external/kmp-toolkit
