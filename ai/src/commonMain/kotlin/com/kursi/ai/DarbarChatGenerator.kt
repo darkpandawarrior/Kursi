@@ -1,10 +1,10 @@
 package com.kursi.ai
 
 import com.kursi.ai.persona.BotPersona
-import com.kursi.ai.provider.AiConfig
-import com.kursi.ai.provider.AiMessage
-import com.kursi.ai.provider.AiProvider
 import com.kursi.engine.PlayerView
+import com.siddharth.kmp.llmchat.AiConfig
+import com.siddharth.kmp.llmchat.AiMessage
+import com.siddharth.kmp.llmchat.AiProvider
 
 enum class ChatTrigger {
     GAME_START,

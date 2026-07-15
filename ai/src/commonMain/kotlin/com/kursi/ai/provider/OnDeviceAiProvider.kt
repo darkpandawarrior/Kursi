@@ -1,5 +1,8 @@
 package com.kursi.ai.provider
 
+import com.siddharth.kmp.llmchat.AiMessage
+import com.siddharth.kmp.llmchat.AiProvider
+
 expect class OnDeviceAiProvider() : AiProvider
 
 /**

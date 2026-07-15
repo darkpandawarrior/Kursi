@@ -4,6 +4,9 @@ import com.siddharth.kmp.ai.CompositeOnDeviceLlm
 import com.siddharth.kmp.ai.FoundationModelsOnDeviceLlm
 import com.siddharth.kmp.ai.MediaPipeOnDeviceLlm
 import com.siddharth.kmp.ai.OnDeviceLlm
+import com.siddharth.kmp.llmchat.AiConfig
+import com.siddharth.kmp.llmchat.AiMessage
+import com.siddharth.kmp.llmchat.AiProvider
 
 /**
  * iOS on-device LLM tier (consolidation #7): routes through toolkit `:ai`'s Foundation Models →

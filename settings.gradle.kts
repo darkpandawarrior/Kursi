@@ -78,6 +78,11 @@ includeBuild("external/kmp-toolkit") {
         // only), so there is no path clash. Coordinate-only consume: routes the on-device-LLM arm
         // of Kursi's own AiProvider through the toolkit's real OnDeviceLlm backends.
         substitute(module("com.siddharth.kmp:ai")).using(project(":ai"))
+        // Consolidation #10: Kursi's cloud-LLM chat client (AiProvider + Anthropic/OpenAI/Gemini +
+        // chain builder) now lives in toolkit :llm-chat. Kursi's own :ai module consumes it; only
+        // IsmctsOnlyProvider (implements AiProvider) and OnDeviceAiProvider.* (consumes toolkit :ai)
+        // stayed behind as Kursi-specific.
+        substitute(module("com.siddharth.kmp:llm-chat")).using(project(":llm-chat"))
     }
 }
 

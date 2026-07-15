@@ -1,6 +1,9 @@
 package com.kursi.ai.provider
 
 import com.siddharth.kmp.ai.UnavailableOnDeviceLlm
+import com.siddharth.kmp.llmchat.AiConfig
+import com.siddharth.kmp.llmchat.AiMessage
+import com.siddharth.kmp.llmchat.AiProvider
 
 /**
  * Desktop/JVM on-device LLM tier (consolidation #7): routes through toolkit `:ai`'s

@@ -9,6 +9,9 @@ import com.siddharth.kmp.ai.MediaPipeModelManager
 import com.siddharth.kmp.ai.MediaPipeOnDeviceLlm
 import com.siddharth.kmp.ai.MlKitGenAiOnDeviceLlm
 import com.siddharth.kmp.ai.OnDeviceLlm
+import com.siddharth.kmp.llmchat.AiConfig
+import com.siddharth.kmp.llmchat.AiMessage
+import com.siddharth.kmp.llmchat.AiProvider
 
 // ponytail: process-wide Application Context capture via a no-op ContentProvider — the standard
 // Android idiom (WorkManager/Firebase/Coil) for library code that needs a Context but must keep a

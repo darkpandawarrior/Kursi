@@ -1,5 +1,8 @@
 package com.kursi.ai.provider
 
+import com.siddharth.kmp.llmchat.AiConfig
+import com.siddharth.kmp.llmchat.AiMessage
+import com.siddharth.kmp.llmchat.AiProvider
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject

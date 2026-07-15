@@ -2,14 +2,14 @@ package com.kursi.ai
 
 import com.kursi.ai.advisor.MoveAdvisor
 import com.kursi.ai.persona.BotPersona
-import com.kursi.ai.provider.AiMessage
-import com.kursi.ai.provider.AiProvider
 import com.kursi.engine.GameState
 import com.kursi.engine.Intent
 import com.kursi.engine.PlayerId
 import com.kursi.engine.legalIntents
 import com.kursi.engine.redact
 import com.siddharth.kmp.botspolicy.SearchBudget
+import com.siddharth.kmp.llmchat.AiMessage
+import com.siddharth.kmp.llmchat.AiProvider
 import kotlinx.coroutines.withTimeoutOrNull
 
 private val QUICK_BUDGET = SearchBudget(maxMillis = 200L, maxIterations = 800, rolloutHorizon = 8)
