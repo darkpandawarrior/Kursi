@@ -28,7 +28,6 @@ import com.kursi.ai.advisor.MoveAdvisor
 import com.kursi.ai.persona.BotDifficulty
 import com.kursi.ai.persona.PersonaAssigner
 import com.kursi.core.network.ConnectionState
-import com.siddharth.kmp.network.LanHost
 import com.kursi.core.prefs.AppPrefs
 import com.kursi.core.prefs.DailyStanding
 import com.kursi.core.prefs.DecisionLedger
@@ -80,6 +79,7 @@ import com.kursi.shared.screen.SettingsScreen
 import com.kursi.shared.screen.SetupScreen
 import com.kursi.shared.screen.StoryScreen
 import com.kursi.shared.screen.TutorialScreen
+import com.siddharth.kmp.network.LanHost
 import java.io.File
 
 // ─────────────────────────────────────────────────────────────────────────────
