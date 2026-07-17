@@ -15,7 +15,7 @@
 - **Design tokens, not hardcoded dp.** New spacing/shape/motion via `core/designsystem` tokens.
 - **No new dependency** for what a few lines do. `feature/game` must NOT gain a `core:prefs` dependency — the VM receives flows/callbacks (existing pattern, `GameViewModel.kt:60-107`).
 - **Determinism untouched.** Nothing in this wave touches `engine/`. Replay (`seed + humanIntentLog`) is unaffected — the beat gate only paces *presentation* of already-computed bot steps.
-- **Verification gate (every task):** `./gradlew :feature:game:testDebugUnitTest` (+ the module owning the change) **and** `./gradlew testAndroidHostTest` for any `commonMain` change to a library module, plus `./gradlew detekt ktlintCheck`. Commit only on green.
+- **Verification gate (every task):** `./gradlew :feature:game:jvmTest` (+ the module owning the change) **and** `./gradlew testAndroidHostTest` for any `commonMain` change to a library module, plus `./gradlew detekt ktlintCheck`. Commit only on green.
 - **Commit style:** conventional commits, ≤72-char subject, **no AI attribution trailer** (repo hook rejects it).
 
 ---
@@ -75,7 +75,7 @@ class DensityLayerTest {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `./gradlew :feature:game:testDebugUnitTest --tests "com.kursi.feature.game.DensityLayerTest"`
+Run: `./gradlew :feature:game:jvmTest --tests "com.kursi.feature.game.DensityLayerTest"`
 Expected: FAIL — `DensityLayer` unresolved.
 
 - [ ] **Step 3: Create the enum**
@@ -188,12 +188,12 @@ Add the imports it needs (`kotlinx.coroutines.flow.map`, `stateIn`, `SharingStar
 
 - [ ] **Step 8: Run tests to verify they pass**
 
-Run: `./gradlew :feature:game:testDebugUnitTest --tests "com.kursi.feature.game.DensityLayerTest"`
+Run: `./gradlew :feature:game:jvmTest --tests "com.kursi.feature.game.DensityLayerTest"`
 Expected: PASS (3 tests).
 
 - [ ] **Step 9: Full module gate**
 
-Run: `./gradlew :feature:game:testDebugUnitTest :core:prefs:testDebugUnitTest testAndroidHostTest detekt ktlintCheck`
+Run: `./gradlew :feature:game:jvmTest :core:prefs:jvmTest testAndroidHostTest detekt ktlintCheck`
 Expected: BUILD SUCCESSFUL. (If `cmp-shared` fails to compile, the KursiApp wiring in Step 7 is incomplete — fix the `GameViewModel(...)` call site.)
 
 - [ ] **Step 10: Commit**
@@ -263,7 +263,7 @@ class BeatGateTest {
 
 - [ ] **Step 2: Run to verify fail**
 
-Run: `./gradlew :feature:game:testDebugUnitTest --tests "com.kursi.feature.game.BeatGateTest"`
+Run: `./gradlew :feature:game:jvmTest --tests "com.kursi.feature.game.BeatGateTest"`
 Expected: FAIL — `tierFor` / `BeatTier` unresolved.
 
 - [ ] **Step 3: Create `BeatGate.kt` (extract the classifier from `pauseFor`)**
@@ -389,12 +389,12 @@ In `submitIntent`'s advance loop (line 675), replace `delay(pauseFor(lastEvents)
 
 - [ ] **Step 8: Run the beat-gate tests**
 
-Run: `./gradlew :feature:game:testDebugUnitTest --tests "com.kursi.feature.game.BeatGateTest"`
+Run: `./gradlew :feature:game:jvmTest --tests "com.kursi.feature.game.BeatGateTest"`
 Expected: PASS (3 tests).
 
 - [ ] **Step 9: Full gate (guards the ANALYST no-change invariant)**
 
-Run: `./gradlew :feature:game:testDebugUnitTest testAndroidHostTest detekt ktlintCheck`
+Run: `./gradlew :feature:game:jvmTest testAndroidHostTest detekt ktlintCheck`
 Expected: BUILD SUCCESSFUL — existing ViewModel pacing tests still pass (they run with no density-layer flow → ANALYST → timed `delay`, unchanged).
 
 - [ ] **Step 10: Commit**
@@ -441,7 +441,7 @@ class KursiMotionTest {
 
 - [ ] **Step 2: Run to verify fail**
 
-Run: `./gradlew :core:designsystem:testDebugUnitTest --tests "com.kursi.designsystem.KursiMotionTest"`
+Run: `./gradlew :core:designsystem:jvmTest --tests "com.kursi.designsystem.KursiMotionTest"`
 Expected: FAIL — `KursiMotion` unresolved.
 
 - [ ] **Step 3: Create the tokens**
@@ -478,7 +478,7 @@ object KursiMotion {
 
 - [ ] **Step 4: Run to verify pass**
 
-Run: `./gradlew :core:designsystem:testDebugUnitTest --tests "com.kursi.designsystem.KursiMotionTest"`
+Run: `./gradlew :core:designsystem:jvmTest --tests "com.kursi.designsystem.KursiMotionTest"`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**

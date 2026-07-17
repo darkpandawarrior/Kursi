@@ -1,8 +1,9 @@
-# Kursi Launch Overhaul — Design Spec (rev 2)
+# Kursi Launch Overhaul — Design Spec (rev 3)
 
-**Date:** 2026-07-18 (rev 2 — full scope, parallel-wave timeline)
-**Status:** Approved direction, pending final spec review
+**Date:** 2026-07-18 (rev 3 — resources folded in, licensing policy, free code-first design tooling)
+**Status:** Approved direction; Wave 0 in execution
 **Scope:** Everything for launch — comprehension, pacing, graphics, AI, accessibility, platform polish, online play, localization, store distribution, docs — across all four client targets (Android, iOS, desktop/JVM, web/Wasm) + server.
+**Companion doc:** [docs/resources.md](../../resources.md) — the license-vetted external resources (shaders, juice technique, fonts, audio, references) referenced throughout.
 
 ---
 
@@ -72,12 +73,12 @@ The player's two cards are physical objects: **hold-to-peek** (cards stay face-d
 Not flat Canvas, not plain bitmaps — a compositor:
 
 1. **Canvas base** — existing felt/guilloché/emblem drawing, deepened (lighting gradient, vignette, warm key light: the lamplit-desk look).
-2. **AGSL / Skia runtime shader layer** — film grain, felt weave, brass specular that sweeps with device tilt, bloom on hero beats. `expect/actual` shader host per platform (Android AGSL / Skiko `RuntimeEffect` elsewhere); graceful no-shader fallback path (web/older devices) that must look intentional, not broken.
+2. **AGSL / Skia runtime shader layer** — film grain, felt weave, brass specular that sweeps with device tilt, bloom on hero beats. `expect/actual` shader host per platform (Android AGSL / Skiko `RuntimeEffect` elsewhere); graceful no-shader fallback path (web/older devices) that must look intentional, not broken. **Reference/absorb** (docs/resources.md): [ShaderX](https://github.com/Debanshu777/ShaderX) for the exact AGSL+Skia expect/actual split, [Cloudy](https://github.com/skydoves/Cloudy) (Apache-2.0, candidate dependency) for GPU-blur-with-CPU-fallback powering the Focus-Pull bokeh and the no-shader path, [Shady](https://github.com/drinkthestars/shady) for grain/texture passes.
 3. **Particle layer** — coin trails, stamp-ink spray, dust motes; capped counts, object-pooled.
 4. **Asset layer** — new `composeResources` art track: 10 persona portraits, 6 role card faces, hero-moment art (KURSI crest, tipped chair). **AI-generated art is the launch art** (§9): produced in-style ("License Raj Deco → Sarkari Noir"), passed through a style-lock QA gate (palette, line weight, CVD pattern channels embedded in card frames) before acceptance. Commissioned art remains a post-launch drop-in option. WebP with per-density variants; total asset budget ≤ 8 MB per target.
 5. **Moment overlays** — existing `MomentHost`/`ActionMomentOverlay` system, extended with the new beats; every new moment gets a `StaticMomentFrame` reduced-motion end-state.
 
-Plus: full wiring of the bundled Rozha One / Marcellus / DM Mono (removing the Serif/Monospace fallbacks in `KursiType`), a spring-physics motion-token set in `core/designsystem` (durations/damping named, not scattered), and a **distinct haptic signature per action class** (Android `HapticFeedback`/Vibrator, iOS Core Haptics via expect/actual; silent no-op on desktop/web).
+Plus: full wiring of the bundled Rozha One / Marcellus / DM Mono (removing the Serif/Monospace fallbacks in `KursiType`), a spring-physics motion-token set in `core/designsystem` (durations/damping named, not scattered), a **distinct haptic signature per action class** (Android `HapticFeedback`/Vibrator, iOS Core Haptics via expect/actual; silent no-op on desktop/web), and a **CC0 sound layer** (stamp-slam / coin / card-deal beats) sourced per docs/resources.md ([Freesound](https://opengameart.org/content/cc0-sound-effects) CC0 / [Kenney](https://kenney.itch.io/kenney-game-assets) / [Pixabay](https://pixabay.com/sound-effects/search/cc0/)), gated by the existing `soundEnabled` pref. The juice design bible is the [Balatro feedback breakdown](https://blakecrosley.com/guides/design/balatro) — the layered stack (animation → particles → screen → audio → haptics) applied to every beat.
 
 ## 8. Workstream G — Intelligence & AI
 
@@ -115,6 +116,17 @@ Selection: auto-detect tier 1 → fall back to tier 3; tier 2 is explicit opt-in
 
 AI-generated art is **launch art**, not placeholder. Acceptance pipeline: generate in-style → style-lock QA gate (brand palette adherence, line-weight consistency, role CVD `RoleFramePattern` embedded in every card frame, contrast check) → asset track. Rejected pieces regenerate; nothing ships unreviewed. Commissioned replacement is a post-launch option, not a launch dependency.
 
+### 9.1 Licensing & credits policy (governs every external asset/code)
+
+The full vetted list is [docs/resources.md](../../resources.md). Enforced rules:
+
+- **Ship only** CC0, MIT, Apache-2.0, OFL. AI-generated art (own work) and original Canvas/vector are unrestricted.
+- **CC-BY** is allowed only with an entry in a new in-app **Credits** screen (Settings → Credits), listing asset, author, source, license. Adding a CC-BY asset without its credit line is a review rejection.
+- **GPL / any copyleft** art or code is **quarantined** — never bundled (would infect this proprietary game). Study-only.
+- **Fonts:** OFL fonts may be embedded freely (the license forbids selling the font itself, not shipping it in an app). Devanagari (Tiro Devanagari Hindi, Hind) + the existing Latin trio are OFL.
+- **Per-clip verification:** Freesound/OGA mix licenses per item — each absorbed asset records its license in a `THIRD_PARTY.md` manifest at the asset track root; CI fails the build if an asset lacks a manifest entry.
+- **Code references** (ShaderX, Cloudy, Shady, treason): copying any snippet requires the source repo's license be permissive and recorded; otherwise they are learning references only.
+
 ## 10. Workstream D — Accessibility
 
 Executed with the android-accessibility + adaptive skills; applies to all new and existing surfaces:
@@ -145,6 +157,7 @@ The Ktor authoritative server and `OnlineHubScreen` exist; they get launch-quali
 
 - Externalize all user-facing strings to CMP string resources (currently hardcoded); templated AI tier-3 strings included.
 - Launch locales: **en**, **hi**, and the game's native **Hinglish voice** as its own locale variant (the brand's register — "Khokha", "Gaddi" — is already Hinglish; en is the accessibility floor, hi the reach play).
+- Devanagari type for `hi` (OFL, free commercial, per docs/resources.md): [Tiro Devanagari Hindi](https://fonts.google.com/specimen/Tiro+Devanagari+Hindi) (display — Murty Classical Library origin, on-theme) + [Hind](https://fonts.google.com/specimen/Hind) (UI body). Bundled alongside the existing Latin trio in `core/designsystem` composeResources.
 - LLM prompts (Munshi/coach) carry the locale so AI output matches the player's language; tier-3 templates are the translation source of truth.
 - Localization QA via the screenshot harness: fixture pass per locale to catch truncation/overflow.
 
@@ -164,6 +177,8 @@ The Ktor authoritative server and `OnlineHubScreen` exist; they get launch-quali
 ## 16. Timeline — parallel wave model (fastest path)
 
 The serial 8-phase ladder is replaced by **4 waves**. Inside a wave, tracks run in parallel — each track in its **own git worktree** (parallel agents must never share a checkout), merged behind a per-track verification gate. Multi-agent Workflow orchestration throughout: Sonnet volume execution, Opus orchestration, ensemble+judge for visual direction picks, generator–critic for a11y and art QA.
+
+**Design tooling is free and code-first** (no paid Figma — Dev Mode is paid-only, unavailable on the Starter plan): the design system is built directly in `core/designsystem` (the source of truth), mockups come from the `:cmp-desktop:renderScreens` harness + Compose `@Preview`, and concept mockups from agent Artifact tooling. Figma stays read-only/optional. Each track that absorbs an external resource (docs/resources.md) runs a **license-verification step first** — CC0/MIT/Apache/OFL only into the ship; CC-BY → Credits screen; GPL quarantined.
 
 **Wave 0 — Foundation (serial; everything depends on it).**
 `GameScreen.kt`/`GameViewModel.kt` decomposition + `DensityLayer` scaffolding + beat-gate state machine + string externalization scaffolding (so parallel tracks write externalized strings from day one) + motion-token stubs. Cielara dependency mapping first. This wave is deliberately small and lands fast — it is the merge base for every track.
