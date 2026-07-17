@@ -64,8 +64,8 @@ import com.kursi.shared.screen.TutorialScreen
 import com.kursi.shared.strings.KursiStrings
 import com.kursi.shared.strings.LocalKursiStrings
 import com.siddharth.kmp.feedback.shareText
-import kotlinx.coroutines.SharingStarted
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
