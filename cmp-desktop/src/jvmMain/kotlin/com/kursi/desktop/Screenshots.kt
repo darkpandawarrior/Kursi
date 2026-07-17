@@ -54,13 +54,13 @@ import com.kursi.feature.game.LobbyKind
 import com.kursi.feature.game.LobbyState
 import com.kursi.feature.game.OnlineHubUiState
 import com.kursi.feature.game.OpponentPersona
+import com.kursi.feature.game.coach.riskBluffConf
 import com.kursi.feature.game.narrative.ArcId
 import com.kursi.feature.game.narrative.ChatActionKind
 import com.kursi.feature.game.narrative.ChatKind
 import com.kursi.feature.game.narrative.ChatMessage
 import com.kursi.feature.game.narrative.ChatSuggestion
 import com.kursi.feature.game.narrative.MessageTone
-import com.kursi.feature.game.riskBluffConf
 import com.kursi.shared.nav.MatchDecisionSummary
 import com.kursi.shared.nav.MatchSummary
 import com.kursi.shared.screen.CareerScreen

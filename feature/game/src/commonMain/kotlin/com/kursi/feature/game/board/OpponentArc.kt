@@ -19,6 +19,7 @@ import com.kursi.designsystem.*
 import com.kursi.designsystem.moment.reportAnchor
 import com.kursi.engine.*
 import com.kursi.feature.game.*
+import com.kursi.feature.game.coach.*
 import com.kursi.feature.game.overlays.*
 
 // ─────────────────────────── Opponent Arc (FlowRow on the felt) ────────────
