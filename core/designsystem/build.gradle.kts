@@ -37,5 +37,8 @@ kotlin {
             implementation("com.siddharth.kmp:feedback:1.0.0")
             implementation("com.siddharth.kmp:common:1.0.0")
         }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
     }
 }
