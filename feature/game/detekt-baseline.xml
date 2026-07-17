@@ -7,11 +7,11 @@
     <ID>CyclomaticComplexMethod:ActionDocks.kt:@OptIn(ExperimentalLayoutApi::class) @Composable internal fun PickActionDock</ID>
     <ID>CyclomaticComplexMethod:ChatVoice.kt:ChatVoice$fun arcBeat: String</ID>
     <ID>CyclomaticComplexMethod:ChatVoice.kt:ChatVoice$fun botArcBeat: String</ID>
+    <ID>CyclomaticComplexMethod:Darbar.kt:@Composable internal fun DarbarPanel</ID>
     <ID>CyclomaticComplexMethod:GameLog.kt:@Composable internal fun CollapsibleLogDrawer</ID>
     <ID>CyclomaticComplexMethod:GameLog.kt:@Composable internal fun GameLogEntry</ID>
     <ID>CyclomaticComplexMethod:GameMoments.kt:internal fun mapEventToMoment: KursiMoment?</ID>
     <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable fun GameScreen</ID>
-    <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun DarbarPanel</ID>
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$fun actionBark: String</ID>
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$fun actionConsequence: String</ID>
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$fun logActorVerb: String</ID>
