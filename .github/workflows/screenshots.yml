@@ -4,8 +4,9 @@ name: Screenshots
 #
 # The Kursi render harness (`:cmp-desktop:renderScreens`) runs the Compose desktop JVM
 # target headlessly and writes PNGs to cmp-desktop/build/shots/. CI runs on Linux (deterministic
-# renderer) and copies the output to docs/screenshots/, then commits any changed/new shots
-# back to main — so baselines are always in sync with code and never drift from CI's environment.
+# renderer) and copies the output to docs/screenshots/, then proposes any changed/new shots
+# back via a bot-branch PR — so baselines are always in sync with code and never drift from
+# CI's environment, without pushing straight to main.
 #
 # On PRs: shots are uploaded as an artifact for review, not committed.
 
@@ -21,11 +22,12 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: write        # allows the bot to push a refresh branch
+  pull-requests: write   # allows the bot to open the baseline-refresh PR
 
 jobs:
   render:
-    name: Render & commit baselines
+    name: Render & propose baselines
     runs-on: ubuntu-latest
     env:
       GRADLE_OPTS: "-Dorg.gradle.daemon=false"
@@ -59,19 +61,32 @@ jobs:
           mkdir -p docs/screenshots
           cp -r cmp-desktop/build/shots/. docs/screenshots/
 
-      # Push: commit new/changed shots back to main.
-      # [skip ci] prevents this push from re-triggering the workflow.
-      - name: Commit refreshed baselines
+      # main: baselines drifted. Push straight to main bypasses review and can race other
+      # pushes, so open a refresh PR instead (idempotent branch name per source SHA; re-runs
+      # force-push the same branch and reuse the open PR). gh pr create is made non-fatal so a
+      # sandbox/permissions issue with PR creation never hard-fails this job — the branch is
+      # still pushed either way.
+      - name: Open baseline-refresh PR
         if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/screenshots
           if git diff --cached --quiet; then
             echo "Screenshots unchanged — nothing to commit."
-          else
-            git commit -m "chore(screenshots): refresh baselines [skip ci]"
-            git push
+            exit 0
+          fi
+          branch="bot/refresh-screenshot-baselines-${GITHUB_SHA::7}"
+          git checkout -b "$branch"
+          git commit -m "chore(screenshots): refresh baselines for ${GITHUB_SHA::7}"
+          git push --force origin "$branch"
+          if ! gh pr list --head "$branch" --state open --json number --jq '.[0].number' | grep -q .; then
+            gh pr create --base main --head "$branch" \
+              --title "chore(screenshots): refresh baselines for ${GITHUB_SHA::7}" \
+              --body "Automated render-harness baseline refresh — screens changed on main and CI re-rendered them. Review the PNG diffs and merge." \
+              || echo "::warning::gh pr create failed (branch $branch was still pushed) — open the PR manually if needed."
           fi
 
       # PR: upload for human review
