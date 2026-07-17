@@ -3,15 +3,15 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ComplexCondition:GameViewModel.kt:GameViewModel$session === this@GameViewModel.session &amp;&amp; shown != null &amp;&amp; shown.isHumanTurn &amp;&amp; shown.advice.isEmpty() &amp;&amp; shown.legalIntents.toSet() == advice.map { it.intent }.toSet()</ID>
+    <ID>CyclomaticComplexMethod:ActionDocks.kt:@Composable internal fun CompactActionChip</ID>
+    <ID>CyclomaticComplexMethod:ActionDocks.kt:@OptIn(ExperimentalLayoutApi::class) @Composable internal fun PickActionDock</ID>
     <ID>CyclomaticComplexMethod:ChatVoice.kt:ChatVoice$fun arcBeat: String</ID>
     <ID>CyclomaticComplexMethod:ChatVoice.kt:ChatVoice$fun botArcBeat: String</ID>
     <ID>CyclomaticComplexMethod:GameMoments.kt:internal fun mapEventToMoment: KursiMoment?</ID>
     <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable fun GameScreen</ID>
     <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun CollapsibleLogDrawer</ID>
-    <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun CompactActionChip</ID>
     <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun DarbarPanel</ID>
     <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun GameLogEntry</ID>
-    <ID>CyclomaticComplexMethod:GameScreen.kt:@OptIn(ExperimentalLayoutApi::class) @Composable internal fun PickActionDock</ID>
     <ID>CyclomaticComplexMethod:GameScreen.kt:internal fun deriveSpineTextAndTone: Pair&lt;String, SpineTone&gt;</ID>
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$fun actionBark: String</ID>
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$fun actionConsequence: String</ID>
