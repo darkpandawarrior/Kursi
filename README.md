@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg" alt="Kursi — Kursi ke liye kuch bhi karega (he'll do anything for the chair)" width="900" />
+<img src="docs/assets/banner.gif" alt="Kursi — Kursi ke liye kuch bhi karega (he'll do anything for the chair)" width="900" />
 
 ### Kursi ke liye kuch bhi karega — he'll do anything for the chair.
 
