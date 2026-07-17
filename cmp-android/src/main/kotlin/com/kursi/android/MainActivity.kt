@@ -7,12 +7,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
+import com.kursi.core.prefs.AppPrefs
+import com.kursi.shared.KursiApp
 import com.siddharth.kmp.feedback.FeedbackAndroid
 import com.siddharth.kmp.feedback.NotificationChannelManager
 import com.siddharth.kmp.feedback.NotificationPermission
 import com.siddharth.kmp.feedback.NotificationPermissionState
-import com.kursi.core.prefs.AppPrefs
-import com.kursi.shared.KursiApp
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
