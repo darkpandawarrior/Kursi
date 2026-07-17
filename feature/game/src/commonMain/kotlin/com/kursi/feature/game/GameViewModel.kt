@@ -104,6 +104,10 @@ class GameViewModel(
      * app can wire this from the language preference; tests / render harness use the default.
      */
     private val language: Language = Language.HINGLISH,
+    /** PROGRESSIVE-DISCLOSURE layer flow (spec §3), sourced from AppPrefs by the app. Null = ANALYST. */
+    private val densityLayerFlow: StateFlow<DensityLayer>? = null,
+    /** Persist a density-layer change (e.g. graduation / settings). Null = in-memory only. */
+    private val onDensityLayerChange: ((DensityLayer) -> Unit)? = null,
 ) {
     private val _state = MutableStateFlow<GameUiState?>(null)
     val state: StateFlow<GameUiState?> = _state.asStateFlow()
@@ -345,6 +349,14 @@ class GameViewModel(
                 turnSpeedFlow.collect { speedMultiplier = it }
             }
         }
+        // PROGRESSIVE-DISCLOSURE: re-stamp densityLayer onto the live state whenever the flow emits.
+        if (densityLayerFlow != null) {
+            coroutineScope.launch {
+                densityLayerFlow.collect { layer ->
+                    _state.value = _state.value?.copy(densityLayer = layer)
+                }
+            }
+        }
     }
 
     /**
@@ -358,6 +370,20 @@ class GameViewModel(
         if (coachEnabledFlow == null) {
             // No flow wired (e.g. tests / render harness): update state directly.
             _state.value = _state.value?.copy(coachEnabled = newValue)
+        }
+    }
+
+    /**
+     * PROGRESSIVE-DISCLOSURE — change the density layer (e.g. from Settings, or a future
+     * graduation prompt). Calls [onDensityLayerChange] to persist (if wired) AND immediately
+     * re-stamps the live state so the UI reflects it without waiting for the flow round-trip
+     * (mirrors [toggleCoach]). Nothing gates on [GameUiState.densityLayer] yet (Wave 1 Track 4).
+     */
+    fun setDensityLayer(layer: DensityLayer) {
+        onDensityLayerChange?.invoke(layer)
+        if (densityLayerFlow == null) {
+            // No flow wired (e.g. tests / render harness): update state directly.
+            _state.value = _state.value?.copy(densityLayer = layer)
         }
     }
 
@@ -591,7 +617,12 @@ class GameViewModel(
             } else {
                 newSession.start()
             }
-        emitState(initialUi.copy(coachEnabled = coachEnabledFlow?.value ?: true))
+        emitState(
+            initialUi.copy(
+                coachEnabled = coachEnabledFlow?.value ?: true,
+                densityLayer = initialDensityLayer(densityLayerFlow),
+            ),
+        )
         // A resumed game re-establishes its snapshot (identical content); a fresh game writes its
         // empty-log baseline so a relaunch before the first move still finds the in-progress match.
         if (!initialUi.isGameOver) {
@@ -855,3 +886,6 @@ class GameViewModel(
         }
     }
 }
+
+/** Initial density layer for a fresh match: the flow's value, or ANALYST when no flow is wired. */
+private fun initialDensityLayer(flow: StateFlow<DensityLayer>?): DensityLayer = flow?.value ?: DensityLayer.ANALYST

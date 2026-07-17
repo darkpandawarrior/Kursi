@@ -106,6 +106,12 @@ data class GameUiState(
      * Key = PlayerId; value = total coins earned (never decremented by spending).
      */
     val lifetimeCoins: Map<PlayerId, Int> = emptyMap(),
+    /**
+     * PROGRESSIVE-DISCLOSURE layer (spec §3). Mirrors [AppPrefs.densityLayer]. Default ANALYST =
+     * today's full-instrument screen. Overlays migrate to gate on this in Wave 1 Track 4; adding it
+     * here changes no rendering yet.
+     */
+    val densityLayer: DensityLayer = DensityLayer.ANALYST,
 ) {
     /** The PUBLIC-info dossier for [id], or null if none has been computed yet. */
     fun insightFor(id: PlayerId): OpponentInsight? = opponentInsights.firstOrNull { it.opponentId == id }

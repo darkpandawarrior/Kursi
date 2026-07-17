@@ -34,6 +34,7 @@ class AppPrefs(
         private const val KEY_DEFAULT_PLAYERS = "default_player_count"
         private const val KEY_LANGUAGE = "language"
         private const val KEY_COACH_ENABLED = "coach_enabled"
+        private const val KEY_DENSITY_LAYER = "density_layer"
 
         // ── Player profile ──
 
@@ -279,6 +280,17 @@ class AppPrefs(
             _coachEnabledFlow.value = v
         }
 
+    // ── Density layer (progressive disclosure, spec §3) ──────────────────────
+
+    /** Density layer name ("FOCUS"|"GUIDED"|"ANALYST"); default ANALYST for existing installs.
+     *  Stored as a plain String — this module stays enum-free; the app layer maps it. */
+    var densityLayerName: String
+        get() = settings.getString(KEY_DENSITY_LAYER, defaultValue = "ANALYST")
+        set(v) {
+            settings.putString(KEY_DENSITY_LAYER, v)
+            _densityLayerFlow.value = v
+        }
+
     // ── M5 Turn speed / auto-mode ─────────────────────────────────────────────
 
     /** Turn pacing tier — scales the bot-step delays. Default NORMAL. */
@@ -320,6 +332,9 @@ class AppPrefs(
 
     private val _coachEnabledFlow = MutableStateFlow(coachEnabled)
     val coachEnabledFlow: StateFlow<Boolean> = _coachEnabledFlow.asStateFlow()
+
+    private val _densityLayerFlow = MutableStateFlow(densityLayerName)
+    val densityLayerFlow: StateFlow<String> = _densityLayerFlow.asStateFlow()
 
     private val _turnSpeedFlow = MutableStateFlow(turnSpeed)
     val turnSpeedFlow: StateFlow<TurnSpeed> = _turnSpeedFlow.asStateFlow()

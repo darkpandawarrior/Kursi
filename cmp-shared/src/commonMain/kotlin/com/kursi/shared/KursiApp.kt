@@ -26,6 +26,7 @@ import com.kursi.core.prefs.DecisionTally
 import com.kursi.designsystem.BrandTokens
 import com.kursi.designsystem.KursiTheme
 import com.kursi.feature.game.DailyChallenge
+import com.kursi.feature.game.DensityLayer
 import com.kursi.feature.game.Difficulty
 import com.kursi.feature.game.DraftPresets
 import com.kursi.feature.game.Elo
@@ -63,7 +64,10 @@ import com.kursi.shared.screen.TutorialOfferDialog
 import com.kursi.shared.screen.TutorialScreen
 import com.kursi.shared.strings.KursiStrings
 import com.kursi.shared.strings.LocalKursiStrings
+import kotlinx.coroutines.SharingStarted
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 /**
  * Root Compose entry point for Kursi, shared across all platforms (android / ios / desktop / wasm).
@@ -494,6 +498,7 @@ fun KursiApp() {
                     // S4 — In-game / Mez. VM is route-scoped; one deterministic match per seed.
                     composable<Route.Game> { entry ->
                         val r = entry.toRoute<Route.Game>()
+                        val vmScope = rememberCoroutineScope()
                         val vm =
                             remember(
                                 r.seed,
@@ -507,9 +512,21 @@ fun KursiApp() {
                                 r.draftCode,
                                 r.anarchy,
                             ) {
+                                // PROGRESSIVE-DISCLOSURE: map the enum-free prefs String flow to a typed
+                                // DensityLayer flow here (the app layer), so feature/game stays free of a
+                                // core:prefs dependency (mirrors the coachEnabledFlow wiring above).
                                 GameViewModel(
                                     coachEnabledFlow = prefs.coachEnabledFlow,
                                     onCoachEnabledChange = { v -> prefs.coachEnabled = v },
+                                    densityLayerFlow =
+                                        prefs.densityLayerFlow
+                                            .map { DensityLayer.fromName(it) }
+                                            .stateIn(
+                                                vmScope,
+                                                SharingStarted.Eagerly,
+                                                DensityLayer.fromName(prefs.densityLayerName),
+                                            ),
+                                    onDensityLayerChange = { v -> prefs.densityLayerName = v.name },
                                     // M6e: a watch-only TAMASHA demo is NOT resumable — never persist its snapshot.
                                     onSnapshot = if (r.spectator) null else ({ snap: String? -> prefs.matchSnapshot = snap }),
                                     turnSpeedFlow = prefs.turnSpeedMultiplierFlow,
