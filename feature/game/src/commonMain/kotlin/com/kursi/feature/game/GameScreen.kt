@@ -415,7 +415,7 @@ fun GameScreen(
  * player never glimpses another's hand. Occludes the entire table; the next player taps to reveal.
  */
 @Composable
-private fun HandoffGuard(
+internal fun HandoffGuard(
     nextSeatName: String,
     onReady: () -> Unit,
 ) {
@@ -503,7 +503,7 @@ private fun HandoffGuard(
  *  - Closes on scrim tap or the close affordance; marks chat read on open.
  */
 @Composable
-private fun DarbarPanel(
+internal fun DarbarPanel(
     state: GameUiState,
     onAction: (GameAction) -> Unit,
     onClose: () -> Unit,
@@ -809,7 +809,7 @@ private fun DarbarPanel(
 // the felt; deck+treasury sit in the middle; hand+dock below; log on the right rail.
 
 @Composable
-private fun DesktopLayout(
+internal fun DesktopLayout(
     state: GameUiState,
     gamePhase: GamePhase,
     humanSeat: PlayerId,
@@ -987,7 +987,7 @@ private fun DesktopLayout(
 // The hero surface: dark green felt with gold rim and inner vignette.
 
 @Composable
-private fun FeltTableSurface(
+internal fun FeltTableSurface(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
@@ -1058,7 +1058,7 @@ private fun FeltTableSurface(
 // engine-turned security-print language of the felt so it stops looking like a flat fill.
 
 /** Concentric guilloché well centred on the table heart — faint brass rings + a rosette wave. */
-private fun DrawScope.drawFeltGuilloche() {
+internal fun DrawScope.drawFeltGuilloche() {
     val cx = size.width / 2f
     val cy = size.height * 0.50f
     val baseR = minOf(size.width, size.height) * 0.48f
@@ -1093,7 +1093,7 @@ private fun DrawScope.drawFeltGuilloche() {
 }
 
 /** Ghosted chair-in-sunburst emblem at the felt centre — the brand mark embedded in the table. */
-private fun DrawScope.drawFeltChairEmblem() {
+internal fun DrawScope.drawFeltChairEmblem() {
     val cx = size.width / 2f
     val cy = size.height * 0.50f
     val r = minOf(size.width, size.height) * 0.20f
@@ -1129,7 +1129,7 @@ private fun DrawScope.drawFeltChairEmblem() {
  * lower felt instead of floating — this reclaims the formerly-dead bottom void. Warm at the
  * heart, fading to nothing before the rim.
  */
-private fun DrawScope.drawHeartPedestal() {
+internal fun DrawScope.drawHeartPedestal() {
     val cx = size.width / 2f
     val cy = size.height * 0.52f
     val maxR = maxOf(size.width, size.height) * 0.7f
@@ -1155,7 +1155,7 @@ private fun DrawScope.drawHeartPedestal() {
 // the panel owns the player's attention (their turn / a pending reaction).
 
 @Composable
-private fun Modifier.decoPanel(
+internal fun Modifier.decoPanel(
     radius: androidx.compose.ui.unit.Dp = KursiRadii.md,
     lifted: Boolean = false,
 ): Modifier {
@@ -1192,7 +1192,7 @@ private fun Modifier.decoPanel(
 // Wraps for 5+ players. At 2p, one chip centered; at 10p, two rows of smaller chips.
 
 @Composable
-private fun OpponentArc(
+internal fun OpponentArc(
     state: GameUiState,
     gamePhase: GamePhase,
     onLocalPhase: (GamePhase?) -> Unit,
@@ -1263,10 +1263,10 @@ private fun OpponentArc(
 }
 
 /** Convert a persona display name to its ID (e.g. "Netaji Vachan" → "netaji_vachan"). */
-private fun findPersonaIdByName(name: String): String = name.lowercase().replace(" ", "_")
+internal fun findPersonaIdByName(name: String): String = name.lowercase().replace(" ", "_")
 
 @Composable
-private fun OpponentChipItem(
+internal fun OpponentChipItem(
     opp: OpponentView,
     state: GameUiState,
     gamePhase: GamePhase,
@@ -1532,7 +1532,7 @@ private fun OpponentChipItem(
 
 /** M6e — a small faction badge chip overlaid on an opponent plate in the TEAMS variant. */
 @Composable
-private fun TeamBadgeChip(
+internal fun TeamBadgeChip(
     label: String,
     teamId: Int,
     modifier: Modifier = Modifier,
@@ -1555,7 +1555,7 @@ private fun TeamBadgeChip(
 }
 
 @Composable
-private fun SpeechRibbon(
+internal fun SpeechRibbon(
     text: String,
     modifier: Modifier = Modifier,
 ) {
@@ -1580,7 +1580,7 @@ private fun SpeechRibbon(
     }
 }
 
-private fun isValidTarget(
+internal fun isValidTarget(
     opp: OpponentView,
     action: Action,
     state: GameUiState,
@@ -1591,7 +1591,7 @@ private fun isValidTarget(
     }
 }
 
-private fun actionsSameType(
+internal fun actionsSameType(
     a: Action,
     b: Action,
 ): Boolean =
@@ -1648,7 +1648,7 @@ internal fun recommendedTarget(
 // During a reaction, show the claimed role spotlight here instead.
 
 @Composable
-private fun FeltCenterTokens(
+internal fun FeltCenterTokens(
     state: GameUiState,
     gamePhase: GamePhase,
     onShowChit: (ChitContent, androidx.compose.ui.geometry.Rect?) -> Unit = { _, _ -> },
@@ -1798,7 +1798,7 @@ private fun FeltCenterTokens(
 }
 
 @Composable
-private fun WinnerBanner(
+internal fun WinnerBanner(
     gamePhase: GamePhase.GameOver,
     state: GameUiState,
 ) {
@@ -1864,7 +1864,7 @@ private fun WinnerBanner(
 }
 
 @Composable
-private fun ReactionSpotlight(
+internal fun ReactionSpotlight(
     gamePhase: GamePhase.ReactionWindow,
     state: GameUiState,
 ) {
@@ -1983,7 +1983,7 @@ private fun ReactionSpotlight(
 // ─────────────────────────── Phone Layout ───────────────────────────
 
 @Composable
-private fun PhoneLayout(
+internal fun PhoneLayout(
     state: GameUiState,
     gamePhase: GamePhase,
     humanSeat: PlayerId,
@@ -2147,7 +2147,7 @@ private fun PhoneLayout(
  * In non-narrative mode the DARBAR tab is hidden and the drawer behaves as before.
  */
 @Composable
-private fun CollapsibleLogDrawer(
+internal fun CollapsibleLogDrawer(
     state: GameUiState,
     onShowChit: (ChitContent, androidx.compose.ui.geometry.Rect?) -> Unit = { _, _ -> },
     onAction: (GameAction) -> Unit = {},
@@ -2351,7 +2351,7 @@ private fun CollapsibleLogDrawer(
  * to discover the hidden 💬 FAB. Newest message auto-scrolls into view.
  */
 @Composable
-private fun DarbarLogInline(state: GameUiState) {
+internal fun DarbarLogInline(state: GameUiState) {
     fun nameForSeat(
         senderSeat: Int,
         isNarrator: Boolean,
@@ -2436,7 +2436,7 @@ private fun DarbarLogInline(state: GameUiState) {
 // comprehension, not advice). Routes all copy through KursiVoice (bilingual).
 
 /** Returns true for events that merit a plain-language recap line. */
-private fun isRecapWorthy(ev: GameEvent): Boolean =
+internal fun isRecapWorthy(ev: GameEvent): Boolean =
     when (ev) {
         is GameEvent.ActionDeclared, is GameEvent.Blocked, is GameEvent.Challenged,
         is GameEvent.ChallengeRevealed, is GameEvent.InfluenceLost,
@@ -2447,16 +2447,16 @@ private fun isRecapWorthy(ev: GameEvent): Boolean =
     }
 
 /** The most recent event worth recapping in plain words (skips bookkeeping noise). */
-private fun mostRecentRecapEvent(state: GameUiState): GameEvent? = state.recentEvents.lastOrNull { isRecapWorthy(it) }
+internal fun mostRecentRecapEvent(state: GameUiState): GameEvent? = state.recentEvents.lastOrNull { isRecapWorthy(it) }
 
 /** The last [n] recap-worthy events, oldest first. Used by IdleDock feed. */
-private fun lastNRecapEvents(
+internal fun lastNRecapEvents(
     state: GameUiState,
     n: Int,
 ): List<GameEvent> = state.recentEvents.filter { isRecapWorthy(it) }.takeLast(n)
 
 /** Resolve the primary + secondary display names a recap line needs for [event]. */
-private fun recapNames(
+internal fun recapNames(
     event: GameEvent,
     state: GameUiState,
 ): Pair<String, String?> {
@@ -2486,7 +2486,7 @@ private fun recapNames(
  * middle Column, squishing YourHandPanel to zero height on small phones.
  */
 @Composable
-private fun RecapRail(
+internal fun RecapRail(
     state: GameUiState,
     gamePhase: GamePhase,
     modifier: Modifier = Modifier,
@@ -2603,7 +2603,7 @@ private fun RecapRail(
 // ─────────────────────────── StatusSpine ───────────────────────────
 
 @Composable
-private fun StatusSpineBar(
+internal fun StatusSpineBar(
     state: GameUiState,
     gamePhase: GamePhase,
     modifier: Modifier = Modifier,
@@ -2625,7 +2625,7 @@ private fun StatusSpineBar(
     )
 }
 
-private fun deriveSpineTextAndTone(
+internal fun deriveSpineTextAndTone(
     state: GameUiState,
     gamePhase: GamePhase,
     humanSeat: PlayerId,
@@ -2701,7 +2701,7 @@ private fun deriveSpineTextAndTone(
 // ─────────────────────────── Your Hand Panel ───────────────────────────
 
 @Composable
-private fun YourHandPanel(
+internal fun YourHandPanel(
     state: GameUiState,
     gamePhase: GamePhase,
     humanSeat: PlayerId,
@@ -2860,7 +2860,7 @@ private fun YourHandPanel(
 // ─────────────────────────── Action Dock ───────────────────────────
 
 @Composable
-private fun ActionDock(
+internal fun ActionDock(
     state: GameUiState,
     gamePhase: GamePhase,
     humanSeat: PlayerId,
@@ -2937,7 +2937,7 @@ private fun ActionDock(
 
 /** A small label row used in the compact mobile action dock to separate grouped sections. */
 @Composable
-private fun ActionSectionLabel(
+internal fun ActionSectionLabel(
     label: String,
     color: Color,
 ) {
@@ -2955,7 +2955,7 @@ private fun ActionSectionLabel(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun PickActionDock(
+internal fun PickActionDock(
     state: GameUiState,
     humanSeat: PlayerId,
     onLocalPhase: (GamePhase?) -> Unit,
@@ -3330,7 +3330,7 @@ private fun PickActionDock(
  * [enabled] = false → chip dims to 45%, cost turns alert_red, untappable.
  */
 @Composable
-private fun CompactActionChip(
+internal fun CompactActionChip(
     icon: String,
     name: String,
     cost: String,
@@ -3502,7 +3502,7 @@ private fun CompactActionChip(
 }
 
 @Composable
-private fun PickTargetDock(
+internal fun PickTargetDock(
     action: Action,
     state: GameUiState,
     onLocalPhase: (GamePhase?) -> Unit,
@@ -3561,7 +3561,7 @@ private fun PickTargetDock(
 }
 
 @Composable
-private fun ConfirmDock(
+internal fun ConfirmDock(
     action: Action,
     target: PlayerId?,
     humanSeat: PlayerId,
@@ -3645,7 +3645,7 @@ private fun ConfirmDock(
     }
 }
 
-private fun buildActionWithTarget(
+internal fun buildActionWithTarget(
     action: Action,
     target: PlayerId?,
 ): Action =
@@ -3657,7 +3657,7 @@ private fun buildActionWithTarget(
     }
 
 @Composable
-private fun ReactionDock(
+internal fun ReactionDock(
     reactionWindow: GamePhase.ReactionWindow,
     humanSeat: PlayerId,
     state: GameUiState,
@@ -3843,7 +3843,7 @@ private fun ReactionDock(
  * Falls back to the plain familyColor styling until advice arrives (or for no-claim moves).
  */
 @Composable
-private fun ReactionChip(
+internal fun ReactionChip(
     label: String,
     familyColor: Color,
     advice: com.kursi.ai.advisor.MoveAdvice?,
@@ -3928,7 +3928,7 @@ private fun ReactionChip(
 }
 
 @Composable
-private fun LoseInfluenceDock(state: GameUiState) {
+internal fun LoseInfluenceDock(state: GameUiState) {
     val voice = LocalKursiVoice.current
     val cause = loseInfluenceCause(state)
     Column(
@@ -4016,7 +4016,7 @@ internal fun loseInfluenceCause(state: GameUiState): String {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ExchangeDock(
+internal fun ExchangeDock(
     state: GameUiState,
     humanSeat: PlayerId,
     onAction: (GameAction) -> Unit,
@@ -4078,7 +4078,7 @@ private fun ExchangeDock(
  * recommended keep. Replaces the old blind "Keep option N".
  */
 @Composable
-private fun ExchangeKeepOption(
+internal fun ExchangeKeepOption(
     keepCards: List<OwnCard>,
     drawnIds: Set<CardId>,
     recommended: Boolean,
@@ -4153,7 +4153,7 @@ private fun ExchangeKeepOption(
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun InvestigatePeekDock(
+internal fun InvestigatePeekDock(
     phase: GamePhase.InvestigatePeek,
     state: GameUiState,
     onAction: (GameAction) -> Unit,
@@ -4219,7 +4219,7 @@ private fun InvestigatePeekDock(
 }
 
 @Composable
-private fun InvestigateChoice(
+internal fun InvestigateChoice(
     label: String,
     accent: Color,
     onClick: () -> Unit,
@@ -4245,7 +4245,7 @@ private fun InvestigateChoice(
 }
 
 @Composable
-private fun IdleDock(state: GameUiState) {
+internal fun IdleDock(state: GameUiState) {
     val voice = LocalKursiVoice.current
     val actorName = actorName(state)
 
@@ -4379,7 +4379,7 @@ private fun IdleDock(state: GameUiState) {
 }
 
 @Composable
-private fun GameOverDock(
+internal fun GameOverDock(
     state: GameUiState,
     onAction: (GameAction) -> Unit,
 ) {
@@ -4416,7 +4416,7 @@ private fun GameOverDock(
  * header keeps the active FILE pinned. Multiplatform-safe Canvas/graphics only.
  */
 @Composable
-private fun GameLog(
+internal fun GameLog(
     state: GameUiState,
     onShowChit: (ChitContent, androidx.compose.ui.geometry.Rect?) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
@@ -4526,7 +4526,7 @@ private fun GameLog(
 
 /** The CRT / inked-ribbon terminal shell: dark phosphor body, brass rim, scanlines + vignette. */
 @Composable
-private fun LogTerminalShell(
+internal fun LogTerminalShell(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
@@ -4564,7 +4564,7 @@ private fun LogTerminalShell(
 }
 
 /** Phosphor scanlines + a soft green-amber CRT vignette. Multiplatform-safe Canvas. */
-private fun DrawScope.drawTeleprinterTexture() {
+internal fun DrawScope.drawTeleprinterTexture() {
     // Horizontal scanlines — the inked-ribbon / CRT raster.
     val gap = 3.dp.toPx()
     var y = 0f
@@ -4599,7 +4599,7 @@ private fun DrawScope.drawTeleprinterTexture() {
 
 /** Masthead: ROZNAMCHA wordmark + a sarkari live-feed tag and a blinking phosphor cursor dot. */
 @Composable
-private fun LogMasthead(voice: KursiVoice) {
+internal fun LogMasthead(voice: KursiVoice) {
     val pulse = rememberInfiniteTransition(label = "logCursor")
     val dotAlpha by pulse.animateFloat(
         initialValue = 0.25f,
@@ -4653,7 +4653,7 @@ private fun LogMasthead(voice: KursiVoice) {
 
 /** Sticky ACTIVE-FILE header pinned at the top of the feed — persona-accented brass strip. */
 @Composable
-private fun LogActiveFileHeader(
+internal fun LogActiveFileHeader(
     text: String,
     accent: Color,
 ) {
@@ -4690,7 +4690,7 @@ private fun LogActiveFileHeader(
 
 /** A per-turn FILE banner inside the scrolling body (grouped-by-turn divider). */
 @Composable
-private fun LogFileBanner(
+internal fun LogFileBanner(
     text: String,
     accent: Color,
 ) {
@@ -4725,7 +4725,7 @@ private fun LogFileBanner(
 
 /** Jump-to-latest pill — scrolls the feed to the freshest line on tap. */
 @Composable
-private fun JumpToLatestPill(
+internal fun JumpToLatestPill(
     label: String,
     onClick: () -> Unit,
     listState: androidx.compose.foundation.lazy.LazyListState,
@@ -4772,7 +4772,7 @@ private fun JumpToLatestPill(
 // ─────────────────────────── Log grouping (M4 §3) ───────────────────────────
 
 /** One turn's block of log entries, with the seat that owns the turn for persona accenting. */
-private data class LogTurnGroup(
+internal data class LogTurnGroup(
     val turn: Int,
     val actorName: String,
     val actorColor: Color,
@@ -4780,7 +4780,7 @@ private data class LogTurnGroup(
 )
 
 /** Flattened stream the LazyColumn renders: a FILE banner followed by its entry rows. */
-private sealed interface LogFlatRow {
+internal sealed interface LogFlatRow {
     data class Group(
         val turn: Int,
         val actorName: String,
@@ -4796,7 +4796,7 @@ private sealed interface LogFlatRow {
  * Groups the collapsed entry stream into per-turn FILE blocks. [LogEntry.RoundDivider] marks a
  * new turn boundary; entries before the first divider land in a synthetic opening block.
  */
-private fun groupLogByTurn(entries: List<LogEntry>): List<LogTurnGroup> {
+internal fun groupLogByTurn(entries: List<LogEntry>): List<LogTurnGroup> {
     val groups = mutableListOf<LogTurnGroup>()
     var curTurn = 1
     var curName = ""
@@ -4828,7 +4828,7 @@ private fun groupLogByTurn(entries: List<LogEntry>): List<LogTurnGroup> {
 }
 
 /** Turn groups → flat row stream with FILE banners. */
-private fun flattenLogGroups(groups: List<LogTurnGroup>): List<LogFlatRow> {
+internal fun flattenLogGroups(groups: List<LogTurnGroup>): List<LogFlatRow> {
     val out = mutableListOf<LogFlatRow>()
     for (g in groups) {
         if (g.actorName.isNotEmpty()) {
@@ -4856,7 +4856,7 @@ sealed interface LogEntry {
     ) : LogEntry
 }
 
-private fun collapseLogEvents(
+internal fun collapseLogEvents(
     events: List<GameEvent>,
     state: GameUiState,
     self: String = DEFAULT_SELF_NAME,
@@ -4889,13 +4889,13 @@ private fun collapseLogEvents(
 }
 
 /** Return the persona color for a PlayerId if available, otherwise TextSecondary. */
-private fun personaColorOrDefault(
+internal fun personaColorOrDefault(
     id: PlayerId,
     state: GameUiState,
 ): Color = state.opponentPersonas[id]?.let { Color(it.seatColorArgb) } ?: KursiNeutrals.TextSecondary
 
 @Composable
-private fun CollapsedLogEntry(
+internal fun CollapsedLogEntry(
     entry: LogEntry,
     state: GameUiState,
     onShowChit: (ChitContent, androidx.compose.ui.geometry.Rect?) -> Unit = { _, _ -> },
@@ -4969,7 +4969,7 @@ private fun CollapsedLogEntry(
  * language and persona name, so single-line + ellipsis was clipping real sentences.
  */
 @Composable
-private fun LogRow(
+internal fun LogRow(
     icon: String,
     text: String,
     textColor: Color,
@@ -5017,7 +5017,7 @@ private fun LogRow(
 }
 
 @Composable
-private fun GameLogEntry(
+internal fun GameLogEntry(
     event: GameEvent,
     state: GameUiState,
     onShowChit: (ChitContent, androidx.compose.ui.geometry.Rect?) -> Unit = { _, _ -> },
@@ -5189,7 +5189,7 @@ private fun GameLogEntry(
     }
 }
 
-private fun actionIcon(action: Action): String =
+internal fun actionIcon(action: Action): String =
     when (action) {
         Action.Income -> "🪙"
         Action.ForeignAid -> "💵"
@@ -5207,7 +5207,7 @@ private fun actionIcon(action: Action): String =
 
 // ─────────────────────────── Helpers ───────────────────────────
 
-private fun actorName(
+internal fun actorName(
     state: GameUiState,
     self: String = DEFAULT_SELF_NAME,
 ): String =
@@ -5221,7 +5221,7 @@ private fun actorName(
     }
 
 /** Fallback self-label used by non-composable helpers that have no [KursiVoice] in scope. */
-private const val DEFAULT_SELF_NAME = "Aap"
+internal const val DEFAULT_SELF_NAME = "Aap"
 
 /**
  * The persona name for [id]: "Aap"/"You" ([self]) for the human viewer, the locked persona name
@@ -5238,7 +5238,7 @@ internal fun personaNameOrDefault(
         else -> state.opponentPersonas[id]?.name ?: "Seat ${id.raw}"
     }
 
-private fun actionName(action: Action): String =
+internal fun actionName(action: Action): String =
     when (action) {
         Action.Income -> "Dehaadi"
         Action.ForeignAid -> "FDI"
@@ -5254,7 +5254,7 @@ private fun actionName(action: Action): String =
         Action.Emergency -> "Adhyadesh"
     }
 
-private fun roleLabel(role: Role): String =
+internal fun roleLabel(role: Role): String =
     when (role) {
         Role.NETA -> "NETA"
         Role.BHAI -> "BHAI"
@@ -5490,7 +5490,7 @@ internal fun challengeBeliefLine(
     }
 }
 
-private fun targetVerb(action: Action): String =
+internal fun targetVerb(action: Action): String =
     when (action) {
         is Action.Coup -> "Khela"
         is Action.Assassinate -> "assassinate"
@@ -5499,7 +5499,7 @@ private fun targetVerb(action: Action): String =
         else -> "target"
     }
 
-private fun confirmSummary(
+internal fun confirmSummary(
     action: Action,
     target: PlayerId?,
     targetName: String? = null,

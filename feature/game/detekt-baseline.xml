@@ -7,13 +7,13 @@
     <ID>CyclomaticComplexMethod:ChatVoice.kt:ChatVoice$fun botArcBeat: String</ID>
     <ID>CyclomaticComplexMethod:GameMoments.kt:internal fun mapEventToMoment: KursiMoment?</ID>
     <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable fun GameScreen</ID>
-    <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable private fun CollapsibleLogDrawer</ID>
-    <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable private fun CompactActionChip</ID>
-    <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable private fun DarbarPanel</ID>
-    <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable private fun GameLogEntry</ID>
-    <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable private fun OpponentChipItem</ID>
-    <ID>CyclomaticComplexMethod:GameScreen.kt:@OptIn(ExperimentalLayoutApi::class) @Composable private fun PickActionDock</ID>
-    <ID>CyclomaticComplexMethod:GameScreen.kt:private fun deriveSpineTextAndTone: Pair&lt;String, SpineTone&gt;</ID>
+    <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun CollapsibleLogDrawer</ID>
+    <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun CompactActionChip</ID>
+    <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun DarbarPanel</ID>
+    <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun GameLogEntry</ID>
+    <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun OpponentChipItem</ID>
+    <ID>CyclomaticComplexMethod:GameScreen.kt:@OptIn(ExperimentalLayoutApi::class) @Composable internal fun PickActionDock</ID>
+    <ID>CyclomaticComplexMethod:GameScreen.kt:internal fun deriveSpineTextAndTone: Pair&lt;String, SpineTone&gt;</ID>
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$fun actionBark: String</ID>
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$fun actionConsequence: String</ID>
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$fun logActorVerb: String</ID>
