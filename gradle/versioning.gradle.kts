@@ -44,3 +44,8 @@ extra["kursiFingerprint"] =
     "${kursiFmt("yyyy")}.${kursiFmt("MM")}.${kursiFmt("ww")}.$kursiMilestoneVal.$kursiCommitCountVal"
 extra["kursiMarketing"] = "${kursiFmt("yyyy")}.${kursiFmt("M")}.$kursiMilestoneVal"
 extra["kursiBuildCode"] = kursiVersionCodeBase + kursiCommitCountVal
+
+// Compose Desktop native packages (Dmg/Msi/Deb) reject the date-based MARKETING string — they need
+// strict MAJOR.MINOR.BUILD with MAJOR/MINOR <= 255, BUILD <= 65535, validated at configure time.
+// ponytail: MILESTONE.0.commitCount fits until MILESTONE>255 or commitCount>65535 (years away).
+extra["kursiDesktopPackageVersion"] = "$kursiMilestoneVal.0.$kursiCommitCountVal"
