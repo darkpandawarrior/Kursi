@@ -19,7 +19,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.siddharth.kmp.feedback.shareText
 import com.kursi.core.network.fetchStandings
 import com.kursi.core.prefs.AppPrefs
 import com.kursi.core.prefs.DecisionTally
@@ -63,6 +62,7 @@ import com.kursi.shared.screen.TutorialOfferDialog
 import com.kursi.shared.screen.TutorialScreen
 import com.kursi.shared.strings.KursiStrings
 import com.kursi.shared.strings.LocalKursiStrings
+import com.siddharth.kmp.feedback.shareText
 import kotlinx.coroutines.delay
 
 /**
