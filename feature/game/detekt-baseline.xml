@@ -30,8 +30,8 @@
     <ID>LongMethod:KursiVoice.kt:KursiVoice$private fun englishPersonaBark: String</ID>
     <ID>LongMethod:KursiVoice.kt:KursiVoice$private fun hinglishPersonaBark: String</ID>
     <ID>LongMethod:StoryArc.kt:StoryArcs$fun begin: ArcStep</ID>
+    <ID>LoopWithTooManyJumpStatements:AutoPlayer.kt:AutoPlayer$while</ID>
     <ID>LoopWithTooManyJumpStatements:GameSession.kt:GameSession$for</ID>
-    <ID>LoopWithTooManyJumpStatements:GameViewModel.kt:GameViewModel$while</ID>
     <ID>LoopWithTooManyJumpStatements:ReplaySession.kt:ReplaySession.Companion$for</ID>
     <ID>MagicNumber:DailyChallenge.kt:DailyChallenge.Companion$0x7fff_ffff_ffff_ffffL</ID>
     <ID>MagicNumber:DailyChallenge.kt:DailyChallenge.Companion$27</ID>
@@ -49,12 +49,8 @@
     <ID>MagicNumber:GameUiState.kt:GameUiState$12</ID>
     <ID>MagicNumber:GameUiState.kt:GameUiState$16</ID>
     <ID>MagicNumber:GameUiState.kt:GameUiState$20</ID>
-    <ID>MagicNumber:GameViewModel.kt:GameViewModel$1200L</ID>
-    <ID>MagicNumber:GameViewModel.kt:GameViewModel$2800L</ID>
     <ID>MagicNumber:GameViewModel.kt:GameViewModel$400L</ID>
-    <ID>MagicNumber:GameViewModel.kt:GameViewModel$4800L</ID>
     <ID>MagicNumber:GameViewModel.kt:GameViewModel$6000L</ID>
-    <ID>MagicNumber:GameViewModel.kt:GameViewModel$800L</ID>
     <ID>MagicNumber:SocialDirector.kt:SocialDirector$0.12f</ID>
     <ID>MagicNumber:SocialDirector.kt:SocialDirector$0.15f</ID>
     <ID>MagicNumber:SocialDirector.kt:SocialDirector$0.2f</ID>

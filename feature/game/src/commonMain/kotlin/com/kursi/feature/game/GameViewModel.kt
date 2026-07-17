@@ -12,6 +12,7 @@ import com.kursi.engine.PlayerId
 import com.kursi.feature.game.narrative.ChatVoice
 import com.kursi.feature.game.narrative.SeatInfo
 import com.kursi.feature.game.narrative.SocialDirector
+import com.kursi.feature.game.session.AutoPlayer
 import com.kursi.feature.game.session.GameSession
 import com.kursi.feature.game.session.MatchSnapshot
 import com.kursi.feature.game.session.toEngine
@@ -22,7 +23,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -155,6 +155,16 @@ class GameViewModel(
     /** M5: current turn-speed multiplier applied to the pacing constants. 1.0 = normal. */
     private var speedMultiplier: Float = turnSpeedFlow?.value ?: 1.0f
 
+    /** M5 AUTO-MODE / M6e TAMASHA — auto-play, auto-resolve, and spectator-demo machinery. */
+    private val autoPlayer =
+        AutoPlayer(
+            session = { session },
+            shown = { _state.value },
+            submit = ::submitIntent,
+            scope = coroutineScope,
+            speed = { speedMultiplier },
+        )
+
     /**
      * The in-flight DECISION-COACH computation (ISMCTS ~200–400 ms). Cancelled/replaced on every
      * new human decision and on new game, so stale advice never lands on a fresh decision point.
@@ -214,9 +224,6 @@ class GameViewModel(
     /** The human player's display name — threaded into moment beats and chat. Default "Khiladi". */
     var humanDisplayName: String = "Khiladi"
         private set
-
-    /** M6e TAMASHA / DEMO — when true, the advisor auto-plays the human seat(s) so the whole game runs itself. */
-    private var spectator: Boolean = false
 
     /** M6c: the persona lineup for the live match (human + bot seats), captured at game start. */
     private var matchPersonas: Map<PlayerId, OpponentPersona> = emptyMap()
@@ -398,7 +405,7 @@ class GameViewModel(
         when (action) {
             is GameAction.NewGame -> startGame(action)
             is GameAction.Submit -> submitIntent(action)
-            is GameAction.PlayBestMove -> playBestMove()
+            is GameAction.PlayBestMove -> autoPlayer.playBestMove()
             is GameAction.SendChat -> sendChat(action)
             is GameAction.MarkChatRead -> markChatRead()
         }
@@ -438,23 +445,6 @@ class GameViewModel(
         _state.value = _state.value?.copy(unreadChat = 0)
     }
 
-    /**
-     * M5 ASSISTANT — resolve the best move off-thread and submit it like a tap. No-op if it is not a
-     * human's turn or the game is over. Reuses the same legality-guarded [submitIntent] path.
-     */
-    private fun playBestMove() {
-        val currentSession = session ?: return
-        if (_state.value?.isHumanTurn != true) return
-        coroutineScope.launch {
-            val best = currentSession.bestHumanMove() ?: return@launch
-            // Re-check on the main flow: the decision must still be live and the move still legal.
-            val shown = _state.value ?: return@launch
-            if (shown.isHumanTurn && best in shown.legalIntents) {
-                submitIntent(GameAction.Submit(best))
-            }
-        }
-    }
-
     /** Cancel all coroutines; call when the ViewModel is no longer needed. */
     fun clear() {
         job?.cancel()
@@ -465,7 +455,7 @@ class GameViewModel(
     private fun startGame(action: GameAction.NewGame) {
         advanceJob?.cancel() // drop any paced bot round still running from a prior game
         adviceJob?.cancel() // drop any decision-coach computation from a prior game
-        spectateJob?.cancel() // M6e: drop any spectator auto-play from a prior game
+        autoPlayer.cancelSpectate() // M6e: drop any spectator auto-play from a prior game
         // M6b: fresh match → fresh decision-quality tally.
         decisionTally = MatchDecisionTally()
         tallyEmitted = false
@@ -497,7 +487,7 @@ class GameViewModel(
                 inflationEnabled = action.inflationEnabled,
                 scarcityEnabled = action.scarcityEnabled,
             )
-        spectator = action.spectator
+        autoPlayer.spectator = action.spectator
         humanDisplayName = action.playerName.ifBlank { "Khiladi" }
         // DARBAR: fresh narrative state for the new match.
         narrativeEnabled = action.narrativeEnabled
@@ -634,9 +624,9 @@ class GameViewModel(
         // If the human acts first, start coaching their opening decision immediately.
         requestAdvice(newSession)
         // M5: if the opening decision is auto-resolvable (e.g. resumed mid-forced-Coup), handle it.
-        maybeAutoResolve(newSession)
+        autoPlayer.maybeAutoResolve(newSession, autoPassFlow?.value == true, autoPlayForcedFlow?.value == true)
         // M6e: in spectator/demo mode, let the advisor play the opening human decision too.
-        maybeAutoSpectate(newSession)
+        autoPlayer.maybeAutoSpectate(newSession)
     }
 
     private fun submitIntent(action: GameAction.Submit) {
@@ -663,7 +653,7 @@ class GameViewModel(
         }
 
         // A real submit lands — cancel any pending auto-resolve so it can't fire a stale move.
-        autoJob?.cancel()
+        autoPlayer.cancelAuto()
         // DARBAR: drop any in-flight chat handling so it can't mutate the fabric under the move.
         darbarChatJob?.cancel()
 
@@ -691,9 +681,9 @@ class GameViewModel(
             requestAdvice(currentSession)
             // M5: the bounce-back decision may itself be auto-resolvable (e.g. lose-influence with
             // one card after a self-challenge). Handle it before spinning the bot loop.
-            if (maybeAutoResolve(currentSession)) return
+            if (autoPlayer.maybeAutoResolve(currentSession, autoPassFlow?.value == true, autoPlayForcedFlow?.value == true)) return
             // M6e: in spectator mode, the demo plays the bounce-back human decision too.
-            if (maybeAutoSpectate(currentSession)) return
+            if (autoPlayer.maybeAutoSpectate(currentSession)) return
         }
 
         // Then walk the bot round ONE action at a time with a readable pause between each, so the
@@ -715,9 +705,9 @@ class GameViewModel(
                 if (currentSession.awaitingHumanOrOver() && _state.value?.isHumanTurn == true) {
                     requestAdvice(currentSession)
                     // M5: auto-resolve a pass-only / forced decision the bot round handed back to us.
-                    maybeAutoResolve(currentSession)
+                    autoPlayer.maybeAutoResolve(currentSession, autoPassFlow?.value == true, autoPlayForcedFlow?.value == true)
                     // M6e: in spectator mode, the demo plays the human decision the bot round handed back.
-                    maybeAutoSpectate(currentSession)
+                    autoPlayer.maybeAutoSpectate(currentSession)
                 }
                 // The game can end during the bot round (a bot couped the human out) without the human
                 // acting again — clear the resume snapshot so a relaunch doesn't offer a finished match.
@@ -726,86 +716,6 @@ class GameViewModel(
                     finishGameOver() // M6b+M6c: a bot ended the game during the paced round.
                 }
             }
-    }
-
-    /** The in-flight auto-mode resolve loop (auto-pass / auto-forced). Cancelled on each new submit. */
-    private var autoJob: Job? = null
-
-    /** M6e: the in-flight spectator auto-play job (plays the human seat's best move). */
-    private var spectateJob: Job? = null
-
-    /**
-     * M6e TAMASHA / DEMO. In spectator mode the advisor plays the human seat(s) too, so the whole game
-     * unfolds on the real table as a watch-only demo. When control rests on a human decision, this
-     * resolves the single best move OFF the main thread (reusing [GameSession.bestHumanMove], exactly
-     * like [playBestMove]) after a paced beat, then submits it like a tap — which kicks the normal bot
-     * advance loop and eventually hands control back to a human seat, re-triggering this. The paced
-     * delay respects the live turn-speed multiplier so the demo is watchable. A no-op outside spectator
-     * mode, when it is not a human's turn, or when the game is over. Returns true if it scheduled a play.
-     */
-    private fun maybeAutoSpectate(currentSession: GameSession): Boolean {
-        if (!spectator) return false
-        if (_state.value?.isHumanTurn != true) return false
-        if (_state.value?.isGameOver == true) return false
-        spectateJob?.cancel()
-        spectateJob =
-            coroutineScope.launch {
-                // Let the player watch the table settle before the demo "thinks" and acts.
-                delay((ROUTINE_STEP_MS * speedMultiplier).toLong().coerceIn(800L, 4800L))
-                val best = currentSession.bestHumanMove() ?: return@launch
-                // bestHumanMove() is a synchronous, non-suspending ISMCTS search - a cancel() issued
-                // while it was running has no effect until it returns. Check explicitly here so a
-                // superseded job (cancelled by a newer maybeAutoSpectate call) aborts instead of racing
-                // the fresh job to submitIntent against the same mutable GameSession.state.
-                coroutineContext.ensureActive()
-                // Re-check on the shown state: still this session, still the human's turn, still legal.
-                val shown = _state.value ?: return@launch
-                if (currentSession === session && shown.isHumanTurn && best in shown.legalIntents) {
-                    submitIntent(GameAction.Submit(best))
-                }
-            }
-        return spectateJob?.isActive == true
-    }
-
-    /**
-     * M5 AUTO-MODE. When control rests on a human decision that the session deems auto-resolvable
-     * AND the matching preference is on, play it for them after a brief readable beat. Loops so a
-     * chain of forced/pass-only decisions clears in one go (e.g. forced-Coup → lose-influence). A
-     * no-op in pass-and-play (auto-resolving one hot-seat player's choice would rob them of agency)
-     * and whenever no preference is enabled. Returns true if it scheduled an auto-resolve.
-     */
-    private fun maybeAutoResolve(currentSession: GameSession): Boolean {
-        // Never auto-act for a hot-seat human in pass-and-play — each human keeps full agency.
-        if (currentSession.isPassAndPlay) return false
-        val autoPass = autoPassFlow?.value == true
-        val autoForced = autoPlayForcedFlow?.value == true
-        if (!autoPass && !autoForced) return false
-        if (_state.value?.isHumanTurn != true) return false
-
-        autoJob?.cancel()
-        autoJob =
-            coroutineScope.launch {
-                while (currentSession.awaitingHumanOrOver() && _state.value?.isHumanTurn == true) {
-                    val decision = currentSession.autoDecision() ?: break
-                    val allowed =
-                        when (decision.kind) {
-                            GameSession.AutoKind.ONLY_PASS -> autoPass
-                            GameSession.AutoKind.SINGLE_LEGAL,
-                            GameSession.AutoKind.FORCED_COUP,
-                            -> autoForced
-                        }
-                    if (!allowed) break
-                    // Let the player register what they're being relieved of before it fires.
-                    delay((1200L * speedMultiplier).toLong().coerceIn(400L, 2800L))
-                    // Bail if the situation changed under us (race with the advance loop).
-                    val shown = _state.value ?: break
-                    if (!shown.isHumanTurn || decision.intent !in shown.legalIntents) break
-                    submitIntent(GameAction.Submit(decision.intent))
-                    // submitIntent kicks its own advance loop; yield so it can settle, then re-check.
-                    return@launch
-                }
-            }
-        return autoJob?.isActive == true
     }
 
     /**
