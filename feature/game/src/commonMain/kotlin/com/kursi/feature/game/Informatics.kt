@@ -1391,8 +1391,8 @@ fun HintRail(
             OddsChip(conf = oddsConf, compact = true)
         }
 
-        // M5 one-tap PLAY BEST MOVE — only when it's the human's live decision and coach is on.
-        if (onPlayBestMove != null && state.isHumanTurn && state.coachEnabled) {
+        // M5 one-tap PLAY BEST MOVE — only when it's the human's live decision and guidance is visible.
+        if (onPlayBestMove != null && state.isHumanTurn && state.coachGuidanceVisible) {
             PlayBestMoveChip(onClick = onPlayBestMove)
         }
 

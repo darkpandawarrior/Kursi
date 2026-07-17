@@ -33,9 +33,9 @@ internal fun ReactionDock(
     val brassColor = BrandTokens.BrassAged
     val verdigris = Color(0xFF3F6B5E)
 
-    // Map a reaction option to its coach advice (null until advisor finishes, or when coach is OFF).
-    val challengeAdvice = if (state.coachEnabled) adviceFor(state, Intent.Challenge(humanSeat)) else null
-    val passAdvice = if (state.coachEnabled) adviceFor(state, Intent.Pass(humanSeat)) else null
+    // Map a reaction option to its coach advice (null until advisor finishes, coach is OFF, or FOCUS).
+    val challengeAdvice = if (state.coachGuidanceVisible) adviceFor(state, Intent.Challenge(humanSeat)) else null
+    val passAdvice = if (state.coachGuidanceVisible) adviceFor(state, Intent.Pass(humanSeat)) else null
 
     // The CLAIM under scrutiny for a challenge: the actor's action-claim on a CHALLENGE_ACTION /
     // CHALLENGE_BLOCK-of-the-action, the blocker's block-role on a CHALLENGE_BLOCK. Used to build the
@@ -52,7 +52,7 @@ internal fun ReactionDock(
             else -> actionName(reactionWindow.action)
         }
     val challengeBelief: String? =
-        if (state.coachEnabled) {
+        if (state.coachGuidanceVisible) {
             scrutinisedRole?.let { challengeBeliefLine(state, it, scrutinisedLabel) }
         } else {
             null
@@ -128,7 +128,7 @@ internal fun ReactionDock(
                         ReactionChip(
                             label = "🛡 BLOCK (${roleLabel(role)})",
                             familyColor = verdigris,
-                            advice = if (state.coachEnabled) adviceFor(state, Intent.Block(humanSeat, role)) else null,
+                            advice = if (state.coachGuidanceVisible) adviceFor(state, Intent.Block(humanSeat, role)) else null,
                             onClick = { onAction(GameAction.Submit(Intent.Block(humanSeat, role))) },
                             onShowChit = onShowChit,
                             consequence = voice.reactionBlockConsequence(role),

@@ -69,8 +69,9 @@ internal fun PickActionDock(
     val showCoachChit: (com.kursi.ai.advisor.MoveAdvice, androidx.compose.ui.geometry.Rect?) -> Unit = { advice, bounds ->
         onShowChit(coachChitOf(advice), bounds)
     }
-    // When COACH is OFF suppress all proactive advice — chips revert to plain family-color styling.
-    val coachActive = state.coachEnabled
+    // When COACH is OFF (or in FOCUS, spec §3) suppress all proactive advice — chips revert to
+    // plain family-color styling.
+    val coachActive = state.coachGuidanceVisible
     val myCoins = state.view.myCoins
     val mustCoup = myCoins >= 10
     val opponents = state.view.players.filter { it.id != state.view.viewer && !it.eliminated }
@@ -599,9 +600,9 @@ internal fun PickTargetDock(
     val voice = LocalKursiVoice.current
     // The explicit weakest/most-suspicious recommendation — so the player isn't left to read the
     // per-plate suspicion pips unaided. PUBLIC-info only (coach's pick, else weakest public seat).
-    // Only shown when coach is ON.
+    // Only shown when coach guidance is visible (coach ON, and not FOCUS — spec §3).
     val recommended =
-        if (state.coachEnabled) {
+        if (state.coachGuidanceVisible) {
             remember(state.advice, state.view, action) { recommendedTarget(action, state) }
         } else {
             null
@@ -672,9 +673,9 @@ internal fun ConfirmDock(
     // turn on the CLAIMED ROLE and public card-accounting, never on hidden cards). Coup/Khela makes
     // no claim, so it carries no verdict/odds — correct, and the strip simply renders nothing.
     val finalAction = buildActionWithTarget(action, target)
-    // Coach guidance (recommended star, badge, odds) only shown when coach is ON.
+    // Coach guidance (recommended star, badge, odds) only shown when visible (spec §3).
     val advice =
-        if (state.coachEnabled) {
+        if (state.coachGuidanceVisible) {
             adviceFor(state, Intent.DeclareAction(humanSeat, finalAction))
                 ?: adviceForActionChip(state, action)
         } else {

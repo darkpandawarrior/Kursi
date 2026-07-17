@@ -151,9 +151,14 @@ internal fun OpponentChipItem(
     // Blend the deck-math BluffOdds with this seat's INFERRED bluffRate (from the coach's
     // public-info belief) so a serial-bluffer's claim reads hotter than the cards alone imply.
     val oppBluffRate = state.insightFor(opp.id)?.bluffRate
+    // DENSITY GATE (spec §3): suspicion pips are ANALYST-only — hidden in FOCUS and GUIDED.
     val suspicion =
-        remember(state.view, opp.id, standingRole, oppBluffRate) {
-            deriveSuspicion(opp, standingRole, state.view, oppBluffRate)
+        if (state.densityLayer == DensityLayer.ANALYST) {
+            remember(state.view, opp.id, standingRole, oppBluffRate) {
+                deriveSuspicion(opp, standingRole, state.view, oppBluffRate)
+            }
+        } else {
+            null
         }
 
     // Derive ChipState
@@ -322,8 +327,9 @@ internal fun OpponentChipItem(
         )
         // DARBAR: ephemeral chat bubble — shown above the plate for ~3.2s, clears automatically.
         // Rendered above the bark ribbon so chat text reads first; bark ribbon stays below.
+        // DENSITY GATE: Darbar chat is ANALYST-only (spec §3), same as the panel/FAB.
         val chatBubble = chatBubbleText
-        if (chatBubble != null && state.narrativeEnabled) {
+        if (chatBubble != null && state.narrativeEnabled && state.densityLayer == DensityLayer.ANALYST) {
             val chatPersonaMonogram = persona?.monogram
             SpeechBubble(
                 speakerName = plateName,

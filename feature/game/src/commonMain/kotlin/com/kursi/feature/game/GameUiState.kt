@@ -120,6 +120,16 @@ data class GameUiState(
      */
     val pendingBeat: PendingBeat? = null,
 ) {
+    /**
+     * DENSITY GATE (spec §3) — whether coach guidance (recommended-move stars, REAL/BLUFF badges,
+     * odds pills) should render right now. FOCUS hides guidance unconditionally (it isn't in the
+     * FOCUS whitelist, regardless of the [coachEnabled] toggle); GUIDED and ANALYST defer to
+     * [coachEnabled] exactly as today — so this is a no-op in ANALYST (today's behavior, byte
+     * identical) and simply forces the toggle off while in FOCUS.
+     */
+    val coachGuidanceVisible: Boolean
+        get() = densityLayer != DensityLayer.FOCUS && coachEnabled
+
     /** The PUBLIC-info dossier for [id], or null if none has been computed yet. */
     fun insightFor(id: PlayerId): OpponentInsight? = opponentInsights.firstOrNull { it.opponentId == id }
 
