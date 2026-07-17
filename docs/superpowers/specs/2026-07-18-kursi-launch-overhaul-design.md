@@ -1,8 +1,8 @@
-# Kursi Launch Overhaul — Design Spec
+# Kursi Launch Overhaul — Design Spec (rev 2)
 
-**Date:** 2026-07-18
+**Date:** 2026-07-18 (rev 2 — full scope, parallel-wave timeline)
 **Status:** Approved direction, pending final spec review
-**Scope:** Full launch update — comprehension, pacing, graphics, AI, accessibility, platform polish, docs — across all four client targets (Android, iOS, desktop/JVM, web/Wasm).
+**Scope:** Everything for launch — comprehension, pacing, graphics, AI, accessibility, platform polish, online play, localization, store distribution, docs — across all four client targets (Android, iOS, desktop/JVM, web/Wasm) + server.
 
 ---
 
@@ -74,7 +74,7 @@ Not flat Canvas, not plain bitmaps — a compositor:
 1. **Canvas base** — existing felt/guilloché/emblem drawing, deepened (lighting gradient, vignette, warm key light: the lamplit-desk look).
 2. **AGSL / Skia runtime shader layer** — film grain, felt weave, brass specular that sweeps with device tilt, bloom on hero beats. `expect/actual` shader host per platform (Android AGSL / Skiko `RuntimeEffect` elsewhere); graceful no-shader fallback path (web/older devices) that must look intentional, not broken.
 3. **Particle layer** — coin trails, stamp-ink spray, dust motes; capped counts, object-pooled.
-4. **Asset layer** — new `composeResources` art track: 10 persona portraits, 6 role card faces, hero-moment art (KURSI crest, tipped chair). Shipped with **AI-generated placeholder art in-style** ("License Raj Deco → Sarkari Noir" treatment); final art is a drop-in swap. WebP with per-density variants; total asset budget ≤ 8 MB per target.
+4. **Asset layer** — new `composeResources` art track: 10 persona portraits, 6 role card faces, hero-moment art (KURSI crest, tipped chair). **AI-generated art is the launch art** (§9): produced in-style ("License Raj Deco → Sarkari Noir"), passed through a style-lock QA gate (palette, line weight, CVD pattern channels embedded in card frames) before acceptance. Commissioned art remains a post-launch drop-in option. WebP with per-density variants; total asset budget ≤ 8 MB per target.
 5. **Moment overlays** — existing `MomentHost`/`ActionMomentOverlay` system, extended with the new beats; every new moment gets a `StaticMomentFrame` reduced-motion end-state.
 
 Plus: full wiring of the bundled Rozha One / Marcellus / DM Mono (removing the Serif/Monospace fallbacks in `KursiType`), a spring-physics motion-token set in `core/designsystem` (durations/damping named, not scattered), and a **distinct haptic signature per action class** (Android `HapticFeedback`/Vibrator, iOS Core Haptics via expect/actual; silent no-op on desktop/web).
@@ -111,58 +111,98 @@ Selection: auto-detect tier 1 → fall back to tier 3; tier 2 is explicit opt-in
 - All prompts are built from **redacted** views (`Engine.redact`) — the LLM never sees hidden cards, so it cannot leak them.
 - Latency rule: AI responses render when ready and never block a beat; the templated string renders first and upgrades in place.
 
-## 9. Workstream D — Accessibility
+## 9. Art policy (revised)
+
+AI-generated art is **launch art**, not placeholder. Acceptance pipeline: generate in-style → style-lock QA gate (brand palette adherence, line-weight consistency, role CVD `RoleFramePattern` embedded in every card frame, contrast check) → asset track. Rejected pieces regenerate; nothing ships unreviewed. Commissioned replacement is a post-launch option, not a launch dependency.
+
+## 10. Workstream D — Accessibility
 
 Executed with the android-accessibility + adaptive skills; applies to all new and existing surfaces:
 
 - Semantics/`contentDescription` on every meaningful element; merged semantics per opponent plate ("Bahenji, 2 influence, 4 coins, claims Neta").
 - Logical traversal order (turn owner → board → your hand → actions); TalkBack + VoiceOver passes on device.
 - Touch targets ≥ 48dp; contrast audit against the Deco palette; dynamic type / font-scale support to 200%.
-- CVD: keep the Okabe-Ito role palette + `RoleFramePattern` non-color channels; verify in the new asset art too (patterns embedded in card frames).
+- CVD: keep the Okabe-Ito role palette + `RoleFramePattern` non-color channels; verify in the new asset art too.
 - Reduced motion: every new moment/camera/parallax/shader effect honors `reducedMotion` via `StaticMomentFrame` equivalents; the Focus Pull degrades to a highlight ring, not a camera move.
 - Beat gate is itself an a11y feature: nothing time-critical, no information that scrolls away.
 
-## 10. Workstream E — Platform-specific enhancements
+## 11. Workstream E — Platform-specific enhancements
 
 - **Android** (`cmp-android`): edge-to-edge, predictive back, haptic signatures, adaptive layouts (phone/foldable/tablet — multi-pane ≥840dp via the adaptive skill), ChromeOS keyboard support, gyro parallax.
 - **iOS** (`cmp-ios`/`iosApp`): safe-area handling, swipe-back interop, Core Haptics, ProMotion-friendly animation, CoreMotion parallax. `CADisableMinimumFrameDurationOnPhone` already present — keep. **Runtime verification on a physical device only** (CMP/Skiko crashes on Xcode-26 simulators — known upstream issue; do not chase it).
 - **Desktop** (`cmp-desktop`): keyboard shortcuts (Space = continue, 1–8 = actions, L = log, Esc = menu), hover states/tooltips on all interactive elements, min-window-size, proper resize behavior.
 - **Web** (`cmp-web`): responsive breakpoints, keyboard nav + focus-visible, no-shader fallback verified, load-size budget for the asset track.
 
-## 11. Workstream F — Screenshots, GIFs, READMEs (last)
+## 12. Workstream H — Online play launch polish
 
-- Extend `buildFixtures()` in `cmp-desktop/src/jvmMain/kotlin/com/kursi/desktop/Screenshots.kt`: FOCUS/GUIDED/ANALYST variants of the table, guided-funnel beats, beat-gate states, Munshi narration, new art, phone/tablet/desktop widths, reduced-motion frames.
-- Regenerate all baselines (`:cmp-desktop:renderScreens` → `docs/screenshots/`), restitch flow GIFs (`scripts/make_flow_gifs.sh` — add flows: `focus_mode`, `graduation`, `tap_to_continue`, `munshi`, `the_read`); CI `screenshots.yml` continues to auto-commit.
-- Capture **real per-platform** screenshots/recordings (Android device/emulator, iOS physical device, desktop, web) for a platform matrix section.
+The Ktor authoritative server and `OnlineHubScreen` exist; they get launch-quality treatment:
+
+- Online table adopts the same density layers, beat gate (per-client ack with server timeout so one player can't stall the table), Focus Pull, and renderer as solo play — one `GameScreen`, no fork.
+- Lobby/hub UX pass: join/host flows aligned with the new design system, connection-state surfacing (reconnect banner, seat-held grace), spectator polish.
+- Server: no protocol redesign; only what the shared UI needs (beat-ack timing metadata) plus a load sanity pass. AI features remain client-side and off by default in online play except the Munshi (redacted-view narration is safe per §8.6).
+
+## 13. Workstream I — Localization
+
+- Externalize all user-facing strings to CMP string resources (currently hardcoded); templated AI tier-3 strings included.
+- Launch locales: **en**, **hi**, and the game's native **Hinglish voice** as its own locale variant (the brand's register — "Khokha", "Gaddi" — is already Hinglish; en is the accessibility floor, hi the reach play).
+- LLM prompts (Munshi/coach) carry the locale so AI output matches the player's language; tier-3 templates are the translation source of truth.
+- Localization QA via the screenshot harness: fixture pass per locale to catch truncation/overflow.
+
+## 14. Workstream J — Launch & distribution
+
+- **Store listings:** Play Store + App Store metadata, feature graphics, and store screenshots generated from the screenshot pipeline (per-locale via §13); web build gets a landing page shell; desktop distributed via GitHub releases.
+- **Release automation:** tag-triggered release flow via the versioned-release skill (changelog, artifacts, scrub gate).
+- **Monetization: free at launch, no IAP/ads.** This is the single flagged product decision in this spec — mechanics (if ever) are a post-launch ruling for Siddharth; nothing in this plan builds toward or against any particular model.
+
+## 15. Workstream F — Screenshots, GIFs, READMEs
+
+- Extend `buildFixtures()` in `cmp-desktop/src/jvmMain/kotlin/com/kursi/desktop/Screenshots.kt`: FOCUS/GUIDED/ANALYST variants, guided-funnel beats, beat-gate states, Munshi narration, new art, online flows, per-locale fixtures, phone/tablet/desktop widths, reduced-motion frames.
+- Regenerate all baselines (`:cmp-desktop:renderScreens` → `docs/screenshots/`), restitch flow GIFs (`scripts/make_flow_gifs.sh` — add flows: `focus_mode`, `graduation`, `tap_to_continue`, `munshi`, `the_read`, `online`); CI `screenshots.yml` continues to auto-commit.
+- Capture **real per-platform** screenshots/recordings (Android device/emulator, iOS physical device, desktop, web) for a platform matrix section; store-listing assets derive from the same captures (§14).
 - Rewrite `README.md` + module READMEs around the three-layer story with GIFs inline (beautify-github-readme skill); update `docs/brand/BRAND.md` with the Sarkari Noir evolution + motion/haptic tokens.
 
-## 12. Sequencing
+## 16. Timeline — parallel wave model (fastest path)
 
-| Phase | Content | Ships when |
+The serial 8-phase ladder is replaced by **4 waves**. Inside a wave, tracks run in parallel — each track in its **own git worktree** (parallel agents must never share a checkout), merged behind a per-track verification gate. Multi-agent Workflow orchestration throughout: Sonnet volume execution, Opus orchestration, ensemble+judge for visual direction picks, generator–critic for a11y and art QA.
+
+**Wave 0 — Foundation (serial; everything depends on it).**
+`GameScreen.kt`/`GameViewModel.kt` decomposition + `DensityLayer` scaffolding + beat-gate state machine + string externalization scaffolding (so parallel tracks write externalized strings from day one) + motion-token stubs. Cielara dependency mapping first. This wave is deliberately small and lands fast — it is the merge base for every track.
+
+**Wave 1 — Parallel build (6 tracks, independent seams):**
+
+| Track | Content | Primary modules |
 |---|---|---|
-| 1 | Comprehension spine: `GameScreen` decomposition, `DensityLayer`, FOCUS default, headline line | build+tests+lint green, screenshots reviewed |
-| 2 | Pacing: beat gate, tap-to-continue, speed settings, telegraphing | " |
-| 3 | Guided funnel + graduation | " |
-| 4 | Graphics: renderer layers, shaders, assets, fonts, haptics, motion tokens, Focus Pull, Tactile Hand | " |
-| 5 | Intelligence: Munshi, coach/debrief, personas, The Read, provider matrix | " |
-| 6 | A11y sweep across 1–5 | TalkBack/VoiceOver device pass |
-| 7 | Platform polish (Android/iOS/desktop/web) | each target **run**, not just compiled |
-| 8 | Docs: fixtures, baselines, GIFs, READMEs, brand doc | CI screenshot workflow green |
+| 1 | Pacing + telegraphing + Focus Pull camera (§5, §4.1) | `feature/game` |
+| 2 | Renderer: shaders, particles, lighting, fonts, motion tokens, Tactile Hand (§7, §4.3) | `core/designsystem`, `feature/game/board` |
+| 3 | Intelligence: provider matrix, Munshi, coach/debrief, personas, The Read data feed (§8, §4.2) | `ai`, `core/prefs` |
+| 4 | Guided funnel + graduation + progressive sheets (§6) | `cmp-shared/screen`, `feature/game` |
+| 5 | Art production: generation → style-lock QA → asset track (§9) | `core/designsystem` resources |
+| 6 | Online polish: lobby UX, beat-ack protocol metadata, reconnect surfacing (§12) | `server`, `cmp-shared`, `shared-protocol` |
 
-Each phase independently shippable. Verification gate per phase: `assembleDebug` + unit tests + host-test aggregate (`testAndroidHostTest` — library-module commonTest is not covered by app-variant test tasks) + detekt/ktlint + screenshot render.
+Cross-track contracts are frozen in Wave 0 (DensityLayer API, beat/ack state machine, motion tokens, asset naming) so tracks don't block each other. Tracks 1+2 share `feature/game` — their file boundaries (camera/ vs board/) are part of the Wave 0 split precisely so they don't collide.
 
-Execution machinery: multi-agent Workflow orchestration (Sonnet volume execution, Opus orchestration per model-routing rules), Figma MCP for the design-system iteration (requires Figma connector auth), ralph-loop for pass/fail regen gates, Cielara queries before shared-file edits.
+**Wave 2 — Integration & hardening (4 platform lanes + 2 sweeps in parallel):**
+Android / iOS / desktop / web platform-polish lanes (§11) each on its own target, plus the a11y sweep (§10) and localization fill (§13) running across the merged result. Every target **run on real runtime** (iOS on physical device), not just compiled.
 
-## 13. Risks & mitigations
+**Wave 3 — Launch (parallel where possible):**
+Fixtures + baselines + GIFs + READMEs + brand doc (§15) ∥ store listings + landing shell (§14) → release automation + tag (§14). Docs capture the finished state, so this wave is last by nature, but its internal jobs run concurrently off the same capture set.
 
-- **Bleeding-edge toolchain** (Kotlin 2.4.20-Beta1, CMP 1.12.0-beta02, AGP alpha): AGSL/RuntimeEffect and gyro APIs verified per-target early in Phase 4 with a spike before committing the renderer design.
-- **Scope**: phases are ordered so that if the effort stops after Phase 3, the actual player complaints are already fixed.
+**Estimated shape** (agent-executed, calendar time dominated by verification + Siddharth's review gates, not typing): Wave 0 ≈ 1–2 days · Wave 1 ≈ 3–5 days (parallel) · Wave 2 ≈ 2–3 days · Wave 3 ≈ 1–2 days → **~7–12 working days** end to end, vs ~4+ weeks serial. The critical path is Wave 0 → Track 1/2 merge → platform lanes → captures; everything else hangs off it with slack.
+
+**Gates (unchanged, per track/lane):** `assembleDebug` + unit tests + host-test aggregate (`testAndroidHostTest`) + detekt/ktlint + replay determinism tests + screenshot render. ralph-loop drives pass/fail regen gates; merges are serialized (one track merges at a time — git operations never run concurrently on a shared checkout).
+
+## 17. Risks & mitigations
+
+- **Bleeding-edge toolchain** (Kotlin 2.4.20-Beta1, CMP 1.12.0-beta02, AGP alpha): AGSL/RuntimeEffect and gyro APIs spiked at the start of Track 2 before the renderer design is committed.
+- **Parallel-merge conflicts**: mitigated by Wave 0 contract freeze, per-track worktrees, file-boundary ownership, serialized merges. Track 1/2 boundary inside `feature/game` is the highest-risk seam — reviewed at Wave 0.
 - **AI latency/cost**: never blocks gameplay (§8.6); templated tier is the floor everywhere.
-- **Web performance**: shader layer and particles are capability-gated; web gets the no-shader path by default until profiled.
-- **Determinism**: replay tests (existing `ReplaySession` byte-for-byte checks) run in every phase gate; any AI-adjacent diff that touches `engine/` is rejected by design.
+- **Web performance**: shader layer and particles capability-gated; web defaults to the no-shader path until profiled.
+- **Determinism**: replay tests run in every gate; any diff touching `engine/` from a non-engine track is rejected by design.
+- **Online beat-gate abuse** (player never taps): server-side ack timeout auto-continues; timeout value tuned in Track 6.
+- **Timeline honesty**: the 7–12-day shape assumes review gates turn around same-day; Siddharth's review latency is the real critical path.
 
-## 14. Out of scope
+## 18. Out of scope (true remainder)
 
-- Online multiplayer feature work (server unchanged except where redaction surfaces feed AI prompts — read-only).
-- Final commissioned art (pipeline + placeholders only).
-- Monetization, store-listing assets, localization of new strings beyond en (structure localizable, translations later).
+- Monetization **mechanics** (IAP/ads/pricing) — flagged one-way-door decision, §14; launch is free.
+- Commissioned art replacement — post-launch drop-in option, §9.
+- New game modes / rule variants beyond what exists.
