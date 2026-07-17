@@ -7,8 +7,10 @@ plugins {
 }
 
 // Three-tier versioning — see gradle/versioning.gradle.kts + docs/RELEASE.md.
+// Native distributions need strict MAJOR.MINOR.BUILD, so desktop uses kursiDesktopPackageVersion
+// (MILESTONE.0.commitCount), not the date-based MARKETING string.
 apply(from = "$rootDir/gradle/versioning.gradle.kts")
-val kursiMarketingVersion = extra["kursiMarketing"] as String
+val kursiMarketingVersion = extra["kursiDesktopPackageVersion"] as String
 
 kotlin {
     jvm()
