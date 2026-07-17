@@ -112,6 +112,13 @@ data class GameUiState(
      * here changes no rendering yet.
      */
     val densityLayer: DensityLayer = DensityLayer.ANALYST,
+    /**
+     * BEAT GATE (spec §5). Non-null when the paced bot round has shown a meaningful beat and is
+     * waiting for the player to tap to continue (FOCUS/GUIDED). Null while flowing (ANALYST/AUTO) or
+     * on the human's own turn. The UI shows a "tap to continue" affordance and dispatches
+     * [GameAction.ContinueBeat].
+     */
+    val pendingBeat: PendingBeat? = null,
 ) {
     /** The PUBLIC-info dossier for [id], or null if none has been computed yet. */
     fun insightFor(id: PlayerId): OpponentInsight? = opponentInsights.firstOrNull { it.opponentId == id }

@@ -18,6 +18,7 @@ import com.kursi.feature.game.session.MatchSnapshot
 import com.kursi.feature.game.session.toEngine
 import com.kursi.feature.game.session.toInput
 import com.siddharth.kmp.mvi.EffectEmitter
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -151,6 +152,12 @@ class GameViewModel(
 
     /** The in-flight paced bot-advance loop (one bot action per tick). Cancelled on each new submit/new game. */
     private var advanceJob: Job? = null
+
+    /**
+     * Completed by [GameAction.ContinueBeat] (or, in online play — Track 6 — a server-timeout job) to
+     * release a gated beat. Non-null only while the paced loop is holding on a [PendingBeat].
+     */
+    private var beatAck: CompletableDeferred<Unit>? = null
 
     /** M5: current turn-speed multiplier applied to the pacing constants. 1.0 = normal. */
     private var speedMultiplier: Float = turnSpeedFlow?.value ?: 1.0f
@@ -408,6 +415,7 @@ class GameViewModel(
             is GameAction.PlayBestMove -> autoPlayer.playBestMove()
             is GameAction.SendChat -> sendChat(action)
             is GameAction.MarkChatRead -> markChatRead()
+            is GameAction.ContinueBeat -> beatAck?.complete(Unit)
         }
     }
 
@@ -693,7 +701,7 @@ class GameViewModel(
             coroutineScope.launch {
                 var lastEvents = humanStep.newEvents
                 while (!currentSession.awaitingHumanOrOver()) {
-                    delay(pauseFor(lastEvents)) // let the previous beat's moment breathe
+                    awaitBeat(lastEvents) // let the previous beat's moment breathe (or hold for a tap)
                     // DARBAR: the social fabric is touched here AND by a chat tap — serialize the two.
                     val step = darbarMutex.withLock { currentSession.stepBotOnce() } ?: break
                     feedEventsToExperts(step.newEvents)
@@ -747,32 +755,44 @@ class GameViewModel(
 
     /** Three-tier rhythm: dramatic beats linger, declared actions are readable, bookkeeping is brisk. */
     private fun pauseFor(events: List<GameEvent>): Long {
-        val dramatic =
-            events.any {
-                it is GameEvent.Challenged ||
-                    it is GameEvent.ChallengeRevealed ||
-                    it is GameEvent.Blocked ||
-                    it is GameEvent.InfluenceLost ||
-                    it is GameEvent.PlayerEliminated ||
-                    it is GameEvent.GameEnded
-            }
         val base =
-            if (dramatic) {
-                DRAMATIC_STEP_MS
-            } else {
-                val routine =
-                    events.any {
-                        it is GameEvent.ActionDeclared ||
-                            it is GameEvent.ActionResolved ||
-                            it is GameEvent.ActionNegated ||
-                            it is GameEvent.Exchanged ||
-                            it is GameEvent.CoinsTransferred
-                    }
-                if (routine) ROUTINE_STEP_MS else TRIVIAL_STEP_MS
+            when (tierFor(events)) {
+                BeatTier.DRAMATIC -> DRAMATIC_STEP_MS
+                BeatTier.ROUTINE -> ROUTINE_STEP_MS
+                BeatTier.TRIVIAL -> TRIVIAL_STEP_MS
             }
         // M5 TURN-SPEED: scale the pacing by the live multiplier (SLOW 1.4× / NORMAL 1.0× / FAST 0.5×),
         // clamped so even FAST keeps a readable floor and SLOW never drags past ~3s.
         return (base * speedMultiplier).toLong().coerceIn(400L, 6000L)
+    }
+
+    /**
+     * Pace the gap before the NEXT bot step. In ANALYST — or when no density-layer flow is wired
+     * (tests / render harness) — this is exactly today's timed [delay]. In FOCUS/GUIDED a non-trivial
+     * beat instead surfaces a [PendingBeat] and SUSPENDS until [GameAction.ContinueBeat] completes
+     * [beatAck]. Trivial beats always flow (no tap for a bare income tick).
+     *
+     * ONLINE (Track 6) will additionally complete [beatAck] from a server ack-timeout so one player
+     * cannot stall the table; the suspension point here is that hook.
+     */
+    private suspend fun awaitBeat(events: List<GameEvent>) {
+        val layer = _state.value?.densityLayer ?: DensityLayer.ANALYST
+        val gated =
+            (layer == DensityLayer.FOCUS || layer == DensityLayer.GUIDED) &&
+                tierFor(events) != BeatTier.TRIVIAL
+        if (!gated) {
+            delay(pauseFor(events))
+            return
+        }
+        val ack = CompletableDeferred<Unit>()
+        beatAck = ack
+        _state.value = _state.value?.copy(pendingBeat = PendingBeat(tierFor(events)))
+        try {
+            ack.await()
+        } finally {
+            beatAck = null
+            _state.value = _state.value?.copy(pendingBeat = null)
+        }
     }
 
     /**

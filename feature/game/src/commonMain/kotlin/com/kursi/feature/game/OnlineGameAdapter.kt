@@ -97,6 +97,7 @@ class OnlineGameAdapter(
             is GameAction.NewGame -> Unit // server creates rooms; the lobby flow handles this, not the table.
             GameAction.PlayBestMove -> Unit // no online coach to resolve a best move.
             is GameAction.SendChat, GameAction.MarkChatRead -> Unit // DARBAR is an offline narrative feature.
+            GameAction.ContinueBeat -> Unit // no beat gate wired online yet (Track 6 adds the server ack-timeout).
         }
     }
 
