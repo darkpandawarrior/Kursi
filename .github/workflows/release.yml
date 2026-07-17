@@ -21,39 +21,48 @@ on:
         options: [skip, testflight, appstore]
         default: skip
       version_bump:
-        description: "Version bump (applied before build)"
+        description: "Bump MILESTONE via a PR before building (merge it, then re-run to build the new version — MARKETING/FINGERPRINT are computed live from MILESTONE + commit count, not baked into a same-run commit)"
         type: choice
-        options: [none, patch, minor, major]
-        default: patch
+        options: [none, milestone]
+        default: none
 
 permissions:
   contents: write
 
 jobs:
   # ── Version bump (optional) ────────────────────────────────────────────────
+  # Opens a PR instead of pushing straight to main, so a future branch-protection required-check
+  # ruleset doesn't block this workflow. The android/ios jobs below build off main as it is right
+  # now — merge the PR and re-run the workflow to actually build the bumped milestone.
   bump:
-    name: Bump Version
+    name: Bump Milestone (opens PR)
     runs-on: ubuntu-latest
     if: ${{ inputs.version_bump != 'none' }}
-    outputs:
-      version_name: ${{ steps.read.outputs.version_name }}
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Bump version
-        run: bash scripts/bump_version.sh --${{ inputs.version_bump }}
-      - name: Read new version
-        id: read
-        run: echo "version_name=$(cat VERSION | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
-      - name: Commit version bump
+      - name: Bump MILESTONE
+        run: bash scripts/bump_version.sh --milestone
+      - name: Open version-bump PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
+          new_milestone="$(tr -d '[:space:]' < MILESTONE)"
+          branch="chore/bump-milestone-${new_milestone}-$(date -u +%Y%m%d%H%M%S)"
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add VERSION BUILD_NUMBER
-          git commit -m "chore: bump version to $(cat VERSION | tr -d '[:space:]')"
-          git push
+          git checkout -b "$branch"
+          git add MILESTONE
+          git commit -m "chore: bump milestone to ${new_milestone}"
+          git push -u origin "$branch"
+          gh pr create --title "chore: bump milestone to ${new_milestone}" \
+            --base main --head "$branch" \
+            --body "Opened by the Release workflow (version_bump=${{ inputs.version_bump }}). Merge before the next run so android/ios builds pick up the bumped MILESTONE."
 
   # ── Android release APK / AAB ─────────────────────────────────────────────
   android:
@@ -90,13 +99,13 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true
 
-      # Materialize signing secrets from base64-encoded repo secrets.
-      # Add these secrets in GitHub → Settings → Secrets and variables → Actions:
-      #   KEYSTORE_B64        — base64 of kursi-release.keystore
-      #   KEYSTORE_PASSWORD   — store password
-      #   KEY_ALIAS           — key alias (kursi)
-      #   KEY_PASSWORD        — key password
-      #   PLAYSTORE_CREDS_B64 — base64 of play-service-account.json
+      # Materialize signing secrets from base64-encoded repo secrets. Canonical names (see
+      # docs/RELEASE.md) — used consistently across every Android deploy workflow in this repo:
+      #   ANDROID_KEYSTORE_B64        — base64 of kursi-release.keystore
+      #   ANDROID_KEYSTORE_PASSWORD   — store password
+      #   ANDROID_KEY_ALIAS           — key alias (kursi)
+      #   ANDROID_KEY_PASSWORD        — key password
+      #   PLAYSTORE_CREDS_B64         — base64 of play-service-account.json
       - name: Materialize signing secrets
         run: |
           set -euo pipefail
@@ -115,10 +124,10 @@ jobs:
             echo "PLAY_STORE_KEY_FILE_PATH=$PWD/secrets/play-service-account.json" >> "$GITHUB_ENV"
           fi
         env:
-          KEYSTORE_B64:      ${{ secrets.KEYSTORE_B64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS:         ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD:      ${{ secrets.KEY_PASSWORD }}
+          KEYSTORE_B64:      ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS:         ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD:      ${{ secrets.ANDROID_KEY_PASSWORD }}
           PLAYSTORE_CREDS_B64: ${{ secrets.PLAYSTORE_CREDS_B64 }}
 
       - name: Grant execute permission

@@ -45,6 +45,11 @@ fun Application.configureRouting(registry: RoomRegistry) {
             call.respondText("OK")
         }
 
+        // ── Build info ───────────────────────────────────────────────────────
+        get("/version") {
+            call.respondText(BuildInfo.FINGERPRINT)
+        }
+
         // ── Online leaderboard ──────────────────────────────────────────────
         get("/standings") {
             call.respond(demoStandings)
