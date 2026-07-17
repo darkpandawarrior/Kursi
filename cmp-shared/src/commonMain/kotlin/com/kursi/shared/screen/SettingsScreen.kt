@@ -30,6 +30,9 @@ import com.kursi.core.prefs.TurnSpeed
 import com.kursi.designsystem.*
 import com.kursi.feature.game.Difficulty
 import com.kursi.shared.strings.LocalKursiStrings
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.settings_title
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * SettingsScreen — Daftari (S6) from 17_app_plan.md §4.
@@ -117,7 +120,7 @@ fun SettingsScreen(
             ) {
                 // ── PROFILE ───────────────────────────────────────────────────────
                 if (onEditProfile != null) {
-                    SettingsSection("APNA PROFILE") {
+                    SettingsSection(stringResource(Res.string.settings_title)) {
                         Row(
                             modifier =
                                 Modifier
