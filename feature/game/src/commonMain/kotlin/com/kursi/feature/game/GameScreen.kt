@@ -161,6 +161,22 @@ fun GameScreen(
         showGazette = true
     }
 
+    // DENSITY GATE (spec §3) — the "dossier/whisper chits" popover system. FOCUS hides every chit
+    // (it isn't in the FOCUS whitelist); GUIDED keeps everything except the heavy opponent Dossier
+    // chit (spec: "still hide ... dossier"); ANALYST shows all of it, unchanged.
+    val onShowChit: (ChitContent, androidx.compose.ui.geometry.Rect?) -> Unit = { content, anchor ->
+        val allowed =
+            when (state.densityLayer) {
+                DensityLayer.FOCUS -> false
+                DensityLayer.GUIDED -> content !is ChitContent.Dossier
+                DensityLayer.ANALYST -> true
+            }
+        if (allowed) {
+            showChit = content
+            chitAnchor = anchor
+        }
+    }
+
     // MEASURED moment anchors (M4 §1): one registry per game screen. Opponent plates, the
     // human hand and the treasury medallion report their on-screen bounds into it; the moment
     // overlay rebases those to fire coin-trails / stamps / handoffs at the REAL seat instead of
@@ -186,10 +202,7 @@ fun GameScreen(
                     onLocalPhase = { localPhase = it },
                     onAction = onAction,
                     onOpenGazette = onOpenGazette,
-                    onShowChit = { content, anchor ->
-                        showChit = content
-                        chitAnchor = anchor
-                    },
+                    onShowChit = onShowChit,
                     onToggleCoach = onToggleCoach,
                     soundEnabled = soundEnabled,
                     reducedMotion = reducedMotion,
@@ -203,10 +216,7 @@ fun GameScreen(
                     onLocalPhase = { localPhase = it },
                     onAction = onAction,
                     onOpenGazette = onOpenGazette,
-                    onShowChit = { content, anchor ->
-                        showChit = content
-                        chitAnchor = anchor
-                    },
+                    onShowChit = onShowChit,
                     onToggleCoach = onToggleCoach,
                     soundEnabled = soundEnabled,
                     reducedMotion = reducedMotion,
@@ -236,7 +246,8 @@ fun GameScreen(
             }
 
             // ── DARBAR toggle FAB — brass button, top-end, clear of SpectatorBanner ──
-            if (state.narrativeEnabled) {
+            // DENSITY GATE: the Darbar chat panel/FAB is ANALYST-only (spec §3) — FOCUS/GUIDED hide it.
+            if (state.narrativeEnabled && state.densityLayer == DensityLayer.ANALYST) {
                 Box(
                     modifier =
                         Modifier
@@ -330,12 +341,27 @@ fun GameScreen(
             }
 
             // DARBAR narrative chat panel — drawn above primer, below handoff guard.
-            if (state.narrativeEnabled && showDarbar) {
+            // DENSITY GATE: ANALYST-only (spec §3), same reasoning as the FAB above.
+            if (state.narrativeEnabled && state.densityLayer == DensityLayer.ANALYST && showDarbar) {
                 DarbarPanel(
                     state = state,
                     onAction = onAction,
                     onClose = { showDarbar = false },
                 )
+            }
+
+            // BEAT GATE (spec §5) — tap-to-continue prompt while the paced bot round holds on a
+            // meaningful beat. FOCUS/GUIDED only; ANALYST never sets pendingBeat (see GameUiState).
+            val pending = state.pendingBeat
+            if (pending != null) {
+                Box(
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp),
+                ) {
+                    ContinueBeatPrompt(
+                        onContinue = { onAction(GameAction.ContinueBeat) },
+                        reducedMotion = reducedMotion,
+                    )
+                }
             }
 
             // PASS-AND-PLAY handoff guard — drawn last so it fully occludes the table (secrecy).
@@ -392,18 +418,26 @@ internal fun DesktopLayout(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            // ── Hint Rail (always-on situational hint + NIYAM button) ──
-            HintRail(
-                gamePhase = gamePhase,
-                state = state,
-                onOpenGazette = onOpenGazette,
-                modifier = Modifier.fillMaxWidth(),
-                onToggleCoach = onToggleCoach,
-                onPlayBestMove = { onAction(GameAction.PlayBestMove) },
-            )
+            // ── Hint Rail (coach guidance + NIYAM button) ──
+            // DENSITY GATE: not in the FOCUS whitelist (spec §3) — GUIDED/ANALYST only.
+            if (state.densityLayer != DensityLayer.FOCUS) {
+                HintRail(
+                    gamePhase = gamePhase,
+                    state = state,
+                    onOpenGazette = onOpenGazette,
+                    modifier = Modifier.fillMaxWidth(),
+                    onToggleCoach = onToggleCoach,
+                    onPlayBestMove = { onAction(GameAction.PlayBestMove) },
+                )
+            }
 
-            // ── What-just-happened recap (Clarity, Tenet 1 — always shown) ──
-            RecapRail(state = state, gamePhase = gamePhase, modifier = Modifier.fillMaxWidth())
+            // ── What-just-happened: ANALYST keeps today's RecapRail; FOCUS/GUIDED get the
+            // single calm headline line in its place (spec §3, §6).
+            if (state.densityLayer == DensityLayer.ANALYST) {
+                RecapRail(state = state, gamePhase = gamePhase, modifier = Modifier.fillMaxWidth())
+            } else {
+                BeatHeadline(state = state, modifier = Modifier.fillMaxWidth())
+            }
 
             // ── Main body: felt table + log rail ──────────────────────
             Row(
@@ -519,13 +553,17 @@ internal fun DesktopLayout(
                 }
 
                 // ── LOG RAIL (right, ~290dp) ──────────────────────────
-                Box(
-                    modifier =
-                        Modifier
-                            .width(290.dp)
-                            .fillMaxHeight(),
-                ) {
-                    GameLog(state = state, onShowChit = onShowChit)
+                // DENSITY GATE: the teleprinter log is ANALYST-only (spec §3) — the Row simply
+                // drops this child in FOCUS/GUIDED, letting the felt column take the full width.
+                if (state.densityLayer == DensityLayer.ANALYST) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .width(290.dp)
+                                .fillMaxHeight(),
+                    ) {
+                        GameLog(state = state, onShowChit = onShowChit)
+                    }
                 }
             }
         }
@@ -798,7 +836,12 @@ internal fun PhoneLayout(
             ) {
                 // ── TOP: turn status + what-just-happened (always visible) ──────────
                 StatusSpineBar(state = state, gamePhase = gamePhase, modifier = Modifier.fillMaxWidth())
-                RecapRail(state = state, gamePhase = gamePhase, modifier = Modifier.fillMaxWidth())
+                // DENSITY GATE: ANALYST keeps RecapRail; FOCUS/GUIDED get the calm headline (spec §3, §6).
+                if (state.densityLayer == DensityLayer.ANALYST) {
+                    RecapRail(state = state, gamePhase = gamePhase, modifier = Modifier.fillMaxWidth())
+                } else {
+                    BeatHeadline(state = state, modifier = Modifier.fillMaxWidth())
+                }
 
                 // ── MIDDLE: opponents + felt + hand (fills remaining space) ──────────
                 val opponentCount = state.view.players.count { it.id != state.view.viewer }
@@ -869,7 +912,8 @@ internal fun PhoneLayout(
                 // ── BOTTOM: hint (only on player turn) + action dock ────────────────
                 // HintRail lives here so it's paired visually with the action dock
                 // rather than buried above the table where the eye doesn't look.
-                if (isPlayerTurn) {
+                // DENSITY GATE: not in the FOCUS whitelist (spec §3) — GUIDED/ANALYST only.
+                if (isPlayerTurn && state.densityLayer != DensityLayer.FOCUS) {
                     HintRail(
                         gamePhase = gamePhase,
                         state = state,
@@ -891,7 +935,10 @@ internal fun PhoneLayout(
                 )
 
                 // ── ROZNAMCHA / DARBAR — collapsible bottom drawer with two tabs ──
-                CollapsibleLogDrawer(state = state, onShowChit = onShowChit, onAction = onAction)
+                // DENSITY GATE: the log drawer (+ its Darbar tab) is ANALYST-only (spec §3).
+                if (state.densityLayer == DensityLayer.ANALYST) {
+                    CollapsibleLogDrawer(state = state, onShowChit = onShowChit, onAction = onAction)
+                }
             }
 
             // Full-screen moment overlay — sits ABOVE the Column but never blocks input when idle.

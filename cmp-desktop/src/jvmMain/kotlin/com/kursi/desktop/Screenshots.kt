@@ -45,6 +45,7 @@ import com.kursi.designsystem.moment.MomentHost
 import com.kursi.designsystem.moment.TableAnchors
 import com.kursi.engine.*
 import com.kursi.feature.game.ChitContent
+import com.kursi.feature.game.DensityLayer
 import com.kursi.feature.game.Difficulty
 import com.kursi.feature.game.GamePhase
 import com.kursi.feature.game.GameScreen
@@ -1373,6 +1374,16 @@ private fun buildFixtures(): List<Triple<String, GameUiState, GamePhase?>> =
         run {
             val (state, _) = buildMidClaimState()
             add(Triple("4p_mid_claim", state, null))
+        }
+
+        // ── 4p_focus ──────────────────────────────────────────────────────────────
+        // DensityLayer.FOCUS (spec §3) — the same mid-claim table, gated down to the clean board:
+        // turn indicator, one headline line, hand, legal-action dock only. No pips, coach badges,
+        // dossier chits, log, or Darbar. Proves the FOCUS gate renders (ANALYST fixtures above are
+        // untouched by it — see 4p_mid_claim).
+        run {
+            val (state, _) = buildMidClaimState()
+            add(Triple("4p_focus", state.copy(densityLayer = DensityLayer.FOCUS), null))
         }
 
         // ── 4p_reaction ───────────────────────────────────────────────────────────
