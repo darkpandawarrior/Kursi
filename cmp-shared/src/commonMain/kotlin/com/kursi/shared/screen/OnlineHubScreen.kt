@@ -34,12 +34,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.siddharth.kmp.network.LanHost
 import com.kursi.designsystem.*
 import com.kursi.feature.game.HubPhase
 import com.kursi.feature.game.LobbyState
 import com.kursi.feature.game.OnlineHubUiState
 import com.kursi.shared.strings.LocalKursiStrings
+import com.siddharth.kmp.network.LanHost
 
 /**
  * S-ONLINE — ONLINE MEHFIL hub (License-Raj Deco): the front desk where a player hosts a PRIVATE
