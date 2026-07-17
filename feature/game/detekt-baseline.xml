@@ -87,9 +87,9 @@
     <ID>TooManyFunctions:KursiVoice.kt:KursiVoice</ID>
     <ID>TooManyFunctions:SocialDirector.kt:SocialDirector</ID>
     <ID>UnusedParameter:ChatVoice.kt:ChatVoice$personaId: String</ID>
-    <ID>UnusedParameter:GameScreen.kt:humanSeat: PlayerId</ID>
     <ID>UnusedParameter:GameScreen.kt:localPhase: GamePhase?</ID>
     <ID>UnusedParameter:Informatics.kt:onDismiss: () -&gt; Unit</ID>
+    <ID>UnusedParameter:ReactionDocks.kt:humanSeat: PlayerId</ID>
     <ID>UnusedParameter:ReplayAnnotation.kt:ReplayAnnotation.Companion$personas: Map&lt;PlayerId, OpponentPersona&gt;</ID>
     <ID>UnusedParameter:StoryArc.kt:StoryArcs$flawOf: (Int) -&gt; CharacterFlaw?</ID>
     <ID>UnusedParameter:StoryArc.kt:StoryArcs$rivalName: String? = null</ID>
