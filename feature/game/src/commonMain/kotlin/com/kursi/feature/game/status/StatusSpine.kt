@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import com.kursi.designsystem.*
 import com.kursi.engine.*
 import com.kursi.feature.game.*
+import com.kursi.feature.game.overlays.*
 
 // ─────────────────────────── WHAT-JUST-HAPPENED recap (Clarity, Tenet 1) ──────
 // A compact, plain-language recap of the most-recent resolved beat, shown near the

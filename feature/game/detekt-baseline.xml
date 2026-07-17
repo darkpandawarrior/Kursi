@@ -7,11 +7,11 @@
     <ID>CyclomaticComplexMethod:ActionDocks.kt:@OptIn(ExperimentalLayoutApi::class) @Composable internal fun PickActionDock</ID>
     <ID>CyclomaticComplexMethod:ChatVoice.kt:ChatVoice$fun arcBeat: String</ID>
     <ID>CyclomaticComplexMethod:ChatVoice.kt:ChatVoice$fun botArcBeat: String</ID>
+    <ID>CyclomaticComplexMethod:GameLog.kt:@Composable internal fun CollapsibleLogDrawer</ID>
+    <ID>CyclomaticComplexMethod:GameLog.kt:@Composable internal fun GameLogEntry</ID>
     <ID>CyclomaticComplexMethod:GameMoments.kt:internal fun mapEventToMoment: KursiMoment?</ID>
     <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable fun GameScreen</ID>
-    <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun CollapsibleLogDrawer</ID>
     <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun DarbarPanel</ID>
-    <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun GameLogEntry</ID>
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$fun actionBark: String</ID>
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$fun actionConsequence: String</ID>
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$fun logActorVerb: String</ID>
@@ -82,7 +82,6 @@
     <ID>ReturnCount:ReplayAnnotation.kt:ReplayAnnotation.Companion$private fun beliefRead: Pair&lt;String, String&gt;</ID>
     <ID>ReturnCount:SocialDirector.kt:SocialDirector$fun nudgeBotIntent: Intent</ID>
     <ID>SwallowedException:GameViewModel.kt:GameViewModel$e: IllegalStateException</ID>
-    <ID>TooManyFunctions:GameScreen.kt:com.kursi.feature.game.GameScreen.kt</ID>
     <ID>TooManyFunctions:GameSession.kt:GameSession</ID>
     <ID>TooManyFunctions:KursiVoice.kt:KursiVoice</ID>
     <ID>TooManyFunctions:SocialDirector.kt:SocialDirector</ID>

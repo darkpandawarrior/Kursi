@@ -44,6 +44,7 @@ import com.kursi.ai.OpponentInsight
 import com.kursi.designsystem.*
 import com.kursi.engine.*
 import com.kursi.feature.game.docks.loseInfluenceCause
+import com.kursi.feature.game.overlays.*
 
 // ─────────────────────────── Primer persistence (in-memory for multiplatform) ──
 // Using a simple Kotlin object singleton rather than DataStore/Settings to keep
