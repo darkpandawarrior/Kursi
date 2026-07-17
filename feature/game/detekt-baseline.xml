@@ -12,7 +12,6 @@
     <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun CollapsibleLogDrawer</ID>
     <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun DarbarPanel</ID>
     <ID>CyclomaticComplexMethod:GameScreen.kt:@Composable internal fun GameLogEntry</ID>
-    <ID>CyclomaticComplexMethod:GameScreen.kt:internal fun deriveSpineTextAndTone: Pair&lt;String, SpineTone&gt;</ID>
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$fun actionBark: String</ID>
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$fun actionConsequence: String</ID>
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$fun logActorVerb: String</ID>
@@ -24,6 +23,7 @@
     <ID>CyclomaticComplexMethod:KursiVoice.kt:KursiVoice$private fun hinglishPersonaBark: String</ID>
     <ID>CyclomaticComplexMethod:OpponentArc.kt:@Composable internal fun OpponentChipItem</ID>
     <ID>CyclomaticComplexMethod:ReplayAnnotation.kt:ReplayAnnotation.Companion$private fun labelOf: String</ID>
+    <ID>CyclomaticComplexMethod:StatusSpine.kt:internal fun deriveSpineTextAndTone: Pair&lt;String, SpineTone&gt;</ID>
     <ID>LargeClass:KursiVoice.kt:KursiVoice</ID>
     <ID>LongMethod:GameMoments.kt:internal fun mapEventToMoment: KursiMoment?</ID>
     <ID>LongMethod:GameViewModel.kt:GameViewModel$private fun startGame</ID>

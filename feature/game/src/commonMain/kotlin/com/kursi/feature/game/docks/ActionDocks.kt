@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.kursi.designsystem.*
 import com.kursi.engine.*
 import com.kursi.feature.game.*
+import com.kursi.feature.game.status.*
 
 /** A small label row used in the compact mobile action dock to separate grouped sections. */
 @Composable
