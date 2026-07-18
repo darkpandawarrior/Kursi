@@ -78,7 +78,9 @@ internal fun FeltTableSurface(
                     }
                     drawFeltGuilloche()
                     drawFeltChairEmblem()
-                    drawTableVignette(centerWarmth = 0.14f, rimDarkness = 0.52f)
+                    // Deepened lamplit-desk key light + vignette (spec §7.1) — subtle nudge over the
+                    // previous values so the felt reads as lit-from-above, not just tinted.
+                    drawTableVignette(centerWarmth = 0.17f, rimDarkness = 0.58f)
                 }.border(
                     width = 2.5.dp,
                     brush =

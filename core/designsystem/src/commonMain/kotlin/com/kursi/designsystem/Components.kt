@@ -484,6 +484,15 @@ fun RoleCard(
         modifier =
             modifier
                 .size(width = cardW, height = cardH)
+                // Token drop-shadow (spec §7.1) — [elevation] above was computed but never applied;
+                // wiring it in gives the card real contact weight against the felt (more when lifted).
+                .shadow(
+                    elevation,
+                    Squircle(radius),
+                    clip = false,
+                    ambientColor = Color.Black,
+                    spotColor = BrandTokens.TeakInk,
+                )
                 // Brass bezel: gradient top-to-bottom (gold highlight → brass → dark brass shadow)
                 .clip(Squircle(radius))
                 .background(
@@ -1802,6 +1811,9 @@ fun FeltTableBackground(
                         )
                         x += step
                     }
+                    // Lamplit-desk key light + vignette (spec §7.1) — phone felt was missing the
+                    // warm centre / shadowed rim that the desktop FeltTableSurface already has.
+                    drawTableVignette(centerWarmth = 0.14f, rimDarkness = 0.52f)
                 }.border(
                     2.dp,
                     // Brass inlay border: gradient to simulate engraved edge
@@ -2556,7 +2568,7 @@ private fun CardStackToken(count: Int) {
                         Modifier
                             .size(width = 44.dp, height = 64.dp)
                             .offset { IntOffset(off * 3, off * -3) }
-                            .shadow(3.dp, Squircle(KursiRadii.sm), clip = false)
+                            .shadow(4.dp, Squircle(KursiRadii.sm), clip = false)
                             .clip(Squircle(KursiRadii.sm))
                             .background(
                                 Brush.verticalGradient(
@@ -2570,7 +2582,7 @@ private fun CardStackToken(count: Int) {
                 modifier =
                     Modifier
                         .size(width = 44.dp, height = 64.dp)
-                        .shadow(5.dp, Squircle(KursiRadii.sm), clip = false)
+                        .shadow(6.dp, Squircle(KursiRadii.sm), clip = false)
                         .clip(Squircle(KursiRadii.sm))
                         .background(
                             Brush.verticalGradient(
@@ -2616,7 +2628,7 @@ private fun CoinStackToken(coins: Int) {
                         Modifier
                             .offset { IntOffset(0, (-(i) * 9.5f * density).toInt()) }
                             .size(width = coinW, height = coinH)
-                            .shadow(2.dp, CircleShape, clip = false)
+                            .shadow(3.dp, CircleShape, clip = false)
                             .clip(CircleShape)
                             .background(
                                 Brush.verticalGradient(
@@ -2631,7 +2643,7 @@ private fun CoinStackToken(coins: Int) {
                     Modifier
                         .offset { IntOffset(0, (-(layers) * 9.5f * density).toInt()) }
                         .size(48.dp)
-                        .shadow(4.dp, CircleShape, clip = false)
+                        .shadow(5.dp, CircleShape, clip = false)
                         .clip(CircleShape)
                         .background(
                             Brush.radialGradient(
