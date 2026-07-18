@@ -410,11 +410,12 @@ private fun rememberKursiFonts(): KursiFonts =
 /**
  * KursiType — License Raj Deco type scale.
  *
- * Static token definitions using system-font families as their [fontFamily].
- * The real OFL fonts (Rozha One, Marcellus, DM Mono) are injected at theme
- * composition time by [KursiTheme], which patches each TextStyle via
- * [TextStyle.copy] so all targets see the real fonts without requiring
- * Res.font.* at object-init time.
+ * Each token resolves its [fontFamily] through [LocalKursiFonts] at read time (a
+ * `@Composable get()`, not a stored constant), so every call site — 500+ across the
+ * app — picks up the real bundled Rozha One / Marcellus / DM Mono the moment it reads
+ * under [KursiTheme], with zero call-site changes. Outside a themed composition (bare
+ * @Preview, non-KMP-resource contexts) [LocalKursiFonts] falls back to system
+ * serif/mono, so previews keep rendering.
  *
  * Slot assignments:
  *   display / cardRole / title_md → Rozha One (deco display)
@@ -423,142 +424,156 @@ private fun rememberKursiFonts(): KursiFonts =
  */
 object KursiType {
     /** 28 / 700 — turn banner, Rozha One display. */
-    val display =
-        TextStyle(
-            fontFamily = FontFamily.Serif,
-            fontSize = 28.sp,
-            fontWeight = FontWeight(700),
-            lineHeight = 34.sp,
-            letterSpacing = 0.sp,
-        )
+    val display: TextStyle
+        @Composable get() =
+            TextStyle(
+                fontFamily = LocalKursiFonts.current.rozhaOne,
+                fontSize = 28.sp,
+                fontWeight = FontWeight(700),
+                lineHeight = 34.sp,
+                letterSpacing = 0.sp,
+            )
 
     /** 26 / 700 — role names on hand cards. */
-    val cardRole =
-        TextStyle(
-            fontFamily = FontFamily.Serif,
-            fontSize = 26.sp,
-            fontWeight = FontWeight(700),
-            lineHeight = 30.sp,
-        )
+    val cardRole: TextStyle
+        @Composable get() =
+            TextStyle(
+                fontFamily = LocalKursiFonts.current.rozhaOne,
+                fontSize = 26.sp,
+                fontWeight = FontWeight(700),
+                lineHeight = 30.sp,
+            )
 
     /** 20 / 700 — status spine, action buttons. Marcellus-style. */
-    val title =
-        TextStyle(
-            fontFamily = FontFamily.Serif,
-            fontSize = 20.sp,
-            fontWeight = FontWeight(700),
-            lineHeight = 26.sp,
-        )
+    val title: TextStyle
+        @Composable get() =
+            TextStyle(
+                fontFamily = LocalKursiFonts.current.marcellus,
+                fontSize = 20.sp,
+                fontWeight = FontWeight(700),
+                lineHeight = 26.sp,
+            )
 
     /** 17 / 700 — player names. */
-    val name =
-        TextStyle(
-            fontFamily = FontFamily.Serif,
-            fontSize = 17.sp,
-            fontWeight = FontWeight(700),
-            lineHeight = 22.sp,
-        )
+    val name: TextStyle
+        @Composable get() =
+            TextStyle(
+                fontFamily = LocalKursiFonts.current.marcellus,
+                fontSize = 17.sp,
+                fontWeight = FontWeight(700),
+                lineHeight = 22.sp,
+            )
 
     /** 15 / 500 — power lines, log rows. Small-caps feel. */
-    val body =
-        TextStyle(
-            fontFamily = FontFamily.Serif,
-            fontSize = 15.sp,
-            fontWeight = FontWeight(500),
-            lineHeight = 20.sp,
-        )
+    val body: TextStyle
+        @Composable get() =
+            TextStyle(
+                fontFamily = LocalKursiFonts.current.marcellus,
+                fontSize = 15.sp,
+                fontWeight = FontWeight(500),
+                lineHeight = 20.sp,
+            )
 
     /** 13 / 600 uppercase + tracking — chips, coin counts, button sublabels. */
-    val label =
-        TextStyle(
-            fontFamily = FontFamily.Serif,
-            fontSize = 13.sp,
-            fontWeight = FontWeight(600),
-            lineHeight = 18.sp,
-            letterSpacing = 0.8.sp,
-        )
+    val label: TextStyle
+        @Composable get() =
+            TextStyle(
+                fontFamily = LocalKursiFonts.current.marcellus,
+                fontSize = 13.sp,
+                fontWeight = FontWeight(600),
+                lineHeight = 18.sp,
+                letterSpacing = 0.8.sp,
+            )
 
     /** 11 / 600 — pip labels, timers. DM Mono for numerals. */
-    val caption =
-        TextStyle(
-            fontFamily = FontFamily.Serif,
-            fontSize = 11.sp,
-            fontWeight = FontWeight(600),
-            lineHeight = 14.sp,
-            letterSpacing = 0.3.sp,
-        )
+    val caption: TextStyle
+        @Composable get() =
+            TextStyle(
+                fontFamily = LocalKursiFonts.current.marcellus,
+                fontSize = 11.sp,
+                fontWeight = FontWeight(600),
+                lineHeight = 14.sp,
+                letterSpacing = 0.3.sp,
+            )
 
     /** Monospaced numeric — coin counts, serial numbers. DM Mono. */
-    val numeric =
-        TextStyle(
-            fontFamily = FontFamily.Monospace,
-            fontSize = 14.sp,
-            fontWeight = FontWeight(600),
-            lineHeight = 18.sp,
-            letterSpacing = 0.sp,
-        )
+    val numeric: TextStyle
+        @Composable get() =
+            TextStyle(
+                fontFamily = LocalKursiFonts.current.dmMono,
+                fontSize = 14.sp,
+                fontWeight = FontWeight(600),
+                lineHeight = 18.sp,
+                letterSpacing = 0.sp,
+            )
 
     // ── Refined density ramp (Step 0) ─────────────────────────────
 
     /** 10/12 — cost chips, pip counts, log timestamps, affordance hints. */
-    val label_micro =
-        TextStyle(
-            fontFamily = FontFamily.Serif,
-            fontSize = 10.sp,
-            fontWeight = FontWeight(500),
-            lineHeight = 12.sp,
-            letterSpacing = 0.2.sp,
-        )
+    val label_micro: TextStyle
+        @Composable get() =
+            TextStyle(
+                fontFamily = LocalKursiFonts.current.marcellus,
+                fontSize = 10.sp,
+                fontWeight = FontWeight(500),
+                lineHeight = 12.sp,
+                letterSpacing = 0.2.sp,
+            )
 
     /** 11/14 — action name in dock chips, opponent meta, log actor. */
-    val label_sm =
-        TextStyle(
-            fontFamily = FontFamily.Serif,
-            fontSize = 11.sp,
-            fontWeight = FontWeight(600),
-            lineHeight = 14.sp,
-            letterSpacing = 0.5.sp,
-        )
+    val label_sm: TextStyle
+        @Composable get() =
+            TextStyle(
+                fontFamily = LocalKursiFonts.current.marcellus,
+                fontSize = 11.sp,
+                fontWeight = FontWeight(600),
+                lineHeight = 14.sp,
+                letterSpacing = 0.5.sp,
+            )
 
     /** 13/16 — opponent nameplate name, dock cost display. */
-    val label_md =
-        TextStyle(
-            fontFamily = FontFamily.Serif,
-            fontSize = 13.sp,
-            fontWeight = FontWeight(700),
-            lineHeight = 16.sp,
-            letterSpacing = 0.3.sp,
-        )
+    val label_md: TextStyle
+        @Composable get() =
+            TextStyle(
+                fontFamily = LocalKursiFonts.current.marcellus,
+                fontSize = 13.sp,
+                fontWeight = FontWeight(700),
+                lineHeight = 16.sp,
+                letterSpacing = 0.3.sp,
+            )
 
     /** 15/18 — status spine text, popover title. */
-    val title_sm =
-        TextStyle(
-            fontFamily = FontFamily.Serif,
-            fontSize = 15.sp,
-            fontWeight = FontWeight(700),
-            lineHeight = 18.sp,
-            letterSpacing = 0.sp,
-        )
+    val title_sm: TextStyle
+        @Composable get() =
+            TextStyle(
+                fontFamily = LocalKursiFonts.current.marcellus,
+                fontSize = 15.sp,
+                fontWeight = FontWeight(700),
+                lineHeight = 18.sp,
+                letterSpacing = 0.sp,
+            )
 
     /** 18/22 — reveal card persona name. */
-    val title_md =
-        TextStyle(
-            fontFamily = FontFamily.Serif,
-            fontSize = 18.sp,
-            fontWeight = FontWeight(700),
-            lineHeight = 22.sp,
-            letterSpacing = 0.sp,
-        )
+    val title_md: TextStyle
+        @Composable get() =
+            TextStyle(
+                fontFamily = LocalKursiFonts.current.rozhaOne,
+                fontSize = 18.sp,
+                fontWeight = FontWeight(700),
+                lineHeight = 22.sp,
+                letterSpacing = 0.sp,
+            )
 
     /** 13 tabular — coin/treasury numerals (monospaced). */
-    val numeral_sm =
-        TextStyle(
-            fontFamily = FontFamily.Monospace,
-            fontSize = 13.sp,
-            fontWeight = FontWeight(600),
-            lineHeight = 16.sp,
-            letterSpacing = 0.sp,
-        )
+    val numeral_sm: TextStyle
+        @Composable get() =
+            TextStyle(
+                fontFamily = LocalKursiFonts.current.dmMono,
+                fontSize = 13.sp,
+                fontWeight = FontWeight(600),
+                lineHeight = 16.sp,
+                letterSpacing = 0.sp,
+            )
 }
 
 /**
@@ -666,6 +681,14 @@ fun TextStyle.marcellus(): TextStyle = this.copy(fontFamily = LocalKursiFonts.cu
 /** Patches a token style with the real DM Mono numeral face. */
 @Composable
 fun TextStyle.dmMono(): TextStyle = this.copy(fontFamily = LocalKursiFonts.current.dmMono)
+
+/**
+ * Whether the player has reduced motion on (spec §10). Provided once at the [GameScreen]
+ * root from `AppPrefs.reducedMotionFlow`; read by shared juice sites (press feedback, card
+ * lift/flip springs) that would otherwise need a `reducedMotion` parameter threaded through
+ * every call site. Defaults false so non-game screens/previews keep today's behavior.
+ */
+val LocalReducedMotion = staticCompositionLocalOf { false }
 
 // ─────────────────────────── Material3 dark scheme (deco palette) ─────────────
 
