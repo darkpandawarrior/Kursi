@@ -35,6 +35,12 @@ import kotlin.math.sin
 @Composable
 internal fun FeltTableSurface(
     modifier: Modifier = Modifier,
+    /**
+     * AAA FOCUS rebuild: the 2.5dp brass sweep border + deep rim shadow read as a "card
+     * floating in a void" — a boxed panel, not a table. FOCUS/GUIDED render full-bleed
+     * (false): the felt IS the screen, no frame. ANALYST/default keeps the framed hero card.
+     */
+    bordered: Boolean = true,
     content: @Composable BoxScope.() -> Unit,
 ) {
     // Teak-and-brass council table: warm teak with engraved-line overlay, brass sweep border,
@@ -43,57 +49,64 @@ internal fun FeltTableSurface(
         modifier =
             modifier
                 // Deep table-rim shadow so the felt reads as a recessed playing surface
-                .shadow(
-                    26.dp,
-                    Squircle(KursiRadii.xxl),
-                    clip = false,
-                    ambientColor = Color.Black,
-                    spotColor = BrandTokens.TeakInk,
-                ).clip(Squircle(KursiRadii.xxl))
+                // (skipped when full-bleed: a shadow around an edge-to-edge surface just
+                // reads as a dark halo, not a lifted panel).
+                .then(
+                    if (bordered) {
+                        Modifier.shadow(
+                            26.dp,
+                            Squircle(KursiRadii.xxl),
+                            clip = false,
+                            ambientColor = Color.Black,
+                            spotColor = BrandTokens.TeakInk,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ).clip(if (bordered) Squircle(KursiRadii.xxl) else androidx.compose.ui.graphics.RectangleShape)
                 .background(
                     brush =
                         Brush.radialGradient(
                             colors =
                                 listOf(
-                                    Color(0xFF45291A), // warm lit centre
+                                    Color(0xFF6A4025), // hot lamplit core — the light source lands here
+                                    Color(0xFF4A2C1B), // warm lit centre
                                     BrandTokens.TeakMid,
                                     BrandTokens.TeakDark,
                                     BrandTokens.TeakInk, // deep shadowed rim
                                 ),
+                            // Lamp hangs above-centre: light pool sits high, rim falls to shadow.
+                            radius = 1.05f,
                         ),
                 ).drawBehind {
-                    // M4 §2: make the felt textures actually READ — engine-turned hatch, then a
-                    // concentric guilloché well + ghosted chair-in-sunburst emblem under the heart,
-                    // then the value-widening vignette so the rim falls into shadow.
-                    val step = 20.dp.toPx()
-                    var x = 0f
-                    while (x < size.width) {
-                        drawLine(
-                            BrandTokens.GoldAntique.copy(alpha = 0.045f),
-                            Offset(x, 0f),
-                            Offset(x, size.height),
-                            strokeWidth = 0.5.dp.toPx(),
-                        )
-                        x += step
-                    }
+                    // M4 §2 / graphics overhaul: the felt textures are drawn to actually READ now
+                    // (were ghosted at α0.045) — engine-turned cross-hatch, a concentric guilloché
+                    // well + chair-in-sunburst emblem, a directional warm key-light pool, then the
+                    // value-widening vignette so the rim falls into shadow (lamplit-desk, not tint).
+                    drawFeltHatch()
                     drawFeltGuilloche()
                     drawFeltChairEmblem()
-                    // Deepened lamplit-desk key light + vignette (spec §7.1) — subtle nudge over the
-                    // previous values so the felt reads as lit-from-above, not just tinted.
-                    drawTableVignette(centerWarmth = 0.17f, rimDarkness = 0.58f)
-                }.border(
-                    width = 2.5.dp,
-                    brush =
-                        Brush.sweepGradient(
-                            listOf(
-                                BrandTokens.GoldAntique,
-                                BrandTokens.BrassAged,
-                                BrandTokens.BrassDark,
-                                BrandTokens.BrassAged,
-                                BrandTokens.GoldAntique,
-                            ),
-                        ),
-                    shape = Squircle(KursiRadii.xxl),
+                    drawKeyLightPool()
+                    drawTableVignette(centerWarmth = 0.22f, rimDarkness = 0.66f)
+                }.then(
+                    if (bordered) {
+                        Modifier.border(
+                            width = 2.5.dp,
+                            brush =
+                                Brush.sweepGradient(
+                                    listOf(
+                                        BrandTokens.GoldAntique,
+                                        BrandTokens.BrassAged,
+                                        BrandTokens.BrassDark,
+                                        BrandTokens.BrassAged,
+                                        BrandTokens.GoldAntique,
+                                    ),
+                                ),
+                            shape = Squircle(KursiRadii.xxl),
+                        )
+                    } else {
+                        Modifier
+                    },
                 ),
         contentAlignment = Alignment.Center,
     ) {
@@ -110,7 +123,7 @@ internal fun DrawScope.drawFeltGuilloche() {
     val cx = size.width / 2f
     val cy = size.height * 0.50f
     val baseR = minOf(size.width, size.height) * 0.48f
-    val c = BrandTokens.GoldAntique.copy(alpha = 0.05f)
+    val c = BrandTokens.GoldAntique.copy(alpha = 0.10f)
     // A few concentric rings widening out from the heart.
     for (k in 1..4) {
         drawCircle(c, baseR * (0.32f + 0.16f * k), Offset(cx, cy), style = Stroke(0.8.dp.toPx()))
@@ -137,7 +150,56 @@ internal fun DrawScope.drawFeltGuilloche() {
             path.lineTo(x, y)
         }
     }
-    drawPath(path, BrandTokens.GoldAntique.copy(alpha = 0.04f), style = Stroke(0.7.dp.toPx()))
+    drawPath(path, BrandTokens.GoldAntique.copy(alpha = 0.085f), style = Stroke(0.7.dp.toPx()))
+}
+
+/**
+ * Engine-turned cross-hatch over the whole felt — the security-print substrate. Two faint gold
+ * grids (vertical + horizontal) so the teak reads as engraved ledger-stock, not a flat fill.
+ */
+internal fun DrawScope.drawFeltHatch() {
+    val step = 22.dp.toPx()
+    val c = BrandTokens.GoldAntique.copy(alpha = 0.05f)
+    val sw = 0.5.dp.toPx()
+    var x = 0f
+    while (x < size.width) {
+        drawLine(c, Offset(x, 0f), Offset(x, size.height), strokeWidth = sw)
+        x += step
+    }
+    var y = 0f
+    while (y < size.height) {
+        drawLine(c, Offset(0f, y), Offset(size.width, y), strokeWidth = sw)
+        y += step
+    }
+}
+
+/**
+ * Directional warm key-light pool — a bright, tight radial high-centre where the hanging lamp
+ * lands on the felt, giving the surface a real lit hotspot above the medallion instead of a flat
+ * tint. Additive-warm, fading to nothing well before the rim (the vignette owns the rim).
+ */
+private const val KEY_LIGHT_GLOW_ALPHA = 0.14f
+private const val KEY_LIGHT_MID_ALPHA = 0.05f
+private val KeyLightGlowColor = Color(0xFFFFE0A0)
+private val KeyLightMidColor = Color(0xFFE8C874)
+
+internal fun DrawScope.drawKeyLightPool() {
+    val cx = size.width / 2f
+    val cy = size.height * 0.30f // lamp lands high-centre
+    val r = maxOf(size.width, size.height) * 0.55f
+    drawRect(
+        brush =
+            Brush.radialGradient(
+                colors =
+                    listOf(
+                        KeyLightGlowColor.copy(alpha = KEY_LIGHT_GLOW_ALPHA), // warm lamp glow
+                        KeyLightMidColor.copy(alpha = KEY_LIGHT_MID_ALPHA),
+                        Color.Transparent,
+                    ),
+                center = Offset(cx, cy),
+                radius = r,
+            ),
+    )
 }
 
 /** Ghosted chair-in-sunburst emblem at the felt centre — the brand mark embedded in the table. */
@@ -145,7 +207,7 @@ internal fun DrawScope.drawFeltChairEmblem() {
     val cx = size.width / 2f
     val cy = size.height * 0.50f
     val r = minOf(size.width, size.height) * 0.20f
-    val c = BrandTokens.GoldAntique.copy(alpha = 0.05f)
+    val c = BrandTokens.GoldAntique.copy(alpha = 0.09f)
     // Sunburst rays.
     val rays = 24
     for (i in 0 until rays) {
@@ -284,6 +346,13 @@ internal fun FeltCenterTokens(
                         )
                     },
                 )
+
+                // AAA FOCUS rebuild: the "what's happening" beat lives here now — an italic
+                // engraved caption anchored directly under the pot — instead of a bar in the
+                // top chrome (see GameScreen's density-gated top-of-screen slot for ANALYST).
+                if (state.densityLayer != DensityLayer.ANALYST) {
+                    BeatHeadline(state = state)
+                }
 
                 // Challenge flip if recent
                 val result = challengeResult

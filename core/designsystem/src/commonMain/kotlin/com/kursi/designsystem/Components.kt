@@ -1779,6 +1779,12 @@ fun CountdownBar(
 @Composable
 fun FeltTableBackground(
     modifier: Modifier = Modifier,
+    /**
+     * AAA FOCUS rebuild: the framed "card in a void" brass sweep border reads as a boxed panel
+     * floating in the ink background. FOCUS/GUIDED want the felt to BE the whole screen — one
+     * continuous lit surface, no frame. Set false to drop the border (ANALYST/default keeps it).
+     */
+    bordered: Boolean = true,
     content: @Composable () -> Unit = {},
 ) {
     Box(
@@ -1814,19 +1820,25 @@ fun FeltTableBackground(
                     // Lamplit-desk key light + vignette (spec §7.1) — phone felt was missing the
                     // warm centre / shadowed rim that the desktop FeltTableSurface already has.
                     drawTableVignette(centerWarmth = 0.14f, rimDarkness = 0.52f)
-                }.border(
-                    2.dp,
-                    // Brass inlay border: gradient to simulate engraved edge
-                    Brush.sweepGradient(
-                        listOf(
-                            BrandTokens.GoldAntique,
-                            BrandTokens.BrassAged,
-                            BrandTokens.BrassDark,
-                            BrandTokens.BrassAged,
-                            BrandTokens.GoldAntique,
-                        ),
-                    ),
-                    Squircle(KursiRadii.xxl),
+                }.then(
+                    if (bordered) {
+                        Modifier.border(
+                            2.dp,
+                            // Brass inlay border: gradient to simulate engraved edge
+                            Brush.sweepGradient(
+                                listOf(
+                                    BrandTokens.GoldAntique,
+                                    BrandTokens.BrassAged,
+                                    BrandTokens.BrassDark,
+                                    BrandTokens.BrassAged,
+                                    BrandTokens.GoldAntique,
+                                ),
+                            ),
+                            Squircle(KursiRadii.xxl),
+                        )
+                    } else {
+                        Modifier
+                    },
                 ),
         contentAlignment = Alignment.Center,
     ) {

@@ -412,12 +412,22 @@ internal fun DesktopLayout(
                     .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            // ── Status Spine (full width gold bar) ──────────────────────
-            StatusSpineBar(
-                state = state,
-                gamePhase = gamePhase,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            // ── Top chrome: ANALYST keeps the fat gold Status Spine bar; FOCUS/GUIDED
+            //    dissolve it into an engraved turn line + hairline rule (AAA rebuild).
+            if (state.densityLayer == DensityLayer.ANALYST) {
+                StatusSpineBar(
+                    state = state,
+                    gamePhase = gamePhase,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            } else {
+                EngravedTurnHeader(
+                    state = state,
+                    gamePhase = gamePhase,
+                    onOpenGazette = onOpenGazette,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
 
             // ── Hint Rail (coach guidance + NIYAM button) ──
             // DENSITY GATE: not in the FOCUS whitelist (spec §3) — GUIDED/ANALYST only.
@@ -432,12 +442,11 @@ internal fun DesktopLayout(
                 )
             }
 
-            // ── What-just-happened: ANALYST keeps today's RecapRail; FOCUS/GUIDED get the
-            // single calm headline line in its place (spec §3, §6).
+            // ── What-just-happened: ANALYST keeps today's RecapRail. FOCUS/GUIDED move the
+            // headline down onto the felt (an engraved caption under the pot) — see
+            // FeltCenterTokens — so the top chrome stays a single clean turn line.
             if (state.densityLayer == DensityLayer.ANALYST) {
                 RecapRail(state = state, gamePhase = gamePhase, modifier = Modifier.fillMaxWidth())
-            } else {
-                BeatHeadline(state = state, modifier = Modifier.fillMaxWidth())
             }
 
             // ── Main body: felt table + log rail ──────────────────────
@@ -468,6 +477,7 @@ internal fun DesktopLayout(
 
                         FeltTableSurface(
                             modifier = Modifier.fillMaxSize(),
+                            bordered = state.densityLayer == DensityLayer.ANALYST,
                         ) {
                             Column(
                                 modifier =
@@ -484,7 +494,7 @@ internal fun DesktopLayout(
                                             .fillMaxWidth()
                                             .heightIn(max = 248.dp),
                                 ) {
-                                    OpponentArc(
+                                    OpponentSeatArc(
                                         state = state,
                                         gamePhase = gamePhase,
                                         onLocalPhase = onLocalPhase,
@@ -519,37 +529,58 @@ internal fun DesktopLayout(
                         )
                     }
 
-                    // ── Bottom: hand + dock side by side ──────────────────
-                    Row(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        // YOUR HAND
-                        YourHandPanel(
-                            state = state,
-                            gamePhase = gamePhase,
-                            humanSeat = humanSeat,
-                            onAction = onAction,
-                            onShowChit = onShowChit,
+                    // ── Bottom: AAA rebuild stacks a full-width, centered stamp-chip dock
+                    //    ABOVE centered held cards for FOCUS/GUIDED (the mockup's thumb-zone
+                    //    composition). ANALYST keeps the boxed hand+dock side by side.
+                    if (state.densityLayer == DensityLayer.ANALYST) {
+                        Row(
                             modifier =
                                 Modifier
-                                    .weight(0.40f),
-                        )
-                        // ACTION DOCK
-                        ActionDock(
-                            state = state,
-                            gamePhase = gamePhase,
-                            humanSeat = humanSeat,
-                            onLocalPhase = onLocalPhase,
-                            onAction = onAction,
-                            onShowChit = onShowChit,
-                            modifier =
-                                Modifier
-                                    .weight(0.60f),
-                        )
+                                    .fillMaxWidth()
+                                    .wrapContentHeight(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            YourHandPanel(
+                                state = state,
+                                gamePhase = gamePhase,
+                                humanSeat = humanSeat,
+                                onAction = onAction,
+                                onShowChit = onShowChit,
+                                modifier = Modifier.weight(0.40f),
+                            )
+                            ActionDock(
+                                state = state,
+                                gamePhase = gamePhase,
+                                humanSeat = humanSeat,
+                                onLocalPhase = onLocalPhase,
+                                onAction = onAction,
+                                onShowChit = onShowChit,
+                                modifier = Modifier.weight(0.60f),
+                            )
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().wrapContentHeight(),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            ActionDock(
+                                state = state,
+                                gamePhase = gamePhase,
+                                humanSeat = humanSeat,
+                                onLocalPhase = onLocalPhase,
+                                onAction = onAction,
+                                onShowChit = onShowChit,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            YourHandPanel(
+                                state = state,
+                                gamePhase = gamePhase,
+                                humanSeat = humanSeat,
+                                onAction = onAction,
+                                onShowChit = onShowChit,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
                     }
                 }
 
@@ -821,7 +852,8 @@ internal fun PhoneLayout(
             gamePhase is GamePhase.Exchange ||
             gamePhase is GamePhase.InvestigatePeek
 
-    FeltTableBackground(modifier = Modifier.fillMaxSize()) {
+    val focusStyle = state.densityLayer != DensityLayer.ANALYST
+    FeltTableBackground(modifier = Modifier.fillMaxSize(), bordered = !focusStyle) {
         // Box so we can layer the full-screen moment overlay ABOVE the UI Column without
         // changing the Column's layout contract (no verticalScroll, all heights fixed/weighted).
         Box(modifier = Modifier.fillMaxSize()) {
@@ -835,13 +867,13 @@ internal fun PhoneLayout(
                         .padding(horizontal = 8.dp, vertical = 6.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                // ── TOP: turn status + what-just-happened (always visible) ──────────
-                StatusSpineBar(state = state, gamePhase = gamePhase, modifier = Modifier.fillMaxWidth())
-                // DENSITY GATE: ANALYST keeps RecapRail; FOCUS/GUIDED get the calm headline (spec §3, §6).
-                if (state.densityLayer == DensityLayer.ANALYST) {
+                // ── TOP: ANALYST keeps the fat gold bar + RecapRail; FOCUS/GUIDED dissolve
+                //    into a single engraved turn line (the headline moves onto the felt).
+                if (!focusStyle) {
+                    StatusSpineBar(state = state, gamePhase = gamePhase, modifier = Modifier.fillMaxWidth())
                     RecapRail(state = state, gamePhase = gamePhase, modifier = Modifier.fillMaxWidth())
                 } else {
-                    BeatHeadline(state = state, modifier = Modifier.fillMaxWidth())
+                    EngravedTurnHeader(state = state, gamePhase = gamePhase, onOpenGazette = onOpenGazette, modifier = Modifier.fillMaxWidth())
                 }
 
                 // ── MIDDLE: opponents + felt + hand (fills remaining space) ──────────
@@ -855,45 +887,57 @@ internal fun PhoneLayout(
                             .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    // Measure the available width to compute the exact plate width that fits the
-                    // grid cells. OpponentPlate uses .size(width=plateWidth) so we must pass the
-                    // actual cell width — the default 176.dp overflows on phones (cell ≈ 169dp).
-                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                        val gapTotal = 6.dp * (columns - 1)
-                        val cellWidth = (maxWidth - gapTotal) / columns
-                        // Clamp to OpponentPlate's safe range so widthFactor stays in [0.78, 1.30]
-                        val plateWidth = cellWidth.coerceIn(136.dp, 228.dp)
+                    if (focusStyle) {
+                        // Unboxed brass seat tokens resting on the felt — no grid, no plates.
+                        OpponentSeatArc(
+                            state = state,
+                            gamePhase = gamePhase,
+                            onLocalPhase = onLocalPhase,
+                            onShowChit = onShowChit,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    } else {
+                        // Measure the available width to compute the exact plate width that fits the
+                        // grid cells. OpponentPlate uses .size(width=plateWidth) so we must pass the
+                        // actual cell width — the default 176.dp overflows on phones (cell ≈ 169dp).
+                        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                            val gapTotal = 6.dp * (columns - 1)
+                            val cellWidth = (maxWidth - gapTotal) / columns
+                            // Clamp to OpponentPlate's safe range so widthFactor stays in [0.78, 1.30]
+                            val plateWidth = cellWidth.coerceIn(136.dp, 228.dp)
 
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(columns),
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height(if (opponentCount <= 2) 104.dp else 172.dp),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                        ) {
-                            val opponents = state.view.players.filter { it.id != state.view.viewer }
-                            items(opponents) { opp ->
-                                OpponentChipItem(
-                                    opp = opp,
-                                    state = state,
-                                    gamePhase = gamePhase,
-                                    onLocalPhase = onLocalPhase,
-                                    onShowChit = onShowChit,
-                                    plateWidth = plateWidth,
-                                )
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(columns),
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(if (opponentCount <= 2) 104.dp else 172.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                val opponents = state.view.players.filter { it.id != state.view.viewer }
+                                items(opponents) { opp ->
+                                    OpponentChipItem(
+                                        opp = opp,
+                                        state = state,
+                                        gamePhase = gamePhase,
+                                        onLocalPhase = onLocalPhase,
+                                        onShowChit = onShowChit,
+                                        plateWidth = plateWidth,
+                                    )
+                                }
                             }
                         }
                     }
 
-                    // Compact felt area — centre tokens only. The moment overlay is now
-                    // full-screen (sibling Box below), so it's removed from this 80dp strip.
+                    // Felt heart: deck/treasury pot (+ engraved beat caption in FOCUS/GUIDED).
+                    // The moment overlay is full-screen (sibling Box below), so it's not here.
                     Box(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .height(80.dp),
+                                .then(if (focusStyle) Modifier.weight(1f) else Modifier.height(80.dp))
+                                .drawBehind { if (focusStyle) drawHeartPedestal() },
                         contentAlignment = Alignment.Center,
                     ) {
                         FeltCenterTokens(state = state, gamePhase = gamePhase, onShowChit = onShowChit)
@@ -906,7 +950,7 @@ internal fun PhoneLayout(
                         humanSeat = humanSeat,
                         onAction = onAction,
                         onShowChit = onShowChit,
-                        modifier = Modifier.weight(1f),
+                        modifier = if (focusStyle) Modifier.fillMaxWidth() else Modifier.weight(1f),
                     )
                 }
 
@@ -982,8 +1026,12 @@ internal fun ActionDock(
             gamePhase is GamePhase.LoseInfluence ||
             gamePhase is GamePhase.Exchange ||
             gamePhase is GamePhase.InvestigatePeek
-    Box(modifier = modifier.fillMaxWidth().decoPanel(lifted = docLifted)) {
-        Box(modifier = Modifier.padding(12.dp)) {
+    // AAA FOCUS rebuild: FOCUS/GUIDED drop the decoPanel box — the chips become raised
+    // "stamp" tokens sitting directly on the felt (each chip carries its own shadow now),
+    // not a panel of chips. ANALYST keeps the boxed dock.
+    val boxed = state.densityLayer == DensityLayer.ANALYST
+    Box(modifier = modifier.fillMaxWidth().then(if (boxed) Modifier.decoPanel(lifted = docLifted) else Modifier)) {
+        Box(modifier = Modifier.padding(if (boxed) 12.dp else 4.dp)) {
             when (gamePhase) {
                 is GamePhase.PickAction ->
                     PickActionDock(

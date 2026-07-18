@@ -8,6 +8,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -52,7 +54,10 @@ internal fun PickActionDock(
     onShowChit: (ChitContent, androidx.compose.ui.geometry.Rect?) -> Unit = { _, _ -> },
     compact: Boolean = false,
 ) {
-    val showConsequence = !compact
+    // AAA FOCUS rebuild: FOCUS/GUIDED chips carry no consequence subtext (mockup: bare stamp
+    // chips — "hierarchy: secondary info recedes"), independent of [compact] (which selects the
+    // grouped-section MOBILE layout vs the flat desktop FlowRow, not the subtext).
+    val showConsequence = !compact && state.densityLayer == DensityLayer.ANALYST
     // Build a RiskAction inspect chit for [action] and route it through onShowChit with
     // the chip's captured [bounds]. Tap still declares; long-press reads the catch.
     val showRiskChit: (Action, androidx.compose.ui.geometry.Rect?) -> Unit = { action, bounds ->
@@ -447,12 +452,17 @@ internal fun CompactActionChip(
     val recommended = enabled && advice?.recommended == true
     val coachAccentColor = if (tone != CoachTone.Neutral) coachAccent(tone) else null
 
-    val bgColor =
+    // AAA FOCUS rebuild: the primary/recommended chip is a gold-filled raised "stamp" (mockup
+    // `.act.pri`); everything else is a dark raised chip with a brass hairline + gold value —
+    // never a flat panel fill. `forced` (mandatory Khela) keeps its alert-family fill so danger
+    // still reads distinct from "recommended".
+    val bgBrush: Brush =
         when {
-            !enabled -> BrandTokens.TeakDark
-            forced -> familyColor.copy(alpha = 0.85f)
-            coachAccentColor != null -> coachAccentColor.copy(alpha = 0.15f)
-            else -> familyColor.copy(alpha = 0.15f)
+            !enabled -> Brush.verticalGradient(listOf(BrandTokens.TeakDark, BrandTokens.TeakInk))
+            recommended -> Brush.verticalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged))
+            forced -> Brush.verticalGradient(listOf(familyColor.copy(alpha = 0.95f), familyColor.copy(alpha = 0.65f)))
+            coachAccentColor != null -> Brush.verticalGradient(listOf(coachAccentColor.copy(alpha = 0.22f), coachAccentColor.copy(alpha = 0.08f)))
+            else -> Brush.verticalGradient(listOf(BrandTokens.TeakMid, BrandTokens.TeakDark))
         }
     val borderColor =
         when {
@@ -487,7 +497,15 @@ internal fun CompactActionChip(
                     .onGloballyPositioned { chipBounds = it.boundsInRoot() }
                     .heightIn(min = 52.dp)
                     .widthIn(min = 96.dp, max = 168.dp)
-                    .then(
+                    // A real cast shadow — the chip is a raised stamp resting on the felt, not a
+                    // flat panel. Dims for disabled/unaffordable chips (they sit flush, not raised).
+                    .shadow(
+                        if (enabled) (if (recommended) 8.dp else 4.dp) else 1.dp,
+                        Squircle(KursiDimens.r_md),
+                        clip = false,
+                        ambientColor = Color.Black.copy(alpha = 0.55f),
+                        spotColor = if (recommended) BrandTokens.GoldAntique else BrandTokens.TeakInk,
+                    ).then(
                         if (recommended) {
                             Modifier.holoRimLight(
                                 accent = BrandTokens.GoldAntique,
@@ -499,7 +517,7 @@ internal fun CompactActionChip(
                             Modifier
                         },
                     ).clip(Squircle(KursiDimens.r_md))
-                    .background(bgColor)
+                    .background(bgBrush)
                     .border(borderWidth, borderColor, Squircle(KursiDimens.r_md))
                     .actionChipSemantics(
                         name = name,
@@ -534,7 +552,7 @@ internal fun CompactActionChip(
                 Text(
                     text = icon,
                     style = KursiType.label_sm.copy(fontSize = 15.sp),
-                    color = if (forced) KursiNeutrals.Cream.copy(alpha = chipAlpha) else familyColor.copy(alpha = chipAlpha),
+                    color = if (recommended || forced) KursiNeutrals.Cream.copy(alpha = chipAlpha) else familyColor.copy(alpha = chipAlpha),
                     maxLines = 1,
                 )
                 // Name — fit-to-width CAPS so labels never clip across languages
@@ -542,10 +560,10 @@ internal fun CompactActionChip(
                     text = name,
                     style = KursiType.label_sm,
                     color =
-                        if (forced) {
-                            KursiNeutrals.Cream.copy(alpha = chipAlpha)
-                        } else {
-                            KursiNeutrals.TextPrimary.copy(alpha = chipAlpha)
+                        when {
+                            recommended -> BrandTokens.TeakDark.copy(alpha = chipAlpha)
+                            forced -> KursiNeutrals.Cream.copy(alpha = chipAlpha)
+                            else -> KursiNeutrals.TextPrimary.copy(alpha = chipAlpha)
                         },
                     maxLines = 1,
                     minSize = 8.sp,
@@ -559,6 +577,8 @@ internal fun CompactActionChip(
                     color =
                         if (!enabled) {
                             alertRed.copy(alpha = chipAlpha)
+                        } else if (recommended) {
+                            BrandTokens.TeakDark.copy(alpha = chipAlpha)
                         } else if (forced) {
                             KursiNeutrals.Cream.copy(alpha = chipAlpha)
                         } else {

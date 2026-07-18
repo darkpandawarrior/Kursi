@@ -6,6 +6,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -211,6 +213,99 @@ internal fun StatusSpineBar(
                 contentDescription = text
             },
     )
+}
+
+// ─────────────────────────── EngravedTurnHeader (AAA FOCUS rebuild) ───────────
+// FOCUS/GUIDED chrome: the fat gold StatusSpine bar dissolves into a single engraved
+// small-caps mono turn line + a hairline gradient rule — no filled bar, no box. A
+// brass coin readout (the player's own treasury) and a subtle menu affordance (opens
+// the NIYAM rules gazette) sit at the trailing edge.
+
+@Composable
+internal fun EngravedTurnHeader(
+    state: GameUiState,
+    gamePhase: GamePhase,
+    onOpenGazette: () -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
+    val humanSeat = state.view.viewer
+    val voice = LocalKursiVoice.current
+    val (text, tone) = deriveSpineTextAndTone(state, gamePhase, humanSeat, voice)
+    val accent =
+        when (tone) {
+            SpineTone.Info -> BrandTokens.BrassAged
+            SpineTone.Pending -> BrandTokens.PendingAmber
+            SpineTone.Danger -> BrandTokens.StampRed
+            SpineTone.Gold -> BrandTokens.GoldAntique
+        }
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .semantics(mergeDescendants = true) {
+                        liveRegion = LiveRegionMode.Polite
+                        contentDescription = text
+                    },
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = text.uppercase(),
+                style = KursiType.numeral_sm.dmMono().copy(letterSpacing = 2.5.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
+                color = accent,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Player's own treasury — the one persistent number FOCUS still needs visible.
+                Text(
+                    text = "${state.view.myCoins} ◈",
+                    style = KursiType.numeral_sm,
+                    color = BrandTokens.GoldAntique.copy(alpha = 0.85f),
+                    maxLines = 1,
+                )
+                Box(
+                    modifier =
+                        Modifier
+                            .size(26.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(
+                                Brush.radialGradient(
+                                    listOf(BrandTokens.GoldAntique.copy(alpha = 0.16f), Color.Transparent),
+                                ),
+                            ).clickable(
+                                indication = null,
+                                interactionSource =
+                                    remember {
+                                        androidx.compose.foundation.interaction
+                                            .MutableInteractionSource()
+                                    },
+                                onClick = onOpenGazette,
+                            ).semantics { contentDescription = "Niyam — rules & Gazette" },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("☰", style = KursiType.label_sm.copy(fontSize = 13.sp), color = BrandTokens.BrassAged)
+                }
+            }
+        }
+        Spacer(Modifier.height(7.dp))
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color.Transparent, BrandTokens.GoldAntique.copy(alpha = 0.5f), Color.Transparent),
+                        ),
+                    ),
+        )
+    }
 }
 
 internal fun deriveSpineTextAndTone(

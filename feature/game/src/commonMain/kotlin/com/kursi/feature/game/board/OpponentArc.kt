@@ -97,6 +97,45 @@ internal fun OpponentArc(
     }
 }
 
+// ─────────────────────────── Opponent Seat Arc (AAA FOCUS rebuild) ────────────
+// FOCUS/GUIDED: opponents sit directly on the felt as brass token seats in a single
+// space-between row — the mockup's "seats", not the ANALYST enamel-plate grid. The
+// middle seat nudges up so the row reads as a gentle arc. ANALYST is untouched —
+// this simply delegates to the existing [OpponentArc] plate grid for that layer.
+
+@Composable
+internal fun OpponentSeatArc(
+    state: GameUiState,
+    gamePhase: GamePhase,
+    onLocalPhase: (GamePhase?) -> Unit,
+    onShowChit: (ChitContent, androidx.compose.ui.geometry.Rect?) -> Unit = { _, _ -> },
+    modifier: Modifier = Modifier,
+) {
+    if (state.densityLayer == DensityLayer.ANALYST) {
+        OpponentArc(state = state, gamePhase = gamePhase, onLocalPhase = onLocalPhase, onShowChit = onShowChit, modifier = modifier)
+        return
+    }
+    val opponents = state.view.players.filter { it.id != state.view.viewer }
+    val midIdx = if (opponents.size in 2..4) (opponents.size - 1) / 2 else -1
+    Row(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top,
+    ) {
+        opponents.forEachIndexed { idx, opp ->
+            OpponentChipItem(
+                opp = opp,
+                state = state,
+                gamePhase = gamePhase,
+                onLocalPhase = onLocalPhase,
+                onShowChit = onShowChit,
+                seatStyle = true,
+                nudgedUp = idx == midIdx,
+            )
+        }
+    }
+}
+
 /** Convert a persona display name to its ID (e.g. "Netaji Vachan" → "netaji_vachan"). */
 internal fun findPersonaIdByName(name: String): String = name.lowercase().replace(" ", "_")
 
@@ -108,6 +147,10 @@ internal fun OpponentChipItem(
     onLocalPhase: (GamePhase?) -> Unit,
     onShowChit: (ChitContent, androidx.compose.ui.geometry.Rect?) -> Unit = { _, _ -> },
     plateWidth: androidx.compose.ui.unit.Dp = 176.dp,
+    /** AAA FOCUS rebuild: an unboxed brass-rimmed circular seat token instead of the enamel
+     * plate — dissolves the box while reusing every bit of data/click wiring below. */
+    seatStyle: Boolean = state.densityLayer != DensityLayer.ANALYST,
+    nudgedUp: Boolean = false,
 ) {
     val phase = state.view.phase
 
@@ -290,41 +333,65 @@ internal fun OpponentChipItem(
                     isValidTarget = chipState == ChipState.ValidTarget,
                 ),
     ) {
-        OpponentPlate(
-            name = plateName,
-            seatColor = plateColor,
-            roleColor = roleVisual?.color,
-            role = roleVisual?.role,
-            coins = opp.coins,
-            influenceAlive = opp.faceDownCount,
-            influenceLost = opp.faceUpRoles.size,
-            claim = claim,
-            claimSummary = claimTrail,
-            claimCaught = claimSummary.caught,
-            claimProven = claimSummary.proven,
-            suspicionPips = suspicion?.first,
-            suspicionLabel = suspicion?.second,
-            lastAction = lastAction,
-            state = chipState,
-            modifier =
-                Modifier
-                    .alpha(alphaValue)
-                    // DARBAR: speaking glow — active while chat bubble is showing for this seat
-                    .speakingSeatGlow(accent = plateColor, active = isSpeaking),
-            plateWidth = plateWidth,
-            onClick = {
-                if (gamePhase is GamePhase.PickTarget && chipState == ChipState.ValidTarget) {
-                    // During target-select, a TAP picks this plate as the target.
-                    onLocalPhase(GamePhase.Confirm(gamePhase.action, opp.id))
-                } else {
-                    // Outside target-select, a tap also opens the dossier (long-press is the
-                    // canonical inspect, but a tap here is intuitive when there's no target duty).
-                    showDossier()
-                }
-            },
-            // Long-press = ALWAYS inspect the dossier, even mid target-select.
-            onLongClick = { showDossier() },
-        )
+        val onSeatClick = {
+            if (gamePhase is GamePhase.PickTarget && chipState == ChipState.ValidTarget) {
+                // During target-select, a TAP picks this plate as the target.
+                onLocalPhase(GamePhase.Confirm(gamePhase.action, opp.id))
+            } else {
+                // Outside target-select, a tap also opens the dossier (long-press is the
+                // canonical inspect, but a tap here is intuitive when there's no target duty).
+                showDossier()
+            }
+        }
+        if (seatStyle) {
+            OpponentSeatToken(
+                name = plateName,
+                seatColor = plateColor,
+                roleColor = roleVisual?.color,
+                role = roleVisual?.role,
+                influenceAlive = opp.faceDownCount,
+                influenceLost = opp.faceUpRoles.size,
+                claim = claim,
+                claimSummary = claimTrail,
+                claimCaught = claimSummary.caught,
+                claimProven = claimSummary.proven,
+                state = chipState,
+                nudgedUp = nudgedUp,
+                modifier =
+                    Modifier
+                        .alpha(alphaValue)
+                        .speakingSeatGlow(accent = plateColor, active = isSpeaking),
+                onClick = onSeatClick,
+                onLongClick = { showDossier() },
+            )
+        } else {
+            OpponentPlate(
+                name = plateName,
+                seatColor = plateColor,
+                roleColor = roleVisual?.color,
+                role = roleVisual?.role,
+                coins = opp.coins,
+                influenceAlive = opp.faceDownCount,
+                influenceLost = opp.faceUpRoles.size,
+                claim = claim,
+                claimSummary = claimTrail,
+                claimCaught = claimSummary.caught,
+                claimProven = claimSummary.proven,
+                suspicionPips = suspicion?.first,
+                suspicionLabel = suspicion?.second,
+                lastAction = lastAction,
+                state = chipState,
+                modifier =
+                    Modifier
+                        .alpha(alphaValue)
+                        // DARBAR: speaking glow — active while chat bubble is showing for this seat
+                        .speakingSeatGlow(accent = plateColor, active = isSpeaking),
+                plateWidth = plateWidth,
+                onClick = onSeatClick,
+                // Long-press = ALWAYS inspect the dossier, even mid target-select.
+                onLongClick = { showDossier() },
+            )
+        }
         // DARBAR: ephemeral chat bubble — shown above the plate for ~3.2s, clears automatically.
         // Rendered above the bark ribbon so chat text reads first; bark ribbon stays below.
         // DENSITY GATE: Darbar chat is ANALYST-only (spec §3), same as the panel/FAB.
