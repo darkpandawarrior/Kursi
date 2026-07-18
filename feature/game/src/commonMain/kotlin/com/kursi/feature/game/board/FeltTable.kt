@@ -309,13 +309,17 @@ internal fun FeltCenterTokens(
                 // M4 §2: the medallion is the table HEART — it now claims more presence so the
                 // felt no longer compresses into the top 60% with a dead bottom void. Scaled up
                 // across the board, still tapering at 10p so the plates above stay uncrowded.
-                val medallionD =
+                val baseMedallionD =
                     when {
                         seatCount <= 3 -> 320.dp
                         seatCount <= 5 -> 288.dp
                         seatCount <= 7 -> 256.dp
                         else -> 224.dp
                     }
+                // AAA FOCUS rebuild: at full ANALYST size the medallion reads as a flat gold disc
+                // dominating the upper-middle of the felt. FOCUS/GUIDED shrink it ~35% so the
+                // (now richer/deeper-struck) pot stays the focal heart without crowding the seats.
+                val medallionD = if (state.densityLayer == DensityLayer.ANALYST) baseMedallionD else baseMedallionD * 0.65f
                 // Long-press the table heart → current-claim detail (or table state) chit.
                 var medallionBounds by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
                 val liveClaim = (state.view.phase as? PhaseView.Reactions)?.claimedRole

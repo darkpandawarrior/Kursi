@@ -943,15 +943,20 @@ internal fun PhoneLayout(
                         FeltCenterTokens(state = state, gamePhase = gamePhase, onShowChit = onShowChit)
                     }
 
-                    // Hand panel takes all remaining middle space.
-                    YourHandPanel(
-                        state = state,
-                        gamePhase = gamePhase,
-                        humanSeat = humanSeat,
-                        onAction = onAction,
-                        onShowChit = onShowChit,
-                        modifier = if (focusStyle) Modifier.fillMaxWidth() else Modifier.weight(1f),
-                    )
+                    // ANALYST: hand panel takes all remaining middle space, same as before.
+                    // FOCUS/GUIDED: the hand moves OUT of this weighted column below — it anchors
+                    // to the true bottom edge (below the action dock) instead of floating here
+                    // between the pot and the actions.
+                    if (!focusStyle) {
+                        YourHandPanel(
+                            state = state,
+                            gamePhase = gamePhase,
+                            humanSeat = humanSeat,
+                            onAction = onAction,
+                            onShowChit = onShowChit,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
 
                 // ── BOTTOM: hint (only on player turn) + action dock ────────────────
@@ -978,6 +983,20 @@ internal fun PhoneLayout(
                     onShowChit = onShowChit,
                     compact = true,
                 )
+
+                // ── HAND (FOCUS/GUIDED only): pinned to the true bottom edge, below the
+                // actions — held cards fanned/overlapping, peeking up (mockup composition).
+                // ANALYST keeps its hand inside the weighted middle column above (unchanged).
+                if (focusStyle) {
+                    YourHandPanel(
+                        state = state,
+                        gamePhase = gamePhase,
+                        humanSeat = humanSeat,
+                        onAction = onAction,
+                        onShowChit = onShowChit,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
 
                 // ── ROZNAMCHA / DARBAR — collapsible bottom drawer with two tabs ──
                 // DENSITY GATE: the log drawer (+ its Darbar tab) is ANALYST-only (spec §3).

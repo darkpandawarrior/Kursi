@@ -39,6 +39,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -2430,26 +2431,31 @@ fun BrassMedallion(
                     rotationY = domeTiltY
                     cameraDistance = 16f * density
                 }
-                // Deep contact shadow so the medallion sits proud of the felt
+                // Deep, crisp contact shadow so the medallion sits proud of the felt like a
+                // struck object dropped onto it, not a sticker.
                 .shadow(
-                    elevation = 22.dp,
+                    elevation = 28.dp,
                     shape = CircleShape,
-                    ambientColor = Color.Black.copy(alpha = 0.6f),
+                    ambientColor = Color.Black.copy(alpha = 0.7f),
                     spotColor = BrandTokens.TeakInk,
                     clip = false,
                 ).clip(CircleShape)
-                // Brass body — radial sheen, lit upper-left
+                // Brass body — struck-metal radial sheen: a hot highlight top-left burning down
+                // through brass into a true dark rim (was Gold→Brass→BrassDark→#5E481B, a shallow
+                // fall that never left "flat gold disc"; now Cream(hot)→Gold→Brass→BrassDark→
+                // TeakInk, tighter radius, so the coin reads as struck metal with real volume).
                 .background(
                     Brush.radialGradient(
                         colors =
                             listOf(
+                                KursiNeutrals.Cream,
                                 BrandTokens.GoldAntique,
                                 BrandTokens.BrassAged,
                                 BrandTokens.BrassDark,
-                                Color(0xFF5E481B),
+                                BrandTokens.TeakInk,
                             ),
                         center = Offset(0.36f * dPx, 0.30f * dPx),
-                        radius = dPx * 0.95f,
+                        radius = dPx * 0.80f,
                     ),
                 ).brassSpecular()
                 // Outer engine-turned bezel + debossed well
@@ -2458,6 +2464,18 @@ fun BrassMedallion(
                     val cx = size.width / 2f
                     val cy = size.height / 2f
                     val rr = minOf(size.width, size.height) / 2f
+                    // Directional rim shadow — darkens the lower-right arc opposite the highlight
+                    // so the disc reads as lit from one side (a struck object), not an evenly-glowing
+                    // flat circle.
+                    drawCircle(
+                        Brush.radialGradient(
+                            colors = listOf(Color.Transparent, BrandTokens.TeakInk.copy(alpha = 0.45f)),
+                            center = Offset(cx * 1.18f, cy * 1.28f),
+                            radius = rr * 1.35f,
+                        ),
+                        rr,
+                        Offset(cx, cy),
+                    )
                     drawCircle(
                         BrandTokens.GoldAntique.copy(alpha = 0.85f),
                         rr - 2.dp.toPx(),
@@ -2532,10 +2550,17 @@ fun BrassMedallion(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp * scale),
         ) {
-            // GADDI mark — the seat of power, engraved (M4 §3: real Rozha One display serif)
+            // GADDI mark — the seat of power, struck INTO the brass: a dark drop-shadow under
+            // bright gold ink reads as debossed engraving instead of text printed on a flat disc.
             Text(
                 text = "GADDI",
-                style = KursiType.display.copy(fontSize = (17 * scale).sp, letterSpacing = (3 * scale).sp).rozha(),
+                style =
+                    KursiType.display
+                        .copy(
+                            fontSize = (17 * scale).sp,
+                            letterSpacing = (3 * scale).sp,
+                            shadow = Shadow(BrandTokens.TeakInk.copy(alpha = 0.75f), Offset(0f, 1.5f), 1.5f),
+                        ).rozha(),
                 color = BrandTokens.GoldAntique.copy(alpha = 0.92f),
             )
             Box(
@@ -2554,7 +2579,11 @@ fun BrassMedallion(
             }
             Text(
                 text = "TURN $turnNumber",
-                style = KursiType.label_micro.copy(letterSpacing = (2 * scale).sp),
+                style =
+                    KursiType.label_micro.copy(
+                        letterSpacing = (2 * scale).sp,
+                        shadow = Shadow(BrandTokens.TeakInk.copy(alpha = 0.7f), Offset(0f, 1f), 1f),
+                    ),
                 color = BrandTokens.GoldAntique.copy(alpha = 0.65f),
             )
         }
