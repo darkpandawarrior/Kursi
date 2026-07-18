@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kursi.designsystem.shader.feltMaterial
 import com.kursi.engine.Role
 import kotlin.math.PI
 import kotlin.math.cos
@@ -1856,7 +1857,7 @@ fun FeltTableBackground(
                     } else {
                         Modifier
                     },
-                ),
+                ).feltMaterial(), // default bloomCenterYFraction matches drawTableVignette's cy above
         contentAlignment = Alignment.Center,
     ) {
         content()

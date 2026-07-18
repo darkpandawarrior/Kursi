@@ -217,6 +217,18 @@ object TextureTokens {
 
     /** Brass specular highlight width fraction (0..1). */
     val brassSpecularWidth = 0.25f
+
+    /**
+     * Film-grain per-pixel noise amplitude added by the [com.kursi.designsystem.shader.feltMaterial]
+     * runtime-shader pass (additive, centred on zero — keep tiny, this is texture not TV static).
+     */
+    val filmGrainIntensity = 0.018f
+
+    /**
+     * Warm bloom lift strength around the key-light pool, added by the
+     * [com.kursi.designsystem.shader.feltMaterial] runtime-shader pass.
+     */
+    val warmBloomStrength = 0.05f
 }
 
 // ─────────────────────────── Role frame patterns (CVD non-color channel) ─────

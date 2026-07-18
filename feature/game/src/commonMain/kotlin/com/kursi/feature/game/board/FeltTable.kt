@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.kursi.designsystem.*
 import com.kursi.designsystem.moment.reportAnchor
+import com.kursi.designsystem.shader.feltMaterial
 import com.kursi.engine.*
 import com.kursi.feature.game.*
 import com.kursi.feature.game.overlays.*
@@ -107,7 +108,7 @@ internal fun FeltTableSurface(
                     } else {
                         Modifier
                     },
-                ),
+                ).feltMaterial(bloomCenterYFraction = 0.30f), // matches drawKeyLightPool's cy above
         contentAlignment = Alignment.Center,
     ) {
         content()
