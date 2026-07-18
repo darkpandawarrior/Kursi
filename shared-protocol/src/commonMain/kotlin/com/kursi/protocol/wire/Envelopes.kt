@@ -76,6 +76,18 @@ sealed interface ClientMessage {
         override val matchId: String,
         val seq: Long,
     ) : ClientMessage
+
+    /**
+     * Online mirror of the offline [com.kursi.feature.game.GameAction.ContinueBeat] tap: a connected
+     * human asks the server to release a paced beat NOW instead of waiting out the bounded server-side
+     * ack timeout (Track 6 — see `MatchActor.BeatAckGate` in `:server`). Any seated human's ack is
+     * sufficient to unblock the table; the beat is a shared, table-wide pace, not a per-seat one.
+     * A no-op if no beat is currently pending.
+     */
+    @Serializable
+    data class ContinueBeat(
+        override val matchId: String,
+    ) : ClientMessage
 }
 
 // ─────────────────────────── Server → Client ───────────────────────────

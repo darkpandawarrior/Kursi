@@ -38,7 +38,44 @@ sealed interface MatchCommand {
         val clientSeq: Long,
         val wireIntent: WireIntent,
     ) : MatchCommand
+
+    /**
+     * A connected human sent [com.kursi.protocol.wire.ClientMessage.ContinueBeat] — release the currently
+     * pending [MatchActor.beatGate] wait now instead of waiting out its bounded timeout. Ignored if the
+     * sender is not a seated human or no beat is pending (stray/late ack).
+     */
+    data class BeatAckReceived(
+        val connectionId: String,
+    ) : MatchCommand
+
+    /**
+     * Internal self-post: [MatchActor.beatGate]'s bounded wait elapsed with no ack. Never sent by a
+     * client — [BeatAckGate] posts this to the actor's own mailbox so the resulting bot cascade still
+     * runs inside the actor's single serial loop (no locks, no races).
+     */
+    data object BeatTimedOut : MatchCommand
 }
+
+/**
+ * True for a non-trivial event batch worth pacing the table for. Mirrors the DRAMATIC/ROUTINE half of
+ * [com.kursi.feature.game.tierFor] (`feature/game/BeatGate.kt`) — duplicated here because :server (a
+ * plain JVM Ktor app) cannot depend on :feature:game (a Compose UI module). Pure bookkeeping batches
+ * (income ticks, coin deltas, redraws, …) stay false and are never paced, exactly as offline.
+ */
+internal fun isMeaningfulBeat(events: List<GameEvent>): Boolean =
+    events.any {
+        it is GameEvent.Challenged ||
+            it is GameEvent.ChallengeRevealed ||
+            it is GameEvent.Blocked ||
+            it is GameEvent.InfluenceLost ||
+            it is GameEvent.PlayerEliminated ||
+            it is GameEvent.GameEnded ||
+            it is GameEvent.ActionDeclared ||
+            it is GameEvent.ActionResolved ||
+            it is GameEvent.ActionNegated ||
+            it is GameEvent.Exchanged ||
+            it is GameEvent.CoinsTransferred
+    }
 
 data class PlayerJoinedResult(
     val seat: Int,
@@ -69,6 +106,14 @@ class MatchActor(
 ) {
     // ── Mailbox (bounded — backpressure rather than OOM) ────────────────────
     private val mailbox = Channel<MatchCommand>(capacity = 128)
+
+    // Retained so timers (Track 6 beat-ack gate) can be launched outside a property initializer —
+    // a plain constructor param isn't reachable from ordinary member functions.
+    private val actorScope = scope
+
+    // Track 6: bounded wait for a human "continue" ack before driving the next bot cascade — see
+    // [BeatAckGate] kdoc. Self-posts [MatchCommand.BeatTimedOut] on timeout; never mutates state directly.
+    private val beatGate = BeatAckGate(actorScope) { mailbox.trySend(MatchCommand.BeatTimedOut) }
 
     // ── State — confined to the actor loop ──────────────────────────────────
     private var state: GameState = initialState(config, seed)
@@ -102,6 +147,8 @@ class MatchActor(
                         is MatchCommand.PlayerJoined -> handleJoin(cmd)
                         is MatchCommand.PlayerLeft -> handleLeft(cmd)
                         is MatchCommand.IntentSubmitted -> handleIntent(cmd)
+                        is MatchCommand.BeatAckReceived -> handleBeatAck(cmd)
+                        MatchCommand.BeatTimedOut -> forceAdvanceNow()
                     }
                 } catch (e: CancellationException) {
                     throw e
@@ -118,6 +165,7 @@ class MatchActor(
     suspend fun post(cmd: MatchCommand) = mailbox.send(cmd)
 
     fun close() {
+        beatGate.cancel()
         mailbox.close()
     }
 
@@ -170,10 +218,12 @@ class MatchActor(
             // First time all seats are accounted for → start the match (vacant seats become bots).
             !started && humanSeats.size == config.seatCount -> startGameWithBots()
             // A reconnect (or a join into an already-running match) → resync THIS seat with current state
-            // (sent AFTER the RoomJoined above), then keep any pending bot turns moving.
+            // (sent AFTER the RoomJoined above), then keep any pending bot turns moving. Track 6: routes
+            // through [forceAdvanceNow] so a returning client is never left staring at a beat the table
+            // is quietly still pacing — the reconnect always gets the table moving NOW.
             started -> {
                 sendStateTo(seat, emptyList())
-                advanceAndBroadcast()
+                forceAdvanceNow()
             }
         }
     }
@@ -190,6 +240,19 @@ class MatchActor(
             reconnectableSeats.add(seat)
         }
         // If the actor seat is now a bot, drive bots forward and broadcast the result.
+        forceAdvanceNow()
+    }
+
+    /** A seated human asked to release the currently-pending beat wait now (see [BeatAckGate]). */
+    private suspend fun handleBeatAck(cmd: MatchCommand.BeatAckReceived) {
+        if (cmd.connectionId !in connToSeat) return // not a seated human — ignore
+        if (!beatGate.isPending) return // no beat pending — stray/late ack, ignore
+        forceAdvanceNow()
+    }
+
+    /** Cancels any pending beat wait and drives the bot cascade immediately. */
+    private suspend fun forceAdvanceNow() {
+        beatGate.cancel()
         advanceAndBroadcast()
     }
 
@@ -223,9 +286,22 @@ class MatchActor(
             is ApplyOutcome.Accepted -> {
                 state = outcome.state
                 broadcastStateToAll(outcome.events)
-                advanceAndBroadcast()
+                // Track 6: pace the table for connected humans ONLY when the next actor is bot-driven —
+                // otherwise advanceAndBroadcast() is a no-op anyway (it stops the moment a human is next),
+                // so arming a wait would just burn a timer for nothing.
+                if (humanSeats.isNotEmpty() && isMeaningfulBeat(outcome.events) && nextActorIsBot()) {
+                    beatGate.arm()
+                } else {
+                    forceAdvanceNow()
+                }
             }
         }
+    }
+
+    /** True when [whoActsNext] is a seat the actor itself drives (empty seat or a bot stand-in). */
+    private fun nextActorIsBot(): Boolean {
+        val who = whoActsNext(state) ?: return false
+        return who.raw in botPolicies || who.raw !in humanSeats
     }
 
     // ── Game start / bot logic ───────────────────────────────────────────────
@@ -233,7 +309,7 @@ class MatchActor(
     private suspend fun startGameWithBots() {
         started = true
         broadcastStateToAll(emptyList())
-        advanceAndBroadcast()
+        forceAdvanceNow()
     }
 
     /**

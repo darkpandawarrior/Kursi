@@ -363,6 +363,7 @@ class ProtocolRoundTripTest {
                     intent = WireIntent.Challenge(actor = 1),
                 ),
                 ClientMessage.Pass(matchId = "match-1", seq = 3L),
+                ClientMessage.ContinueBeat(matchId = "match-1"),
             )
         for (msg in messages) {
             val json = KursiJson.encodeToString<ClientMessage>(msg)
