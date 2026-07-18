@@ -379,6 +379,48 @@ fun BrassToken(
 }
 
 /**
+ * A hairline gold-gradient rule fading in from both edges — the engraved-chrome divider
+ * (non-negotiable #3). Use between sections instead of a filled bar or a full-alpha line.
+ */
+@Composable
+fun HairlineRule(
+    modifier: Modifier = Modifier,
+    alpha: Float = 0.5f,
+) {
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color.Transparent, BrandTokens.GoldAntique.copy(alpha = alpha), Color.Transparent),
+                    ),
+                ),
+    )
+}
+
+/**
+ * Column-header labels for a ledger-style list (name/effect/rules columns) — small-caps DM Mono
+ * over a [HairlineRule], never a filled bar (non-negotiable #3). [columns] pairs a label with its
+ * `Row.weight`, matching the data rows below it.
+ */
+@Composable
+fun LedgerHeaderRow(columns: List<Pair<String, Float>>) {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp)) {
+        columns.forEach { (label, weight) ->
+            Text(
+                text = label,
+                style = KursiType.label_sm.dmMono().copy(letterSpacing = 1.sp),
+                color = BrandTokens.GoldAntique,
+                modifier = Modifier.weight(weight),
+            )
+        }
+    }
+    HairlineRule(alpha = 0.35f)
+}
+
+/**
  * A text input that reads as a stamped ledger line, not a filled/bordered box (non-negotiable #1):
  * text sits directly on the ground with a hairline rule underneath that brightens to gold on focus.
  * Shared by any screen collecting a short line of text (server address, join code, display name) —

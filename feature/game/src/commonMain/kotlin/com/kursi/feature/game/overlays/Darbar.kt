@@ -12,7 +12,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kursi.designsystem.*
@@ -99,7 +98,10 @@ internal fun DarbarPanel(
                     ),
         )
 
-        // Panel card — occupies most of the screen, centered, max 560dp wide.
+        // Panel card — occupies most of the screen, centered, max 560dp wide. AAA rebuild
+        // (design-language.md #1): a shadow-depth raised surface, not a bordered box — the
+        // old 1.5dp gold↔brass gradient border is gone, replaced by tableDepth + embossEdge.
+        val panelShape = RoundedCornerShape(18.dp)
         Box(
             modifier =
                 Modifier
@@ -108,15 +110,13 @@ internal fun DarbarPanel(
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp)
                     .widthIn(max = 560.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(BrandTokens.TeakDark)
-                    .border(
-                        1.5.dp,
+                    .tableDepth(panelShape, elevation = 10.dp, lifted = true)
+                    .clip(panelShape)
+                    .background(
                         Brush.verticalGradient(
-                            listOf(BrandTokens.GoldAntique.copy(alpha = 0.85f), BrandTokens.BrassDark.copy(alpha = 0.5f)),
+                            listOf(KursiFeltColors.Surface3.copy(alpha = 0.96f), KursiFeltColors.Surface2, BrandTokens.TeakDark),
                         ),
-                        RoundedCornerShape(18.dp),
-                    )
+                    ).embossEdge(18.dp)
                     // Prevent tap-through to the scrim when tapping inside the panel.
                     .clickable(
                         indication = null,
@@ -129,13 +129,12 @@ internal fun DarbarPanel(
                     ),
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // ── Title bar ────────────────────────────────────────────────
+                // ── Title bar — engraved: Rozha title + hairline rule, no filled bar ──
                 Row(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .background(BrandTokens.TeakInk.copy(alpha = 0.6f))
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                            .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -150,14 +149,14 @@ internal fun DarbarPanel(
                         color = KursiNeutrals.TextMuted,
                         modifier = Modifier.weight(1f),
                     )
-                    // Live kissa / arc indicator
+                    // Live kissa / arc indicator — a small brass-hairline pip, not a filled box.
                     if (state.activeArcs.isNotEmpty()) {
-                        Box(
+                        Row(
                             modifier =
                                 Modifier
                                     .clip(RoundedCornerShape(4.dp))
-                                    .background(BrandTokens.StampRed.copy(alpha = 0.85f))
-                                    .border(0.8.dp, BrandTokens.StampRed, RoundedCornerShape(4.dp))
+                                    .background(BrandTokens.StampRed.copy(alpha = 0.55f))
+                                    .border(0.75.dp, BrandTokens.StampRed, RoundedCornerShape(4.dp))
                                     .padding(horizontal = 7.dp, vertical = 3.dp),
                         ) {
                             Text(
@@ -172,31 +171,36 @@ internal fun DarbarPanel(
                             )
                         }
                     }
-                    // Close affordance
+                    // Close affordance — soft radial ghost circle, same idiom as the Gazette's.
                     Box(
                         modifier =
                             Modifier
                                 .size(28.dp)
                                 .clip(androidx.compose.foundation.shape.CircleShape)
-                                .background(BrandTokens.BrassAged.copy(alpha = 0.18f))
-                                .clickable(onClick = onClose),
+                                .background(
+                                    Brush.radialGradient(listOf(BrandTokens.GoldAntique.copy(alpha = 0.18f), Color.Transparent)),
+                                ).clickable(onClick = onClose),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = "✕",
                             style = KursiType.label_sm.copy(fontSize = 13.sp),
-                            color = KursiNeutrals.TextMuted,
+                            color = BrandTokens.BrassAged,
                         )
                     }
                 }
 
-                // Thin gold divider
+                // Hairline rule (engraved, not a filled bar)
                 Box(
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .height(1.dp)
-                            .background(BrandTokens.GoldAntique.copy(alpha = 0.35f)),
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(Color.Transparent, BrandTokens.GoldAntique.copy(alpha = 0.5f), Color.Transparent),
+                                ),
+                            ),
                 )
 
                 // ── Chat feed ─────────────────────────────────────────────
@@ -252,77 +256,46 @@ internal fun DarbarPanel(
                     }
                 }
 
-                // Thin gold divider
+                // Hairline rule (engraved, not a filled bar)
                 Box(
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .height(1.dp)
-                            .background(BrandTokens.GoldAntique.copy(alpha = 0.22f)),
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(Color.Transparent, BrandTokens.GoldAntique.copy(alpha = 0.35f), Color.Transparent),
+                                ),
+                            ),
                 )
 
-                // ── Quick-reply chips ─────────────────────────────────────
+                // ── Quick-reply "send" stamps — the same raised-stamp material as every
+                // other actionable button in the app (design-language.md #4), not a bordered
+                // chip-in-a-box tray.
                 if (state.chatSuggestions.isNotEmpty()) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .background(BrandTokens.TeakInk.copy(alpha = 0.45f))
-                                .padding(horizontal = 10.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    androidx.compose.foundation.lazy.LazyRow(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = 2.dp),
                     ) {
-                        androidx.compose.foundation.lazy.LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            contentPadding = PaddingValues(horizontal = 2.dp),
-                        ) {
-                            items(state.chatSuggestions, key = { it.id }) { suggestion ->
-                                Column(
-                                    modifier =
-                                        Modifier
-                                            .widthIn(min = 80.dp, max = 180.dp)
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(BrandTokens.TeakDark)
-                                            .border(
-                                                1.dp,
-                                                BrandTokens.BrassAged.copy(alpha = 0.7f),
-                                                RoundedCornerShape(10.dp),
-                                            ).clickable {
-                                                onAction(
-                                                    GameAction.SendChat(
-                                                        com.kursi.feature.game.narrative.HumanChatInput(
-                                                            suggestionId = suggestion.id,
-                                                            kind = suggestion.kind,
-                                                            arc = suggestion.arc,
-                                                            targetSeat = suggestion.targetSeat,
-                                                        ),
-                                                    ),
-                                                )
-                                            }.padding(horizontal = 10.dp, vertical = 7.dp),
-                                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                                ) {
-                                    Text(
-                                        text = suggestion.label,
-                                        style = KursiType.label_sm.copy(fontSize = 12.sp),
-                                        color = KursiNeutrals.TextPrimary,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
+                        items(state.chatSuggestions, key = { it.id }) { suggestion ->
+                            StampButton(
+                                label = suggestion.label,
+                                sublabel = suggestion.consequence,
+                                style = StampStyle.Secondary,
+                                onClick = {
+                                    onAction(
+                                        GameAction.SendChat(
+                                            com.kursi.feature.game.narrative.HumanChatInput(
+                                                suggestionId = suggestion.id,
+                                                kind = suggestion.kind,
+                                                arc = suggestion.arc,
+                                                targetSeat = suggestion.targetSeat,
+                                            ),
+                                        ),
                                     )
-                                    val consequence = suggestion.consequence
-                                    if (consequence != null) {
-                                        Text(
-                                            text = consequence,
-                                            style =
-                                                KursiType.caption.copy(
-                                                    fontSize = 9.sp,
-                                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                                                ),
-                                            color = KursiNeutrals.TextMuted,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                    }
-                                }
-                            }
+                                },
+                            )
                         }
                     }
                 }

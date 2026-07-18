@@ -438,7 +438,12 @@ internal fun GameLog(
 
 // ─────────────────────────── Teleprinter terminal chrome (M4 §3) ────────────
 
-/** The CRT / inked-ribbon terminal shell: dark phosphor body, brass rim, scanlines + vignette. */
+/**
+ * The CRT / inked-ribbon terminal shell: dark phosphor body, scanlines + vignette. AAA
+ * rebuild (design-language.md #1): depth is [tableDepth]'s cast shadow + [embossEdge]'s
+ * drawn-on bevel — the old two-stop gold↔brass gradient border is gone, replaced with a
+ * single low-alpha brass hairline (engraved, not a bordered box).
+ */
 @Composable
 internal fun LogTerminalShell(
     modifier: Modifier = Modifier,
@@ -462,16 +467,7 @@ internal fun LogTerminalShell(
                         ),
                     ),
                 ).drawBehind { drawTeleprinterTexture() }
-                .border(
-                    1.dp,
-                    Brush.verticalGradient(
-                        listOf(
-                            BrandTokens.GoldAntique.copy(alpha = 0.7f),
-                            BrandTokens.BrassDark.copy(alpha = 0.5f),
-                        ),
-                    ),
-                    shape,
-                ),
+                .embossEdge(KursiRadii.sm, highlight = BrandTokens.GoldAntique.copy(alpha = 0.5f)),
     ) {
         content()
     }

@@ -781,13 +781,21 @@ internal fun IdleDock(state: GameUiState) {
         label = "idlePulseAlpha",
     )
 
+    // AAA rebuild (design-language.md #1): a shadow-depth raised surface tinted by the
+    // acting seat's color, not a bordered box — same tableDepth + embossEdge material as
+    // decoPanel, so the "what's happening" summary reads as an instrument on the table.
+    val idleShape = Squircle(KursiRadii.sm)
     Column(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clip(Squircle(KursiRadii.sm))
-                .background(actorColor.copy(alpha = 0.09f))
-                .border(1.dp, actorColor.copy(alpha = 0.3f), Squircle(KursiRadii.sm))
+                .tableDepth(idleShape, elevation = 4.dp)
+                .clip(idleShape)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(actorColor.copy(alpha = 0.14f), BrandTokens.TeakDark.copy(alpha = 0.92f)),
+                    ),
+                ).embossEdge(KursiRadii.sm, highlight = actorColor.copy(alpha = 0.4f))
                 .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {

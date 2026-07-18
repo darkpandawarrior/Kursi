@@ -118,6 +118,9 @@ fun GameScreen(
     spectator: Boolean = false,
     // The human player's chosen display name — shown in moment beats and chat.
     humanDisplayName: String = "Khiladi",
+    // Render-harness only: pre-open the DARBAR chat overlay so a screenshot can verify its
+    // content renders correctly. False in the real app (the panel opens via the chat FAB).
+    initialDarbarOpen: Boolean = false,
 ) {
     var localPhase by remember { mutableStateOf<GamePhase?>(initialLocalPhase) }
     val gamePhase = deriveGamePhase(state, localPhase)
@@ -138,7 +141,7 @@ fun GameScreen(
     var chitAnchor by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
     var showPrimer by remember { mutableStateOf(showPrimerOverride ?: !PrimerPrefs.hasSeenPrimer) }
     // DARBAR narrative chat panel
-    var showDarbar by remember { mutableStateOf(false) }
+    var showDarbar by remember { mutableStateOf(initialDarbarOpen) }
 
     // ── M5 PASS-AND-PLAY handoff guard ────────────────────────────────────────
     // In a multi-human (hot-seat) game the active seat changes between DIFFERENT humans. To stop one
@@ -603,10 +606,13 @@ internal fun DesktopLayout(
 }
 
 // ─────────────────────────── decoPanel (P3 depth surface) ──────────────────
-// A tactile teak panel with layered contact shadow, brass emboss edge and a thin
-// brass rim — used for the hand, action dock and Roznamcha log so they read as
-// raised instruments on the table, not flat fills. [lifted] raises elevation when
-// the panel owns the player's attention (their turn / a pending reaction).
+// A tactile teak panel with layered contact shadow and a brass emboss bevel —
+// used for the hand, action dock and Roznamcha log so they read as raised
+// instruments on the table, not flat fills. AAA rebuild (design-language.md #1):
+// depth comes from shadow + the drawn-on emboss bevel alone, never an outline
+// framing the block — the old 1-1.5dp brass border is gone. [lifted] raises
+// elevation when the panel owns the player's attention (their turn / a pending
+// reaction).
 
 @Composable
 internal fun Modifier.decoPanel(
@@ -616,7 +622,6 @@ internal fun Modifier.decoPanel(
     val shape =
         androidx.compose.foundation.shape
             .RoundedCornerShape(radius)
-    val rimAlpha = if (lifted) 0.85f else 0.45f
     return this
         .tableDepth(shape, elevation = 7.dp, lifted = lifted)
         .clip(shape)
@@ -628,17 +633,7 @@ internal fun Modifier.decoPanel(
                     BrandTokens.TeakDark,
                 ),
             ),
-        ).border(
-            if (lifted) 1.5.dp else 1.dp,
-            Brush.horizontalGradient(
-                listOf(
-                    BrandTokens.GoldAntique.copy(alpha = rimAlpha),
-                    BrandTokens.BrassAged.copy(alpha = rimAlpha * 0.7f),
-                    BrandTokens.BrassDark.copy(alpha = rimAlpha),
-                ),
-            ),
-            shape,
-        ).embossEdge(radius)
+        ).embossEdge(radius, highlight = BrandTokens.GoldAntique.copy(alpha = if (lifted) 0.7f else 0.45f))
 }
 
 @Composable

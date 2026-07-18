@@ -231,7 +231,10 @@ fun main() {
     println("  wrote home_mode_story.png")
 
     // M6a: the Niyam Gazette — DARBAR (roles) tab now includes the 6th role, PATRAKAAR.
-    renderComposable(outDir, "gazette_roles") {
+    // Dialog/Popup content needs a few pumped frames to settle (same reasoning as
+    // renderComposableAnimated's other animated-entrance fixtures) — a single-frame
+    // capture caught the popup mid-fade, rendering the whole gazette at ~20% opacity.
+    renderComposableAnimated(outDir, "gazette_roles") {
         com.kursi.feature.game
             .NiyamGazette(onDismiss = {}, onReplayPrimer = {}, initialTab = 0)
     }
@@ -351,7 +354,7 @@ fun main() {
                 activeArcs = listOf(ArcId.AFWAAH),
                 unreadChat = 3,
             )
-        renderToPng(narrativeState, outDir, "darbar_table", null)
+        renderToPng(narrativeState, outDir, "darbar_table", null, initialDarbarOpen = true)
         println("  wrote darbar_table.png")
     }
 
@@ -1034,6 +1037,7 @@ private fun renderToPng(
     spectator: Boolean = false,
     width: Int = 1440,
     height: Int = 900,
+    initialDarbarOpen: Boolean = false,
 ) {
     val scene =
         ImageComposeScene(
@@ -1053,6 +1057,7 @@ private fun renderToPng(
                     initialChit = initialChit,
                     forceHandoffOverride = forceHandoff,
                     spectator = spectator,
+                    initialDarbarOpen = initialDarbarOpen,
                 )
             }
         }

@@ -985,14 +985,18 @@ fun OpponentPlate(
         remember { mutableStateOf(0f) }
     }
 
-    // Ring color + width from state
+    // Ring color + width from state. AAA rebuild (design-language.md #1): Idle — the
+    // plate's default, majority-of-the-time state — drops to a near-invisible rim so the
+    // plate reads as a shadow-depth surface (tableDepth + embossEdge below), sharing
+    // OpponentSeatToken's no-hard-border material. Acting/Responding/ValidTarget/Eliminated
+    // keep a real ring: that's a live state SIGNAL, not decorative framing.
     val ringColor: Color =
         when (state) {
             ChipState.Acting -> brassColor.copy(alpha = pulseAlpha)
             ChipState.Responding -> verdigris
             ChipState.ValidTarget -> alertRed
             ChipState.Eliminated -> brassDim.copy(alpha = 0.4f)
-            ChipState.Idle -> brassColor.copy(alpha = 0.55f)
+            ChipState.Idle -> brassColor.copy(alpha = 0.22f)
         }
     val ringWidth: androidx.compose.ui.unit.Dp =
         when (state) {
@@ -1621,9 +1625,13 @@ fun KursiActionButton(
 enum class SpineTone { Info, Pending, Danger, Gold }
 
 /**
- * Brass plate status spine — spec §6.
- * Full-width brass bar with engraved look: gradient brass background,
- * text in display serif, tone-matched accent border.
+ * ANALYST top chrome — the running turn verdict (spec §6).
+ *
+ * AAA rebuild (design-language.md #1/#3): the old full-width filled-gold-gradient bar +
+ * 1.5dp border is gone. This is now a shadow-depth raised surface — the same [tableDepth]
+ * + emboss-bevel material as [decoPanel] one hairline rule underneath, matching every
+ * other engraved header in the app (non-negotiable #3: "engraved chrome, not fat bars").
+ * The verdict text carries the tone as color, not the plate as a gold fill.
  */
 @Composable
 fun StatusSpine(
@@ -1639,49 +1647,57 @@ fun StatusSpine(
             SpineTone.Danger -> BrandTokens.StampRed
             SpineTone.Gold -> BrandTokens.GoldAntique
         }
-    val bgBrush =
-        Brush.verticalGradient(
-            listOf(
-                BrandTokens.BrassDark.copy(alpha = 0.85f),
-                BrandTokens.BrassAged.copy(alpha = 0.90f),
-                BrandTokens.BrassDark.copy(alpha = 0.85f),
-            ),
-        )
+    val shape = Squircle(KursiRadii.lg)
 
-    Row(
+    Column(
         modifier =
             modifier
                 .fillMaxWidth()
-                .clip(Squircle(KursiRadii.lg))
-                .background(bgBrush)
-                .brassSpecular()
-                .border(
-                    1.5.dp,
-                    Brush.horizontalGradient(
-                        listOf(accentColor.copy(alpha = 0.8f), BrandTokens.GoldAntique.copy(alpha = 0.5f), accentColor.copy(alpha = 0.8f)),
+                .tableDepth(shape, elevation = 6.dp)
+                .clip(shape)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            KursiFeltColors.Surface3.copy(alpha = 0.96f),
+                            KursiFeltColors.Surface2,
+                            BrandTokens.TeakDark,
+                        ),
                     ),
-                    Squircle(KursiRadii.lg),
-                ).padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
+                ).embossEdge(KursiRadii.lg, highlight = accentColor.copy(alpha = 0.4f))
+                .padding(horizontal = 16.dp, vertical = 10.dp),
     ) {
-        Text(
-            text = text,
-            // M4 §3: status-spine verdict is in-game HERO text — render in the real
-            // Rozha One display serif, not the placeholder system serif.
-            style = KursiType.title.rozha(),
-            color = BrandTokens.TeakDark,
-            modifier = Modifier.weight(1f),
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (trailingTimer != null) {
-            Spacer(Modifier.width(12.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = trailingTimer,
-                style = KursiType.numeric,
+                text = text,
+                // M4 §3: status-spine verdict is in-game HERO text — render in the real
+                // Rozha One display serif, not the placeholder system serif.
+                style = KursiType.title.rozha(),
                 color = accentColor,
+                modifier = Modifier.weight(1f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
+            if (trailingTimer != null) {
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text = trailingTimer,
+                    style = KursiType.numeric,
+                    color = accentColor,
+                )
+            }
         }
+        Spacer(Modifier.height(8.dp))
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color.Transparent, accentColor.copy(alpha = 0.55f), Color.Transparent),
+                        ),
+                    ),
+        )
     }
 }
 
