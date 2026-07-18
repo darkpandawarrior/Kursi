@@ -3,6 +3,8 @@ package com.kursi.designsystem
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,8 +18,13 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,10 +32,14 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -363,6 +374,71 @@ fun BrassToken(
             text = monogram.take(2).uppercase(),
             style = KursiType.name.copy(fontSize = (size.value * 0.3f).sp),
             color = KursiNeutrals.Cream,
+        )
+    }
+}
+
+/**
+ * A text input that reads as a stamped ledger line, not a filled/bordered box (non-negotiable #1):
+ * text sits directly on the ground with a hairline rule underneath that brightens to gold on focus.
+ * Shared by any screen collecting a short line of text (server address, join code, display name) —
+ * used by ≥2 screens (Online Hub, Profile Setup), so it earns extraction per
+ * docs/design-language.md "Reuse, don't reinvent".
+ */
+@Composable
+fun EngravedField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    singleLine: Boolean = true,
+    capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
+    monospace: Boolean = false,
+    imeAction: ImeAction = ImeAction.Done,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+) {
+    val textStyle =
+        (if (monospace) KursiType.numeric else KursiType.body).copy(
+            fontSize = if (monospace) 18.sp else 15.sp,
+            color = KursiNeutrals.TextPrimary,
+            letterSpacing = if (monospace) 4.sp else 0.sp,
+        )
+    val interactionSource = remember { MutableInteractionSource() }
+    val focused by interactionSource.collectIsFocusedAsState()
+    Column(modifier = modifier.fillMaxWidth()) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = singleLine,
+            textStyle = textStyle,
+            cursorBrush = SolidColor(BrandTokens.GoldAntique),
+            interactionSource = interactionSource,
+            keyboardOptions =
+                KeyboardOptions(
+                    capitalization = capitalization,
+                    imeAction = imeAction,
+                ),
+            keyboardActions = keyboardActions,
+            modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 28.dp),
+            decorationBox = { inner ->
+                if (value.isEmpty()) {
+                    Text(
+                        placeholder,
+                        style = textStyle.copy(color = KursiNeutrals.TextMuted, letterSpacing = 0.sp, fontStyle = FontStyle.Italic),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                inner()
+            },
+        )
+        Spacer(Modifier.height(8.dp))
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(if (focused) BrandTokens.GoldAntique else BrandTokens.BrassAged.copy(alpha = 0.4f)),
         )
     }
 }

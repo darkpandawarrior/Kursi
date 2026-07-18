@@ -1,11 +1,9 @@
 package com.kursi.shared.screen
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -13,15 +11,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,7 +33,11 @@ import org.jetbrains.compose.resources.stringResource
 /**
  * SettingsScreen — Daftari (S6) from 17_app_plan.md §4.
  *
- * Cream form backed by AppPrefs:
+ * Sarkari Noir rebuild: engraved nav header, every section an [EngravedHeader] resting on the
+ * lit ground (no bordered SettingsSection cards), toggle/link rows as [HairlineRow]s, and
+ * segmented pickers as raised [StampButton] chips / [BrassToken] steppers instead of
+ * outline-only pills — design-language.md non-negotiables #1, #3, #4.
+ *
  * - AAWAZ: sound toggle
  * - DIKHAWA: reduced motion toggle
  * - KHEL: default difficulty, default player count
@@ -67,41 +67,13 @@ fun SettingsScreen(
     var autoPass by remember { mutableStateOf(prefs.autoPass) }
     var autoForced by remember { mutableStateOf(prefs.autoPlayForced) }
 
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .background(BrandTokens.TeakInk),
-    ) {
-        // Header
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .background(BrandTokens.TeakDark)
-                    .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier =
-                    Modifier
-                        .defaultMinSize(minWidth = 64.dp, minHeight = 52.dp)
-                        .semantics(mergeDescendants = true) { role = Role.Button }
-                        .clickable(onClick = onBack)
-                        .padding(horizontal = 8.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(s.back, style = KursiType.body.copy(fontSize = 13.sp), color = BrandTokens.BrassAged)
-            }
-            Spacer(Modifier.weight(1f))
-            Text(
-                s.settingsTitle,
-                style = KursiType.title.copy(fontSize = 16.sp, letterSpacing = 1.sp),
-                color = KursiNeutrals.TextPrimary,
-            )
-            Spacer(Modifier.weight(1f))
-        }
+    Column(modifier = modifier.fillMaxSize().litGround()) {
+        EngravedNavHeader(
+            title = s.settingsTitle,
+            onBack = onBack,
+            backLabel = s.back,
+            modifier = Modifier.padding(top = 16.dp, start = 4.dp, end = 4.dp, bottom = 4.dp),
+        )
 
         Column(
             modifier =
@@ -109,120 +81,68 @@ fun SettingsScreen(
                     .weight(1f)
                     .fillMaxWidth()
                     .verticalScroll(scrollState)
-                    .padding(horizontal = 24.dp, vertical = 24.dp),
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Centred daftari column: keeps toggles next to their labels instead of
-            // flinging the switch to the far edge on wide desktop windows.
             Column(
                 modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
+                verticalArrangement = Arrangement.spacedBy(26.dp),
             ) {
                 // ── PROFILE ───────────────────────────────────────────────────────
                 if (onEditProfile != null) {
-                    SettingsSection(stringResource(Res.string.settings_title)) {
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clip(
-                                        androidx.compose.foundation.shape
-                                            .RoundedCornerShape(10.dp),
-                                    ).background(BrandTokens.TeakDark.copy(alpha = 0.6f))
-                                    .border(
-                                        1.dp,
-                                        BrandTokens.BrassDark.copy(alpha = 0.35f),
-                                        androidx.compose.foundation.shape
-                                            .RoundedCornerShape(10.dp),
-                                    ).clickable { onEditProfile() }
-                                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        EngravedHeader(eyebrow = stringResource(Res.string.settings_title))
+                        HairlineRow(
+                            onClick = onEditProfile,
+                            showDivider = false,
                         ) {
-                            // Monogram circle
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .size(44.dp)
-                                        .clip(androidx.compose.foundation.shape.CircleShape)
-                                        .background(
-                                            if (prefs.playerColorArgb != 0L) {
-                                                androidx.compose.ui.graphics
-                                                    .Color(prefs.playerColorArgb)
-                                            } else {
-                                                BrandTokens.StampRed
-                                            },
-                                        ),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                val avatarEmoji =
-                                    com.kursi.shared.screen.AVATAR_ROSTER
-                                        .getOrNull(prefs.playerAvatarIdx)
-                                if (avatarEmoji != null) {
-                                    Text(text = avatarEmoji, fontSize = 22.sp)
-                                } else {
-                                    Text(
-                                        text = prefs.displayName.take(2).uppercase(),
-                                        style = KursiType.label_sm.copy(fontWeight = FontWeight.Bold, fontSize = 14.sp),
-                                        color = BrandTokens.PaperCream,
-                                    )
-                                }
-                            }
+                            BrassToken(
+                                monogram = prefs.displayName,
+                                fill = if (prefs.playerColorArgb != 0L) Color(prefs.playerColorArgb) else BrandTokens.StampRed,
+                            )
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = prefs.displayName,
-                                    style = KursiType.name.copy(fontSize = 16.sp),
+                                    style = KursiType.name.copy(fontSize = 15.sp),
                                     color = KursiNeutrals.TextPrimary,
                                 )
                                 Text(
-                                    text = "EDIT PROFILE  →",
+                                    text = "EDIT PROFILE",
                                     style = KursiType.label_micro.copy(letterSpacing = 0.8.sp, fontSize = 10.sp),
-                                    color = BrandTokens.BrassAged.copy(alpha = 0.6f),
+                                    color = BrandTokens.BrassAged.copy(alpha = 0.7f),
                                 )
                             }
+                            Text("›", style = KursiType.title.copy(fontSize = 18.sp), color = BrandTokens.BrassAged)
                         }
                     }
                 }
+
                 // ── BHASHA (Language) ──────────────────────────────────────────────
-                SettingsSection(s.settingsLanguageSection) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    EngravedHeader(eyebrow = s.settingsLanguageSection)
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         listOf(s.settingsLangHinglish to "HINGLISH", s.settingsLangEnglish to "ENGLISH").forEach { (label, code) ->
-                            val selected = language == code
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(if (selected) BrandTokens.BrassAged.copy(alpha = 0.2f) else Color.Transparent)
-                                        .border(
-                                            1.dp,
-                                            if (selected) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.4f),
-                                            RoundedCornerShape(6.dp),
-                                        ).clickable {
-                                            language = code
-                                            prefs.language = code
-                                        }.padding(horizontal = 8.dp, vertical = 10.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    label,
-                                    style = KursiType.caption.copy(fontSize = 11.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal),
-                                    color = if (selected) BrandTokens.GoldAntique else KursiNeutrals.TextMuted,
-                                )
-                            }
+                            StampButton(
+                                label = label,
+                                onClick = {
+                                    language = code
+                                    prefs.language = code
+                                },
+                                style = if (language == code) StampStyle.Primary else StampStyle.Secondary,
+                                modifier = Modifier.weight(1f),
+                            )
                         }
                     }
                 }
 
                 // ── AAWAZ (Sound) ──────────────────────────────────────────────────
-                SettingsSection(s.settingsSoundSection) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    EngravedHeader(eyebrow = s.settingsSoundSection)
                     SettingsToggleRow(
                         label = s.settingsSoundLabel,
                         sublabel = s.settingsSoundSub,
                         checked = soundEnabled,
+                        showDivider = false,
                         onCheckedChange = { v ->
                             soundEnabled = v
                             prefs.soundEnabled = v
@@ -231,11 +151,13 @@ fun SettingsScreen(
                 }
 
                 // ── MASHWARA (Decision Coach) ──────────────────────────────────────
-                SettingsSection(s.settingsCoachSection) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    EngravedHeader(eyebrow = s.settingsCoachSection)
                     SettingsToggleRow(
                         label = s.settingsCoachLabel,
                         sublabel = s.settingsCoachSub,
                         checked = coachEnabled,
+                        showDivider = false,
                         onCheckedChange = { v ->
                             coachEnabled = v
                             prefs.coachEnabled = v
@@ -244,47 +166,31 @@ fun SettingsScreen(
                 }
 
                 // ── AUTO-MODE (M5 turn-speed + assistant) ──────────────────────────
-                SettingsSection(s.settingsAutoSection) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(
-                            s.settingsTurnSpeedLabel,
-                            style = KursiType.body.copy(fontSize = 12.sp),
-                            color = KursiNeutrals.TextSecondary,
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            listOf(
-                                TurnSpeed.SLOW to s.settingsSpeedSlow,
-                                TurnSpeed.NORMAL to s.settingsSpeedNormal,
-                                TurnSpeed.FAST to s.settingsSpeedFast,
-                            ).forEach { (speed, label) ->
-                                val selected = turnSpeed == speed
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .weight(1f)
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(if (selected) BrandTokens.BrassAged.copy(alpha = 0.2f) else Color.Transparent)
-                                            .border(
-                                                1.dp,
-                                                if (selected) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.4f),
-                                                RoundedCornerShape(6.dp),
-                                            ).clickable {
-                                                turnSpeed = speed
-                                                prefs.turnSpeed = speed
-                                            }.padding(horizontal = 8.dp, vertical = 10.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        label,
-                                        style = KursiType.caption.copy(fontSize = 10.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal),
-                                        color = if (selected) BrandTokens.GoldAntique else KursiNeutrals.TextMuted,
-                                    )
-                                }
-                            }
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    EngravedHeader(eyebrow = s.settingsAutoSection)
+                    Text(
+                        s.settingsTurnSpeedLabel,
+                        style = KursiType.body.copy(fontSize = 12.sp),
+                        color = KursiNeutrals.TextSecondary,
+                    )
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(
+                            TurnSpeed.SLOW to s.settingsSpeedSlow,
+                            TurnSpeed.NORMAL to s.settingsSpeedNormal,
+                            TurnSpeed.FAST to s.settingsSpeedFast,
+                        ).forEach { (speed, label) ->
+                            StampButton(
+                                label = label,
+                                onClick = {
+                                    turnSpeed = speed
+                                    prefs.turnSpeed = speed
+                                },
+                                style = if (turnSpeed == speed) StampStyle.Primary else StampStyle.Secondary,
+                                modifier = Modifier.weight(1f),
+                            )
                         }
+                    }
+                    Column(modifier = Modifier.padding(top = 4.dp)) {
                         SettingsToggleRow(
                             label = s.settingsAutoPassLabel,
                             sublabel = s.settingsAutoPassSub,
@@ -298,6 +204,7 @@ fun SettingsScreen(
                             label = s.settingsAutoForcedLabel,
                             sublabel = s.settingsAutoForcedSub,
                             checked = autoForced,
+                            showDivider = false,
                             onCheckedChange = { v ->
                                 autoForced = v
                                 prefs.autoPlayForced = v
@@ -307,11 +214,13 @@ fun SettingsScreen(
                 }
 
                 // ── DIKHAWA (Motion & display) ─────────────────────────────────────
-                SettingsSection(s.settingsMotionSection) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    EngravedHeader(eyebrow = s.settingsMotionSection)
                     SettingsToggleRow(
                         label = s.settingsMotionLabel,
                         sublabel = s.settingsMotionSub,
                         checked = reducedMotion,
+                        showDivider = false,
                         onCheckedChange = { v ->
                             reducedMotion = v
                             prefs.reducedMotion = v
@@ -320,130 +229,90 @@ fun SettingsScreen(
                 }
 
                 // ── KHEL (Gameplay defaults) ───────────────────────────────────────
-                SettingsSection(s.settingsDefaultsSection) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(
-                            s.settingsDefaultDiffLabel,
-                            style = KursiType.body.copy(fontSize = 12.sp),
-                            color = KursiNeutrals.TextSecondary,
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Difficulty.entries.forEach { d ->
-                                val selected = d.name == defaultDifficulty
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .weight(1f)
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(if (selected) BrandTokens.BrassAged.copy(alpha = 0.2f) else Color.Transparent)
-                                            .border(
-                                                1.dp,
-                                                if (selected) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.4f),
-                                                RoundedCornerShape(6.dp),
-                                            ).clickable {
-                                                defaultDifficulty = d.name
-                                                prefs.defaultDifficulty = d.name
-                                            }.padding(horizontal = 8.dp, vertical = 8.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        d.name,
-                                        style = KursiType.caption.copy(fontSize = 10.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal),
-                                        color = if (selected) BrandTokens.GoldAntique else KursiNeutrals.TextMuted,
-                                        textAlign = TextAlign.Center,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                            }
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    EngravedHeader(eyebrow = s.settingsDefaultsSection)
+                    Text(
+                        s.settingsDefaultDiffLabel,
+                        style = KursiType.body.copy(fontSize = 12.sp),
+                        color = KursiNeutrals.TextSecondary,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Difficulty.entries.forEach { d ->
+                            StampButton(
+                                label = d.name.uppercase(),
+                                onClick = {
+                                    defaultDifficulty = d.name
+                                    prefs.defaultDifficulty = d.name
+                                },
+                                style = if (d.name == defaultDifficulty) StampStyle.Primary else StampStyle.Secondary,
+                                modifier = Modifier.width(104.dp),
+                            )
                         }
+                    }
 
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            s.settingsDefaultPlayersLabel(defaultPlayers),
-                            style = KursiType.body.copy(fontSize = 12.sp),
-                            color = KursiNeutrals.TextSecondary,
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            (2..10).forEach { n ->
-                                val selected = n == defaultPlayers
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .size(32.dp)
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(if (selected) BrandTokens.BrassAged.copy(alpha = 0.2f) else Color.Transparent)
-                                            .border(
-                                                1.dp,
-                                                if (selected) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.3f),
-                                                RoundedCornerShape(6.dp),
-                                            ).clickable {
-                                                defaultPlayers = n
-                                                prefs.defaultPlayerCount = n
-                                            },
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        "$n",
-                                        style = KursiType.caption.copy(fontSize = 11.sp),
-                                        color = if (selected) BrandTokens.GoldAntique else KursiNeutrals.TextMuted,
-                                    )
-                                }
-                            }
+                    Text(
+                        s.settingsDefaultPlayersLabel(defaultPlayers),
+                        style = KursiType.body.copy(fontSize = 12.sp),
+                        color = KursiNeutrals.TextSecondary,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        (2..10).forEach { n ->
+                            val isSelected = n == defaultPlayers
+                            BrassToken(
+                                monogram = "$n",
+                                fill = if (isSelected) BrandTokens.GoldAntique else BrandTokens.TeakMid,
+                                size = 38.dp,
+                                modifier =
+                                    Modifier
+                                        .clickable {
+                                            defaultPlayers = n
+                                            prefs.defaultPlayerCount = n
+                                        }.semantics(mergeDescendants = true) {
+                                            role = Role.RadioButton
+                                            contentDescription = "$n players"
+                                            selected = isSelected
+                                        },
+                            )
                         }
                     }
                 }
 
                 // ── SEEKH (Learning) ───────────────────────────────────────────────
-                SettingsSection(s.settingsLearningSection) {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        SettingsLinkRow(
-                            label = s.settingsReplayPrimerLabel,
-                            sublabel = s.settingsReplayPrimerSub,
-                            onClick = onReplayPrimer,
-                        )
-                        SettingsLinkRow(
-                            label = s.settingsRulesLabel,
-                            sublabel = s.settingsRulesSub,
-                            onClick = onGazette,
-                        )
-                    }
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    EngravedHeader(eyebrow = s.settingsLearningSection)
+                    SettingsLinkRow(label = s.settingsReplayPrimerLabel, sublabel = s.settingsReplayPrimerSub, onClick = onReplayPrimer)
+                    SettingsLinkRow(label = s.settingsRulesLabel, sublabel = s.settingsRulesSub, onClick = onGazette, showDivider = false)
                 }
 
                 // ── BAARE MEIN (About) ─────────────────────────────────────────────
-                SettingsSection(s.settingsAboutSection) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            s.settingsAboutTitle,
-                            style = KursiType.body.copy(fontSize = 13.sp),
-                            color = KursiNeutrals.TextPrimary,
-                        )
-                        Text(
-                            s.settingsAboutDisclaimer,
-                            style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
-                            color = KursiNeutrals.TextMuted,
-                        )
-                        Box(
-                            modifier =
-                                Modifier.fillMaxWidth().height(1.dp).background(
-                                    Brush.horizontalGradient(listOf(Color.Transparent, BrandTokens.BrassDark.copy(alpha = 0.3f), Color.Transparent)),
-                                ),
-                        )
-                        Text(
-                            s.settingsAboutFooter,
-                            style = KursiType.caption.copy(fontSize = 9.sp),
-                            color = KursiNeutrals.TextDisabled,
-                        )
-                    }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    EngravedHeader(eyebrow = s.settingsAboutSection)
+                    Text(
+                        s.settingsAboutTitle,
+                        style = KursiType.body.copy(fontSize = 13.sp),
+                        color = KursiNeutrals.TextPrimary,
+                    )
+                    Text(
+                        s.settingsAboutDisclaimer,
+                        style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
+                        color = KursiNeutrals.TextMuted,
+                    )
+                    Text(
+                        s.settingsAboutFooter,
+                        style = KursiType.caption.copy(fontSize = 9.sp),
+                        color = KursiNeutrals.TextDisabled,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(8.dp))
             }
         }
     }
@@ -452,47 +321,14 @@ fun SettingsScreen(
 // ─────────────────────────── Sub-components ───────────────────────────────────
 
 @Composable
-private fun SettingsSection(
-    title: String,
-    content: @Composable () -> Unit,
-) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
-                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            title,
-            style = KursiType.label.copy(fontSize = 11.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold),
-            color = BrandTokens.BrassAged,
-        )
-        Box(
-            modifier =
-                Modifier.fillMaxWidth().height(1.dp).background(
-                    Brush.horizontalGradient(listOf(Color.Transparent, BrandTokens.BrassAged.copy(alpha = 0.3f), Color.Transparent)),
-                ),
-        )
-        content()
-    }
-}
-
-@Composable
 private fun SettingsToggleRow(
     label: String,
     sublabel: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
+    showDivider: Boolean = true,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
+    HairlineRow(showDivider = showDivider) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 label,
@@ -524,35 +360,25 @@ private fun SettingsLinkRow(
     label: String,
     sublabel: String,
     onClick: () -> Unit,
+    showDivider: Boolean = true,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(6.dp))
-                .background(BrandTokens.BrassDark.copy(alpha = 0.1f))
-                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
-                .clickable(onClick = onClick)
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
+    HairlineRow(onClick = onClick, showDivider = showDivider) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 label,
                 style = KursiType.name.copy(fontSize = 13.sp),
                 color = KursiNeutrals.TextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 sublabel,
                 style = KursiType.caption.copy(fontSize = 10.sp),
                 color = KursiNeutrals.TextMuted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        Text(
-            "→",
-            style = KursiType.title.copy(fontSize = 16.sp),
-            color = BrandTokens.BrassAged,
-        )
+        Text("›", style = KursiType.title.copy(fontSize = 18.sp), color = BrandTokens.BrassAged)
     }
 }

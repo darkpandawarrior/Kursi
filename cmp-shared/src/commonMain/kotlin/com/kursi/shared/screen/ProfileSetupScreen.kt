@@ -12,25 +12,19 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
@@ -42,12 +36,16 @@ import com.kursi.designsystem.*
 // ══════════════════════════════════════════════════════════════════════════════
 // ProfileSetupScreen — shown after the primer (first run) or from Settings.
 //
+// Sarkari Noir rebuild: engraved chrome on the lit ground (no floating cream card), a live
+// preview [BrassToken] avatar, [EngravedField] for the name, avatar/colour pickers as brass-rimmed
+// tokens (selected = gold ring + lift, not a filled swatch box), and the commit CTA as a gold
+// [StampButton] — matching the Home/Setup/Gauntlet standard (design-language.md #1, #3, #4).
+//
 // The player fills out three fields:
 //   1. Display name (text field, max 18 chars, defaults to "Khiladi")
 //   2. Avatar emoji (12-option grid from AVATAR_ROSTER)
 //   3. Seat accent color (10 swatches from KursiSeatColors)
 //
-// Matches the Kursi cream-certificate aesthetic (teak background, paper card).
 // onDone() is called once the player taps MUHAR LAGAO (confirm stamp).
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -87,64 +85,41 @@ fun ProfileSetupScreen(
     }
 
     val keyboardController = LocalSoftwareKeyboardController.current
-    val nameFocusRequester = remember { FocusRequester() }
+    val previewColor = Color(colorArgb)
 
     Column(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(BrandTokens.TeakInk)
+                .litGround()
                 .verticalScroll(rememberScrollState()),
     ) {
         // ── Header ────────────────────────────────────────────────────────────
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (fromSettings && onBack != null) {
-                Text(
-                    text = "← WAPAS",
-                    style = KursiType.label_sm.copy(letterSpacing = 0.8.sp),
-                    color = BrandTokens.BrassAged,
-                    modifier =
-                        Modifier
-                            .clickable(
-                                indication = null,
-                                interactionSource = remember { MutableInteractionSource() },
-                            ) { onBack() }
-                            .padding(end = 16.dp),
-                )
-            }
-            Column {
-                Text(
-                    text = if (fromSettings) "APNA PROFILE" else "PEHLI HAZRI",
-                    style = KursiType.label_micro.copy(letterSpacing = 1.8.sp),
-                    color = BrandTokens.BrassAged.copy(alpha = 0.7f),
-                )
-                Text(
-                    text = if (fromSettings) "Edit your identity" else "Welcome to the Darbar",
-                    style = KursiType.title.copy(fontSize = 22.sp),
-                    color = BrandTokens.PaperCream,
-                )
-            }
+        if (fromSettings && onBack != null) {
+            EngravedNavHeader(
+                title = "APNA PROFILE",
+                onBack = onBack,
+                backLabel = "Wapas",
+                modifier = Modifier.padding(top = 16.dp, start = 20.dp, end = 20.dp, bottom = 4.dp),
+            )
+        } else {
+            EngravedHeader(
+                eyebrow = "PEHLI HAZRI",
+                title = "Welcome to the Darbar",
+                modifier = Modifier.padding(top = 20.dp, start = 20.dp, end = 20.dp, bottom = 4.dp),
+            )
         }
 
-        // ── Cream certificate card ─────────────────────────────────────────
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(BrandTokens.PaperCream.copy(alpha = 0.97f))
-                    .padding(horizontal = 20.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+                    .widthIn(max = 520.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(28.dp),
         ) {
-            // ── Live preview monogram ──────────────────────────────────────
-            val previewColor = Color(colorArgb)
+            // ── Live preview token ───────────────────────────────────────────
             val previewEmoji = AVATAR_ROSTER.getOrNull(avatarIdx) ?: "🪑"
             val previewMonogram =
                 name
@@ -152,121 +127,83 @@ fun ProfileSetupScreen(
                     .take(2)
                     .uppercase()
                     .ifBlank { "KH" }
-
-            Box(
-                modifier =
-                    Modifier
-                        .size(72.dp)
-                        .clip(CircleShape)
-                        .background(previewColor)
-                        .align(Alignment.CenterHorizontally),
-                contentAlignment = Alignment.Center,
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(
-                    text = previewEmoji,
-                    fontSize = 32.sp,
-                )
-            }
-            Text(
-                text = previewMonogram,
-                style = KursiType.label_micro.copy(letterSpacing = 1.2.sp, fontSize = 11.sp),
-                color = BrandTokens.TeakInk.copy(alpha = 0.5f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            // ── FORM FIELD 1 — Display name ────────────────────────────────
-            FormSection(label = "AAPKA NAAM") {
                 Box(
                     modifier =
                         Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(BrandTokens.TeakInk.copy(alpha = 0.06f))
-                            .border(
-                                1.dp,
-                                BrandTokens.BrassDark.copy(alpha = 0.4f),
-                                RoundedCornerShape(8.dp),
-                            ).padding(horizontal = 14.dp, vertical = 12.dp),
+                            .size(84.dp)
+                            .shadow(14.dp, CircleShape, clip = false, ambientColor = Color.Black, spotColor = BrandTokens.TeakInk)
+                            .clip(CircleShape)
+                            .background(
+                                Brush.radialGradient(
+                                    listOf(previewColor.copy(alpha = 0.98f), previewColor, previewColor.copy(alpha = 0.75f)),
+                                ),
+                            ).border(2.dp, BrandTokens.BrassAged.copy(alpha = 0.8f), CircleShape),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    BasicTextField(
-                        value = name,
-                        onValueChange = { if (it.length <= 18) name = it },
-                        textStyle =
-                            TextStyle(
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = BrandTokens.TeakInk,
-                                fontFamily = KursiType.name.fontFamily,
-                            ),
-                        cursorBrush = SolidColor(BrandTokens.BrassDark),
-                        singleLine = true,
-                        keyboardOptions =
-                            KeyboardOptions(
-                                capitalization = KeyboardCapitalization.Words,
-                                imeAction = ImeAction.Done,
-                            ),
-                        keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .focusRequester(nameFocusRequester),
-                        decorationBox = { inner ->
-                            if (name.isEmpty()) {
-                                Text(
-                                    "Khiladi",
-                                    style =
-                                        TextStyle(
-                                            fontSize = 18.sp,
-                                            color = BrandTokens.TeakInk.copy(alpha = 0.30f),
-                                            fontFamily = KursiType.name.fontFamily,
-                                        ),
-                                )
-                            }
-                            inner()
-                        },
-                    )
+                    Text(text = previewEmoji, fontSize = 36.sp)
                 }
                 Text(
+                    text = previewMonogram,
+                    style = KursiType.label_sm.dmMono().copy(letterSpacing = 2.sp),
+                    color = BrandTokens.BrassAged.copy(alpha = 0.75f),
+                )
+            }
+
+            // ── FORM FIELD 1 — Display name ────────────────────────────────
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                EngravedHeader(eyebrow = "AAPKA NAAM")
+                EngravedField(
+                    value = name,
+                    onValueChange = { if (it.length <= 18) name = it },
+                    placeholder = "Khiladi",
+                    singleLine = true,
+                    capitalization = KeyboardCapitalization.Words,
+                    imeAction = ImeAction.Done,
+                    keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
+                )
+                Text(
                     text = "${name.length}/18",
-                    style = KursiType.label_micro.copy(fontSize = 10.sp),
-                    color = BrandTokens.TeakInk.copy(alpha = 0.35f),
-                    modifier = Modifier.align(Alignment.End).padding(top = 4.dp),
+                    style = KursiType.label_micro.dmMono().copy(fontSize = 10.sp),
+                    color = KursiNeutrals.TextMuted,
+                    modifier = Modifier.align(Alignment.End),
                 )
             }
 
             // ── FORM FIELD 2 — Avatar emoji ────────────────────────────────
-            FormSection(label = "AVATAR CHUNEIN") {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                EngravedHeader(eyebrow = "AVATAR CHUNEIN")
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(6),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(112.dp),
-                    // 2 rows × (48dp + 8dp gap)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth().height(120.dp), // 2 rows × (52dp + 10dp gap)
                     userScrollEnabled = false,
                 ) {
                     itemsIndexed(AVATAR_ROSTER) { idx, emoji ->
                         val selected = idx == avatarIdx
-                        val borderColor by animateColorAsState(
-                            if (selected) previewColor else Color.Transparent,
+                        val ringColor by animateColorAsState(
+                            if (selected) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.55f),
                             animationSpec = tween(180),
-                            label = "avatarBorder",
+                            label = "avatarRing",
                         )
                         Box(
                             modifier =
                                 Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .background(
+                                    .size(52.dp)
+                                    .then(
                                         if (selected) {
-                                            previewColor.copy(alpha = 0.15f)
+                                            Modifier.shadow(6.dp, CircleShape, clip = false, ambientColor = Color.Black, spotColor = BrandTokens.TeakInk)
                                         } else {
-                                            BrandTokens.TeakInk.copy(alpha = 0.06f)
+                                            Modifier
                                         },
-                                    ).border(2.dp, borderColor, CircleShape)
+                                    ).clip(CircleShape)
+                                    .background(if (selected) BrandTokens.TeakMid else BrandTokens.TeakDark.copy(alpha = 0.6f))
+                                    .border(if (selected) 2.dp else 1.5.dp, ringColor, CircleShape)
                                     .clickable(
                                         indication = null,
                                         interactionSource = remember { MutableInteractionSource() },
@@ -274,34 +211,38 @@ fun ProfileSetupScreen(
                                     .semantics { contentDescription = "Avatar $emoji" },
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(text = emoji, fontSize = 22.sp)
+                            Text(text = emoji, fontSize = 24.sp)
                         }
                     }
                 }
             }
 
             // ── FORM FIELD 3 — Seat color ──────────────────────────────────
-            FormSection(label = "KURSI KA RANG") {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                EngravedHeader(eyebrow = "KURSI KA RANG")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     KursiSeatColors.all.forEach { swatch ->
                         val swatchArgb = swatch.value.toLong()
                         val selected = swatchArgb == colorArgb
-                        val borderColor by animateColorAsState(
-                            if (selected) BrandTokens.TeakInk else Color.Transparent,
+                        val ringColor by animateColorAsState(
+                            if (selected) BrandTokens.GoldAntique else BrandTokens.BrassAged.copy(alpha = 0.6f),
                             animationSpec = tween(180),
-                            label = "swatchBorder",
+                            label = "swatchRing",
                         )
                         Box(
                             modifier =
                                 Modifier
                                     .weight(1f)
                                     .aspectRatio(1f)
-                                    .clip(CircleShape)
+                                    .then(
+                                        if (selected) {
+                                            Modifier.shadow(5.dp, CircleShape, clip = false, ambientColor = Color.Black, spotColor = BrandTokens.TeakInk)
+                                        } else {
+                                            Modifier
+                                        },
+                                    ).clip(CircleShape)
                                     .background(swatch)
-                                    .border(2.dp, borderColor, CircleShape)
+                                    .border(if (selected) 2.5.dp else 1.5.dp, ringColor, CircleShape)
                                     .clickable(
                                         indication = null,
                                         interactionSource = remember { MutableInteractionSource() },
@@ -311,75 +252,46 @@ fun ProfileSetupScreen(
                     }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // ── MUHAR LAGAO — commit button ────────────────────────────────────
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(BrandTokens.BrassDark)
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() },
-                    ) {
-                        prefs.playerName = name.trim().ifBlank { "Khiladi" }
-                        prefs.playerAvatarIdx = avatarIdx
-                        prefs.playerColorArgb = colorArgb
-                        onDone()
-                    }.padding(vertical = 16.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "MUHAR LAGAO ✦",
-                style = KursiType.label_sm.copy(letterSpacing = 1.4.sp, fontWeight = FontWeight.Bold),
-                color = BrandTokens.PaperCream,
+            // ── MUHAR LAGAO — commit button ────────────────────────────────────
+            StampButton(
+                label = "MUHAR LAGAO ✦",
+                onClick = {
+                    prefs.playerName = name.trim().ifBlank { "Khiladi" }
+                    prefs.playerAvatarIdx = avatarIdx
+                    prefs.playerColorArgb = colorArgb
+                    onDone()
+                },
+                style = StampStyle.Primary,
+                modifier = Modifier.fillMaxWidth(),
             )
+
+            // ── Skip link (first-run only) ─────────────────────────────────────
+            if (!fromSettings) {
+                Text(
+                    text = "BAAD MEIN KAREIN",
+                    style = KursiType.label_sm.dmMono().copy(letterSpacing = 1.sp),
+                    color = BrandTokens.BrassAged.copy(alpha = 0.6f),
+                    textAlign = TextAlign.Center,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 48.dp)
+                            .wrapContentHeight()
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() },
+                            ) {
+                                // Save defaults even on skip so hasPlayerProfile triggers only on explicit set.
+                                if (prefs.playerName.isBlank()) prefs.playerName = "Khiladi"
+                                if (prefs.playerAvatarIdx < 0) prefs.playerAvatarIdx = 0
+                                if (prefs.playerColorArgb == 0L) prefs.playerColorArgb = 0xFFE63946L
+                                onDone()
+                            },
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
         }
-
-        // ── Skip link (first-run only) ─────────────────────────────────────
-        if (!fromSettings) {
-            Text(
-                text = "BAAD MEIN KAREIN",
-                style = KursiType.label_micro.copy(letterSpacing = 0.8.sp),
-                color = BrandTokens.BrassAged.copy(alpha = 0.5f),
-                textAlign = TextAlign.Center,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp)
-                        .clickable(
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() },
-                        ) {
-                            // Save defaults even on skip so hasPlayerProfile triggers only on explicit set.
-                            if (prefs.playerName.isBlank()) prefs.playerName = "Khiladi"
-                            if (prefs.playerAvatarIdx < 0) prefs.playerAvatarIdx = 0
-                            if (prefs.playerColorArgb == 0L) prefs.playerColorArgb = 0xFFE63946L
-                            onDone()
-                        },
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-    }
-}
-
-@Composable
-private fun FormSection(
-    label: String,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = label,
-            style = KursiType.label_micro.copy(letterSpacing = 1.2.sp, fontSize = 10.sp),
-            color = BrandTokens.TeakInk.copy(alpha = 0.5f),
-        )
-        content()
     }
 }
