@@ -189,6 +189,7 @@ fun GameScreen(
 
     CompositionLocalProvider(
         com.kursi.designsystem.moment.LocalTableAnchorRegistry provides anchorRegistry,
+        LocalReducedMotion provides reducedMotion,
     ) {
         BoxWithConstraints(modifier = modifier.fillMaxSize()) {
             val isDesktop = maxWidth >= 840.dp

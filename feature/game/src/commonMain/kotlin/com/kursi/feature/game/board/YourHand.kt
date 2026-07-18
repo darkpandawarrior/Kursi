@@ -105,14 +105,19 @@ internal fun YourHandPanel(
                     val fanZ = if (handCount > 1) rel * 6f else 0f
                     // The relevant card un-fans, rises and tilts to face the player.
                     val relevant = lifted || isLossChoice
+                    // Spring-physics settle (spec §7 juice) — the relevant card springs into
+                    // place like a physically held card, not a linear tween. Reduced motion
+                    // collapses to an instant snap (no time-critical info hides behind motion).
+                    val reducedMotion = LocalReducedMotion.current
+                    val fanSpec: AnimationSpec<Float> = if (reducedMotion) tween(0) else KursiMotion.settle()
                     val fanTarget by animateFloatAsState(
                         targetValue = if (relevant) 0f else fanZ,
-                        animationSpec = tween(260),
+                        animationSpec = fanSpec,
                         label = "handFanZ",
                     )
                     val liftTarget by animateFloatAsState(
                         targetValue = if (relevant) -10f else 0f,
-                        animationSpec = tween(260),
+                        animationSpec = fanSpec,
                         label = "handFanLift",
                     )
 

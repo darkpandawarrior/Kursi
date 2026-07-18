@@ -209,13 +209,19 @@ internal fun FeltCenterTokens(
     var lastSeenRevealCount by remember { mutableStateOf(0) }
     val flipAngle = remember { Animatable(0f) }
     var challengeResult by remember { mutableStateOf<GameEvent.ChallengeRevealed?>(null) }
+    val reducedMotion = LocalReducedMotion.current
 
     LaunchedEffect(challengeRevealEvents.size) {
         if (challengeRevealEvents.size > lastSeenRevealCount) {
             lastSeenRevealCount = challengeRevealEvents.size
             challengeResult = challengeRevealEvents.last()
-            flipAngle.snapTo(0f)
-            flipAngle.animateTo(targetValue = 180f, animationSpec = tween(600))
+            if (reducedMotion) {
+                flipAngle.snapTo(180f)
+            } else {
+                flipAngle.snapTo(0f)
+                // Spring-physics reveal (spec §7 juice) — a card landing face-up, not a linear rotate.
+                flipAngle.animateTo(targetValue = 180f, animationSpec = KursiMotion.settle())
+            }
         }
     }
 

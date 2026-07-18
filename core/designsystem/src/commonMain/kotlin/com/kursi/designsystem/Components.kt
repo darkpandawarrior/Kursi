@@ -91,16 +91,21 @@ fun Modifier.inspectable(
     pressShape: androidx.compose.ui.graphics.Shape? = null,
 ): Modifier {
     var pressed by remember { mutableStateOf(false) }
+    // Crisp spring response (spec §7 juice) rather than a flat tween — a press should feel
+    // like it lands, not just fade in. Reduced motion collapses to an instant snap.
+    val reducedMotion = LocalReducedMotion.current
+    val pressSpec: AnimationSpec<Float> = if (reducedMotion) tween(0) else KursiMotion.snap()
+    val pressShadowSpec: AnimationSpec<Dp> = if (reducedMotion) tween(0) else KursiMotion.snap()
     // Slightly deeper dip than before; the hold should feel like the surface gives way.
     val pressScale by animateFloatAsState(
         targetValue = if (pressed) 0.955f else 1f,
-        animationSpec = tween(110),
+        animationSpec = pressSpec,
         label = "inspectPressScale",
     )
     // The cast shadow swells while held, then settles back — the "physical hold" cue.
     val pressShadow by animateDpAsState(
         targetValue = if (pressed) 14.dp else 0.dp,
-        animationSpec = tween(110),
+        animationSpec = pressShadowSpec,
         label = "inspectPressShadow",
     )
     return this
@@ -1373,10 +1378,26 @@ fun CoinPill(
     modifier: Modifier = Modifier,
     alpha: Float = 1f,
 ) {
+    // Coin/token juice (spec §7): a small spring bump when the count changes, so a
+    // Tax/Steal/Income coin landing reads as a physical arrival, not just a text swap.
+    // `mounted` skips the bump on first composition — only real count changes pop.
+    val reducedMotion = LocalReducedMotion.current
+    val bump = remember { Animatable(1f) }
+    var mounted by remember { mutableStateOf(false) }
+    LaunchedEffect(count) {
+        if (mounted && !reducedMotion) {
+            bump.snapTo(1.22f)
+            bump.animateTo(1f, KursiMotion.snap())
+        }
+        mounted = true
+    }
     Row(
         modifier =
             modifier
-                .clip(Squircle(KursiRadii.sm))
+                .graphicsLayer {
+                    scaleX = bump.value
+                    scaleY = bump.value
+                }.clip(Squircle(KursiRadii.sm))
                 .background(
                     brush =
                         Brush.horizontalGradient(
