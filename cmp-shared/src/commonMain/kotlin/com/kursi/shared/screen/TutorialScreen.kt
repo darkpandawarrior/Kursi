@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -41,10 +42,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kursi.designsystem.BrandTokens
+import com.kursi.designsystem.BrassToken
 import com.kursi.designsystem.KursiNeutrals
 import com.kursi.designsystem.KursiRoleHues
 import com.kursi.designsystem.KursiType
 import com.kursi.designsystem.RoleGlyph
+import com.kursi.designsystem.litGround
 import com.kursi.engine.Role
 import com.kursi.shared.strings.LocalKursiStrings
 import kotlin.math.PI
@@ -129,7 +132,7 @@ fun TutorialScreen(
         }
     var mechanicActed by remember(step) { mutableStateOf(false) }
 
-    Box(modifier = modifier.fillMaxSize().background(BrandTokens.TeakInk)) {
+    Box(modifier = modifier.fillMaxSize().litGround()) {
         // ── Scripted table backdrop (always present; mutates with the beat) ─────
         if (mechanic != null) {
             MechanicTable(mechanic = mechanic, acted = mechanicActed)
@@ -318,42 +321,51 @@ private fun TutorialHeader(
     onSkip: () -> Unit,
     skipLabel: String,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(BrandTokens.TeakDark)
-                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(header, style = KursiType.title.copy(fontSize = 15.sp, letterSpacing = 1.sp), color = KursiNeutrals.TextPrimary)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(
-                    modifier =
-                        Modifier
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(BrandTokens.StampRed.copy(alpha = 0.12f))
-                            .border(0.7.dp, BrandTokens.StampRed.copy(alpha = 0.4f), RoundedCornerShape(3.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                ) {
-                    Text(badge, style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.6.sp), color = BrandTokens.StampRed.copy(alpha = 0.8f))
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(header, style = KursiType.title.copy(fontSize = 15.sp, letterSpacing = 1.sp), color = KursiNeutrals.TextPrimary)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(BrandTokens.StampRed.copy(alpha = 0.12f))
+                                .border(0.7.dp, BrandTokens.StampRed.copy(alpha = 0.4f), RoundedCornerShape(3.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                    ) {
+                        Text(badge, style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.6.sp), color = BrandTokens.StampRed.copy(alpha = 0.8f))
+                    }
+                    Text("$stepLabel ${step + 1}/$total", style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted)
                 }
-                Text("$stepLabel ${step + 1}/$total", style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted)
             }
+            Text(
+                text = skipLabel,
+                style = KursiType.caption.copy(fontSize = 11.sp),
+                color = BrandTokens.BrassAged,
+                modifier =
+                    Modifier
+                        .clickable(onClick = onSkip)
+                        .semantics {
+                            role = androidx.compose.ui.semantics.Role.Button
+                            contentDescription = skipLabel
+                        },
+            )
         }
-        Text(
-            text = skipLabel,
-            style = KursiType.caption.copy(fontSize = 11.sp),
-            color = BrandTokens.BrassAged,
+        // Engraved chrome — a hairline gold rule, not a filled/bordered bar (non-negotiable #3).
+        Box(
             modifier =
                 Modifier
-                    .clickable(onClick = onSkip)
-                    .semantics {
-                        role = androidx.compose.ui.semantics.Role.Button
-                        contentDescription = skipLabel
-                    },
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color.Transparent, BrandTokens.GoldAntique.copy(alpha = 0.4f), Color.Transparent),
+                        ),
+                    ),
         )
     }
 }
@@ -572,26 +584,24 @@ private fun RivalPlate(
      *  pip instead of two. */
     pipsLost: Boolean = false,
 ) {
+    // AAA polish: no bordered seat card — the rival rests directly on the ground; a soft circular
+    // glow behind the token (not a rectangular box) marks the active/challenging seat (non-negotiable #1).
     Column(
-        modifier =
-            modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(if (active) hue.copy(alpha = 0.16f) else BrandTokens.TeakDark.copy(alpha = 0.55f))
-                .border(if (active) 1.5.dp else 1.dp, if (active) hue else BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
-                .padding(horizontal = 10.dp, vertical = 10.dp),
+        modifier = modifier.padding(horizontal = 10.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(Brush.radialGradient(listOf(hue, hue.copy(alpha = 0.5f))))
-                    .border(1.dp, BrandTokens.BrassAged, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(monogram, style = KursiType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold), color = KursiNeutrals.Cream)
+        Box(contentAlignment = Alignment.Center) {
+            if (active) {
+                Box(
+                    modifier =
+                        Modifier
+                            .size(52.dp)
+                            .clip(CircleShape)
+                            .background(Brush.radialGradient(listOf(hue.copy(alpha = 0.38f), Color.Transparent))),
+                )
+            }
+            BrassToken(monogram = monogram, fill = hue, size = 36.dp)
         }
         Text(name, style = KursiType.name.copy(fontSize = 11.sp), color = KursiNeutrals.TextPrimary, maxLines = 1)
         // Face-down influence pips — one fewer once this rival has lost an influence (COUP beat).
@@ -610,26 +620,22 @@ private fun RivalPlate(
     }
 }
 
+/** The "what's-happening" headline — plain italic text on the ground, matching the game board's
+ *  narration line (e.g. "Netaji Vachan ne Supari ka elaan kiya."), not a bordered banner box
+ *  (non-negotiable #1). Shifts to the oxblood accent once a bluff/verdict lands (non-negotiable #7). */
 @Composable
 private fun ChallengeBanner(
     text: String,
     revealed: Boolean,
 ) {
-    val accent = if (revealed) BrandTokens.StampRed else BrandTokens.GoldAntique
     Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(accent.copy(alpha = 0.14f))
-                .border(1.2.dp, accent, RoundedCornerShape(8.dp))
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
-            style = KursiType.body.copy(fontSize = 12.sp, fontStyle = FontStyle.Italic),
-            color = if (revealed) BrandTokens.StampRed else KursiNeutrals.TextPrimary,
+            style = KursiType.body.copy(fontSize = 13.sp, fontStyle = FontStyle.Italic),
+            color = if (revealed) BrandTokens.StampRed else BrandTokens.GoldAntique,
             textAlign = TextAlign.Center,
         )
     }
@@ -674,6 +680,7 @@ private fun HandCard(
         modifier =
             Modifier
                 .size(width = 78.dp, height = 104.dp)
+                .shadow(5.dp, RoundedCornerShape(10.dp), clip = false, ambientColor = Color.Black, spotColor = BrandTokens.TeakInk)
                 .clip(RoundedCornerShape(10.dp))
                 .background(if (faceUp) BrandTokens.PaperCream else BrandTokens.TeakDark)
                 .border(
@@ -760,12 +767,25 @@ private fun ActionDock(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        // The highlighted chip — the move the learner performs this beat.
+        // The highlighted chip — the move the learner performs this beat. A raised stamp (non-negotiable
+        // #4): real cast shadow when live, flat once dimmed/spent.
         Box(
             modifier =
                 Modifier
                     .weight(1f)
-                    .clip(RoundedCornerShape(10.dp))
+                    .then(
+                        if (!spent) {
+                            Modifier.shadow(
+                                if (pulse) 5.dp else 3.dp,
+                                RoundedCornerShape(10.dp),
+                                clip = false,
+                                ambientColor = Color.Black,
+                                spotColor = BrandTokens.TeakInk,
+                            )
+                        } else {
+                            Modifier
+                        },
+                    ).clip(RoundedCornerShape(10.dp))
                     .background(if (pulse) BrandTokens.GoldAntique.copy(alpha = 0.20f + glow * 0.18f) else BrandTokens.TeakDark.copy(alpha = 0.55f))
                     .border(
                         if (pulse) 2.dp else 1.dp,
