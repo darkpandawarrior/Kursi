@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -231,7 +232,7 @@ fun HomeScreen(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(BrandTokens.TeakInk)
+                .litGround()
                 .drawBehind { drawHomeDepth() },
     ) {
         // 840dp threshold: tablets (≥600dp) get the two-column layout, phones (<840dp) get the
@@ -552,18 +553,12 @@ private fun ColumnScope.ExpandedHomeLayout(
                             Modifier
                                 .fillMaxHeight()
                                 .fillMaxWidth()
+                                // Raised lit surface — real cast shadow, no thin brass border framing
+                                // an otherwise-flat panel (non-negotiable #1).
+                                .shadow(14.dp, RoundedCornerShape(20.dp), clip = false, ambientColor = Color.Black, spotColor = BrandTokens.TeakInk)
                                 .clip(RoundedCornerShape(20.dp))
-                                .background(BrandTokens.TeakDark.copy(alpha = 0.55f))
-                                .border(
-                                    1.5.dp,
-                                    Brush.verticalGradient(
-                                        listOf(
-                                            BrandTokens.BrassAged.copy(alpha = 0.55f),
-                                            BrandTokens.BrassDark.copy(alpha = 0.25f),
-                                        ),
-                                    ),
-                                    RoundedCornerShape(20.dp),
-                                ).padding(horizontal = 40.dp, vertical = 48.dp),
+                                .background(Brush.verticalGradient(listOf(BrandTokens.TeakMid, BrandTokens.TeakDark)))
+                                .padding(horizontal = 40.dp, vertical = 48.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                     ) {
@@ -1277,32 +1272,27 @@ private fun GauntletStrip(
 ) {
     val s = LocalKursiStrings.current
     val label = s.gauntletStripLabel(gauntlet.clearedCount.coerceIn(0, total), total)
-    Box(
+    HairlineRow(
+        onClick = onOpen,
         modifier =
-            modifier
-                .clip(RoundedCornerShape(10.dp))
-                .background(BrandTokens.GoldAntique.copy(alpha = 0.10f))
-                .border(1.dp, BrandTokens.GoldAntique.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
-                .clickable(onClick = onOpen)
-                .semantics(mergeDescendants = true) {
-                    role = androidx.compose.ui.semantics.Role.Button
-                    contentDescription = "${s.homeCtaGauntlet}. $label"
-                }.padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier.semantics(mergeDescendants = true) {
+                role = androidx.compose.ui.semantics.Role.Button
+                contentDescription = "${s.homeCtaGauntlet}. $label"
+            },
+        verticalPadding = 11.dp,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("▲", style = KursiType.title.copy(fontSize = 16.sp), color = BrandTokens.GoldAntique)
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    s.homeCtaGauntlet,
-                    style = KursiType.title.copy(fontSize = 14.sp),
-                    color = KursiNeutrals.TextPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(label, style = KursiType.caption.copy(fontSize = 10.sp), color = KursiNeutrals.TextMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-            Text("›", style = KursiType.title.copy(fontSize = 16.sp), color = BrandTokens.GoldAntique)
+        Text("▲", style = KursiType.title.copy(fontSize = 16.sp), color = BrandTokens.GoldAntique)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                s.homeCtaGauntlet,
+                style = KursiType.title.copy(fontSize = 14.sp),
+                color = KursiNeutrals.TextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(label, style = KursiType.caption.copy(fontSize = 10.sp), color = KursiNeutrals.TextMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
+        Text("›", style = KursiType.title.copy(fontSize = 16.sp), color = BrandTokens.GoldAntique)
     }
 }
 
@@ -1313,25 +1303,17 @@ private fun ResumeStrip(
     onResume: () -> Unit,
 ) {
     val s = LocalKursiStrings.current
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(BrandTokens.BrassAged.copy(alpha = 0.18f))
-                .border(1.5.dp, BrandTokens.GoldAntique.copy(alpha = 0.6f), RoundedCornerShape(10.dp))
-                .clickable(onClick = onResume)
-                .semantics(mergeDescendants = true) { contentDescription = "Resume in-progress match: $label" }
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+    HairlineRow(
+        onClick = onResume,
+        modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "Resume in-progress match: $label" },
+        verticalPadding = 11.dp,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("⟳", style = KursiType.title.copy(fontSize = 18.sp), color = BrandTokens.GoldAntique)
-            Column(modifier = Modifier.weight(1f)) {
-                Text(s.homeResumeLabel, style = KursiType.title.copy(fontSize = 14.sp), color = KursiNeutrals.TextPrimary)
-                Text(label, style = KursiType.caption.copy(fontSize = 10.sp), color = KursiNeutrals.TextMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-            Text("›", style = KursiType.title.copy(fontSize = 16.sp), color = BrandTokens.GoldAntique)
+        Text("⟳", style = KursiType.title.copy(fontSize = 18.sp), color = BrandTokens.GoldAntique)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(s.homeResumeLabel, style = KursiType.title.copy(fontSize = 14.sp), color = KursiNeutrals.TextPrimary)
+            Text(label, style = KursiType.caption.copy(fontSize = 10.sp), color = KursiNeutrals.TextMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
+        Text("›", style = KursiType.title.copy(fontSize = 16.sp), color = BrandTokens.GoldAntique)
     }
 }
 
@@ -1651,15 +1633,17 @@ private fun PersonaOnDutyCard(
                 translationY = personaSlide + bobOffsetPx
             },
     ) {
-        // Enamel oval nameplate
+        // Enamel nameplate "card" — brass double-rim is the sanctioned card idiom (non-negotiable
+        // #4); the real cast shadow is what was missing to make it read as raised, not flat-boxed.
         Box(
             modifier =
                 Modifier
                     .then(if (enlarged) Modifier.fillMaxWidth().height(104.dp) else Modifier.fillMaxWidth().height(64.dp))
+                    .shadow(8.dp, RoundedCornerShape(16.dp), clip = false, ambientColor = Color.Black, spotColor = BrandTokens.TeakInk)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFF14110D))
+                    .background(Brush.verticalGradient(listOf(Color(0xFF1C1710), Color(0xFF14110D))))
                     .border(
-                        2.dp,
+                        1.5.dp,
                         Brush.horizontalGradient(listOf(BrandTokens.GoldAntique, seatColor, BrandTokens.BrassAged)),
                         RoundedCornerShape(16.dp),
                     ),
@@ -1728,6 +1712,11 @@ private data class HomeModeData(
     val onClick: () -> Unit,
 )
 
+// AAA polish: the 3×3 grid of colour-header bordered tiles was the screen's biggest concentration
+// of "bordered boxes" (non-negotiable #1) — eight little cards stacked in a grid. Rebuilt as a
+// single-column list of hairline rows (matching Setup's mode/preset lists): a brass-rimmed accent
+// token carries the mode's colour identity, gold ink + a right chevron carry "selected" instead of
+// a full-tile border.
 @Composable
 private fun ModeGrid(
     modes: List<HomeModeData>,
@@ -1743,24 +1732,13 @@ private fun ModeGrid(
                 alpha = ctaAlpha
                 translationY = ctaSlide
             },
-        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        val cols = 3
-        modes.chunked(cols).forEach { rowModes ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                rowModes.forEach { mode ->
-                    ModeGridTile(
-                        mode = mode,
-                        isSelected = selectedKey == mode.key,
-                        onTap = { onSelect(if (selectedKey == mode.key) null else mode.key) },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                repeat(cols - rowModes.size) { Spacer(Modifier.weight(1f)) }
-            }
+        modes.forEach { mode ->
+            ModeGridTile(
+                mode = mode,
+                isSelected = selectedKey == mode.key,
+                onTap = { onSelect(if (selectedKey == mode.key) null else mode.key) },
+            )
         }
     }
 }
@@ -1772,100 +1750,76 @@ private fun ModeGridTile(
     onTap: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val pressScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.97f else 1f,
-        animationSpec = tween(80, easing = FastOutSlowInEasing),
-        label = "tilePress_${mode.key}",
-    )
-    val borderAlpha by animateFloatAsState(
-        targetValue = if (isSelected) 1f else 0.35f,
-        animationSpec = tween(180),
-        label = "tileBorder_${mode.key}",
-    )
     val accentColor = Color(mode.accentArgb)
     val contentAlpha = if (mode.isDisabled) 0.45f else 1f
 
-    Column(
-        modifier =
-            modifier
-                .graphicsLayer {
-                    scaleX = pressScale
-                    scaleY = pressScale
-                }.clip(RoundedCornerShape(10.dp))
-                .background(if (isSelected) Color(0xFF211A12) else Color(0xFF181309))
-                .border(if (isSelected) 2.dp else 1.5.dp, BrandTokens.GoldAntique.copy(alpha = borderAlpha), RoundedCornerShape(10.dp))
-                .clickable(interactionSource = interactionSource, indication = null, onClick = onTap)
-                .alpha(contentAlpha),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    HairlineRow(
+        onClick = onTap,
+        modifier = modifier.alpha(contentAlpha),
+        verticalPadding = 11.dp,
     ) {
-        // Icon area — accent-tinted header strip
+        // Accent-tinted brass token carries the mode's colour identity — no header-strip box.
         Box(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .height(44.dp)
-                    .background(accentColor.copy(alpha = if (mode.isDisabled) 0.22f else 0.45f)),
+                    .size(38.dp)
+                    .shadow(4.dp, CircleShape, clip = false, ambientColor = Color.Black, spotColor = BrandTokens.TeakInk)
+                    .clip(CircleShape)
+                    .background(Brush.radialGradient(listOf(accentColor.copy(alpha = 0.9f), accentColor.copy(alpha = 0.55f))))
+                    .border(1.5.dp, if (isSelected) BrandTokens.GoldAntique else BrandTokens.BrassAged.copy(alpha = 0.6f), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = mode.icon,
-                style = KursiType.title.copy(fontSize = 22.sp),
-                color = Color.White.copy(alpha = 0.88f),
-            )
-            val badge =
-                when {
-                    mode.isHero -> "APPROVED"
-                    mode.disabledStamp != null -> mode.disabledStamp
-                    else -> null
-                }
-            if (badge != null) {
-                Box(
-                    modifier =
-                        Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(5.dp)
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(
-                                if (mode.isHero) {
-                                    BrandTokens.StampRed.copy(alpha = 0.9f)
-                                } else {
-                                    BrandTokens.StampRed.copy(alpha = 0.22f)
-                                },
-                            ).border(
-                                1.dp,
-                                BrandTokens.StampRed.copy(alpha = if (mode.isHero) 0f else 0.5f),
-                                RoundedCornerShape(3.dp),
-                            ).padding(horizontal = 5.dp, vertical = 2.dp),
-                ) {
-                    Text(
-                        text = badge,
-                        style = KursiType.caption.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp),
-                        color = if (mode.isHero) KursiNeutrals.Cream else BrandTokens.StampRed.copy(alpha = 0.8f),
-                    )
+            Text(text = mode.icon, style = KursiType.title.copy(fontSize = 16.sp), color = Color.White.copy(alpha = 0.92f))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = mode.label,
+                    style = KursiType.name.copy(fontSize = 14.sp),
+                    color = if (isSelected) BrandTokens.GoldAntique else KursiNeutrals.TextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                val badge =
+                    when {
+                        mode.isHero -> "APPROVED"
+                        mode.disabledStamp != null -> mode.disabledStamp
+                        else -> null
+                    }
+                if (badge != null) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(
+                                    if (mode.isHero) BrandTokens.StampRed.copy(alpha = 0.9f) else BrandTokens.StampRed.copy(alpha = 0.18f),
+                                ).border(
+                                    1.dp,
+                                    BrandTokens.StampRed.copy(alpha = if (mode.isHero) 0f else 0.5f),
+                                    RoundedCornerShape(3.dp),
+                                ).padding(horizontal = 5.dp, vertical = 1.dp),
+                    ) {
+                        Text(
+                            text = badge,
+                            style = KursiType.caption.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.4.sp),
+                            color = if (mode.isHero) KursiNeutrals.Cream else BrandTokens.StampRed.copy(alpha = 0.8f),
+                        )
+                    }
                 }
             }
-        }
-        // Label area
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
-        ) {
-            Text(
-                text = mode.label,
-                style = KursiType.title.copy(fontSize = 10.sp),
-                color = if (mode.isHero) BrandTokens.GoldAntique else KursiNeutrals.TextPrimary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
             Text(
                 text = mode.sublabel,
-                style = KursiType.caption.copy(fontSize = 9.sp),
+                style = KursiType.caption.copy(fontSize = 10.sp),
                 color = KursiNeutrals.TextMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
+        Text(
+            text = "›",
+            style = KursiType.title.copy(fontSize = 16.sp),
+            color = if (isSelected) BrandTokens.GoldAntique else BrandTokens.BrassAged.copy(alpha = 0.5f),
+        )
     }
 }
 
@@ -1876,6 +1830,9 @@ private fun ModePreviewPanel(
     personaSlide: Float,
 ) {
     val accentColor = Color(mode.accentArgb)
+    // AAA polish: a raised lit surface (real cast shadow) instead of a thin-bordered flat panel
+    // (non-negotiable #1) — the accent-colour header rectangle dissolves into a brass-rimmed
+    // accent medallion + a sparing Rozha title, the one focal point of the panel.
     Column(
         modifier =
             Modifier
@@ -1884,45 +1841,32 @@ private fun ModePreviewPanel(
                 .graphicsLayer {
                     alpha = personaAlpha
                     translationY = personaSlide
-                }.clip(RoundedCornerShape(20.dp))
-                .background(BrandTokens.TeakDark.copy(alpha = 0.55f))
-                .border(
-                    1.5.dp,
-                    Brush.verticalGradient(
-                        listOf(
-                            BrandTokens.GoldAntique.copy(alpha = 0.7f),
-                            BrandTokens.BrassDark.copy(alpha = 0.3f),
-                        ),
-                    ),
-                    RoundedCornerShape(20.dp),
-                ),
+                }.shadow(14.dp, RoundedCornerShape(20.dp), clip = false, ambientColor = Color.Black, spotColor = BrandTokens.TeakInk)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Brush.verticalGradient(listOf(BrandTokens.TeakMid, BrandTokens.TeakDark)))
+                .padding(horizontal = 28.dp, vertical = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // Top accent block with large icon
         Box(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .weight(0.40f)
-                    .background(accentColor.copy(alpha = if (mode.isDisabled) 0.2f else 0.38f)),
+                    .size(72.dp)
+                    .shadow(10.dp, CircleShape, clip = false, ambientColor = Color.Black, spotColor = BrandTokens.TeakInk)
+                    .clip(CircleShape)
+                    .background(Brush.radialGradient(listOf(accentColor.copy(alpha = 0.95f), accentColor.copy(alpha = 0.6f))))
+                    .border(2.dp, BrandTokens.GoldAntique.copy(alpha = if (mode.isDisabled) 0.3f else 0.8f), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = mode.icon,
-                style = KursiType.title.copy(fontSize = 72.sp),
-                color = Color.White.copy(alpha = 0.8f),
-            )
+            Text(text = mode.icon, style = KursiType.title.copy(fontSize = 30.sp), color = Color.White.copy(alpha = 0.9f))
         }
+        Spacer(Modifier.height(18.dp))
+
         // Info + CTA
         Column(
-            modifier =
-                Modifier
-                    .weight(0.60f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 28.dp, vertical = 24.dp),
+            modifier = Modifier.weight(1f).fillMaxWidth(),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Column {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 // Title row
                 if (mode.isHero) {
                     Text(
@@ -1934,14 +1878,16 @@ private fun ModePreviewPanel(
                 }
                 Text(
                     text = mode.label,
-                    style = KursiType.title.copy(fontSize = 18.sp),
+                    style = KursiType.display.rozha().copy(fontSize = 22.sp),
                     color = KursiNeutrals.TextPrimary,
+                    textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(3.dp))
                 Text(
                     text = mode.sublabel,
                     style = KursiType.caption.copy(fontSize = 10.sp),
                     color = KursiNeutrals.TextMuted,
+                    textAlign = TextAlign.Center,
                 )
 
                 // Description
@@ -1953,27 +1899,19 @@ private fun ModePreviewPanel(
                         text = mode.description,
                         style = KursiType.body.copy(fontSize = 11.sp),
                         color = KursiNeutrals.TextSecondary,
+                        textAlign = TextAlign.Center,
                     )
                 }
 
-                // Detail rows — styled as mini file fields
+                // Detail rows — hairline fields, matching the rest of the app's list idiom.
                 if (mode.details.isNotEmpty()) {
                     Spacer(Modifier.height(16.dp))
                     Box(Modifier.fillMaxWidth().height(1.dp).background(BrandTokens.BrassDark.copy(alpha = 0.4f)))
-                    Spacer(Modifier.height(10.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
-                        mode.details.forEachIndexed { i, (fieldLabel, value) ->
+                    Spacer(Modifier.height(4.dp))
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        mode.details.forEach { (fieldLabel, value) ->
                             Row(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .background(
-                                            if (i % 2 == 0) {
-                                                Color(0xFF1A1208).copy(alpha = 0.6f)
-                                            } else {
-                                                Color.Transparent
-                                            },
-                                        ).padding(horizontal = 8.dp, vertical = 5.dp),
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -1993,42 +1931,24 @@ private fun ModePreviewPanel(
                 }
             }
 
+            Spacer(Modifier.height(16.dp))
+
             // ENTER / disabled stamp button
             if (!mode.isDisabled) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(if (mode.isHero) BrandTokens.BrassAged else BrandTokens.BrassAged.copy(alpha = 0.7f))
-                            .border(1.dp, BrandTokens.GoldAntique, RoundedCornerShape(8.dp))
-                            .clickable(onClick = mode.onClick)
-                            .padding(vertical = 15.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        "ENTER →",
-                        style = KursiType.title.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-                        color = BrandTokens.TeakDark,
-                    )
-                }
+                StampButton(
+                    label = "ENTER →",
+                    style = StampStyle.Primary,
+                    onClick = mode.onClick,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             } else {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(BrandTokens.TeakDark)
-                            .border(1.dp, BrandTokens.StampRed.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                            .padding(vertical = 13.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        mode.disabledStamp ?: "UNAVAILABLE",
-                        style = KursiType.caption.copy(fontSize = 11.sp, letterSpacing = 1.5.sp),
-                        color = BrandTokens.StampRed.copy(alpha = 0.65f),
-                    )
-                }
+                StampButton(
+                    label = mode.disabledStamp ?: "UNAVAILABLE",
+                    style = StampStyle.Ghost,
+                    enabled = false,
+                    onClick = {},
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
     }
@@ -2177,7 +2097,22 @@ fun StampChit(
                 .graphicsLayer {
                     scaleX = pressScale
                     scaleY = pressScale
-                }.clip(RoundedCornerShape(8.dp))
+                }
+                // A raised stamp needs a real cast shadow, not just a filled fill + hairline —
+                // non-negotiable #4 ("buttons = raised stamps"). Disabled chits stay flat.
+                .then(
+                    if (isDisabled) {
+                        Modifier
+                    } else {
+                        Modifier.shadow(
+                            if (isHero) 8.dp else 4.dp,
+                            RoundedCornerShape(8.dp),
+                            clip = false,
+                            ambientColor = Color.Black,
+                            spotColor = BrandTokens.TeakInk,
+                        )
+                    },
+                ).clip(RoundedCornerShape(8.dp))
                 .background(bgColor)
                 .border(1.5.dp, borderColor, RoundedCornerShape(8.dp))
                 // A11y: each CTA is a button; merge the label/sublabel/stamp into one spoken node and
@@ -2270,16 +2205,21 @@ fun StampChit(
 
 @Composable
 private fun HomeFooter() {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(BrandTokens.TeakDark.copy(alpha = 0.8f))
-                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.3f), RoundedCornerShape(0.dp))
-                .padding(horizontal = 24.dp, vertical = 8.dp),
-    ) {
+    // A hairline rule lifts the footer off the body — not a filled/bordered bar (non-negotiable #1).
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color.Transparent, BrandTokens.BrassDark.copy(alpha = 0.4f), Color.Transparent),
+                        ),
+                    ),
+        )
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
