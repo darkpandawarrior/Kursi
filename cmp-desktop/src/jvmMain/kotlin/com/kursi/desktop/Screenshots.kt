@@ -358,6 +358,24 @@ fun main() {
     }
     println("  wrote tutorial_bluff_caught.png")
 
+    // Beats 8-10 (indices 7-9) — the guided-funnel mechanic-at-a-time beats added per spec §6: BLOCK
+    // (VAKIL stops a SUPARI), COUP (KHELA — unblockable), EXCHANGE (SETTING). Each renders in its
+    // un-acted "prompting" state, matching tutorial_intro's before-interaction convention.
+    renderComposable(outDir, "tutorial_block") {
+        TutorialScreen(onDone = {}, initialStep = 7)
+    }
+    println("  wrote tutorial_block.png")
+
+    renderComposable(outDir, "tutorial_coup") {
+        TutorialScreen(onDone = {}, initialStep = 8)
+    }
+    println("  wrote tutorial_coup.png")
+
+    renderComposable(outDir, "tutorial_exchange") {
+        TutorialScreen(onDone = {}, initialStep = 9)
+    }
+    println("  wrote tutorial_exchange.png")
+
     // Lobby derives a real deterministic roster internally via PersonaAssigner.assign(seed, ...).
     // We pass a concrete seed/players/difficulty so the Hazri Register renders a full house.
     renderComposable(outDir, "lobby") {

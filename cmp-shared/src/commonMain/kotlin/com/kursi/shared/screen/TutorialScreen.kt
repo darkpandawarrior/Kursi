@@ -51,20 +51,27 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
+/** The three post-claim mechanics taught as their own tappable beats (spec §6: claim → challenge →
+ *  block → coup → exchange — claim/challenge/reveal are beats 4-6; these are 7-9). */
+private enum class Mechanic { BLOCK, COUP, EXCHANGE }
+
 /**
- * PEHLI HAZRI — the interactive tutorial (M5 ONBOARD §1).
+ * PEHLI HAZRI — the interactive tutorial (M5 ONBOARD §1; reworked per spec §6 into a
+ * mechanic-at-a-time sequence).
  *
  * A guided "training round" that teaches by DOING rather than by reading. A seeded, scripted table
- * sits behind a coach chit; the Advisor (Salahkaar) narrates eight beats, bilingually, via
- * [LocalKursiStrings] + [LocalKursiVoice]. The spine of the lesson is a GUARANTEED bluff-caught
- * teaching beat: the learner stamps GHOTALA (claiming NETA without holding it), a scripted rival
- * (Babu Filewala) challenges, and the card flips to reveal JHOOTH — the learner watches a bluff get
- * caught and an influence lost, the single most important rule loop in the game (claim → challenge →
- * verdict).
+ * sits behind a coach chit; the Advisor (Salahkaar) narrates ten beats, bilingually, via
+ * [LocalKursiStrings] + [LocalKursiVoice], one mechanic per screen. The spine of the lesson is a
+ * GUARANTEED bluff-caught teaching beat: the learner stamps GHOTALA (claiming NETA without holding
+ * it), a scripted rival (Babu Filewala) challenges, and the card flips to reveal JHOOTH — the learner
+ * watches a bluff get caught and an influence lost, the single most important rule loop in the game
+ * (claim → challenge → verdict). Three further tappable beats then illustrate BLOCK (VAKIL stops a
+ * SUPARI), COUP (KHELA — unblockable, unchallengeable), and EXCHANGE (SETTING — refresh your hand)
+ * against their own scripted setups before graduation.
  *
  * This is intentionally a SELF-CONTAINED scripted overlay, not a live [com.kursi.feature.game.GameSession]:
  * a real match can't be forced to deal a specific bluff or guarantee a specific challenge without
- * fighting the deterministic engine, and a scripted beat sheet is the robust way to make the
+ * fighting the deterministic engine, and a scripted beat sheet is the robust way to make each
  * teaching moment land every time. The visuals reuse the License Raj Deco tokens so it reads as the
  * same office, not a separate tutorial skin.
  *
@@ -74,13 +81,13 @@ import kotlin.math.sin
 fun TutorialScreen(
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
-    /** Render-harness only: start the flow on a given beat so static shots can capture the
-     *  guaranteed bluff-caught beat without driving the UI. Defaults to 0 (the live entry). */
+    /** Render-harness only: start the flow on a given beat so static shots can capture a specific
+     *  teaching moment without driving the UI. Defaults to 0 (the live entry). */
     initialStep: Int = 0,
 ) {
     val s = LocalKursiStrings.current
 
-    // The eight beats, paired (title, body) from the localized string table.
+    // The ten beats, paired (title, body) from the localized string table. One concept per screen.
     val beats =
         remember(s) {
             listOf(
@@ -88,9 +95,12 @@ fun TutorialScreen(
                 s.tut2Title to s.tut2Body,
                 s.tut3Title to s.tut3Body,
                 s.tut4Title to s.tut4Body,
-                s.tut5Title to s.tut5Body, // YOU act: GHOTALA
+                s.tut5Title to s.tut5Body, // YOU act: GHOTALA (claim)
                 s.tut6Title to s.tut6Body, // rival challenges
                 s.tut7Title to s.tut7Body, // reveal — JHOOTH (bluff caught)
+                s.tutBlockTitle to s.tutBlockBody, // YOU act: VAKIL blocks SUPARI
+                s.tutCoupTitle to s.tutCoupBody, // YOU act: KHELA (coup)
+                s.tutExchangeTitle to s.tutExchangeBody, // YOU act: SETTING (exchange)
                 s.tut8Title to s.tut8Body, // graduation
             )
         }
@@ -99,7 +109,7 @@ fun TutorialScreen(
     val isLast = step == beats.lastIndex
     val (title, body) = beats[step]
 
-    // Scripted table-state flags, derived from the current beat:
+    // Scripted table-state flags for the claim → challenge → reveal spine, derived from the beat:
     //  4 = the learner is being prompted to ACT (GHOTALA chip pulses, "DO IT" CTA shown).
     //  5 = Babu Filewala has challenged (challenge banner over the human seat).
     //  6 = the card has flipped to reveal JHOOTH (the bluff is caught, one card face-up + lost).
@@ -107,14 +117,30 @@ fun TutorialScreen(
     val challenged = step >= 5
     val revealed = step >= 6
 
+    // The three mechanic beats (7-9) each stay on ONE screen: tap the chip, watch it resolve in
+    // place, then continue — [mechanicActed] is local to the beat (keyed on [step], so it resets on
+    // Back/replay) and gates whether the primary button performs the move or advances to the next beat.
+    val mechanic =
+        when (step) {
+            7 -> Mechanic.BLOCK
+            8 -> Mechanic.COUP
+            9 -> Mechanic.EXCHANGE
+            else -> null
+        }
+    var mechanicActed by remember(step) { mutableStateOf(false) }
+
     Box(modifier = modifier.fillMaxSize().background(BrandTokens.TeakInk)) {
         // ── Scripted table backdrop (always present; mutates with the beat) ─────
-        ScriptedTable(
-            challenged = challenged,
-            revealed = revealed,
-            promptingAction = promptingAction,
-            challengerName = scriptedChallengerName(),
-        )
+        if (mechanic != null) {
+            MechanicTable(mechanic = mechanic, acted = mechanicActed)
+        } else {
+            ScriptedTable(
+                challenged = challenged,
+                revealed = revealed,
+                promptingAction = promptingAction,
+                challengerName = scriptedChallengerName(),
+            )
+        }
 
         // ── Header strip ────────────────────────────────────────────────────────
         Column(Modifier.fillMaxSize()) {
@@ -137,22 +163,41 @@ fun TutorialScreen(
                 step = step,
                 total = beats.size,
                 isLast = isLast,
-                // Beat 5 (index 4) makes the primary CTA the "stamp GHOTALA" action so the learner
-                // performs the move; advancing reveals the challenge + bluff-caught beats.
                 primaryLabel =
                     when {
+                        // Beat 5 (index 4) makes the primary CTA the "stamp GHOTALA" action so the learner
+                        // performs the move; advancing reveals the challenge + bluff-caught beats.
                         promptingAction -> s.tutorialDoIt
+                        // The BLOCK/COUP/EXCHANGE beats prompt their own action until tapped once.
+                        mechanic != null && !mechanicActed -> mechanicDoLabel(mechanic, s)
                         isLast -> s.tutorialFinish
                         else -> s.tutorialNext
                     },
                 backLabel = s.tutorialBack,
                 canGoBack = step > 0,
                 onBack = { if (step > 0) step -= 1 },
-                onPrimary = { if (isLast) onDone() else step += 1 },
+                onPrimary = {
+                    when {
+                        mechanic != null && !mechanicActed -> mechanicActed = true
+                        isLast -> onDone()
+                        else -> step += 1
+                    }
+                },
             )
         }
     }
 }
+
+/** The primary-CTA label for a mechanic beat's un-acted (prompting) state. */
+private fun mechanicDoLabel(
+    mechanic: Mechanic,
+    s: com.kursi.shared.strings.KursiStrings,
+): String =
+    when (mechanic) {
+        Mechanic.BLOCK -> s.tutorialDoBlock
+        Mechanic.COUP -> s.tutorialDoCoup
+        Mechanic.EXCHANGE -> s.tutorialDoExchange
+    }
 
 /** The scripted rival who delivers the guaranteed challenge. Kept as a helper for one source of truth. */
 private fun scriptedChallengerName(): String = "Babu Filewala"
@@ -506,8 +551,8 @@ private fun ScriptedTable(
 
             // Action dock — the GHOTALA chip pulses when prompting the learner to act.
             ActionDock(
-                ghotalaLabel = "GHOTALA",
-                ghotalaSub = "claims NETA · +3",
+                label = "GHOTALA",
+                sub = "claims NETA · +3",
                 pulse = promptingAction,
                 spent = challenged, // once acted, the dock is dimmed (the move was made)
             )
@@ -523,6 +568,9 @@ private fun RivalPlate(
     role: Role,
     active: Boolean,
     modifier: Modifier = Modifier,
+    /** True once this rival has lost an influence in the scripted scene (the COUP beat) — shows one
+     *  pip instead of two. */
+    pipsLost: Boolean = false,
 ) {
     Column(
         modifier =
@@ -546,9 +594,9 @@ private fun RivalPlate(
             Text(monogram, style = KursiType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold), color = KursiNeutrals.Cream)
         }
         Text(name, style = KursiType.name.copy(fontSize = 11.sp), color = KursiNeutrals.TextPrimary, maxLines = 1)
-        // Two face-down influence pips
+        // Face-down influence pips — one fewer once this rival has lost an influence (COUP beat).
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            repeat(2) {
+            repeat(if (pipsLost) 1 else 2) {
                 Box(
                     modifier =
                         Modifier
@@ -693,10 +741,13 @@ private fun CoinTally(coins: Int) {
 
 @Composable
 private fun ActionDock(
-    ghotalaLabel: String,
-    ghotalaSub: String,
+    label: String,
+    sub: String,
     pulse: Boolean,
     spent: Boolean,
+    /** The role glyph shown on the highlighted chip; null for a claim-free move (KHELA has no claim). */
+    iconRole: Role? = Role.NETA,
+    iconTint: Color = KursiRoleHues.Neta,
 ) {
     val infinite = rememberInfiniteTransition(label = "dockPulse")
     val glow by infinite.animateFloat(
@@ -709,7 +760,7 @@ private fun ActionDock(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        // The GHOTALA chip — the move the learner performs.
+        // The highlighted chip — the move the learner performs this beat.
         Box(
             modifier =
                 Modifier
@@ -724,10 +775,15 @@ private fun ActionDock(
                     .padding(horizontal = 14.dp, vertical = 12.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                RoleGlyph(role = Role.NETA, modifier = Modifier.size(26.dp), tint = KursiRoleHues.Neta)
+                if (iconRole != null) {
+                    RoleGlyph(role = iconRole, modifier = Modifier.size(26.dp), tint = iconTint)
+                } else {
+                    // KHELA claims no role — a plain stamp mark stands in for the missing glyph.
+                    Text("✦", style = KursiType.title.copy(fontSize = 20.sp), color = BrandTokens.GoldAntique)
+                }
                 Column {
-                    Text(ghotalaLabel, style = KursiType.name.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary)
-                    Text(ghotalaSub, style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted)
+                    Text(label, style = KursiType.name.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary)
+                    Text(sub, style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted)
                 }
             }
         }
@@ -748,6 +804,120 @@ private fun ActionDock(
         }
     }
 }
+
+// ─────────────────────── BLOCK / COUP / EXCHANGE scripted scenes ──────────────────────
+
+/**
+ * The scripted table for the three post-claim mechanic beats (spec §6). One compact scene reused for
+ * all three — [mechanic] picks which rival is highlighted, which chip pulses, and which banner line
+ * shows — so a tap resolves the move in place (ponytail: a full 4-drawn-card exchange UI is out of
+ * scope; the banner line carries that concept, matching the existing challenge/reveal banner idiom).
+ */
+@Composable
+private fun MechanicTable(
+    mechanic: Mechanic,
+    acted: Boolean,
+) {
+    Box(modifier = Modifier.fillMaxSize().drawBehind { drawFeltGuilloche() }) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(top = 84.dp, start = 24.dp, end = 24.dp, bottom = 200.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                RivalPlate(name = "Babu Filewala", monogram = "BF", hue = KursiRoleHues.Babu, role = Role.BABU, active = false, modifier = Modifier.weight(1f))
+                RivalPlate(
+                    name = "Netaji Vachan",
+                    monogram = "NV",
+                    hue = KursiRoleHues.Neta,
+                    role = Role.NETA,
+                    active = mechanic == Mechanic.BLOCK,
+                    modifier = Modifier.weight(1f),
+                )
+                RivalPlate(
+                    name = "Vakil Loophole",
+                    monogram = "VL",
+                    hue = KursiRoleHues.Vakil,
+                    role = Role.VAKIL,
+                    active = mechanic == Mechanic.COUP,
+                    pipsLost = mechanic == Mechanic.COUP && acted,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+
+            AnimatedVisibility(visible = true, enter = fadeIn() + scaleIn(initialScale = 0.9f)) {
+                ChallengeBanner(text = mechanicLine(mechanic, acted), revealed = acted)
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            // Your hand never reveals in a successful block, a coup, or an exchange — it stays face-down
+            // throughout all three beats.
+            HandRow(revealed = false)
+
+            CoinTally(coins = if (mechanic == Mechanic.COUP) 7 else 5)
+
+            when (mechanic) {
+                Mechanic.BLOCK ->
+                    ActionDock(
+                        label = "VAKIL ROKO",
+                        sub = "blocks SUPARI",
+                        pulse = !acted,
+                        spent = acted,
+                        iconRole = Role.VAKIL,
+                        iconTint = KursiRoleHues.Vakil,
+                    )
+                Mechanic.COUP ->
+                    ActionDock(
+                        label = "KHELA",
+                        sub = "no claim · unblockable",
+                        pulse = !acted,
+                        spent = acted,
+                        iconRole = null,
+                    )
+                Mechanic.EXCHANGE ->
+                    ActionDock(
+                        label = "SETTING",
+                        sub = "claims JUGAADU · draw 2",
+                        pulse = !acted,
+                        spent = acted,
+                        iconRole = Role.JUGAADU,
+                        iconTint = KursiRoleHues.Jugaadu,
+                    )
+            }
+        }
+    }
+}
+
+/** Before/after flavor line for a [MechanicTable] beat. Hardcoded (not localized) like the existing
+ *  [challengeLine]/[revealVerdictLine] scripted banners this mirrors. */
+private fun mechanicLine(
+    mechanic: Mechanic,
+    acted: Boolean,
+): String =
+    when (mechanic) {
+        Mechanic.BLOCK ->
+            if (acted) {
+                "VAKIL ROKA! Supari fail — koi nuksaan nahi."
+            } else {
+                "Netaji Vachan: \"SUPARI — ek influence tumhara jayega.\""
+            }
+        Mechanic.COUP ->
+            if (acted) {
+                "KHELA laga! Vakil Loophole ek influence khoyi."
+            } else {
+                "7 khokha jama — KHELA ab khareeda ja sakta hai."
+            }
+        Mechanic.EXCHANGE ->
+            if (acted) {
+                "2 card khinche, best do rakhe — baaki laut diye."
+            } else {
+                "SETTING se apna haath taaza kijiye."
+            }
+    }
 
 // ─────────────────────────── Helpers ──────────────────────────────────────────
 
