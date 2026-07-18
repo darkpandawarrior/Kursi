@@ -2,6 +2,7 @@ package com.kursi.feature.game
 
 import com.kursi.ai.ExpertPolicy
 import com.kursi.ai.GrandmasterPolicy
+import com.kursi.ai.MunshiNarrator
 import com.kursi.ai.Policy
 import com.kursi.ai.persona.BotDifficulty
 import com.kursi.ai.persona.PersonaAssigner
@@ -136,9 +137,11 @@ class GameViewModel(
     private fun GameUiState.withUnread(): GameUiState =
         if (!narrativeEnabled) this else copy(unreadChat = chatFeed.count { it.id > chatReadHwm && !it.fromPlayer })
 
-    /** Publish [ui] to the UI, stamping the Darbar unread badge. */
+    /** Publish [ui] to the UI, stamping the Darbar unread badge, then kick off Munshi narration for it. */
     private fun emitState(ui: GameUiState) {
-        _state.value = ui.withUnread()
+        val stamped = ui.withUnread()
+        _state.value = stamped
+        requestNarration(stamped)
     }
 
     private val coroutineScope: CoroutineScope = scope
@@ -177,6 +180,15 @@ class GameViewModel(
      * new human decision and on new game, so stale advice never lands on a fresh decision point.
      */
     private var adviceJob: Job? = null
+
+    /** MUNSHI (Track 3, spec §8.1) — the AI narrator's provider-matrix selection, built once. */
+    private val munshi = MunshiNarrator()
+
+    /**
+     * The in-flight Munshi narration job for the beat most recently published via [emitState].
+     * Cancelled/replaced on every new beat so a stale line can never land on a newer one.
+     */
+    private var narrationJob: Job? = null
 
     private companion object {
         /** Pure bookkeeping (income / foreign aid / a coin tick / a bare turn pass): readable but brisk. */
@@ -463,6 +475,7 @@ class GameViewModel(
     private fun startGame(action: GameAction.NewGame) {
         advanceJob?.cancel() // drop any paced bot round still running from a prior game
         adviceJob?.cancel() // drop any decision-coach computation from a prior game
+        narrationJob?.cancel() // drop any Munshi narration computation from a prior game
         autoPlayer.cancelSpectate() // M6e: drop any spectator auto-play from a prior game
         // M6b: fresh match → fresh decision-quality tally.
         decisionTally = MatchDecisionTally()
@@ -749,6 +762,32 @@ class GameViewModel(
                     shown.legalIntents.toSet() == advice.map { it.intent }.toSet()
                 ) {
                     emitState(shown.copy(advice = advice))
+                }
+            }
+    }
+
+    /**
+     * MUNSHI (Track 3, spec §8.1) — cancel any in-flight narration and ask for a fresh line for the
+     * beat just published in [ui]. Per spec §8.6's latency rule, [ui]'s templated headline has
+     * ALREADY rendered synchronously by the time this fires (see
+     * [com.kursi.feature.game.overlays.headlineFor]); this only ever upgrades it in place if a
+     * nicer line lands before the NEXT beat cancels it. Staleness guard: [GameUiState.recentEvents]
+     * is a fresh list built per-beat ([com.kursi.feature.game.session.GameSession]), so reference
+     * equality on it — rather than the whole state object, which other in-place updates (coach
+     * toggle, unread badge, advice landing, ...) also `.copy()` — is exactly "still the same beat".
+     *
+     * DISPLAY-ONLY (spec §8.6): the result only ever lands in the ephemeral
+     * [GameUiState.narrationText] field — never `humanIntentLog`, never `GameState`, never a legal-
+     * action gate, and never the replay record.
+     */
+    private fun requestNarration(ui: GameUiState) {
+        narrationJob?.cancel()
+        narrationJob =
+            coroutineScope.launch {
+                val line = munshi.narrate(ui.view, ui.recentEvents) ?: return@launch
+                val shown = _state.value
+                if (shown != null && shown.recentEvents === ui.recentEvents) {
+                    _state.value = shown.copy(narrationText = line)
                 }
             }
     }

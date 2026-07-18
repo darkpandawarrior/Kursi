@@ -34,10 +34,11 @@ import com.kursi.feature.game.status.recapNames
  * FOCUS/GUIDED "what's happening" headline (spec §6, §8.1) — one calm, plain-language sentence
  * for the most recent meaningful beat, replacing ANALYST's denser [com.kursi.feature.game.status.RecapRail].
  *
- * Templated + deterministic today: it reuses [KursiVoice.recap], the same bilingual copy source
- * ANALYST's recap strip already draws from. This is a deliberate seam — Track 3 (the AI Munshi
- * narrator, spec §8.1) swaps the body of [headlineFor] for an LLM-generated line without any
- * caller needing to change, since the signature (events in, one sentence out) stays the same.
+ * Templated + deterministic, ALWAYS: it reuses [KursiVoice.recap], the same bilingual copy source
+ * ANALYST's recap strip already draws from. Per spec §8.6's latency rule this is the floor that
+ * must render instantly — it stays pure and synchronous on purpose, never awaits anything. The AI
+ * Munshi narrator (spec §8.1) does not replace this function; see [displayHeadlineFor], which
+ * upgrades its result in place with [GameUiState.narrationText] when that async line has landed.
  */
 fun headlineFor(
     events: List<GameEvent>,
@@ -49,13 +50,24 @@ fun headlineFor(
     return voice.recap(event, actor, other) ?: voice.opponentActing(actorName(state))
 }
 
+/**
+ * The line the headline actually shows (spec §8.1, §8.6): [GameUiState.narrationText] when the
+ * Munshi has produced one for THIS beat, otherwise the templated [headlineFor] line. Pure — kept
+ * separate from [BeatHeadline] so the upgrade-in-place rule is unit-testable without Compose.
+ */
+fun displayHeadlineFor(
+    events: List<GameEvent>,
+    state: GameUiState,
+    voice: KursiVoice,
+): String = state.narrationText?.trim()?.takeIf { it.isNotBlank() } ?: headlineFor(events, state, voice)
+
 @Composable
 internal fun BeatHeadline(
     state: GameUiState,
     modifier: Modifier = Modifier,
 ) {
     val voice = LocalKursiVoice.current
-    val line = headlineFor(state.recentEvents, state, voice)
+    val line = displayHeadlineFor(state.recentEvents, state, voice)
     Row(
         modifier =
             modifier

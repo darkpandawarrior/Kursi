@@ -119,6 +119,16 @@ data class GameUiState(
      * [GameAction.ContinueBeat].
      */
     val pendingBeat: PendingBeat? = null,
+    /**
+     * MUNSHI NARRATION (spec §8.1, §8.5, §8.6) — the AI-generated line for the current beat, once it
+     * lands. Null until the async narration job (if any provider tier is available) resolves, or
+     * whenever nothing beats the templated floor. [com.kursi.feature.game.overlays.headlineFor]
+     * always renders first regardless — this is a display-only, non-blocking UPGRADE-IN-PLACE on
+     * top of it, never a replacement source of truth: it is never folded into `humanIntentLog`,
+     * never mutates `GameState`, never gates a legal action, and is never persisted into a replay
+     * record (a fresh replay simply shows the templated line, or regenerates its own narration).
+     */
+    val narrationText: String? = null,
 ) {
     /**
      * DENSITY GATE (spec §3) — whether coach guidance (recommended-move stars, REAL/BLUFF badges,
