@@ -28,6 +28,13 @@ class AppPrefs(
 
         /** M5 ONBOARD — whether the post-primer "take the tutorial?" offer has been shown once. */
         private const val KEY_HAS_SEEN_TUTORIAL_OFFER = "has_seen_tutorial_offer"
+
+        /** Guided-funnel (spec §6) — whether the first-run funnel (Boot/Primer → Tutorial → Home) has run. */
+        private const val KEY_HAS_SEEN_FUNNEL = "has_seen_funnel"
+
+        /** Graduation policy (spec §3) — true once the player has changed the density layer themselves;
+         *  the auto-graduation evaluator never overrides a manual choice once this is set. */
+        private const val KEY_DENSITY_LAYER_MANUAL = "density_layer_manual"
         private const val KEY_SOUND_ENABLED = "sound_enabled"
         private const val KEY_REDUCED_MOTION = "reduced_motion"
         private const val KEY_DEFAULT_DIFFICULTY = "default_difficulty"
@@ -228,6 +235,22 @@ class AppPrefs(
             settings.putBoolean(KEY_HAS_SEEN_TUTORIAL_OFFER, v)
         }
 
+    // ── hasSeenFunnel (guided funnel, spec §6) ─────────────────────────────────
+
+    /**
+     * Gates first-run routing into the interactive guided funnel (Boot/Primer/ProfileSetup → Tutorial
+     * → Home). Defaults to [hasSeenTutorialOffer] when unset so a player upgrading from a build that
+     * predates the funnel — and who therefore already reached Home at least once, resolving the old
+     * offer dialog — is never routed into the funnel retroactively. Only a genuinely brand-new install
+     * (both flags unset) sees it. The app layer sets this alongside [hasSeenTutorialOffer] when the
+     * tutorial finishes (see KursiApp.kt), whether reached via the funnel or replayed later from Home.
+     */
+    var hasSeenFunnel: Boolean
+        get() = settings.getBoolean(KEY_HAS_SEEN_FUNNEL, defaultValue = hasSeenTutorialOffer)
+        set(v) {
+            settings.putBoolean(KEY_HAS_SEEN_FUNNEL, v)
+        }
+
     // ── Sound ─────────────────────────────────────────────────────────────────
 
     var soundEnabled: Boolean
@@ -289,6 +312,14 @@ class AppPrefs(
         set(v) {
             settings.putString(KEY_DENSITY_LAYER, v)
             _densityLayerFlow.value = v
+        }
+
+    /** True once the player has changed the density layer themselves (Settings / an in-game override).
+     *  [com.kursi.feature.game.evaluateDensityGraduation] reads this and never auto-advances past it. */
+    var densityLayerManuallySet: Boolean
+        get() = settings.getBoolean(KEY_DENSITY_LAYER_MANUAL, defaultValue = false)
+        set(v) {
+            settings.putBoolean(KEY_DENSITY_LAYER_MANUAL, v)
         }
 
     // ── M5 Turn speed / auto-mode ─────────────────────────────────────────────

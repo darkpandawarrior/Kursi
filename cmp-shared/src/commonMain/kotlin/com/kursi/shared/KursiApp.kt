@@ -39,6 +39,7 @@ import com.kursi.feature.game.LocalKursiVoice
 import com.kursi.feature.game.NiyamGazette
 import com.kursi.feature.game.OnlineHubController
 import com.kursi.feature.game.SwearingInPrimer
+import com.kursi.feature.game.evaluateDensityGraduation
 import com.kursi.feature.game.session.CompletedMatch
 import com.kursi.feature.game.session.MatchSnapshot
 import com.kursi.shared.nav.MatchSummaryStore
@@ -115,6 +116,10 @@ fun KursiApp() {
                                 when {
                                     !prefs.hasSeenPrimer -> Route.Primer
                                     !prefs.hasPlayerProfile -> Route.ProfileSetup()
+                                    // GUIDED FUNNEL (spec §6) — a brand-new player (see AppPrefs.hasSeenFunnel
+                                    // for the upgrade-safety default) lands in the interactive tutorial before
+                                    // ever seeing Home. Returning players skip straight through, unaffected.
+                                    !prefs.hasSeenFunnel -> Route.Tutorial
                                     else -> Route.Home
                                 }
                             navController.navigate(dest) { popUpTo(Route.Boot) { inclusive = true } }
@@ -126,8 +131,14 @@ fun KursiApp() {
                     composable<Route.Primer> {
                         SwearingInPrimer(onDone = {
                             prefs.hasSeenPrimer = true
-                            // Route to profile setup if the player hasn't named themselves yet.
-                            val next = if (!prefs.hasPlayerProfile) Route.ProfileSetup() else Route.Home
+                            // Route to profile setup if the player hasn't named themselves yet; otherwise
+                            // into the guided funnel (first-run only — see Route.Boot above).
+                            val next =
+                                when {
+                                    !prefs.hasPlayerProfile -> Route.ProfileSetup()
+                                    !prefs.hasSeenFunnel -> Route.Tutorial
+                                    else -> Route.Home
+                                }
                             navController.navigate(next) { popUpTo(Route.Primer) { inclusive = true } }
                         })
                     }
@@ -145,7 +156,10 @@ fun KursiApp() {
                                     null
                                 },
                             onDone = {
-                                navController.navigate(Route.Home) {
+                                // GUIDED FUNNEL (spec §6) — only the first-run path (never an edit-from-Settings
+                                // visit) routes into the tutorial; see Route.Boot above.
+                                val next = if (!fromSettings && !prefs.hasSeenFunnel) Route.Tutorial else Route.Home
+                                navController.navigate(next) {
                                     popUpTo(Route.ProfileSetup(fromSettings)) { inclusive = true }
                                 }
                             },
@@ -247,9 +261,24 @@ fun KursiApp() {
                         }
                     }
 
-                    // PEHLI HAZRI — M5 interactive tutorial (scripted, guaranteed bluff-caught teaching beat).
+                    // PEHLI HAZRI — M5 interactive tutorial, and (spec §6) the guided-funnel entry: a
+                    // brand-new player lands here straight from Boot/Primer/ProfileSetup before ever seeing
+                    // Home. [firstRun] is read BEFORE flipping hasSeenFunnel — true only on that first pass
+                    // (the back stack is then exactly [Tutorial], so popUpTo(Tutorial) safely clears it and
+                    // seeds FOCUS for their first real match, per spec §3/§6). A later replay from Home (the
+                    // offer dialog / a Home button) has hasSeenFunnel already true, so onDone just pops back.
                     composable<Route.Tutorial> {
-                        TutorialScreen(onDone = { navController.popBackStack() })
+                        TutorialScreen(onDone = {
+                            val firstRun = !prefs.hasSeenFunnel
+                            prefs.hasSeenFunnel = true
+                            prefs.hasSeenTutorialOffer = true
+                            if (firstRun) {
+                                prefs.densityLayerName = DensityLayer.FOCUS.name
+                                navController.navigate(Route.Home) { popUpTo(Route.Tutorial) { inclusive = true } }
+                            } else {
+                                navController.popBackStack()
+                            }
+                        })
                     }
 
                     // M6e GAUNTLET — Tarakki ki Seedhi: the escalating promotion ladder.
@@ -526,7 +555,14 @@ fun KursiApp() {
                                                 SharingStarted.Eagerly,
                                                 DensityLayer.fromName(prefs.densityLayerName),
                                             ),
-                                    onDensityLayerChange = { v -> prefs.densityLayerName = v.name },
+                                    onDensityLayerChange = { v ->
+                                        // A density change through this seam is always a deliberate player
+                                        // choice (Settings, or any future in-game override) — flag it so the
+                                        // graduation evaluator (spec §3) never fights it, per the "Settings can
+                                        // always override" rule.
+                                        prefs.densityLayerName = v.name
+                                        prefs.densityLayerManuallySet = true
+                                    },
                                     // M6e: a watch-only TAMASHA demo is NOT resumable — never persist its snapshot.
                                     onSnapshot = if (r.spectator) null else ({ snap: String? -> prefs.matchSnapshot = snap }),
                                     turnSpeedFlow = prefs.turnSpeedMultiplierFlow,
@@ -625,6 +661,22 @@ fun KursiApp() {
                                         bluffsCaught = s.toMatchSummary(r.seed, r.players, difficultyOf(r.difficulty)).bluffsCaught,
                                         opponentIds = opponentIds,
                                     )
+                                    // GRADUATION (spec §3) — after each real match, offer the pure evaluator the
+                                    // fresh games-played + decision-quality read; it no-ops once the player has
+                                    // manually chosen a density layer, and never advances past ANALYST.
+                                    val dl = prefs.readDecisionLedger()
+                                    val graduated =
+                                        evaluateDensityGraduation(
+                                            current = DensityLayer.fromName(prefs.densityLayerName),
+                                            manuallySet = prefs.densityLayerManuallySet,
+                                            gamesPlayed = prefs.readLedger().games,
+                                            decisions = dl.decisions,
+                                            accuracyPct = dl.accuracyPct,
+                                            avgEvLostPct = dl.avgEvLostPct,
+                                        )
+                                    if (graduated.name != prefs.densityLayerName) {
+                                        prefs.densityLayerName = graduated.name
+                                    }
                                     // M6d — fold the result into the ranked ELO ladder: a 1-v-table bout where
                                     // the difficulty implies the opponent rating. Win always nudges up, loss down.
                                     val curRating = prefs.readRankedStanding().rating
