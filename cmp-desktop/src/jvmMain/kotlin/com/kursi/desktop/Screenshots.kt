@@ -103,6 +103,18 @@ fun main() {
         println("  wrote ${file.name}  (${file.length()} bytes)")
     }
 
+    // Phone-width FOCUS render — exercises PhoneLayout (below the 840.dp breakpoint) so the primary
+    // mobile composition is captured, not just DesktopLayout at 1440px.
+    val (phoneFocusBase, _) = buildMidClaimState()
+    renderToPng(
+        phoneFocusBase.copy(densityLayer = DensityLayer.FOCUS),
+        outDir,
+        "4p_focus_phone",
+        width = 400,
+        height = 880,
+    )
+    println("  wrote 4p_focus_phone.png")
+
     // ── Chit-OPEN shots: verify the long-press inspect chits render rich + fit ──
     // Reuse the mid-claim state (human turn, opponents with standing claims).
     val (chitState, _) = buildMidClaimState()
@@ -1020,11 +1032,13 @@ private fun renderToPng(
     initialChit: ChitContent? = null,
     forceHandoff: Boolean? = null,
     spectator: Boolean = false,
+    width: Int = 1440,
+    height: Int = 900,
 ) {
     val scene =
         ImageComposeScene(
-            width = 1440,
-            height = 900,
+            width = width,
+            height = height,
             density = Density(1f),
         ) {
             KursiTheme {
