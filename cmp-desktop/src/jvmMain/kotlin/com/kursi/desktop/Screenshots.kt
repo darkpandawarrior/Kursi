@@ -115,6 +115,13 @@ fun main() {
     )
     println("  wrote 4p_focus_phone.png")
 
+    // 4p_coach_action_phone — reuse the ANALYST coach-action fixture already built in buildFixtures()
+    // rather than re-running its seed search, just at phone dimensions.
+    shots.firstOrNull { it.first == "4p_coach_action" }?.let { (_, state, lp) ->
+        renderToPng(state, outDir, "4p_coach_action_phone", lp, width = 400, height = 880)
+        println("  wrote 4p_coach_action_phone.png")
+    }
+
     // ── Chit-OPEN shots: verify the long-press inspect chits render rich + fit ──
     // Reuse the mid-claim state (human turn, opponents with standing claims).
     val (chitState, _) = buildMidClaimState()
@@ -202,6 +209,12 @@ fun main() {
     }
     println("  wrote home.png")
 
+    // Phone-portrait — portfolio device-wall capture (see 4p_focus_phone above for the pattern).
+    renderComposableAnimated(outDir, "home_phone", width = 400, height = 880) {
+        HomeScreen(onNewGame = {}, onGazette = {}, onSettings = {}, onOnlineTap = {}, launchIndex = 3)
+    }
+    println("  wrote home_phone.png")
+
     // home_mode_gauntlet.png — GAUNTLET tile pre-selected; right panel shows description + ENTER.
     renderComposableAnimated(outDir, "home_mode_gauntlet") {
         HomeScreen(
@@ -240,6 +253,12 @@ fun main() {
     }
     println("  wrote gazette_roles.png")
 
+    renderComposableAnimated(outDir, "gazette_roles_phone", width = 400, height = 880) {
+        com.kursi.feature.game
+            .NiyamGazette(onDismiss = {}, onReplayPrimer = {}, initialTab = 0)
+    }
+    println("  wrote gazette_roles_phone.png")
+
     renderComposable(outDir, "setup") {
         SetupScreen(
             onBack = {},
@@ -249,6 +268,16 @@ fun main() {
         )
     }
     println("  wrote setup.png")
+
+    renderComposable(outDir, "setup_phone", width = 400, height = 880) {
+        SetupScreen(
+            onBack = {},
+            onNext = { _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ -> },
+            initialPlayers = 4,
+            initialDifficulty = Difficulty.Medium,
+        )
+    }
+    println("  wrote setup_phone.png")
 
     // ── M6e GAUNTLET — the escalating promotion ladder (mid-run: rungs 0-1 cleared) ──
     renderComposable(outDir, "gauntlet") {
@@ -356,6 +385,9 @@ fun main() {
             )
         renderToPng(narrativeState, outDir, "darbar_table", null, initialDarbarOpen = true)
         println("  wrote darbar_table.png")
+
+        renderToPng(narrativeState, outDir, "darbar_table_phone", null, initialDarbarOpen = true, width = 400, height = 880)
+        println("  wrote darbar_table_phone.png")
     }
 
     // ── M5 ONBOARD: interactive tutorial (Pehli Hazri) ──
@@ -385,6 +417,11 @@ fun main() {
         TutorialScreen(onDone = {}, initialStep = 8)
     }
     println("  wrote tutorial_coup.png")
+
+    renderComposable(outDir, "tutorial_coup_phone", width = 400, height = 880) {
+        TutorialScreen(onDone = {}, initialStep = 8)
+    }
+    println("  wrote tutorial_coup_phone.png")
 
     renderComposable(outDir, "tutorial_exchange") {
         TutorialScreen(onDone = {}, initialStep = 9)
@@ -416,6 +453,17 @@ fun main() {
     }
     println("  wrote results.png")
 
+    renderComposable(outDir, "results_phone", width = 400, height = 880) {
+        ResultsScreen(
+            summary = sampleMatchSummary(),
+            onRematch = {},
+            onNewGame = {},
+            onHome = {},
+            onShare = {},
+        )
+    }
+    println("  wrote results_phone.png")
+
     renderComposable(outDir, "settings") {
         SettingsScreen(
             prefs = AppPrefs(),
@@ -425,6 +473,16 @@ fun main() {
         )
     }
     println("  wrote settings.png")
+
+    renderComposable(outDir, "settings_phone", width = 400, height = 880) {
+        SettingsScreen(
+            prefs = AppPrefs(),
+            onBack = {},
+            onReplayPrimer = {},
+            onGazette = {},
+        )
+    }
+    println("  wrote settings_phone.png")
 
     // ── PEHLI HAZRI — first-run profile setup (name, avatar, seat colour) ──
     // Seeded with a populated identity so the live-preview monogram + selected avatar/swatch
@@ -479,6 +537,37 @@ fun main() {
         )
     }
     println("  wrote career.png")
+
+    renderComposable(outDir, "career_phone", width = 400, height = 880) {
+        CareerScreen(
+            ledger =
+                StatsLedger(
+                    games = 14,
+                    wins = 9,
+                    bluffsHeld = 21,
+                    bluffsCaught = 6,
+                    headToHead =
+                        mapOf(
+                            "netaji_vachan" to PersonaRecord(played = 8, wins = 5),
+                            "bhai_teja" to PersonaRecord(played = 6, wins = 2),
+                            "babu_filewala" to PersonaRecord(played = 5, wins = 4),
+                        ),
+                ),
+            decisionLedger =
+                DecisionLedger(
+                    decisions = 168,
+                    matchedBest = 121,
+                    evLostMilli = 6720L,
+                    challenges = 24,
+                    challengesGood = 17,
+                    bluffsTried = 31,
+                    bluffsOk = 22,
+                ),
+            ranked = sampleRanked(),
+            onBack = {},
+        )
+    }
+    println("  wrote career_phone.png")
 
     // M6d §1+§3 — the local leaderboard / standings: rank plaque + rating spark-line + daily streak.
     renderComposable(outDir, "leaderboard") {
@@ -979,10 +1068,12 @@ private fun sampleMatchSummary(): MatchSummary =
 private fun renderComposable(
     dir: File,
     name: String,
+    width: Int = 1440,
+    height: Int = 900,
     content: @Composable () -> Unit,
 ) {
     val scene =
-        ImageComposeScene(width = 1440, height = 900, density = Density(1f)) {
+        ImageComposeScene(width = width, height = height, density = Density(1f)) {
             KursiTheme { content() }
         }
     val data = scene.render().encodeToData() ?: error("encode null for $name")
@@ -1007,10 +1098,12 @@ private fun renderComposable(
 private fun renderComposableAnimated(
     dir: File,
     name: String,
+    width: Int = 1440,
+    height: Int = 900,
     content: @Composable () -> Unit,
 ) {
     val scene =
-        ImageComposeScene(width = 1440, height = 900, density = Density(1f)) {
+        ImageComposeScene(width = width, height = height, density = Density(1f)) {
             KursiTheme { content() }
         }
     val frameNs = 16_000_000L // 16 ms per frame
