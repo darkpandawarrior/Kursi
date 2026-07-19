@@ -1,0 +1,120 @@
+# github-release.yml — tag-triggered GitHub Release (changelog + debug/release APK artifacts).
+# Adapted from the versioned-release skill's proven template (Mileway).
+#
+# Distinct from release.yml (manual store-deploy orchestration via fastlane) and desktop-release.yml
+# (triggered by `release: published`, which this workflow's `gh release create` fires). This one
+# creates the GitHub Release itself + attaches Android APKs on every `v*` tag push.
+#
+# Tag format is the FINGERPRINT computed by gradle/versioning.gradle.kts / scripts/bump_version.sh
+# (see docs/RELEASE.md): v<YYYY>.<0M>.<0W>.<MILESTONE>.<commitCount>, e.g. v2026.07.29.1.126.
+name: GitHub Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # full history for the changelog range
+          submodules: recursive
+
+      - name: Assemble release notes
+        id: cl
+        run: |
+          set -uo pipefail
+          cur="${GITHUB_REF_NAME}"
+          prev="$(git describe --tags --abbrev=0 "${cur}^" 2>/dev/null || echo "")"
+          range="${prev:+$prev..}$cur"
+          git log --no-merges --pretty='- %s' "$range" > CHANGELOG_BODY.md
+          echo "prev=$prev" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with: { java-version: '17', distribution: 'temurin' }
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Android build: every flavor+buildType RELEASE_BUILD_CMD lists (repo variable — Settings →
+      # Variables). Default mirrors cmp-android's gms/noGms flavors, debug + release, so testers can
+      # grab the variant they need. Release is unsigned unless ANDROID_KEYSTORE_* secrets are set
+      # (see docs/RELEASE.md) — that's fine for sideloading/Obtainium; debug installs directly.
+      - name: Build Android artifacts
+        run: |
+          set -uo pipefail
+          cmd="${RELEASE_BUILD_CMD:-:cmp-android:assembleGmsDebug :cmp-android:assembleGmsRelease :cmp-android:assembleNoGmsDebug :cmp-android:assembleNoGmsRelease}"
+          ./gradlew $cmd || ./gradlew ${cmd%% *} || true
+          mkdir -p dist
+          tag="${GITHUB_REF_NAME}"
+          # Attach APKs under meaningful names: Kursi-<tag>-<flavor>-<buildType>[-unsigned].apk
+          while IFS= read -r apk; do
+            variant="$(basename "$apk" .apk)"; variant="${variant#cmp-android-}"
+            name="Kursi-${tag}-${variant}"
+            if [[ "$variant" == *release* ]] && ! unzip -l "$apk" | grep -q 'META-INF/.*\.RSA\|META-INF/.*\.DSA\|META-INF/.*\.EC'; then
+              name="${name}-unsigned"
+            fi
+            cp "$apk" "dist/${name}.apk"
+          done < <(find . -path '*/outputs/apk/*' -name '*.apk' -not -name '*androidTest*')
+        env:
+          RELEASE_BUILD_CMD: ${{ vars.RELEASE_BUILD_CMD }}
+
+      - name: Fail if no release APK was produced
+        run: |
+          shopt -s nullglob
+          rel=(dist/*release*.apk)
+          if [ ${#rel[@]} -eq 0 ]; then
+            echo "::error::no release APK in dist/ — Build Android artifacts step must have failed"
+            exit 1
+          fi
+
+      - name: Create or update release
+        run: |
+          set -uo pipefail
+          tag="${GITHUB_REF_NAME}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" --title "$tag" --notes-file CHANGELOG_BODY.md || true
+          else
+            gh release create "$tag" --title "$tag" --notes-file CHANGELOG_BODY.md || true
+          fi
+          shopt -s nullglob
+          files=(dist/*)
+          if [ ${#files[@]} -gt 0 ]; then gh release upload "$tag" "${files[@]}" --clobber || true; else echo "no artifacts to attach"; fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  # ── iOS unsigned build check (gated on iosApp/ existing) ───────────────────
+  # Not a real archive/IPA (needs a signing team) — just proves the KMP framework + Xcode project
+  # still build against the tagged commit's stamped version. Never fails the release job above.
+  ios-build-check:
+    runs-on: macos-latest
+    needs: [release]
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Check iosApp/ exists
+        id: has_ios
+        run: echo "present=$([ -d iosApp ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Set up JDK 17
+        if: steps.has_ios.outputs.present == 'true'
+        uses: actions/setup-java@v4
+        with: { java-version: '17', distribution: 'temurin' }
+      - name: Setup Gradle
+        if: steps.has_ios.outputs.present == 'true'
+        uses: gradle/actions/setup-gradle@v4
+      - name: Stamp iOS version from tag
+        if: steps.has_ios.outputs.present == 'true'
+        run: bash scripts/gen_ios_version.sh
+      - name: Build KMP iOS framework
+        if: steps.has_ios.outputs.present == 'true'
+        run: ./gradlew :cmp-ios:linkReleaseFrameworkIosArm64
+      - name: Build unsigned iosApp (no codesign)
+        if: steps.has_ios.outputs.present == 'true'
+        run: |
+          xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -configuration Release \
+            -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build

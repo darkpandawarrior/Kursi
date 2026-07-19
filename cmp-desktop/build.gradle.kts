@@ -6,6 +6,12 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+// Three-tier versioning — see gradle/versioning.gradle.kts + docs/RELEASE.md.
+// Native distributions need strict MAJOR.MINOR.BUILD, so desktop uses kursiDesktopPackageVersion
+// (MILESTONE.0.commitCount), not the date-based MARKETING string.
+apply(from = "$rootDir/gradle/versioning.gradle.kts")
+val kursiMarketingVersion = extra["kursiDesktopPackageVersion"] as String
+
 kotlin {
     jvm()
 
@@ -56,7 +62,7 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
 
             packageName = "Kursi"
-            packageVersion = "1.0.0"
+            packageVersion = kursiMarketingVersion
             description = "Bluffing card game — Kursi ke liye kuch bhi karega."
             copyright = "© 2025 Siddharth Pandalai"
             vendor = "darkpandawarrior"
@@ -67,8 +73,8 @@ compose.desktop {
             macOS {
                 iconsDir.resolve("kursi.icns").takeIf { it.exists() }?.let { iconFile.set(it) }
                 bundleID = "com.kursi.desktop"
-                packageVersion = "1.0.0"
-                dmgPackageVersion = "1.0.0"
+                packageVersion = kursiMarketingVersion
+                dmgPackageVersion = kursiMarketingVersion
                 infoPlist {
                     extraKeysRawXml =
                         """
@@ -78,15 +84,15 @@ compose.desktop {
             }
             windows {
                 iconsDir.resolve("kursi.ico").takeIf { it.exists() }?.let { iconFile.set(it) }
-                packageVersion = "1.0.0"
-                msiPackageVersion = "1.0.0"
+                packageVersion = kursiMarketingVersion
+                msiPackageVersion = kursiMarketingVersion
                 menuGroup = "Kursi"
                 upgradeUuid = "2E5F3A1C-9B4D-4E7A-8C0F-1D2B3E4A5F6C"
             }
             linux {
                 iconsDir.resolve("kursi_512.png").takeIf { it.exists() }?.let { iconFile.set(it) }
-                packageVersion = "1.0.0"
-                debPackageVersion = "1.0.0"
+                packageVersion = kursiMarketingVersion
+                debPackageVersion = kursiMarketingVersion
                 menuGroup = "Game"
             }
         }

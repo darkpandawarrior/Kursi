@@ -8,27 +8,17 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
-// ── Single-source versioning ──────────────────────────────────────────────────
-// VERSION (semver) + BUILD_NUMBER at the repo root are the ONE place versions
-// change. Bump with scripts/bump_version.sh --patch|--minor|--major.
-// versionCode = 1 + BUILD_NUMBER so the first release ships as versionCode 1.
-val versionCodeBase = 1
+// ── Three-tier versioning ──────────────────────────────────────────────────────
+// FINGERPRINT/MARKETING/BUILDCODE are computed in gradle/versioning.gradle.kts from
+// MILESTONE + git commit count (see docs/RELEASE.md). Bump MILESTONE with
+// scripts/bump_version.sh --milestone.
+apply(from = "$rootDir/gradle/versioning.gradle.kts")
 
-fun readVersionName(): String =
-    rootProject
-        .file("VERSION")
-        .takeIf { it.exists() }
-        ?.readText()
-        ?.trim()
-        ?.ifEmpty { "1.0.0" } ?: "1.0.0"
+fun readVersionName(): String = extra["kursiMarketing"] as String
 
-fun readBuildNumber(): Int =
-    rootProject
-        .file("BUILD_NUMBER")
-        .takeIf { it.exists() }
-        ?.readText()
-        ?.trim()
-        ?.toIntOrNull() ?: 0
+fun readFingerprint(): String = extra["kursiFingerprint"] as String
+
+fun readBuildCode(): Int = extra["kursiBuildCode"] as Int
 
 // ── Release signing ────────────────────────────────────────────────────────────
 // Reads from keystore.properties (copy keystore.properties.template and fill in).
@@ -57,8 +47,9 @@ android {
         applicationId = "com.kursi.android"
         minSdk = 26
         targetSdk = 37
-        versionCode = versionCodeBase + readBuildNumber()
+        versionCode = readBuildCode()
         versionName = readVersionName()
+        buildConfigField("String", "FINGERPRINT", "\"${readFingerprint()}\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -100,7 +91,7 @@ android {
             applicationIdSuffix = ".debug"
             isDebuggable = true
             isMinifyEnabled = false
-            versionNameSuffix = "-debug"
+            versionNameSuffix = "-${readFingerprint()}"
         }
         // QA/staging: minified but debug-signed; installs alongside the debug build.
         create("staging") {
