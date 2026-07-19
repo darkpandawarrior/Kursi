@@ -31,6 +31,8 @@ Sibling repos: [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit) 
 - [Why Kursi](#why-kursi)
 - [Highlights](#highlights)
 - [Screenshots](#screenshots)
+- [The three-layer table — FOCUS / GUIDED / ANALYST](#the-three-layer-table--focus--guided--analyst)
+- [Sarkari Noir — the AAA visual system](#sarkari-noir--the-aaa-visual-system)
 - [The world](#the-world)
 - [Home](#home)
 - [The six roles](#the-six-roles)
@@ -39,11 +41,13 @@ Sibling repos: [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit) 
 - [KISSA — story arcs mode](#kissa--story-arcs-mode)
 - [The ten personas](#the-ten-personas)
 - [Decision Coach](#decision-coach)
+- [The Munshi — AI narrator](#the-munshi--ai-narrator)
 - [Game modes](#game-modes)
 - [Career, replay, and ranking](#career-replay-and-ranking)
 - [Online play](#online-play)
 - [Onboarding](#onboarding)
 - [Reference & accessibility](#reference--accessibility)
+- [Shader material layer & sound](#shader-material-layer--sound)
 - [Features at a glance](#features-at-a-glance)
 - [Architecture](#architecture)
 - [Technical deep dive](#technical-deep-dive)
@@ -66,10 +70,15 @@ Sibling repos: [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit) 
 
 Coup (Indie Boards and Cards, 2012) is a tight bluffing game with almost no social layer — five roles, a handful of actions, and the table goes quiet between claims. Kursi keeps that deterministic core intact and builds a satirical India corporate-political skin plus a social layer (DARBAR) on top of it: bots that remember, gossip, form pacts and hold grudges, and an ISMCTS-powered coach that reads the table the way the bots do.
 
+The first build of that idea shipped every screen as one dense instrument panel — right for a rules-lawyer, overwhelming for a first-timer. The overhaul in this README's screenshots is the fix: the same engine, the same DARBAR layer, now revealed at **three densities** instead of one, wrapped in a from-scratch **AAA visual language** and narrated in-character by an **AI Munshi** instead of static log lines. Nothing about the deterministic core changed — the presentation layer got rebuilt around how a new player actually learns the table.
+
 It's also the KMP proving ground for reusable pieces that live in a separate repo: `mvi-core`, `feedback` and several other shared modules (`common`, `bots-policy`, `network`, the on-device-AI layer, `llm-chat`) are versioned once in [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit) and consumed here via `includeBuild` + dependency substitution, not copy-pasted — the same toolkit and the same [`kmp-build-logic`](https://github.com/darkpandawarrior/kmp-build-logic) convention plugins that back [Mileway](https://github.com/darkpandawarrior/Mileway) and [PaymentsLab](https://github.com/darkpandawarrior/PaymentsLab), the sibling projects under the same [portfolio](https://cv-siddharth.vercel.app/). See [Technical deep dive](#technical-deep-dive) for exactly how.
 
 What's real vs. mocked, honestly:
 - **Engine, AI (ISMCTS), DARBAR, career/replay, offline modes** — fully implemented, covered by `commonTest` (`ScalingGoldenTest`, `MatchResumeTest`, `NarrativeResumeTest`).
+- **The FOCUS/GUIDED/ANALYST density layers, the Sarkari Noir visual system, beat-gate pacing** — fully implemented across every screen, covered by `feature:game` / `core:designsystem` unit tests and the render-fixture gate below.
+- **The Munshi AI narrator** — a real seam (`MunshiNarrator`, provider matrix: on-device → BYOK cloud → templated floor); the templated tier is always live, on-device/cloud upgrade it in place when a provider is available.
+- **The AGSL/Skia shader material layer** — real `RuntimeShader`/`RuntimeEffect` per-platform actuals with a procedural (non-shader) fallback where the platform doesn't support runtime shaders.
 - **Online play (Ktor/Netty server, LAN discovery, reconnect)** — real server code and protocol, not a mock; gameplay-tested locally. Production deploy (`server-deploy.yml` → Fly.io) is wired but not yet running continuously.
 - **Cloud AI providers (Anthropic/OpenAI/Gemini)** — real `AiProvider` implementations, BYOK. On-device Gemini Nano / Apple FoundationModels are the no-network fallback path.
 - **Store distribution pipelines** (Play, F-Droid, Amazon, Huawei, Samsung, Aptoide) — real workflows, gated on repo secrets that aren't populated yet; no build has shipped to a store.
@@ -78,10 +87,16 @@ Inspired by Coup (Indie Boards and Cards, 2012). Theme, characters, code, visual
 
 ## Highlights
 
-- 🎲 **Deterministic engine.** `(GameState, Intent) → GameState`, a pure function with a counter-based SplitMix64 RNG carried in state — no wall-clock, no platform `Random`. Any match replays byte-for-byte from `(seed, intentLog)`.
+- 🎚️ **Three densities, one engine.** FOCUS (turn · one plain sentence · your hand · your actions, nothing else) → GUIDED (FOCUS + one suggestion at a time) → ANALYST (the full instrument panel). A pure function (`evaluateDensityGraduation`) climbs a player FOCUS → GUIDED → ANALYST as they rack up completed matches, climbing faster if their lifetime decision-quality reads competent — and never overrides a manual choice in Settings.
+- 🎨 **Sarkari Noir — an AAA visual system, not a reskin.** One warm-lamp-on-teak/brass/paper material language enforced across every screen: no bordered boxes (shadow + material only), raised "stamp" buttons, brass-rimmed tokens, engraved DM Mono/Rozha One/Marcellus headers, one accent colour (oxblood) reserved for the thing that actually needs it. Spelled out in [`docs/design-language.md`](docs/design-language.md).
+- 🗞️ **The Munshi — an AI narrator, not a log.** `MunshiNarrator` turns the redacted table state + recent events into one grounded, in-character sentence, upgrading the templated headline in place. Provider matrix: on-device (auto-detected, zero setup) → any BYOK cloud provider you opt into → the templated floor, which is always truthful and never blocks a beat.
+- ⏸️ **Beat-gate pacing.** In FOCUS/GUIDED, the table holds on a meaningful beat until you tap, click, or press Space to continue — instead of the log auto-scrolling past what just happened.
+- 🎲 **Deterministic engine, unchanged underneath.** `(GameState, Intent) → GameState`, a pure function with a counter-based SplitMix64 RNG carried in state — no wall-clock, no platform `Random`. Any match replays byte-for-byte from `(seed, intentLog)`.
 - 🕵️ **Structural secrecy, not convention.** `redact(state, viewer) → PlayerView` is a type-level projection — another player's face-down roles cannot structurally appear in the view bots or clients receive.
-- 🤖 **ISMCTS-backed bots and coach.** The same Information Set Monte Carlo Tree Search that drives the 10 named personas (Easy → Grandmaster) also powers the optional Decision Coach — recommended-move stars, bluff-risk odds, an opponent dossier.
+- 🤖 **ISMCTS-backed bots and coach.** The same Information Set Monte Carlo Tree Search that drives the 10 named personas (Easy → Grandmaster) also powers the optional Decision Coach — recommended-move stars, bluff-risk odds, an opponent dossier — surfaced at ANALYST density.
 - 🗣️ **DARBAR social layer.** Four concurrent bot-driven story arcs (Gathbandhan, Afwaah, Sting, Badla) run on a separate deterministic narrative RNG that never touches game state, covered by `NarrativeResumeTest`.
+- 🖌️ **A real shader material layer.** The felt table and key panels get an AGSL (Android `RuntimeShader`)/SkSL (Skia `RuntimeEffect`) per-pixel grain + warm bloom pass — the same shader source compiles on both, with a procedural fallback on platforms without runtime-shader support.
+- 🔊 **Sound.** A gated CC0 SFX pipeline wired to the real game beats (deal, claim, challenge, reveal, coup, win) — silent by default per-platform decode failure, never a crash, always behind the player's own sound toggle.
 - 🌍 **One codebase, four targets.** Android, iOS, JVM desktop and Kotlin/Wasm all build from the same Compose Multiplatform `cmp-shared` UI over a platform-neutral `CoroutineScope`-based MVI core (no `androidx.lifecycle.ViewModel` — `cmp-ios`/`cmp-web` can't depend on AndroidX).
 - 🧱 **A vendored KMP toolkit, not copy-pasted code.** `mvi-core`, `feedback` and five other modules live once in [`kmp-toolkit`](https://github.com/darkpandawarrior/kmp-toolkit), pulled in as a submodule + `includeBuild` with explicit `dependencySubstitution`.
 - 🌐 **A real authoritative server.** Ktor/Netty holds all game state; clients get only their redacted `PlayerView`. LAN discovery via Bonjour/mDNS, room codes, quick-match, and reconnect with auto-pass for a dropped player.
@@ -89,9 +104,9 @@ Inspired by Coup (Indie Boards and Cards, 2012). Theme, characters, code, visual
 
 ## Screenshots
 
-![DARBAR — Afwaah arc live at a 4-player table](docs/screenshots/darbar_table.png)
+![The FOCUS board — Sarkari Noir at the density that ships to a first-time player](docs/screenshots/4p_focus.png)
 
-*सब मिले हुए हैं।* — Everyone is in on it.
+*अब सिर्फ ज़रूरी बात।* — Just what matters, now.
 
 Every screenshot in `docs/screenshots/` is rendered headlessly on the JVM by
 `:cmp-desktop:renderScreens` and committed back to `main` by `screenshots.yml` on every push, so
@@ -103,6 +118,48 @@ prose: [Home](#home) · [The six roles](#the-six-roles) · [How you play](#how-y
 [Decision Coach](#decision-coach) · [Game modes](#game-modes) ·
 [Career, replay, and ranking](#career-replay-and-ranking) · [Online play](#online-play) ·
 [Onboarding](#onboarding) · [Reference & accessibility](#reference--accessibility).
+
+---
+
+## The three-layer table — FOCUS / GUIDED / ANALYST
+
+The single biggest change in this pass: the same live `GameState` is now rendered at three
+progressive-disclosure densities instead of one, via `DensityLayer` (`feature/game/DensityLayer.kt`).
+
+| Layer | What's on screen | Who it's for |
+|---|---|---|
+| **FOCUS** | Whose turn, one plain-language headline (`BeatHeadline`), your hand, your legal actions. No suspicion pips, no coach badges, no dossier chits, no event log, no Darbar tray. | A first-time player who needs to see the table, not an instrument panel. |
+| **GUIDED** | Everything in FOCUS, plus one suggestion at a time. | A player past the tutorial but not yet reading the room unassisted. |
+| **ANALYST** | The full panel: suspicion pips, coach badges + odds, opponent dossiers, the event log, Darbar chat. | The rules-lawyer table this game always supported — unchanged from before the overhaul. |
+
+Nothing about the ANALYST density changed underneath — `4p_mid_claim.png` below is the same fixture
+it always was. `4p_focus.png` is the **same table, same state**, rendered through the FOCUS gate:
+
+![The same mid-game table at ANALYST density (left) vs FOCUS density (right) — same GameState, different disclosure](docs/screenshots/4p_mid_claim.png)
+
+**Graduation is earned, not forced.** `evaluateDensityGraduation` (pure function, unit-tested) advances a player FOCUS → GUIDED → ANALYST purely off `StatsLedger.games` and the same `DecisionGrade` competence read the career dossier already computes — faster if their accuracy/EV-bled numbers show real competence, never sideways or backward, and **never** overriding a manual choice from Settings. First-run funnel routing pins a brand-new player at FOCUS the moment they finish the tutorial (`KursiApp.kt`); everyone who played before the overhaul keeps ANALYST, since nothing forces an existing player back down a density they were already reading fine.
+
+**Beat-gate pacing** ties into the same FOCUS/GUIDED path: instead of the event log scrolling past what just happened, the table holds on a meaningful beat and shows a tap-to-continue prompt (`BeatGatePrompt.kt`) — tap, click, or Space on desktop — so a new player actually sees the reveal before the next claim buries it.
+
+---
+
+## Sarkari Noir — the AAA visual system
+
+![The Niyam Gazette rule reference in the Sarkari Noir material language](docs/screenshots/gazette_roles.png)
+
+Every screen in this build — not just the game board — was rebuilt against one written design
+language, [`docs/design-language.md`](docs/design-language.md): a warm overhead lamp on
+teak/aged-brass/document-paper, enforced structurally rather than left to per-screen taste.
+
+- **No bordered boxes.** Depth comes from shadow + material, never a 1–2dp outline framing a region.
+- **Crafted elements.** Buttons are raised stamps (gold-fill for primary, dark+brass-hairline for secondary). Cards are aged paper with a brass double-rim. Avatars are brass-rimmed discs with a role-hued radial fill.
+- **Engraved chrome.** Headers are a small-caps DM Mono eyebrow + a hairline gold rule, or a sparing Rozha One display title — never a full-width filled gradient bar.
+- **One accent.** Oxblood/stamp-red is reserved for the single element that needs attention; gold is primary/focal; everything else recedes into warm neutrals.
+- **Ground truth = the render.** The checklist's last line is literal: every screen is self-checked against its own `cmp-desktop/build/shots/<name>.png` fixture before it ships, not against a mockup.
+
+This is why the render harness in `cmp-desktop/src/jvmMain/kotlin/com/kursi/desktop/Screenshots.kt`
+matters as much as it does — it's the actual QA loop this visual system was built with, not an
+afterthought bolted on for the README.
 
 ---
 
@@ -287,6 +344,20 @@ Coach can be toggled off in Settings. When off, the table is silent — no odds,
 
 ---
 
+## The Munshi — AI narrator
+
+DARBAR's chat feed and the coach's odds are structured data. The **Munshi** (`ai/src/commonMain/kotlin/com/kursi/ai/MunshiNarrator.kt`) turns that plus the recent public event log into one grounded, in-character sentence — the same headline `BeatHeadline` shows at FOCUS/GUIDED density, upgraded in place when a better source is available.
+
+**Provider matrix (spec §8.5), tried in order:**
+
+1. **On-device** — auto-detected, zero setup for the player (Gemini Nano on Android, Apple FoundationModels on iOS 26).
+2. **BYOK cloud** — any provider (Anthropic/OpenAI/Gemini) the player has explicitly opted into with their own key; a null key simply never enters the chain (`buildProviderChain`), so it's inert by default, not a hidden network call.
+3. **Templated floor** — the copy already used everywhere else in the game (`KursiVoice.recap`). The Munshi reports this tier back to its caller as `null` rather than synthetic text, so the templated line at the call site is always the truthful fallback, never a stand-in the narrator pretends to have written.
+
+**Latency and guardrails:** a plain suspend call with its own internal timeout — it never blocks a beat, since the templated line has already rendered synchronously by the time the Munshi is invoked; a non-null result only ever upgrades that line after the fact. It never sees hidden cards (inputs are already redacted/public-only), never mutates `GameState`, never gates a legal action, and is never persisted into the replay record — display-only, always regenerable.
+
+---
+
 ## Game modes
 
 ![Game modes flow — Setup, Team Khel toggle, the GAUNTLET ladder, a team table with faction badges, TAMASHA spectator mode, and the pass-and-play handoff guard](docs/gifs/modes.gif)
@@ -421,6 +492,12 @@ The authoritative server is **Ktor/Netty**. All game state lives server-side. Cl
 
 Scripted table with guaranteed teaching beats. Beat 7 is the lesson that matters: a NETA claim gets challenged and the card flips to BHAI. The **JHOOTH** (liar) verdict stamp lands. The bluffer loses influence. You can't exit the tutorial without seeing it happen.
 
+Three more beats teach the mechanics FOCUS/GUIDED players would otherwise never see explained: a BLOCK (Vakil stopping a Supari), the unblockable KHELA/Coup, and an Exchange (Setting) — one mechanic at a time, each in its own un-acted "prompting" state.
+
+![Tutorial — the KHELA/Coup teaching beat, unblockable and mandatory at 10 coins](docs/screenshots/tutorial_coup.png)
+
+Finishing the tutorial for the first time pins a brand-new player at **FOCUS** density (`KursiApp.kt`'s first-run funnel routing) — the three-layer table above starts everyone at the calmest view, not the full instrument panel.
+
 ---
 
 ### Setup
@@ -445,14 +522,37 @@ Every game moment (income, coin steal, role reveal, influence loss, elimination,
 
 ---
 
+## Shader material layer & sound
+
+The felt table and key panels get a per-pixel material pass rather than a static gradient:
+`core/designsystem/src/commonMain/kotlin/com/kursi/designsystem/shader/MaterialShaders.kt` holds one
+shared AGSL/SkSL source string (animated film grain + a warm bloom lift around the lamp key-light
+pool) that compiles unmodified as AGSL on Android's `android.graphics.RuntimeShader` (API 33+) and as
+SkSL on Skia's `org.jetbrains.skia.RuntimeEffect` (desktop/iOS/wasm) — a single `expect`/`actual`
+(`MaterialShader.kt`) picks the right backend per target, falling back to the procedural
+Canvas-drawn felt (hatch/guilloché/vignette) underneath on platforms without runtime-shader support.
+It's additive polish on top of a real drawn surface, not a filter-demo overlay.
+
+A gated CC0 SFX pipeline (`core/designsystem/.../audio/SoundPlayer.kt`) plays clips on the real game
+beats — deal, claim, challenge, reveal, coup, win — decoding lazily per platform actual. Every `play()`
+call is wrapped so a missing clip, an unsupported codec, or a headless CI box degrades to silence,
+never a crash; callers gate every call on the player's own sound-enabled preference.
+
+---
+
 ## Features at a glance
 
 | Area | What's inside |
 |---|---|
+| Progressive disclosure | 3 densities — FOCUS / GUIDED / ANALYST — via `DensityLayer`, earned graduation off match count + decision quality, manual override always wins |
+| Visual system | Sarkari Noir — one enforced material language across every screen (`docs/design-language.md`), no bordered boxes, stamp buttons, brass tokens |
+| AI narrator | The Munshi — on-device → BYOK cloud → templated-floor provider chain, upgrades the beat headline in place, never blocks or persists into replay |
+| Shader layer | AGSL/SkSL per-pixel grain + bloom material pass on the felt, procedural fallback where runtime shaders aren't supported |
+| Audio | Gated CC0 SFX pipeline wired to real game beats, silent-on-failure, player-toggleable |
 | Core game | 5 roles (6th — Patrakaar — at 6+ players), 8 actions, challenge/block resolution, 2–10 players |
 | Social layer | DARBAR: 4 concurrent bot-driven story arcs (Gathbandhan, Afwaah, Sting, Badla), deterministic narrative RNG |
 | Bots | 10 named personas, 5 difficulty tiers (Easy → Grandmaster), ISMCTS-backed at Medium+ |
-| Coach | ISMCTS move recommendation, bluff-risk odds, opponent dossier, toggleable |
+| Coach | ISMCTS move recommendation, bluff-risk odds, opponent dossier, toggleable, ANALYST density |
 | Modes | vs AI, GAUNTLET ladder, Team Khel (factions), DARBAR, TAMASHA spectate, pass-and-play, 7 optional Vishesh rule variants |
 | Career | Results certificate, Roznamcha dossier, local ELO + daily streak, byte-for-byte replay scrubber |
 | Online | Private room codes, quick-match, LAN/mDNS discovery, authoritative Ktor/Netty server, reconnect handling |
@@ -560,7 +660,7 @@ Things worth calling out:
 
 **DARBAR narrative doesn't touch the engine.** Two RNG streams: `nudgeRng` advances in strict bot-step order (deterministic across resume) and a cosmetic `rng` for chat timings (never game-affecting). `NarrativeResumeTest` covers this.
 
-**Design system is the enforcement layer.** Every surface routes through `BrassParchmentSurface`, `decoPopoverPaper`, `WaxSeal`, `drawRoleGlyph`. The License Raj Deco visual identity — 1950s–70s government-issue document aesthetic, teak `#1A1A2E` / brass `#C99A3B` / cream `#F4ECD8` — is structurally enforced, not left to per-screen taste.
+**Design system is the enforcement layer.** Every surface routes through `BrassParchmentSurface`, `decoPopoverPaper`, `WaxSeal`, `drawRoleGlyph`. The **License Raj Deco** brand identity — 1950s–70s government-issue document aesthetic, teak `#1A1A2E` / brass `#C99A3B` / cream `#F4ECD8` — is structurally enforced, not left to per-screen taste. **Sarkari Noir** (`docs/design-language.md`) is the AAA execution standard applied on top of those same tokens in this pass — no bordered boxes, shadow+material depth, stamp buttons — across every screen, not just the game board.
 
 **AI layer is provider-agnostic.** The `AiProvider` interface abstracts Anthropic, OpenAI, and Gemini cloud calls, on-device Gemini Nano (Android), and Apple FoundationModels (iOS 26). ISMCTS is the offline fallback. BYOK (bring your own key) stored in EncryptedSharedPreferences / Keychain.
 
