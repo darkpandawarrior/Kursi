@@ -4,46 +4,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import com.siddharth.kmp.feedback.HapticPattern
-import com.siddharth.kmp.feedback.SoundKey
 import com.siddharth.kmp.feedback.SoundPlayer
 import com.siddharth.kmp.feedback.defaultSoundPlayer
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MomentFeedback.kt — M3 glue between the moment data model and the :core:feedback
-// expect/actual layer. Maps each KursiMoment to its SFX [SoundKey] and translates the
-// moment's [HapticBeat] taxonomy to the platform [HapticPattern].
+// expect/actual layer. Translates the moment's [HapticBeat] taxonomy to the platform
+// [HapticPattern]. SFX playback for game beats now goes through the fine-grained
+// com.kursi.designsystem.audio.SoundPlayer (docs/experience-assets.md §3), wired at the
+// GameEvent level in feature/game/GameMoments.kt — this file stays wired for HAPTICS only,
+// so a moment never plays both a coarse tone-synth blip and a real CC0 clip together.
 //
-// The overlay fires these GATED by the master sound toggle (AppPrefs.soundFlow); when
-// the toggle is off the overlay never calls in here, so the game is fully silent.
+// The overlay fires haptics GATED by the master sound toggle (AppPrefs.soundFlow); when
+// the toggle is off the overlay never calls in here, so there's no buzz either.
 // ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * The SFX cue for a moment. The reward clink for economic actions, a heavy thud for losses/steals,
- * the success sting for victory, and a firm confirm slam for everything claim/reveal-shaped.
- */
-internal fun KursiMoment.soundKey(): SoundKey =
-    when (this) {
-        is KursiMoment.Income,
-        is KursiMoment.ForeignAid,
-        is KursiMoment.Tax,
-        -> SoundKey.Reward
-
-        is KursiMoment.Steal,
-        is KursiMoment.Assassinate,
-        is KursiMoment.InfluenceLoss,
-        is KursiMoment.Coup,
-        is KursiMoment.Elimination,
-        -> SoundKey.Thud
-
-        is KursiMoment.Win -> SoundKey.Success
-
-        is KursiMoment.Exchange,
-        is KursiMoment.Block,
-        is KursiMoment.Challenge,
-        is KursiMoment.Reveal,
-        is KursiMoment.TurnHandoff,
-        -> SoundKey.Confirm
-    }
 
 /** Translate the moment-layer [HapticBeat] taxonomy into the device [HapticPattern]. */
 internal fun HapticBeat.toPattern(): HapticPattern =
@@ -69,10 +43,9 @@ fun rememberSoundPlayer(): SoundPlayer {
 }
 
 /**
- * Fires the SFX + haptic for [moment] through [player]. Caller is responsible for the
- * sound-enabled gate; this function assumes feedback is permitted.
+ * Fires the haptic for [moment] through [player]. Caller is responsible for the sound-enabled
+ * gate; this function assumes feedback is permitted. (SFX is fired separately — see file header.)
  */
 internal fun SoundPlayer.fire(moment: KursiMoment) {
-    playSound(moment.soundKey())
     haptic(moment.haptic.toPattern())
 }

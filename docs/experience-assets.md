@@ -78,7 +78,7 @@ overlays.
 | Track | Pipeline | Assets |
 |---|---|---|
 | Art (portraits/faces/hero) | ✅ ready (`KursiArt.readySlots`) | ⏭ need real files |
-| Audio (SFX) | ⏭ build after composition | ⏭ curated CC0 packs above |
+| Audio (SFX) | ✅ wired (`core/designsystem/.../audio/SoundPlayer` expect/actual + GameEvent→KursiSound map) | ✅ 17 clips bundled |
 | Music (ambient/tension) | ⏭ (part of audio arch) | ⏭ shortlist on request |
 | Latin fonts | ✅ wired | ✅ |
 | Devanagari fonts | ⏭ | Tiro Devanagari + Hind (OFL) |
@@ -101,9 +101,15 @@ filename — a listen-and-swap pass is worth doing, but these are sensible defau
 | StingWin / StingTrue / StingBluff | impactBell_heavy_000 / confirmation_001 / impactPunch_heavy_002 | Impact/Interface |
 | UiTap / UiConfirm / UiBack | click_001 / confirmation_002 / back_001 | Interface |
 
-Staged at `scratchpad/audio-staging/selected/`; moved into `composeResources/files/audio/` when the
-SoundPlayer pipeline lands. **Still needed:** ambient music loop + a real win fanfare (Kenney Music
-Jingles / Pixabay / Freesound CC0) — those benefit most from a listen-and-pick and a licence check.
+**Wired**: all 17 clips live at `core/designsystem/src/commonMain/composeResources/files/audio/`,
+loaded through the `SoundPlayer` expect/actual (Android `SoundPool`, desktop `javax.sound.sampled`,
+iOS `AVAudioPlayer`, wasm `Audio` element) and fired from a pure `GameEvent -> KursiSound` map in
+`feature/game/GameSound.kt`, gated by the existing `soundEnabled` flag. Desktop/iOS currently
+degrade to a silent no-op for these Ogg Vorbis clips (no bundled decoder on stock javax.sound /
+Core Audio) — the pipeline is correct end to end and lights up if/when a WAV/PCM fallback or codec
+SPI lands. Wasm is compile-verified only; needs an in-browser check. **Still needed:** the ambient
+music loop (Kenney Music Jingles / Pixabay / Freesound CC0) — benefits most from a listen-and-pick
+and a licence check.
 
 ## The honest download constraint
 
