@@ -151,6 +151,8 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.core.ktx)
 
+    testImplementation(libs.junit)
+
     // Non-free, gms-flavor only — F-Droid's noGms flavor ships without these (PlayFeatures.kt
     // and KursiFirebaseMessagingService.kt have a noGms no-op counterpart under src/noGms).
     add("gmsImplementation", platform(libs.firebase.bom))
