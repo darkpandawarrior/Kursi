@@ -4,6 +4,7 @@ import com.kursi.engine.Role
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 /**
  * The loading seam's pure resolution logic (§7.4): a slot resolves to [ArtResolution.Asset]
@@ -70,6 +71,6 @@ class KursiArtTest {
         val b: ArtSlot = ArtSlot.RoleFace(Role.BHAI)
         val c: ArtSlot = ArtSlot.RoleFace(Role.NETA)
         assertEquals(a, c)
-        assert(a != b)
+        assertNotEquals(a, b)
     }
 }

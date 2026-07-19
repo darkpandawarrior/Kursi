@@ -10,6 +10,7 @@ import com.siddharth.kmp.llmchat.AiProvider
 import com.siddharth.kmp.llmchat.AiProviderConfig
 import com.siddharth.kmp.llmchat.buildProviderChain
 import com.siddharth.kmp.llmchat.firstAvailable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -67,7 +68,7 @@ class MunshiNarrator(
                             ),
                         config = AiConfig(maxTokens = MAX_TOKENS, temperature = TEMPERATURE),
                     )
-                }.getOrNull()
+                }.onFailure { if (it is CancellationException) throw it }.getOrNull()
             }?.trim()
         return line?.ifBlank { null }
     }

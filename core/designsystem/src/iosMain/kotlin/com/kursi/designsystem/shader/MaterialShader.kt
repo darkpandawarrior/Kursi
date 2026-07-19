@@ -13,6 +13,11 @@ import org.jetbrains.skia.RuntimeShaderBuilder
 // Compile-verified only (:core:designsystem klib compile); on-device iOS render verification is
 // a separate step — see the cmp-xcode26-sim-metal caveat.
 
+// Compiled RuntimeEffect is cached by source string — RuntimeEffect.makeForShader parses+compiles
+// SkSL and this block re-runs every frame (it captures the animated `time` uniform), so without
+// caching every frame paid a full shader recompile.
+private val effectCache = mutableMapOf<String, RuntimeEffect>()
+
 /**
  * SkSL via `org.jetbrains.skia.RuntimeEffect`, applied as a Compose [RenderEffect] on the layer.
  * A shader that fails to compile (or any other RuntimeEffect hiccup) is swallowed via
@@ -26,7 +31,8 @@ actual fun Modifier.materialShader(
     graphicsLayer {
         renderEffect =
             runCatching {
-                val builder = RuntimeShaderBuilder(RuntimeEffect.makeForShader(sksl))
+                val effect = effectCache.getOrPut(sksl) { RuntimeEffect.makeForShader(sksl) }
+                val builder = RuntimeShaderBuilder(effect)
                 builder.uniform("time", time)
                 for ((name, value) in uniforms) builder.uniform(name, value)
                 ImageFilter.makeRuntimeShader(builder, "content", null)

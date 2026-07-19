@@ -77,7 +77,8 @@ internal fun FeltTableSurface(
                                     BrandTokens.TeakInk, // deep shadowed rim
                                 ),
                             // Lamp hangs above-centre: light pool sits high, rim falls to shadow.
-                            radius = 1.05f,
+                            // (radius left at the default — it spans the surface; an explicit
+                            // value here is treated as raw px and collapses the gradient.)
                         ),
                 ).drawBehind {
                     // M4 §2 / graphics overhaul: the felt textures are drawn to actually READ now

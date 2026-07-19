@@ -906,7 +906,7 @@ internal fun PhoneLayout(
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
-                                        .height(if (opponentCount <= 2) 104.dp else 172.dp),
+                                        .height(if (opponentCount <= 3) 104.dp else 172.dp),
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 verticalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
