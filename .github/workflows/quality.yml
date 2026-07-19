@@ -40,10 +40,14 @@ jobs:
       - name: Code style (ktlint)
         run: ./gradlew ktlintCheck
 
+      # !cancelled() so all three checks always report in one run — a ktlint failure
+      # doesn't hide the detekt/test results (replaces the old separate JVM Tests job).
       - name: Static analysis (detekt)
+        if: ${{ !cancelled() }}
         run: ./gradlew detekt
 
       - name: JVM tests
+        if: ${{ !cancelled() }}
         run: ./gradlew jvmTest --continue
 
       - name: Upload detekt report
