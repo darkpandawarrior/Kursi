@@ -106,7 +106,40 @@ data class GameUiState(
      * Key = PlayerId; value = total coins earned (never decremented by spending).
      */
     val lifetimeCoins: Map<PlayerId, Int> = emptyMap(),
+    /**
+     * PROGRESSIVE-DISCLOSURE layer (spec §3). Mirrors [AppPrefs.densityLayer]. Default ANALYST =
+     * today's full-instrument screen. Overlays migrate to gate on this in Wave 1 Track 4; adding it
+     * here changes no rendering yet.
+     */
+    val densityLayer: DensityLayer = DensityLayer.ANALYST,
+    /**
+     * BEAT GATE (spec §5). Non-null when the paced bot round has shown a meaningful beat and is
+     * waiting for the player to tap to continue (FOCUS/GUIDED). Null while flowing (ANALYST/AUTO) or
+     * on the human's own turn. The UI shows a "tap to continue" affordance and dispatches
+     * [GameAction.ContinueBeat].
+     */
+    val pendingBeat: PendingBeat? = null,
+    /**
+     * MUNSHI NARRATION (spec §8.1, §8.5, §8.6) — the AI-generated line for the current beat, once it
+     * lands. Null until the async narration job (if any provider tier is available) resolves, or
+     * whenever nothing beats the templated floor. [com.kursi.feature.game.overlays.headlineFor]
+     * always renders first regardless — this is a display-only, non-blocking UPGRADE-IN-PLACE on
+     * top of it, never a replacement source of truth: it is never folded into `humanIntentLog`,
+     * never mutates `GameState`, never gates a legal action, and is never persisted into a replay
+     * record (a fresh replay simply shows the templated line, or regenerates its own narration).
+     */
+    val narrationText: String? = null,
 ) {
+    /**
+     * DENSITY GATE (spec §3) — whether coach guidance (recommended-move stars, REAL/BLUFF badges,
+     * odds pills) should render right now. FOCUS hides guidance unconditionally (it isn't in the
+     * FOCUS whitelist, regardless of the [coachEnabled] toggle); GUIDED and ANALYST defer to
+     * [coachEnabled] exactly as today — so this is a no-op in ANALYST (today's behavior, byte
+     * identical) and simply forces the toggle off while in FOCUS.
+     */
+    val coachGuidanceVisible: Boolean
+        get() = densityLayer != DensityLayer.FOCUS && coachEnabled
+
     /** The PUBLIC-info dossier for [id], or null if none has been computed yet. */
     fun insightFor(id: PlayerId): OpponentInsight? = opponentInsights.firstOrNull { it.opponentId == id }
 

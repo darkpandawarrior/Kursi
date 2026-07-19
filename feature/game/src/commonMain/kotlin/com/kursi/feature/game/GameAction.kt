@@ -89,6 +89,9 @@ sealed interface GameAction {
      * A no-op if it is not a human's turn.
      */
     data object PlayBestMove : GameAction
+
+    /** BEAT GATE — the player tapped to advance past a held beat (spec §5). */
+    data object ContinueBeat : GameAction
 }
 
 enum class Difficulty { Easy, Medium, Hard, Expert, Grandmaster }

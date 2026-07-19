@@ -39,6 +39,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -53,6 +54,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kursi.designsystem.shader.feltMaterial
 import com.kursi.engine.Role
 import kotlin.math.PI
 import kotlin.math.cos
@@ -91,16 +93,21 @@ fun Modifier.inspectable(
     pressShape: androidx.compose.ui.graphics.Shape? = null,
 ): Modifier {
     var pressed by remember { mutableStateOf(false) }
+    // Crisp spring response (spec §7 juice) rather than a flat tween — a press should feel
+    // like it lands, not just fade in. Reduced motion collapses to an instant snap.
+    val reducedMotion = LocalReducedMotion.current
+    val pressSpec: AnimationSpec<Float> = if (reducedMotion) tween(0) else KursiMotion.snap()
+    val pressShadowSpec: AnimationSpec<Dp> = if (reducedMotion) tween(0) else KursiMotion.snap()
     // Slightly deeper dip than before; the hold should feel like the surface gives way.
     val pressScale by animateFloatAsState(
         targetValue = if (pressed) 0.955f else 1f,
-        animationSpec = tween(110),
+        animationSpec = pressSpec,
         label = "inspectPressScale",
     )
     // The cast shadow swells while held, then settles back — the "physical hold" cue.
     val pressShadow by animateDpAsState(
         targetValue = if (pressed) 14.dp else 0.dp,
-        animationSpec = tween(110),
+        animationSpec = pressShadowSpec,
         label = "inspectPressShadow",
     )
     return this
@@ -479,6 +486,15 @@ fun RoleCard(
         modifier =
             modifier
                 .size(width = cardW, height = cardH)
+                // Token drop-shadow (spec §7.1) — [elevation] above was computed but never applied;
+                // wiring it in gives the card real contact weight against the felt (more when lifted).
+                .shadow(
+                    elevation,
+                    Squircle(radius),
+                    clip = false,
+                    ambientColor = Color.Black,
+                    spotColor = BrandTokens.TeakInk,
+                )
                 // Brass bezel: gradient top-to-bottom (gold highlight → brass → dark brass shadow)
                 .clip(Squircle(radius))
                 .background(
@@ -970,14 +986,18 @@ fun OpponentPlate(
         remember { mutableStateOf(0f) }
     }
 
-    // Ring color + width from state
+    // Ring color + width from state. AAA rebuild (design-language.md #1): Idle — the
+    // plate's default, majority-of-the-time state — drops to a near-invisible rim so the
+    // plate reads as a shadow-depth surface (tableDepth + embossEdge below), sharing
+    // OpponentSeatToken's no-hard-border material. Acting/Responding/ValidTarget/Eliminated
+    // keep a real ring: that's a live state SIGNAL, not decorative framing.
     val ringColor: Color =
         when (state) {
             ChipState.Acting -> brassColor.copy(alpha = pulseAlpha)
             ChipState.Responding -> verdigris
             ChipState.ValidTarget -> alertRed
             ChipState.Eliminated -> brassDim.copy(alpha = 0.4f)
-            ChipState.Idle -> brassColor.copy(alpha = 0.55f)
+            ChipState.Idle -> brassColor.copy(alpha = 0.22f)
         }
     val ringWidth: androidx.compose.ui.unit.Dp =
         when (state) {
@@ -1373,10 +1393,26 @@ fun CoinPill(
     modifier: Modifier = Modifier,
     alpha: Float = 1f,
 ) {
+    // Coin/token juice (spec §7): a small spring bump when the count changes, so a
+    // Tax/Steal/Income coin landing reads as a physical arrival, not just a text swap.
+    // `mounted` skips the bump on first composition — only real count changes pop.
+    val reducedMotion = LocalReducedMotion.current
+    val bump = remember { Animatable(1f) }
+    var mounted by remember { mutableStateOf(false) }
+    LaunchedEffect(count) {
+        if (mounted && !reducedMotion) {
+            bump.snapTo(1.22f)
+            bump.animateTo(1f, KursiMotion.snap())
+        }
+        mounted = true
+    }
     Row(
         modifier =
             modifier
-                .clip(Squircle(KursiRadii.sm))
+                .graphicsLayer {
+                    scaleX = bump.value
+                    scaleY = bump.value
+                }.clip(Squircle(KursiRadii.sm))
                 .background(
                     brush =
                         Brush.horizontalGradient(
@@ -1590,9 +1626,13 @@ fun KursiActionButton(
 enum class SpineTone { Info, Pending, Danger, Gold }
 
 /**
- * Brass plate status spine — spec §6.
- * Full-width brass bar with engraved look: gradient brass background,
- * text in display serif, tone-matched accent border.
+ * ANALYST top chrome — the running turn verdict (spec §6).
+ *
+ * AAA rebuild (design-language.md #1/#3): the old full-width filled-gold-gradient bar +
+ * 1.5dp border is gone. This is now a shadow-depth raised surface — the same [tableDepth]
+ * + emboss-bevel material as [decoPanel] one hairline rule underneath, matching every
+ * other engraved header in the app (non-negotiable #3: "engraved chrome, not fat bars").
+ * The verdict text carries the tone as color, not the plate as a gold fill.
  */
 @Composable
 fun StatusSpine(
@@ -1608,49 +1648,57 @@ fun StatusSpine(
             SpineTone.Danger -> BrandTokens.StampRed
             SpineTone.Gold -> BrandTokens.GoldAntique
         }
-    val bgBrush =
-        Brush.verticalGradient(
-            listOf(
-                BrandTokens.BrassDark.copy(alpha = 0.85f),
-                BrandTokens.BrassAged.copy(alpha = 0.90f),
-                BrandTokens.BrassDark.copy(alpha = 0.85f),
-            ),
-        )
+    val shape = Squircle(KursiRadii.lg)
 
-    Row(
+    Column(
         modifier =
             modifier
                 .fillMaxWidth()
-                .clip(Squircle(KursiRadii.lg))
-                .background(bgBrush)
-                .brassSpecular()
-                .border(
-                    1.5.dp,
-                    Brush.horizontalGradient(
-                        listOf(accentColor.copy(alpha = 0.8f), BrandTokens.GoldAntique.copy(alpha = 0.5f), accentColor.copy(alpha = 0.8f)),
+                .tableDepth(shape, elevation = 6.dp)
+                .clip(shape)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            KursiFeltColors.Surface3.copy(alpha = 0.96f),
+                            KursiFeltColors.Surface2,
+                            BrandTokens.TeakDark,
+                        ),
                     ),
-                    Squircle(KursiRadii.lg),
-                ).padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
+                ).embossEdge(KursiRadii.lg, highlight = accentColor.copy(alpha = 0.4f))
+                .padding(horizontal = 16.dp, vertical = 10.dp),
     ) {
-        Text(
-            text = text,
-            // M4 §3: status-spine verdict is in-game HERO text — render in the real
-            // Rozha One display serif, not the placeholder system serif.
-            style = KursiType.title.rozha(),
-            color = BrandTokens.TeakDark,
-            modifier = Modifier.weight(1f),
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (trailingTimer != null) {
-            Spacer(Modifier.width(12.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = trailingTimer,
-                style = KursiType.numeric,
+                text = text,
+                // M4 §3: status-spine verdict is in-game HERO text — render in the real
+                // Rozha One display serif, not the placeholder system serif.
+                style = KursiType.title.rozha(),
                 color = accentColor,
+                modifier = Modifier.weight(1f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
+            if (trailingTimer != null) {
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text = trailingTimer,
+                    style = KursiType.numeric,
+                    color = accentColor,
+                )
+            }
         }
+        Spacer(Modifier.height(8.dp))
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color.Transparent, accentColor.copy(alpha = 0.55f), Color.Transparent),
+                        ),
+                    ),
+        )
     }
 }
 
@@ -1749,6 +1797,12 @@ fun CountdownBar(
 @Composable
 fun FeltTableBackground(
     modifier: Modifier = Modifier,
+    /**
+     * AAA FOCUS rebuild: the framed "card in a void" brass sweep border reads as a boxed panel
+     * floating in the ink background. FOCUS/GUIDED want the felt to BE the whole screen — one
+     * continuous lit surface, no frame. Set false to drop the border (ANALYST/default keeps it).
+     */
+    bordered: Boolean = true,
     content: @Composable () -> Unit = {},
 ) {
     Box(
@@ -1781,20 +1835,29 @@ fun FeltTableBackground(
                         )
                         x += step
                     }
-                }.border(
-                    2.dp,
-                    // Brass inlay border: gradient to simulate engraved edge
-                    Brush.sweepGradient(
-                        listOf(
-                            BrandTokens.GoldAntique,
-                            BrandTokens.BrassAged,
-                            BrandTokens.BrassDark,
-                            BrandTokens.BrassAged,
-                            BrandTokens.GoldAntique,
-                        ),
-                    ),
-                    Squircle(KursiRadii.xxl),
-                ),
+                    // Lamplit-desk key light + vignette (spec §7.1) — phone felt was missing the
+                    // warm centre / shadowed rim that the desktop FeltTableSurface already has.
+                    drawTableVignette(centerWarmth = 0.14f, rimDarkness = 0.52f)
+                }.then(
+                    if (bordered) {
+                        Modifier.border(
+                            2.dp,
+                            // Brass inlay border: gradient to simulate engraved edge
+                            Brush.sweepGradient(
+                                listOf(
+                                    BrandTokens.GoldAntique,
+                                    BrandTokens.BrassAged,
+                                    BrandTokens.BrassDark,
+                                    BrandTokens.BrassAged,
+                                    BrandTokens.GoldAntique,
+                                ),
+                            ),
+                            Squircle(KursiRadii.xxl),
+                        )
+                    } else {
+                        Modifier
+                    },
+                ).feltMaterial(), // default bloomCenterYFraction matches drawTableVignette's cy above
         contentAlignment = Alignment.Center,
     ) {
         content()
@@ -2385,26 +2448,31 @@ fun BrassMedallion(
                     rotationY = domeTiltY
                     cameraDistance = 16f * density
                 }
-                // Deep contact shadow so the medallion sits proud of the felt
+                // Deep, crisp contact shadow so the medallion sits proud of the felt like a
+                // struck object dropped onto it, not a sticker.
                 .shadow(
-                    elevation = 22.dp,
+                    elevation = 28.dp,
                     shape = CircleShape,
-                    ambientColor = Color.Black.copy(alpha = 0.6f),
+                    ambientColor = Color.Black.copy(alpha = 0.7f),
                     spotColor = BrandTokens.TeakInk,
                     clip = false,
                 ).clip(CircleShape)
-                // Brass body — radial sheen, lit upper-left
+                // Brass body — struck-metal radial sheen: a hot highlight top-left burning down
+                // through brass into a true dark rim (was Gold→Brass→BrassDark→#5E481B, a shallow
+                // fall that never left "flat gold disc"; now Cream(hot)→Gold→Brass→BrassDark→
+                // TeakInk, tighter radius, so the coin reads as struck metal with real volume).
                 .background(
                     Brush.radialGradient(
                         colors =
                             listOf(
+                                KursiNeutrals.Cream,
                                 BrandTokens.GoldAntique,
                                 BrandTokens.BrassAged,
                                 BrandTokens.BrassDark,
-                                Color(0xFF5E481B),
+                                BrandTokens.TeakInk,
                             ),
                         center = Offset(0.36f * dPx, 0.30f * dPx),
-                        radius = dPx * 0.95f,
+                        radius = dPx * 0.80f,
                     ),
                 ).brassSpecular()
                 // Outer engine-turned bezel + debossed well
@@ -2413,6 +2481,18 @@ fun BrassMedallion(
                     val cx = size.width / 2f
                     val cy = size.height / 2f
                     val rr = minOf(size.width, size.height) / 2f
+                    // Directional rim shadow — darkens the lower-right arc opposite the highlight
+                    // so the disc reads as lit from one side (a struck object), not an evenly-glowing
+                    // flat circle.
+                    drawCircle(
+                        Brush.radialGradient(
+                            colors = listOf(Color.Transparent, BrandTokens.TeakInk.copy(alpha = 0.45f)),
+                            center = Offset(cx * 1.18f, cy * 1.28f),
+                            radius = rr * 1.35f,
+                        ),
+                        rr,
+                        Offset(cx, cy),
+                    )
                     drawCircle(
                         BrandTokens.GoldAntique.copy(alpha = 0.85f),
                         rr - 2.dp.toPx(),
@@ -2487,10 +2567,17 @@ fun BrassMedallion(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp * scale),
         ) {
-            // GADDI mark — the seat of power, engraved (M4 §3: real Rozha One display serif)
+            // GADDI mark — the seat of power, struck INTO the brass: a dark drop-shadow under
+            // bright gold ink reads as debossed engraving instead of text printed on a flat disc.
             Text(
                 text = "GADDI",
-                style = KursiType.display.copy(fontSize = (17 * scale).sp, letterSpacing = (3 * scale).sp).rozha(),
+                style =
+                    KursiType.display
+                        .copy(
+                            fontSize = (17 * scale).sp,
+                            letterSpacing = (3 * scale).sp,
+                            shadow = Shadow(BrandTokens.TeakInk.copy(alpha = 0.75f), Offset(0f, 1.5f), 1.5f),
+                        ).rozha(),
                 color = BrandTokens.GoldAntique.copy(alpha = 0.92f),
             )
             Box(
@@ -2509,7 +2596,11 @@ fun BrassMedallion(
             }
             Text(
                 text = "TURN $turnNumber",
-                style = KursiType.label_micro.copy(letterSpacing = (2 * scale).sp),
+                style =
+                    KursiType.label_micro.copy(
+                        letterSpacing = (2 * scale).sp,
+                        shadow = Shadow(BrandTokens.TeakInk.copy(alpha = 0.7f), Offset(0f, 1f), 1f),
+                    ),
                 color = BrandTokens.GoldAntique.copy(alpha = 0.65f),
             )
         }
@@ -2535,7 +2626,7 @@ private fun CardStackToken(count: Int) {
                         Modifier
                             .size(width = 44.dp, height = 64.dp)
                             .offset { IntOffset(off * 3, off * -3) }
-                            .shadow(3.dp, Squircle(KursiRadii.sm), clip = false)
+                            .shadow(4.dp, Squircle(KursiRadii.sm), clip = false)
                             .clip(Squircle(KursiRadii.sm))
                             .background(
                                 Brush.verticalGradient(
@@ -2549,7 +2640,7 @@ private fun CardStackToken(count: Int) {
                 modifier =
                     Modifier
                         .size(width = 44.dp, height = 64.dp)
-                        .shadow(5.dp, Squircle(KursiRadii.sm), clip = false)
+                        .shadow(6.dp, Squircle(KursiRadii.sm), clip = false)
                         .clip(Squircle(KursiRadii.sm))
                         .background(
                             Brush.verticalGradient(
@@ -2595,7 +2686,7 @@ private fun CoinStackToken(coins: Int) {
                         Modifier
                             .offset { IntOffset(0, (-(i) * 9.5f * density).toInt()) }
                             .size(width = coinW, height = coinH)
-                            .shadow(2.dp, CircleShape, clip = false)
+                            .shadow(3.dp, CircleShape, clip = false)
                             .clip(CircleShape)
                             .background(
                                 Brush.verticalGradient(
@@ -2610,7 +2701,7 @@ private fun CoinStackToken(coins: Int) {
                     Modifier
                         .offset { IntOffset(0, (-(layers) * 9.5f * density).toInt()) }
                         .size(48.dp)
-                        .shadow(4.dp, CircleShape, clip = false)
+                        .shadow(5.dp, CircleShape, clip = false)
                         .clip(CircleShape)
                         .background(
                             Brush.radialGradient(

@@ -2,28 +2,20 @@ package com.kursi.shared.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -93,7 +85,7 @@ fun LobbyScreen(
         }
     }
 
-    BoxWithConstraints(modifier = modifier.fillMaxSize().background(BrandTokens.TeakInk)) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize().litGround()) {
         val density = androidx.compose.ui.platform.LocalDensity.current
         val screenWidthPx = with(density) { maxWidth.toPx() }
         val screenHeightPx = with(density) { maxHeight.toPx() }
@@ -123,55 +115,22 @@ fun LobbyScreen(
             ) {
                 Column(
                     modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     val ls = LocalKursiStrings.current
-                    // Register title
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(BrandTokens.BrassDark.copy(alpha = 0.25f))
-                                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                                .padding(horizontal = 16.dp, vertical = 10.dp),
+                    // Register title — engraved chrome (eyebrow + hairline), not a filled bordered
+                    // bar. A sparing Rozha title carries the one focal point at the top of the list.
+                    val cabinetNo = (currentSeed % 9999).let { if (it < 0) it + 9999 else it }
+                    EngravedHeader(
+                        eyebrow = "Cabinet #$cabinetNo · ${players}p · ${difficulty.name}",
+                        title = ls.lobbyHeader,
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Column {
-                                Text(
-                                    ls.lobbyHeader,
-                                    style = KursiType.title.copy(fontSize = 14.sp, letterSpacing = 1.sp),
-                                    color = BrandTokens.GoldAntique,
-                                )
-                                // Friendly cabinet number instead of raw seed
-                                val cabinetNo = (currentSeed % 9999).let { if (it < 0) it + 9999 else it }
-                                Text(
-                                    "Cabinet #$cabinetNo · ${players}p · ${difficulty.name}",
-                                    style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
-                                    color = KursiNeutrals.TextMuted,
-                                )
-                            }
-                            // "Tap any row" discovery hint
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(BrandTokens.BrassAged.copy(alpha = 0.12f))
-                                        .border(0.7.dp, BrandTokens.BrassAged.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
-                                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                            ) {
-                                Text(
-                                    "Tap a row for their voice →",
-                                    style = KursiType.caption.copy(fontSize = 9.sp, fontStyle = FontStyle.Italic),
-                                    color = KursiNeutrals.TextSecondary,
-                                )
-                            }
-                        }
+                        Text(
+                            text = "Tap a row for their voice →",
+                            style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
+                            color = KursiNeutrals.TextSecondary,
+                        )
                     }
+                    Spacer(Modifier.height(6.dp))
 
                     // M6e TEAM KHEL — alternating seat→team split (seat i → team i % teamCount). The human (seat
                     // 0) anchors team 0; bots fill seats humanCount.. so their seat index is humanCount + i.
@@ -220,41 +179,37 @@ fun LobbyScreen(
                 }
             }
 
-            // Footer with re-roll + commit
+            // Footer with re-roll + commit — a hairline rule (not a filled/bordered bar) lifts
+            // the footer off the register above it; the two stamps rest directly on the ground.
             Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .background(BrandTokens.TeakDark)
-                        .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.5f), RoundedCornerShape(0.dp))
-                        .padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .widthIn(max = 860.dp)
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(Color.Transparent, BrandTokens.BrassDark.copy(alpha = 0.5f), Color.Transparent),
+                                ),
+                            ),
+                )
+                Spacer(Modifier.height(14.dp))
                 Row(
                     modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     val lb = LocalKursiStrings.current
-                    // Reroll button
-                    Box(
-                        modifier =
-                            Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(BrandTokens.TeakDark)
-                                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
-                                .clickable { currentSeed += 1L }
-                                .padding(horizontal = 14.dp, vertical = 12.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = lb.lobbyReroll,
-                            style = KursiType.title.copy(fontSize = 13.sp),
-                            color = KursiNeutrals.TextPrimary,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+                    // Reroll — a raised secondary stamp, not a flat bordered box.
+                    StampButton(
+                        label = lb.lobbyReroll,
+                        style = StampStyle.Secondary,
+                        onClick = { currentSeed += 1L },
+                        modifier = Modifier.weight(1f),
+                    )
 
                     // Deal In commit
                     StampChit(
@@ -351,31 +306,13 @@ private fun PersonaRegisterRow(
 ) {
     var flipped by remember { mutableStateOf(false) }
 
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(
-                    if (isHuman) {
-                        BrandTokens.BrassAged.copy(alpha = 0.12f)
-                    } else {
-                        Color(0xFF14110D)
-                    },
-                ).border(
-                    1.dp,
-                    if (isHuman) {
-                        BrandTokens.GoldAntique.copy(alpha = 0.5f)
-                    } else {
-                        seatColor.copy(alpha = 0.4f)
-                    },
-                    RoundedCornerShape(10.dp),
-                ).clickable { flipped = !flipped }
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-    ) {
+    // AAA polish: a row resting on the ground with a hairline rule below — no bordered card.
+    // The human seat's only distinction from a bot row is warmer ink on its name, matching
+    // "one accent" (non-negotiable #7) rather than a filled/bordered highlight box.
+    HairlineRow(onClick = { flipped = !flipped }, verticalPadding = 12.dp) {
         if (flipped && sampleBark.isNotEmpty()) {
             // Flipped — show sample bark
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     "\"$sampleBark\"",
                     style = KursiType.body.copy(fontStyle = FontStyle.Italic, fontSize = 14.sp),
@@ -389,90 +326,59 @@ private fun PersonaRegisterRow(
                 )
             }
         } else {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                // Monogram roundel
-                Box(
-                    modifier =
-                        Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(Brush.radialGradient(listOf(seatColor.copy(alpha = 0.9f), seatColor.copy(alpha = 0.4f))))
-                            .border(1.5.dp, BrandTokens.BrassAged.copy(alpha = 0.7f), CircleShape),
-                    contentAlignment = Alignment.Center,
+            BrassToken(monogram = monogram, fill = seatColor, size = 44.dp)
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        monogram,
-                        style = KursiType.name.copy(fontSize = 13.sp),
-                        color = KursiNeutrals.Cream,
-                        textAlign = TextAlign.Center,
+                        name,
+                        style = KursiType.name.copy(fontSize = 14.sp),
+                        color = if (isHuman) BrandTokens.GoldAntique else KursiNeutrals.TextPrimary,
+                        fontWeight = if (isHuman) FontWeight.Bold else FontWeight.Normal,
+                        modifier = Modifier.weight(1f, fill = false),
                     )
-                }
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            name,
-                            style = KursiType.name.copy(fontSize = 14.sp),
-                            color = if (isHuman) BrandTokens.GoldAntique else KursiNeutrals.TextPrimary,
-                            fontWeight = if (isHuman) FontWeight.Bold else FontWeight.Normal,
-                            modifier = Modifier.weight(1f, fill = false),
-                        )
-                        if (teamBadge != null) {
-                            val teamHue = if (teamId == 0) BrandTokens.GoldAntique else BrandTokens.StampRed
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .clip(RoundedCornerShape(3.dp))
-                                        .background(teamHue.copy(alpha = 0.16f))
-                                        .border(0.7.dp, teamHue.copy(alpha = 0.6f), RoundedCornerShape(3.dp))
-                                        .padding(horizontal = 5.dp, vertical = 1.dp),
-                            ) {
-                                Text(
-                                    teamBadge,
-                                    style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.5.sp, fontWeight = FontWeight.Bold),
-                                    color = teamHue,
-                                )
-                            }
+                    if (teamBadge != null) {
+                        val teamHue = if (teamId == 0) BrandTokens.GoldAntique else BrandTokens.StampRed
+                        Box(
+                            modifier =
+                                Modifier
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(teamHue.copy(alpha = 0.16f))
+                                    .border(0.7.dp, teamHue.copy(alpha = 0.6f), RoundedCornerShape(3.dp))
+                                    .padding(horizontal = 5.dp, vertical = 1.dp),
+                        ) {
+                            Text(
+                                teamBadge,
+                                style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.5.sp, fontWeight = FontWeight.Bold),
+                                color = teamHue,
+                            )
                         }
                     }
-                    Text(
-                        "$title  ·  $archetype",
-                        style = KursiType.body.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
-                        color = KursiNeutrals.TextSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        personalityLine,
-                        style = KursiType.caption.copy(fontSize = 9.sp),
-                        color = KursiNeutrals.TextMuted,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
                 }
-
-                // Visible tap affordance — was 9sp at 50% alpha (invisible)
-                Box(
-                    modifier =
-                        Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(BrandTokens.BrassDark.copy(alpha = 0.2f))
-                            .border(0.7.dp, BrandTokens.BrassAged.copy(alpha = 0.45f), RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 3.dp),
-                ) {
-                    Text(
-                        "VOICE ▸",
-                        style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.5.sp),
-                        color = BrandTokens.BrassAged.copy(alpha = 0.8f),
-                    )
-                }
+                Text(
+                    "$title  ·  $archetype",
+                    style = KursiType.body.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
+                    color = KursiNeutrals.TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    personalityLine,
+                    style = KursiType.caption.copy(fontSize = 9.sp),
+                    color = KursiNeutrals.TextMuted,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
+
+            Text(
+                text = "VOICE ▸",
+                style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.5.sp),
+                color = BrandTokens.BrassAged.copy(alpha = 0.85f),
+            )
         }
     }
 }
@@ -483,35 +389,12 @@ private fun LobbyHeader(
     onBack: () -> Unit,
 ) {
     val s = LocalKursiStrings.current
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(BrandTokens.TeakDark)
-                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp)),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Back — 52dp minimum tap target
-        Box(
-            modifier =
-                Modifier
-                    .defaultMinSize(minWidth = 64.dp, minHeight = 52.dp)
-                    .semantics(mergeDescendants = true) {
-                        role = Role.Button
-                        contentDescription = s.back
-                    }.clickable(onClick = onBack)
-                    .padding(horizontal = 20.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(s.back, style = KursiType.body.copy(fontSize = 13.sp), color = BrandTokens.BrassAged)
-        }
-        Text(
-            s.lobbyHeader,
-            style = KursiType.title.copy(fontSize = 16.sp, letterSpacing = 1.sp),
-            color = KursiNeutrals.TextPrimary,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.width(64.dp)) // balance the back button
-    }
+    // Short nav breadcrumb — the full engraved title (with subtitle) is the register's own
+    // focal EngravedHeader below; repeating it here would be a second, competing focal point.
+    EngravedNavHeader(
+        title = s.lobbyHeader.substringBefore("—").trim(),
+        onBack = onBack,
+        backLabel = s.back,
+        modifier = Modifier.padding(top = 16.dp, start = 4.dp, end = 4.dp, bottom = 4.dp),
+    )
 }

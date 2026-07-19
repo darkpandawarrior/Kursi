@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -211,7 +212,7 @@ fun SetupScreen(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(BrandTokens.TeakInk),
+                .litGround(),
     ) {
         // Header bar
         SetupHeader(onBack = onBack)
@@ -500,16 +501,20 @@ fun SetupScreen(
             }
         }
 
-        // Footer CTA
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .background(BrandTokens.TeakDark)
-                    .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.5f), RoundedCornerShape(0.dp))
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-            contentAlignment = Alignment.Center,
-        ) {
+        // Footer CTA — a hairline rule lifts the stamp off the form above it, not a filled/bordered bar.
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color.Transparent, BrandTokens.BrassDark.copy(alpha = 0.5f), Color.Transparent),
+                            ),
+                        ),
+            )
+            Spacer(Modifier.height(10.dp))
             StampChit(
                 label = s.setupCta,
                 sublabel = s.setupCtaSub,
@@ -548,73 +553,26 @@ fun SetupScreen(
 @Composable
 private fun SetupHeader(onBack: () -> Unit) {
     val s = LocalKursiStrings.current
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(BrandTokens.TeakDark)
-                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp)),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Back button: 48dp minimum tap target enforced via Box
-        Box(
-            modifier =
-                Modifier
-                    .defaultMinSize(minWidth = 64.dp, minHeight = 52.dp)
-                    .semantics(mergeDescendants = true) {
-                        role = androidx.compose.ui.semantics.Role.Button
-                        contentDescription = s.back
-                    }.clickable(onClick = onBack)
-                    .padding(horizontal = 20.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "← ${s.back}",
-                style = KursiType.body.copy(fontSize = 13.sp),
-                color = BrandTokens.BrassAged,
-            )
-        }
-        Text(
-            text = s.setupTitle,
-            style = KursiType.title.copy(fontSize = 16.sp, letterSpacing = 1.sp),
-            color = KursiNeutrals.TextPrimary,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center,
-        )
-        Box(
-            modifier =
-                Modifier
-                    .padding(end = 16.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(BrandTokens.BrassDark.copy(alpha = 0.3f))
-                    .border(0.8.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-        ) {
+    EngravedNavHeader(
+        title = s.setupTitle,
+        onBack = onBack,
+        backLabel = s.back,
+        modifier = Modifier.padding(top = 16.dp, start = 4.dp, end = 4.dp, bottom = 4.dp),
+        trailing = {
             Text(s.setupFormBadge, style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted)
-        }
-    }
+        },
+    )
 }
 
 @Composable
 private fun FormSectionTitle(text: String) {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(6.dp))
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(BrandTokens.BrassDark.copy(alpha = 0.4f), BrandTokens.BrassAged.copy(alpha = 0.2f), BrandTokens.BrassDark.copy(alpha = 0.1f)),
-                    ),
-                ).border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-    ) {
-        Text(
-            text = text,
-            style = KursiType.display.copy(fontSize = 14.sp, letterSpacing = 2.sp),
-            color = BrandTokens.GoldAntique,
-        )
-    }
+    // The one focal point on the form — a sparing Rozha display line, no filled bar (non-negotiable #3).
+    Text(
+        text = text,
+        style = KursiType.display.rozha().copy(fontSize = 22.sp),
+        color = KursiNeutrals.TextPrimary,
+        modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
+    )
 }
 
 @Composable
@@ -623,34 +581,21 @@ private fun FormSection(
     sublabel: String,
     content: @Composable () -> Unit,
 ) {
+    // AAA polish: sections rest on the shared lit ground — an engraved eyebrow + hairline
+    // rule replaces the bordered paper-tint panel (non-negotiable #1).
     Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(BrandTokens.PaperCream.copy(alpha = 0.06f))
-                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Column {
-            Text(
-                text = label,
-                style = KursiType.label.copy(fontSize = 11.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold),
-                color = BrandTokens.BrassAged,
-            )
+        EngravedHeader(eyebrow = label) {
             Text(
                 text = sublabel,
                 style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
                 color = KursiNeutrals.TextSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        Box(
-            modifier =
-                Modifier.fillMaxWidth().height(1.dp).background(
-                    Brush.horizontalGradient(listOf(Color.Transparent, BrandTokens.BrassAged.copy(alpha = 0.4f), Color.Transparent)),
-                ),
-        )
         content()
     }
 }
@@ -664,99 +609,82 @@ private fun ModeChit(
     onlineBadge: String? = null,
 ) {
     val isAvailable = mode.available
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(
-                    when {
-                        selected -> BrandTokens.GoldAntique.copy(alpha = 0.18f)
-                        isAvailable -> BrandTokens.BrassAged.copy(alpha = 0.15f)
-                        else -> BrandTokens.TeakDark.copy(alpha = 0.5f)
-                    },
-                ).border(
-                    if (selected) 1.5.dp else 1.dp,
-                    when {
-                        selected -> BrandTokens.GoldAntique
-                        isAvailable -> BrandTokens.BrassAged.copy(alpha = 0.7f)
-                        else -> BrandTokens.BrassDark.copy(alpha = 0.3f)
-                    },
-                    RoundedCornerShape(8.dp),
-                ).clickable(enabled = isAvailable, onClick = onSelect)
-                .padding(horizontal = 14.dp, vertical = 8.dp)
-                .alpha(if (isAvailable) 1f else 0.5f),
+    // AAA polish: a hairline row with a brass-ringed selection dot, not a bordered/filled tile
+    // stacked with seven others (non-negotiable #1 + #4 "lists = rows on the ground").
+    HairlineRow(
+        onClick = if (isAvailable) onSelect else null,
+        modifier = Modifier.alpha(if (isAvailable) 1f else 0.5f),
+        verticalPadding = 10.dp,
     ) {
         Row(
+            modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Box(
-                    modifier =
-                        Modifier
-                            .size(16.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(
-                                if (selected) {
-                                    BrandTokens.GoldAntique
-                                } else if (isAvailable) {
-                                    BrandTokens.BrassDark.copy(alpha = 0.5f)
-                                } else {
-                                    BrandTokens.TeakDark
-                                },
-                            ).border(1.5.dp, BrandTokens.BrassAged, RoundedCornerShape(50)),
+            Box(
+                modifier =
+                    Modifier
+                        .size(16.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(
+                            if (selected) {
+                                BrandTokens.GoldAntique
+                            } else if (isAvailable) {
+                                BrandTokens.BrassDark.copy(alpha = 0.5f)
+                            } else {
+                                BrandTokens.TeakDark
+                            },
+                        ).border(1.5.dp, BrandTokens.BrassAged, RoundedCornerShape(50)),
+            )
+            Column {
+                Text(
+                    text = mode.label,
+                    style = KursiType.name.copy(fontSize = 13.sp),
+                    color = if (isAvailable) KursiNeutrals.TextPrimary else KursiNeutrals.TextDisabled,
                 )
-                Column {
-                    Text(
-                        text = mode.label,
-                        style = KursiType.name.copy(fontSize = 13.sp),
-                        color = if (isAvailable) KursiNeutrals.TextPrimary else KursiNeutrals.TextDisabled,
-                    )
-                    Text(
-                        text = mode.sublabel,
-                        style = KursiType.caption.copy(fontSize = 9.sp),
-                        color = KursiNeutrals.TextMuted,
-                    )
-                }
+                Text(
+                    text = mode.sublabel,
+                    style = KursiType.caption.copy(fontSize = 9.sp),
+                    color = KursiNeutrals.TextMuted,
+                )
             }
-            if (!isAvailable) {
-                Box(
-                    modifier =
-                        Modifier
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(BrandTokens.StampRed.copy(alpha = 0.12f))
-                            .border(0.7.dp, BrandTokens.StampRed.copy(alpha = 0.4f), RoundedCornerShape(3.dp))
-                            .padding(horizontal = 5.dp, vertical = 2.dp),
-                ) {
-                    Text(comingSoonBadge, style = KursiType.caption.copy(fontSize = 9.sp), color = BrandTokens.StampRed.copy(alpha = 0.7f))
-                }
-            } else if (onlineBadge != null) {
-                Box(
-                    modifier =
-                        Modifier
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(BrandTokens.GoldAntique.copy(alpha = 0.15f))
-                            .border(0.7.dp, BrandTokens.GoldAntique.copy(alpha = 0.6f), RoundedCornerShape(3.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                ) {
-                    Text(
-                        onlineBadge,
-                        style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.Bold),
-                        color = BrandTokens.GoldAntique,
-                    )
-                }
-            } else if (selected) {
-                Box(
-                    modifier =
-                        Modifier
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(BrandTokens.BrassAged.copy(alpha = 0.2f))
-                            .border(0.7.dp, BrandTokens.GoldAntique.copy(alpha = 0.7f), RoundedCornerShape(3.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                ) {
-                    Text("✓", style = KursiType.caption.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold), color = BrandTokens.GoldAntique)
-                }
+        }
+        if (!isAvailable) {
+            Box(
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(BrandTokens.StampRed.copy(alpha = 0.12f))
+                        .border(0.7.dp, BrandTokens.StampRed.copy(alpha = 0.4f), RoundedCornerShape(3.dp))
+                        .padding(horizontal = 5.dp, vertical = 2.dp),
+            ) {
+                Text(comingSoonBadge, style = KursiType.caption.copy(fontSize = 9.sp), color = BrandTokens.StampRed.copy(alpha = 0.7f))
+            }
+        } else if (onlineBadge != null) {
+            Box(
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(BrandTokens.GoldAntique.copy(alpha = 0.15f))
+                        .border(0.7.dp, BrandTokens.GoldAntique.copy(alpha = 0.6f), RoundedCornerShape(3.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+            ) {
+                Text(
+                    onlineBadge,
+                    style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.6.sp, fontWeight = FontWeight.Bold),
+                    color = BrandTokens.GoldAntique,
+                )
+            }
+        } else if (selected) {
+            Box(
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(BrandTokens.BrassAged.copy(alpha = 0.2f))
+                        .border(0.7.dp, BrandTokens.GoldAntique.copy(alpha = 0.7f), RoundedCornerShape(3.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+            ) {
+                Text("✓", style = KursiType.caption.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold), color = BrandTokens.GoldAntique)
             }
         }
     }
@@ -771,19 +699,15 @@ private fun HumanCountPicker(
     sublabel: String,
     onChange: (Int) -> Unit,
 ) {
+    // AAA polish: rests on the ground, no bordered gold-tint panel — the brass stepper +
+    // KursiType.label eyebrow already carry the section's identity.
     Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(BrandTokens.GoldAntique.copy(alpha = 0.06f))
-                .border(1.dp, BrandTokens.GoldAntique.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
             text = label,
-            style = KursiType.label.copy(fontSize = 10.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold),
+            style = KursiType.label_sm.dmMono().copy(letterSpacing = 1.5.sp),
             color = BrandTokens.GoldAntique,
         )
         Row(
@@ -821,18 +745,17 @@ private fun TeamToggle(
     teamBName: String,
     onToggle: (Boolean) -> Unit,
 ) {
+    // AAA polish: no filled/bordered toggle panel — the row sits on the ground; the pill switch
+    // and gold text already carry the on/off state (non-negotiable #1).
     Column(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(if (on) BrandTokens.GoldAntique.copy(alpha = 0.10f) else BrandTokens.BrassAged.copy(alpha = 0.08f))
-                .border(if (on) 1.5.dp else 1.dp, if (on) BrandTokens.GoldAntique else BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
                 .clickable { onToggle(!on) }
                 .semantics(mergeDescendants = true) {
                     role = androidx.compose.ui.semantics.Role.Switch
                     contentDescription = if (on) onLabel else offLabel
-                }.padding(horizontal = 14.dp, vertical = 10.dp),
+                }.padding(vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
@@ -882,18 +805,16 @@ private fun VisheshToggle(
     on: Boolean,
     onToggle: (Boolean) -> Unit,
 ) {
+    // AAA polish: bare row on the ground — the pill switch + gold label already read on/off.
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(6.dp))
-                .background(if (on) BrandTokens.GoldAntique.copy(alpha = 0.10f) else BrandTokens.TeakDark.copy(alpha = 0.6f))
-                .border(if (on) 1.dp else 0.8.dp, if (on) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.35f), RoundedCornerShape(6.dp))
                 .clickable { onToggle(!on) }
                 .semantics(mergeDescendants = true) {
                     role = androidx.compose.ui.semantics.Role.Switch
                     contentDescription = "$label: ${if (on) "on" else "off"}"
-                }.padding(horizontal = 12.dp, vertical = 8.dp),
+                }.padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -988,12 +909,24 @@ private fun PlayerCountStepper(
             modifier =
                 Modifier
                     .defaultMinSize(minWidth = 56.dp, minHeight = 56.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .shadow(
+                        if (count >
+                            min
+                        ) {
+                            5.dp
+                        } else {
+                            0.dp
+                        },
+                        RoundedCornerShape(10.dp),
+                        clip = false,
+                        ambientColor = Color.Black,
+                        spotColor = BrandTokens.TeakInk,
+                    ).clip(RoundedCornerShape(10.dp))
                     .background(
                         if (count > min) {
-                            BrandTokens.BrassDark.copy(alpha = 0.3f)
+                            Brush.verticalGradient(listOf(BrandTokens.TeakMid, BrandTokens.TeakDark))
                         } else {
-                            BrandTokens.TeakDark.copy(alpha = 0.4f)
+                            Brush.verticalGradient(listOf(BrandTokens.TeakDark, BrandTokens.TeakDark))
                         },
                     ).border(
                         1.5.dp,
@@ -1049,12 +982,24 @@ private fun PlayerCountStepper(
             modifier =
                 Modifier
                     .defaultMinSize(minWidth = 56.dp, minHeight = 56.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .shadow(
+                        if (count <
+                            max
+                        ) {
+                            5.dp
+                        } else {
+                            0.dp
+                        },
+                        RoundedCornerShape(10.dp),
+                        clip = false,
+                        ambientColor = Color.Black,
+                        spotColor = BrandTokens.TeakInk,
+                    ).clip(RoundedCornerShape(10.dp))
                     .background(
                         if (count < max) {
-                            BrandTokens.BrassAged.copy(alpha = 0.3f)
+                            Brush.verticalGradient(listOf(BrandTokens.TeakMid, BrandTokens.TeakDark))
                         } else {
-                            BrandTokens.TeakDark.copy(alpha = 0.4f)
+                            Brush.verticalGradient(listOf(BrandTokens.TeakDark, BrandTokens.TeakDark))
                         },
                     ).border(
                         1.5.dp,
@@ -1098,6 +1043,8 @@ private fun DifficultyPillRow(
                         .tween(70),
                 label = "diffPress_${m.tier.name}",
             )
+            // Raised stamp chip — selected = gold-fill w/ dark ink, unselected = dark raised
+            // + brass hairline (non-negotiable #4), matching the reference board's action chips.
             Column(
                 modifier =
                     Modifier
@@ -1105,16 +1052,22 @@ private fun DifficultyPillRow(
                         .graphicsLayer {
                             scaleX = pressScale
                             scaleY = pressScale
-                        }.clip(RoundedCornerShape(10.dp))
+                        }.shadow(
+                            if (isSelected) 6.dp else 3.dp,
+                            Squircle(KursiRadii.md),
+                            clip = false,
+                            ambientColor = Color.Black,
+                            spotColor = BrandTokens.TeakInk,
+                        ).clip(RoundedCornerShape(10.dp))
                         .background(
                             if (isSelected) {
-                                BrandTokens.GoldAntique.copy(alpha = 0.22f)
+                                Brush.verticalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged))
                             } else {
-                                BrandTokens.BrassDark.copy(alpha = 0.12f)
+                                Brush.verticalGradient(listOf(BrandTokens.TeakMid, BrandTokens.TeakDark))
                             },
                         ).border(
-                            if (isSelected) 2.dp else 1.dp,
-                            if (isSelected) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.4f),
+                            if (isSelected) 1.5.dp else KursiDimens.stroke_ring_idle,
+                            if (isSelected) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.6f),
                             RoundedCornerShape(10.dp),
                         ).semantics(mergeDescendants = true) {
                             role = androidx.compose.ui.semantics.Role.RadioButton
@@ -1135,7 +1088,7 @@ private fun DifficultyPillRow(
                                     .clip(CircleShape)
                                     .background(
                                         if (i < level) {
-                                            if (isSelected) BrandTokens.GoldAntique else BrandTokens.BrassAged
+                                            if (isSelected) BrandTokens.TeakInk else BrandTokens.BrassAged
                                         } else {
                                             BrandTokens.BrassDark.copy(alpha = 0.3f)
                                         },
@@ -1146,25 +1099,17 @@ private fun DifficultyPillRow(
                 Text(
                     text = m.nameplate,
                     style = KursiType.caption.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.sp),
-                    color = if (isSelected) BrandTokens.GoldAntique else KursiNeutrals.TextSecondary,
+                    color = if (isSelected) BrandTokens.TeakInk else KursiNeutrals.TextSecondary,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
                 if (isSelected) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(BrandTokens.GoldAntique)
-                                .padding(horizontal = 4.dp, vertical = 1.dp),
-                    ) {
-                        Text(
-                            "✓",
-                            style = KursiType.caption.copy(fontSize = 8.sp),
-                            color = BrandTokens.TeakDark,
-                        )
-                    }
+                    Text(
+                        "✓ SELECTED",
+                        style = KursiType.caption.copy(fontSize = 7.sp, letterSpacing = 0.3.sp, fontWeight = FontWeight.Bold),
+                        color = BrandTokens.TeakInk.copy(alpha = 0.7f),
+                    )
                 }
             }
         }
@@ -1183,69 +1128,52 @@ private fun AdvancedOptionsSection(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        // Header row — tap to expand/collapse
-        Box(
+        // Header row — tap to expand/collapse. A hairline row on the ground, not a bordered tile.
+        HairlineRow(
+            onClick = onToggle,
+            showDivider = !expanded,
+            verticalPadding = 12.dp,
             modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(BrandTokens.TeakDark.copy(alpha = 0.6f))
-                    .border(
-                        1.dp,
-                        if (hasActiveOption) {
-                            BrandTokens.GoldAntique.copy(alpha = 0.6f)
-                        } else {
-                            BrandTokens.BrassDark.copy(alpha = 0.4f)
-                        },
-                        RoundedCornerShape(8.dp),
-                    ).semantics(mergeDescendants = true) {
-                        role = androidx.compose.ui.semantics.Role.Button
-                        contentDescription = "Advanced options. ${if (expanded) "Tap to collapse." else "Tap to expand."}"
-                    }.clickable(onClick = onToggle)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                Modifier.semantics(mergeDescendants = true) {
+                    role = androidx.compose.ui.semantics.Role.Button
+                    contentDescription = "Advanced options. ${if (expanded) "Tap to collapse." else "Tap to expand."}"
+                },
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(
-                            "ADVANCED OPTIONS",
-                            style = KursiType.label.copy(fontSize = 11.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold),
-                            color = if (hasActiveOption) BrandTokens.GoldAntique else BrandTokens.BrassAged,
-                        )
-                        if (hasActiveOption) {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .clip(RoundedCornerShape(3.dp))
-                                        .background(BrandTokens.GoldAntique.copy(alpha = 0.2f))
-                                        .border(0.7.dp, BrandTokens.GoldAntique.copy(alpha = 0.7f), RoundedCornerShape(3.dp))
-                                        .padding(horizontal = 5.dp, vertical = 2.dp),
-                            ) {
-                                Text("ACTIVE", style = KursiType.caption.copy(fontSize = 8.sp, letterSpacing = 0.5.sp), color = BrandTokens.GoldAntique)
-                            }
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(
+                        "ADVANCED OPTIONS",
+                        style = KursiType.label_sm.dmMono().copy(letterSpacing = 1.5.sp),
+                        color = if (hasActiveOption) BrandTokens.GoldAntique else BrandTokens.BrassAged,
+                    )
+                    if (hasActiveOption) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(BrandTokens.GoldAntique.copy(alpha = 0.2f))
+                                    .border(0.7.dp, BrandTokens.GoldAntique.copy(alpha = 0.7f), RoundedCornerShape(3.dp))
+                                    .padding(horizontal = 5.dp, vertical = 2.dp),
+                        ) {
+                            Text("ACTIVE", style = KursiType.caption.copy(fontSize = 8.sp, letterSpacing = 0.5.sp), color = BrandTokens.GoldAntique)
                         }
                     }
-                    Text(
-                        text = "Teams · Darbar · Anarchy · Deck",
-                        style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
-                        color = KursiNeutrals.TextMuted,
-                    )
                 }
                 Text(
-                    text = if (expanded) "▲" else "▼",
-                    style = KursiType.body.copy(fontSize = 14.sp),
-                    color = BrandTokens.BrassAged,
+                    text = "Teams · Darbar · Anarchy · Deck",
+                    style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
+                    color = KursiNeutrals.TextMuted,
                 )
             }
+            Text(
+                text = if (expanded) "▲" else "▼",
+                style = KursiType.body.copy(fontSize = 14.sp),
+                color = BrandTokens.BrassAged,
+            )
         }
 
         // Animated content
@@ -1267,71 +1195,54 @@ private fun DraftOptionChit(
     selected: Boolean,
     onSelect: () -> Unit,
 ) {
-    Box(
+    HairlineRow(
+        onClick = onSelect,
+        verticalPadding = 8.dp,
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(
-                    if (selected) {
-                        BrandTokens.GoldAntique.copy(alpha = 0.14f)
-                    } else {
-                        BrandTokens.BrassAged.copy(alpha = 0.08f)
-                    },
-                ).border(
-                    if (selected) 1.5.dp else 1.dp,
-                    if (selected) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.4f),
-                    RoundedCornerShape(8.dp),
-                ).clickable(onClick = onSelect)
-                .semantics(mergeDescendants = true) {
-                    role = androidx.compose.ui.semantics.Role.RadioButton
-                    contentDescription = "$title. $subtitle"
-                }.padding(horizontal = 14.dp, vertical = 8.dp),
+            Modifier.semantics(mergeDescendants = true) {
+                role = androidx.compose.ui.semantics.Role.RadioButton
+                contentDescription = "$title. $subtitle"
+            },
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(14.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(
+                        if (selected) {
+                            BrandTokens.GoldAntique
+                        } else {
+                            BrandTokens.BrassDark.copy(alpha = 0.4f)
+                        },
+                    ).border(1.dp, BrandTokens.BrassAged, RoundedCornerShape(50)),
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = KursiType.name.copy(fontSize = 13.sp),
+                color = if (selected) BrandTokens.GoldAntique else KursiNeutrals.TextPrimary,
+            )
+            Text(
+                text = subtitle,
+                style = KursiType.caption.copy(fontSize = 9.sp),
+                color = KursiNeutrals.TextMuted,
+            )
+        }
+        if (selected) {
             Box(
                 modifier =
                     Modifier
-                        .size(14.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(
-                            if (selected) {
-                                BrandTokens.GoldAntique
-                            } else {
-                                BrandTokens.BrassDark.copy(alpha = 0.4f)
-                            },
-                        ).border(1.dp, BrandTokens.BrassAged, RoundedCornerShape(50)),
-            )
-            Column(modifier = Modifier.weight(1f)) {
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(BrandTokens.BrassAged.copy(alpha = 0.2f))
+                        .border(0.7.dp, BrandTokens.GoldAntique.copy(alpha = 0.7f), RoundedCornerShape(3.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+            ) {
                 Text(
-                    text = title,
-                    style = KursiType.name.copy(fontSize = 13.sp),
-                    color = if (selected) BrandTokens.GoldAntique else KursiNeutrals.TextPrimary,
+                    "✓",
+                    style = KursiType.caption.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold),
+                    color = BrandTokens.GoldAntique,
                 )
-                Text(
-                    text = subtitle,
-                    style = KursiType.caption.copy(fontSize = 9.sp),
-                    color = KursiNeutrals.TextMuted,
-                )
-            }
-            if (selected) {
-                Box(
-                    modifier =
-                        Modifier
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(BrandTokens.BrassAged.copy(alpha = 0.2f))
-                            .border(0.7.dp, BrandTokens.GoldAntique.copy(alpha = 0.7f), RoundedCornerShape(3.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                ) {
-                    Text(
-                        "✓",
-                        style = KursiType.caption.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold),
-                        color = BrandTokens.GoldAntique,
-                    )
-                }
             }
         }
     }
@@ -1354,12 +1265,15 @@ private fun QuickMatchChit(
     sublabel: String,
     onClick: () -> Unit,
 ) {
+    // A raised gold stamp — the one true hero CTA of the presets list, so it earns real depth
+    // (non-negotiable #4), unlike the hairline rows underneath it.
     Box(
         modifier =
             Modifier
                 .fillMaxWidth()
+                .shadow(6.dp, Squircle(KursiRadii.md), clip = false, ambientColor = Color.Black, spotColor = BrandTokens.TeakInk)
                 .clip(RoundedCornerShape(10.dp))
-                .background(BrandTokens.BrassAged)
+                .background(Brush.verticalGradient(listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged)))
                 .border(1.5.dp, BrandTokens.GoldAntique, RoundedCornerShape(10.dp))
                 .clickable(onClick = onClick)
                 .semantics(mergeDescendants = true) {
@@ -1392,7 +1306,7 @@ private fun QuickMatchChit(
     }
 }
 
-/** A curated persona-lineup preset card — name, sublabel, a brass monogram rail of the cast. */
+/** A curated persona-lineup preset row — name, sublabel, a brass monogram rail of the cast. */
 @Composable
 private fun PresetChit(
     name: String,
@@ -1401,20 +1315,18 @@ private fun PresetChit(
     lineupMonograms: List<String>,
     onClick: () -> Unit,
 ) {
-    Box(
+    // AAA polish: a hairline row on the ground, matching every other selectable list in the
+    // form — the monogram rail + gold name already carry the "curated cast" identity.
+    HairlineRow(
+        onClick = onClick,
+        verticalPadding = 10.dp,
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(BrandTokens.GoldAntique.copy(alpha = 0.08f))
-                .border(1.dp, BrandTokens.GoldAntique.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                .clickable(onClick = onClick)
-                .semantics(mergeDescendants = true) {
-                    role = androidx.compose.ui.semantics.Role.Button
-                    contentDescription = "$name. $sublabel"
-                }.padding(horizontal = 14.dp, vertical = 10.dp),
+            Modifier.semantics(mergeDescendants = true) {
+                role = androidx.compose.ui.semantics.Role.Button
+                contentDescription = "$name. $sublabel"
+            },
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(name, style = KursiType.name.copy(fontSize = 14.sp, letterSpacing = 0.5.sp), color = BrandTokens.GoldAntique)

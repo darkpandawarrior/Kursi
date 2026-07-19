@@ -28,12 +28,20 @@ class AppPrefs(
 
         /** M5 ONBOARD — whether the post-primer "take the tutorial?" offer has been shown once. */
         private const val KEY_HAS_SEEN_TUTORIAL_OFFER = "has_seen_tutorial_offer"
+
+        /** Guided-funnel (spec §6) — whether the first-run funnel (Boot/Primer → Tutorial → Home) has run. */
+        private const val KEY_HAS_SEEN_FUNNEL = "has_seen_funnel"
+
+        /** Graduation policy (spec §3) — true once the player has changed the density layer themselves;
+         *  the auto-graduation evaluator never overrides a manual choice once this is set. */
+        private const val KEY_DENSITY_LAYER_MANUAL = "density_layer_manual"
         private const val KEY_SOUND_ENABLED = "sound_enabled"
         private const val KEY_REDUCED_MOTION = "reduced_motion"
         private const val KEY_DEFAULT_DIFFICULTY = "default_difficulty"
         private const val KEY_DEFAULT_PLAYERS = "default_player_count"
         private const val KEY_LANGUAGE = "language"
         private const val KEY_COACH_ENABLED = "coach_enabled"
+        private const val KEY_DENSITY_LAYER = "density_layer"
 
         // ── Player profile ──
 
@@ -227,6 +235,22 @@ class AppPrefs(
             settings.putBoolean(KEY_HAS_SEEN_TUTORIAL_OFFER, v)
         }
 
+    // ── hasSeenFunnel (guided funnel, spec §6) ─────────────────────────────────
+
+    /**
+     * Gates first-run routing into the interactive guided funnel (Boot/Primer/ProfileSetup → Tutorial
+     * → Home). Defaults to [hasSeenTutorialOffer] when unset so a player upgrading from a build that
+     * predates the funnel — and who therefore already reached Home at least once, resolving the old
+     * offer dialog — is never routed into the funnel retroactively. Only a genuinely brand-new install
+     * (both flags unset) sees it. The app layer sets this alongside [hasSeenTutorialOffer] when the
+     * tutorial finishes (see KursiApp.kt), whether reached via the funnel or replayed later from Home.
+     */
+    var hasSeenFunnel: Boolean
+        get() = settings.getBoolean(KEY_HAS_SEEN_FUNNEL, defaultValue = hasSeenTutorialOffer)
+        set(v) {
+            settings.putBoolean(KEY_HAS_SEEN_FUNNEL, v)
+        }
+
     // ── Sound ─────────────────────────────────────────────────────────────────
 
     var soundEnabled: Boolean
@@ -279,6 +303,25 @@ class AppPrefs(
             _coachEnabledFlow.value = v
         }
 
+    // ── Density layer (progressive disclosure, spec §3) ──────────────────────
+
+    /** Density layer name ("FOCUS"|"GUIDED"|"ANALYST"); default ANALYST for existing installs.
+     *  Stored as a plain String — this module stays enum-free; the app layer maps it. */
+    var densityLayerName: String
+        get() = settings.getString(KEY_DENSITY_LAYER, defaultValue = "ANALYST")
+        set(v) {
+            settings.putString(KEY_DENSITY_LAYER, v)
+            _densityLayerFlow.value = v
+        }
+
+    /** True once the player has changed the density layer themselves (Settings / an in-game override).
+     *  [com.kursi.feature.game.evaluateDensityGraduation] reads this and never auto-advances past it. */
+    var densityLayerManuallySet: Boolean
+        get() = settings.getBoolean(KEY_DENSITY_LAYER_MANUAL, defaultValue = false)
+        set(v) {
+            settings.putBoolean(KEY_DENSITY_LAYER_MANUAL, v)
+        }
+
     // ── M5 Turn speed / auto-mode ─────────────────────────────────────────────
 
     /** Turn pacing tier — scales the bot-step delays. Default NORMAL. */
@@ -320,6 +363,9 @@ class AppPrefs(
 
     private val _coachEnabledFlow = MutableStateFlow(coachEnabled)
     val coachEnabledFlow: StateFlow<Boolean> = _coachEnabledFlow.asStateFlow()
+
+    private val _densityLayerFlow = MutableStateFlow(densityLayerName)
+    val densityLayerFlow: StateFlow<String> = _densityLayerFlow.asStateFlow()
 
     private val _turnSpeedFlow = MutableStateFlow(turnSpeed)
     val turnSpeedFlow: StateFlow<TurnSpeed> = _turnSpeedFlow.asStateFlow()

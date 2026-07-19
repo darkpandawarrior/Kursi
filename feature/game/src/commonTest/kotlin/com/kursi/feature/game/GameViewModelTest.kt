@@ -89,4 +89,22 @@ class GameViewModelTest {
             "a declared action should record at least as many events",
         )
     }
+
+    /**
+     * MUNSHI (Track 3, spec §8.1, §8.6) wiring check: with no on-device SDK and no BYOK key
+     * available (the JVM test environment — [com.kursi.ai.provider.OnDeviceAiProvider]'s jvm actual
+     * always reports unavailable, and [GameViewModel] never supplies a cloud key by default), the
+     * provider matrix selection always lands on the templated floor, which never sets
+     * [GameUiState.narrationText]. Locks in "AI off/unavailable = byte-identical to today".
+     */
+    @Test
+    fun narrationText_staysNull_whenNoAiProviderIsAvailable() {
+        val vm = GameViewModel()
+        vm.onAction(GameAction.NewGame(playerCount = 2, difficulty = Difficulty.Easy, seed = 1L))
+        assertEquals(null, vm.state.value?.narrationText)
+
+        val legal = requireNotNull(vm.state.value).legalIntents.first()
+        vm.onAction(GameAction.Submit(legal))
+        assertEquals(null, vm.state.value?.narrationText)
+    }
 }

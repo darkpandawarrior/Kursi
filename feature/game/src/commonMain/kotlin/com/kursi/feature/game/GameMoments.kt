@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import com.kursi.designsystem.KursiRoleHues
+import com.kursi.designsystem.audio.rememberKursiSoundPlayer
 import com.kursi.designsystem.moment.ActionMomentOverlay
 import com.kursi.designsystem.moment.KursiMoment
 import com.kursi.designsystem.moment.LocalTableAnchorRegistry
@@ -314,9 +315,13 @@ internal fun BoxScope.GameMomentLayer(
     // fire at the REAL seat. Until a slot is measured, that slot uses the ellipse fallback.
     val registry = LocalTableAnchorRegistry.current
     val anchors = registry.measuredAnchors(resolver.seatCount, fallback) ?: fallback
-    // Platform SFX + haptic sink, released on dispose. Only actually emits when
-    // soundEnabled is true (the overlay applies the gate per-moment).
+    // Platform haptic sink (SFX now goes through kursiSoundPlayer below), released on dispose.
+    // Only actually emits when soundEnabled is true (the overlay applies the gate per-moment).
     val soundPlayer = rememberSoundPlayer()
+    // Fine-grained CC0 SFX player (docs/experience-assets.md §3) — fires on the SAME GameEvents
+    // that drive the moment theatre below, gated by [soundEnabled] at the call site so the
+    // screenshot/test harness (which passes soundEnabled = false) stays silent.
+    val kursiSoundPlayer = rememberKursiSoundPlayer()
 
     // Track the last list of events we've already turned into moments. The window slides,
     // so we diff by finding the newly-appended suffix rather than trusting a raw count.
@@ -328,6 +333,7 @@ internal fun BoxScope.GameMomentLayer(
         seen = current
         fresh.forEach { event ->
             mapEventToMoment(event, resolver, state, humanDisplayName)?.let { host.play(it) }
+            if (soundEnabled) event.toKursiSound()?.let { kursiSoundPlayer.play(it) }
         }
     }
 

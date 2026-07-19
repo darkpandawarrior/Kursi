@@ -28,6 +28,7 @@ kotlin {
             implementation(libs.foundation)
             implementation(libs.material3)
             implementation(libs.ui)
+            implementation(libs.components.resources)
             implementation(project(":feature:game"))
             implementation(project(":core:designsystem"))
             implementation("com.siddharth.kmp:feedback:1.0.0")

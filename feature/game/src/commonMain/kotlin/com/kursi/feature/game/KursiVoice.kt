@@ -460,6 +460,13 @@ class KursiVoice(
             Language.ENGLISH -> "Your cards only. Don't let others peek."
         }
 
+    // ── Beat gate (spec §5) — FOCUS/GUIDED tap-to-continue affordance ──────
+    val continuePrompt: String get() =
+        when (language) {
+            Language.HINGLISH -> "Aage badhne ke liye tap karein"
+            Language.ENGLISH -> "Tap to continue"
+        }
+
     val youWin: String get() =
         when (language) {
             Language.HINGLISH -> "Kursi aapki. Taj pehno, sarkar."

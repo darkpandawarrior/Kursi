@@ -43,6 +43,8 @@ import com.kursi.ai.BluffOdds
 import com.kursi.ai.OpponentInsight
 import com.kursi.designsystem.*
 import com.kursi.engine.*
+import com.kursi.feature.game.docks.loseInfluenceCause
+import com.kursi.feature.game.overlays.*
 
 // ─────────────────────────── Primer persistence (in-memory for multiplatform) ──
 // Using a simple Kotlin object singleton rather than DataStore/Settings to keep
@@ -1389,8 +1391,8 @@ fun HintRail(
             OddsChip(conf = oddsConf, compact = true)
         }
 
-        // M5 one-tap PLAY BEST MOVE — only when it's the human's live decision and coach is on.
-        if (onPlayBestMove != null && state.isHumanTurn && state.coachEnabled) {
+        // M5 one-tap PLAY BEST MOVE — only when it's the human's live decision and guidance is visible.
+        if (onPlayBestMove != null && state.isHumanTurn && state.coachGuidanceVisible) {
             PlayBestMoveChip(onClick = onPlayBestMove)
         }
 
@@ -1505,7 +1507,7 @@ fun NiyamGazette(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .background(BrandTokens.TeakDark.copy(alpha = 0.94f))
+                    .background(BrandTokens.TeakInk.copy(alpha = 0.80f))
                     .clickable(
                         indication = null,
                         interactionSource =
@@ -1517,26 +1519,19 @@ fun NiyamGazette(
                     ),
             contentAlignment = Alignment.Center,
         ) {
-            // Dialog card — stops click propagation
+            // Dialog card — AAA rebuild (design-language.md #1/#2): the old brass-fill +
+            // sweep-gradient-border card is gone. The gazette now sits on the same warm lit
+            // ground every screen shares, lifted off the scrim by a real cast shadow — no
+            // outline framing the document. Stops click propagation to the scrim.
+            val cardShape = Squircle(KursiRadii.xl)
             Column(
                 modifier =
                     Modifier
                         .fillMaxWidth(0.94f)
                         .fillMaxHeight(0.92f)
-                        .clip(Squircle(KursiRadii.xl))
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark),
-                            ),
-                        ).border(
-                            2.dp,
-                            Brush.sweepGradient(
-                                listOf(BrandTokens.GoldAntique, BrandTokens.BrassAged, BrandTokens.BrassDark, BrandTokens.BrassAged, BrandTokens.GoldAntique),
-                            ),
-                            Squircle(KursiRadii.xl),
-                        ).padding(2.dp)
-                        .clip(Squircle(KursiRadii.xl))
-                        .background(BrandTokens.TeakMid)
+                        .tableDepth(cardShape, elevation = 14.dp, lifted = true)
+                        .clip(cardShape)
+                        .litGround()
                         .clickable(
                             indication = null,
                             interactionSource =
@@ -1563,76 +1558,87 @@ private fun GazetteContent(
     val tabs = listOf("DARBAR", "DHANDHA", "DASTUR", "HISAAB")
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // ── Masthead ──────────────────────────────────────────────────────────
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .background(
-                        Brush.horizontalGradient(listOf(BrandTokens.BrassDark, BrandTokens.BrassAged, BrandTokens.BrassDark)),
-                    ).padding(horizontal = KursiDimens.space_lg, vertical = KursiDimens.space_sm),
-        ) {
-            Column(modifier = Modifier.align(Alignment.CenterStart)) {
-                Text(
-                    text = "THE KURSI GAZETTE",
-                    style = KursiType.display.copy(letterSpacing = 2.sp),
-                    color = BrandTokens.TeakDark,
-                )
-                Text(
-                    text = "Published by the Ministry of Whatever Works · Price: One Favour",
-                    style = KursiType.label_micro.copy(fontStyle = FontStyle.Italic),
-                    color = BrandTokens.TeakDark.copy(alpha = 0.7f),
-                )
-            }
-            // Close button
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.CenterEnd)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(BrandTokens.BrassDark)
-                        .border(1.dp, BrandTokens.GoldAntique, CircleShape)
-                        .clickable(onClick = onDismiss),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("✕", style = KursiType.label_md, color = BrandTokens.GoldAntique)
-            }
-        }
-
-        // ── Tab rail ─────────────────────────────────────────────────────────
+        // ── Masthead — engraved, not a filled brass bar (design-language.md #3) ────
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .background(BrandTokens.BrassDark.copy(alpha = 0.5f))
-                    .padding(horizontal = KursiDimens.space_sm),
+                    .padding(horizontal = KursiDimens.space_lg, vertical = KursiDimens.space_md),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top,
+        ) {
+            Column {
+                Text(
+                    text = "THE KURSI GAZETTE",
+                    style = KursiType.display.copy(letterSpacing = 1.sp).rozha(),
+                    color = BrandTokens.GoldAntique,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = "Published by the Ministry of Whatever Works · Price: One Favour",
+                    style = KursiType.label_micro.copy(fontStyle = FontStyle.Italic),
+                    color = KursiNeutrals.TextMuted,
+                )
+            }
+            // Close affordance — a soft radial ghost circle, same idiom as EngravedTurnHeader's
+            // gazette-open button. No fill, no border framing it.
+            Box(
+                modifier =
+                    Modifier
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(listOf(BrandTokens.GoldAntique.copy(alpha = 0.18f), Color.Transparent)),
+                        ).clickable(onClick = onDismiss)
+                        .semantics { contentDescription = "Close Niyam Gazette" },
+                contentAlignment = Alignment.Center,
+            ) {
+                Text("✕", style = KursiType.label_md, color = BrandTokens.BrassAged)
+            }
+        }
+        HairlineRule()
+
+        // ── Tab rail — DM Mono labels, active tab reads via a hairline underline ──
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = KursiDimens.space_lg, vertical = KursiDimens.space_sm),
+            horizontalArrangement = Arrangement.spacedBy(KursiDimens.space_lg),
         ) {
             tabs.forEachIndexed { idx, tab ->
                 val active = idx == selectedTab
-                Box(
+                Column(
                     modifier =
                         Modifier
-                            .clip(Squircle(KursiRadii.sm))
-                            .background(if (active) BrandTokens.BrassAged else Color.Transparent)
-                            .border(
-                                if (active) 1.dp else 0.dp,
-                                BrandTokens.GoldAntique.copy(alpha = if (active) 1f else 0f),
-                                Squircle(KursiRadii.sm),
-                            ).clickable { selectedTab = idx }
-                            .padding(horizontal = KursiDimens.space_md, vertical = KursiDimens.space_xs),
-                    contentAlignment = Alignment.Center,
+                            .clickable(
+                                indication = null,
+                                interactionSource =
+                                    remember {
+                                        androidx.compose.foundation.interaction
+                                            .MutableInteractionSource()
+                                    },
+                            ) { selectedTab = idx }
+                            .padding(vertical = KursiDimens.space_xs),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
                         text = tab,
-                        style = KursiType.label_sm.copy(letterSpacing = 0.8.sp),
-                        color = if (active) BrandTokens.TeakDark else KursiNeutrals.TextMuted,
+                        style = KursiType.label_sm.dmMono().copy(letterSpacing = 1.5.sp),
+                        color = if (active) BrandTokens.GoldAntique else KursiNeutrals.TextMuted,
+                    )
+                    Spacer(Modifier.height(5.dp))
+                    Box(
+                        modifier =
+                            Modifier
+                                .height(2.dp)
+                                .width(if (active) 22.dp else 0.dp)
+                                .background(BrandTokens.GoldAntique),
                     )
                 }
             }
         }
-
-        BrassDivider()
+        HairlineRule(alpha = 0.3f)
 
         // ── Tab content ───────────────────────────────────────────────────────
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -1644,14 +1650,13 @@ private fun GazetteContent(
             }
         }
 
-        // ── Footer ────────────────────────────────────────────────────────────
-        BrassDivider()
+        // ── Footer — a hairline rule, not a filled brass bar ─────────────────────
+        HairlineRule(alpha = 0.3f)
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .background(BrandTokens.BrassDark.copy(alpha = 0.3f))
-                    .padding(horizontal = KursiDimens.space_lg, vertical = KursiDimens.space_xs),
+                    .padding(horizontal = KursiDimens.space_lg, vertical = KursiDimens.space_sm),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -1675,8 +1680,7 @@ private fun GazetteContent(
 @Composable
 private fun DarbarTab() {
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(KursiDimens.space_md),
-        verticalArrangement = Arrangement.spacedBy(KursiDimens.space_sm),
+        modifier = Modifier.fillMaxSize().padding(horizontal = KursiDimens.space_lg),
     ) {
         items(Role.entries) { role ->
             RoleReferenceCard(role = role)
@@ -1687,36 +1691,31 @@ private fun DarbarTab() {
                 text = "Every card is a claim, not a fact. You may claim a role you do not hold — that is called 'leadership'.",
                 style = KursiType.label_sm.copy(fontStyle = FontStyle.Italic),
                 color = BrandTokens.BrassAged,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(vertical = KursiDimens.space_sm),
                 textAlign = TextAlign.Center,
             )
         }
     }
 }
 
+/**
+ * A role's reference entry — a crafted paper row resting on the gazette's lit ground,
+ * separated from its neighbour by a hairline (design-language.md #4), not a bordered box.
+ */
 @Composable
 private fun RoleReferenceCard(role: Role) {
     val voice = LocalKursiVoice.current
     val visual = KursiColors.forRole(role)
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(Squircle(KursiRadii.md))
-                .background(BrandTokens.TeakDark.copy(alpha = 0.85f))
-                .border(KursiDimens.stroke_hairline, visual.color.copy(alpha = 0.5f), Squircle(KursiRadii.md))
-                .padding(KursiDimens.space_sm),
-        horizontalArrangement = Arrangement.spacedBy(KursiDimens.space_sm),
-        verticalAlignment = Alignment.Top,
-    ) {
-        // Seal
+    HairlineRow(verticalPadding = 12.dp) {
+        // Seal — a brass-rimmed, role-hued disc (the same token material as OpponentSeatToken).
         Box(
             modifier =
                 Modifier
                     .size(40.dp)
+                    .shadow(4.dp, CircleShape, clip = false, ambientColor = Color.Black, spotColor = BrandTokens.TeakInk)
                     .clip(CircleShape)
                     .background(visual.color)
-                    .border(1.5.dp, BrandTokens.BrassAged, CircleShape),
+                    .border(1.5.dp, BrandTokens.BrassAged.copy(alpha = 0.85f), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             com.kursi.designsystem.RoleGlyph(
@@ -1764,35 +1763,11 @@ private fun DhandhaTab() {
         )
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(KursiDimens.space_md),
-        verticalArrangement = Arrangement.spacedBy(KursiDimens.space_xs),
+        modifier = Modifier.fillMaxSize().padding(horizontal = KursiDimens.space_lg),
     ) {
-        item {
-            // Ledger header
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(Squircle(KursiRadii.sm))
-                        .background(BrandTokens.BrassDark.copy(alpha = 0.6f))
-                        .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
-            ) {
-                Text("ACTION", style = KursiType.label_sm.copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique, modifier = Modifier.weight(1.2f))
-                Text("EFFECT", style = KursiType.label_sm.copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique, modifier = Modifier.weight(0.6f))
-                Text("RULES", style = KursiType.label_sm.copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique, modifier = Modifier.weight(2f))
-            }
-        }
+        item { LedgerHeaderRow(listOf("ACTION" to 1.2f, "EFFECT" to 0.6f, "RULES" to 2f)) }
         items(actions) { (action, name, rules) ->
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(Squircle(KursiRadii.sm))
-                        .background(BrandTokens.TeakDark.copy(alpha = 0.7f))
-                        .border(KursiDimens.stroke_hairline, BrandTokens.BrassDark.copy(alpha = 0.3f), Squircle(KursiRadii.sm))
-                        .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
-                verticalAlignment = Alignment.Top,
-            ) {
+            HairlineRow(verticalPadding = 10.dp) {
                 Text(name, style = KursiType.label_sm, color = KursiNeutrals.TextPrimary, modifier = Modifier.weight(1.2f))
                 Text(actionCostSummary(action), style = KursiType.label_sm, color = BrandTokens.GoldAntique, modifier = Modifier.weight(0.6f))
                 Text(rules, style = KursiType.label_micro, color = KursiNeutrals.TextSecondary, modifier = Modifier.weight(2f))
@@ -1805,7 +1780,7 @@ private fun DhandhaTab() {
                 style = KursiType.label_sm.copy(fontStyle = FontStyle.Italic),
                 color = BrandTokens.BrassAged,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(vertical = KursiDimens.space_sm),
             )
         }
     }
@@ -1838,23 +1813,17 @@ private fun DasturTab() {
         )
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(KursiDimens.space_md),
-        verticalArrangement = Arrangement.spacedBy(KursiDimens.space_sm),
+        modifier = Modifier.fillMaxSize().padding(horizontal = KursiDimens.space_lg),
     ) {
-        items(steps) { (title, body, accent) ->
+        itemsIndexed(steps) { idx, (title, body, accent) ->
             Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(Squircle(KursiRadii.md))
-                        .background(BrandTokens.TeakDark.copy(alpha = 0.8f))
-                        .border(KursiDimens.stroke_ring_idle, accent.copy(alpha = 0.5f), Squircle(KursiRadii.md))
-                        .padding(KursiDimens.space_md),
+                modifier = Modifier.fillMaxWidth().padding(vertical = KursiDimens.space_sm),
                 verticalArrangement = Arrangement.spacedBy(KursiDimens.space_xs),
             ) {
                 Text(text = title, style = KursiType.title_sm, color = accent)
                 Text(text = body, style = KursiType.label_sm, color = KursiNeutrals.TextSecondary)
             }
+            if (idx < steps.lastIndex) HairlineRule(alpha = 0.25f)
         }
         item {
             Spacer(Modifier.height(KursiDimens.space_sm))
@@ -1863,7 +1832,7 @@ private fun DasturTab() {
                 style = KursiType.label_sm.copy(fontStyle = FontStyle.Italic),
                 color = BrandTokens.BrassAged,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(vertical = KursiDimens.space_sm),
             )
         }
     }
@@ -1893,39 +1862,18 @@ private fun HisaabTab() {
         )
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(KursiDimens.space_md),
-        verticalArrangement = Arrangement.spacedBy(KursiDimens.space_xs),
+        modifier = Modifier.fillMaxSize().padding(horizontal = KursiDimens.space_lg),
     ) {
         item {
-            // Grid header
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(Squircle(KursiRadii.sm))
-                        .background(BrandTokens.BrassDark.copy(alpha = 0.6f))
-                        .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
-            ) {
-                Text("ACTION", style = KursiType.label_sm.copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique, modifier = Modifier.weight(1.2f))
-                Text("EFFECT", style = KursiType.label_sm.copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique, modifier = Modifier.weight(0.6f))
-                Text("CHALLENGE?", style = KursiType.label_sm.copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique, modifier = Modifier.weight(1.3f))
-                Text("BLOCKED BY", style = KursiType.label_sm.copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique, modifier = Modifier.weight(1.5f))
-            }
+            LedgerHeaderRow(
+                listOf("ACTION" to 1.2f, "EFFECT" to 0.6f, "CHALLENGE?" to 1.3f, "BLOCKED BY" to 1.5f),
+            )
         }
 
         items(rows) { row ->
             val isSafe = row.challengeNote == "safe"
             val isUnstoppable = row.blockedBy.startsWith("—")
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(Squircle(KursiRadii.sm))
-                        .background(BrandTokens.TeakDark.copy(alpha = 0.7f))
-                        .border(KursiDimens.stroke_hairline, BrandTokens.BrassDark.copy(alpha = 0.3f), Squircle(KursiRadii.sm))
-                        .padding(horizontal = KursiDimens.space_sm, vertical = KursiDimens.space_xs),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            HairlineRow(verticalPadding = 10.dp) {
                 Text(row.actionName, style = KursiType.label_sm, color = KursiNeutrals.TextPrimary, modifier = Modifier.weight(1.2f))
                 Text(row.effect, style = KursiType.numeral_sm, color = BrandTokens.GoldAntique, modifier = Modifier.weight(0.6f))
                 Text(
@@ -1945,18 +1893,13 @@ private fun HisaabTab() {
 
         item {
             Spacer(Modifier.height(KursiDimens.space_md))
-            // Block chain quick-read
+            // Block-chain quick-read — plain ground + hairline header, no bordered box.
             Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(Squircle(KursiRadii.md))
-                        .background(BrandTokens.TeakDark.copy(alpha = 0.6f))
-                        .border(KursiDimens.stroke_hairline, BrandTokens.BrassDark.copy(alpha = 0.4f), Squircle(KursiRadii.md))
-                        .padding(KursiDimens.space_md),
+                modifier = Modifier.fillMaxWidth().padding(vertical = KursiDimens.space_sm),
                 verticalArrangement = Arrangement.spacedBy(KursiDimens.space_xs),
             ) {
-                Text("BLOCK CHAIN", style = KursiType.label_sm.copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique)
+                Text("BLOCK CHAIN", style = KursiType.label_sm.dmMono().copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique)
+                HairlineRule(alpha = 0.3f)
                 Spacer(Modifier.height(2.dp))
                 val items =
                     listOf(

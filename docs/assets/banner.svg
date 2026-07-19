@@ -1,5 +1,6 @@
-<svg viewBox="0 0 1200 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="kursiBannerTitle">
+<svg viewBox="0 0 1200 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="kursiBannerTitle kursiBannerDesc">
   <title id="kursiBannerTitle">Kursi — Kursi ke liye kuch bhi karega (he'll do anything for the chair)</title>
+  <desc id="kursiBannerDesc">A License Raj Deco brass-and-parchment wordmark with a stamped khokha coin, in the style of a 1970s government-issue document.</desc>
 
   <defs>
     <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
@@ -11,12 +12,6 @@
       <stop offset="0%" stop-color="#C99A3B"/>
       <stop offset="50%" stop-color="#E8C874"/>
       <stop offset="100%" stop-color="#C99A3B"/>
-    </linearGradient>
-
-    <linearGradient id="shineGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#F4ECD8" stop-opacity="0"/>
-      <stop offset="50%" stop-color="#F4ECD8" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="#F4ECD8" stop-opacity="0"/>
     </linearGradient>
 
     <radialGradient id="coinGrad" cx="35%" cy="32%" r="75%">
@@ -32,10 +27,6 @@
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
-
-    <clipPath id="textClip">
-      <text x="60" y="172" font-family="Georgia, 'Palatino Linotype', 'Book Antiqua', serif" font-weight="700" font-size="128" letter-spacing="4">Kursi</text>
-    </clipPath>
   </defs>
 
   <!-- Background -->
@@ -54,35 +45,26 @@
   <!-- Wordmark -->
   <text x="60" y="172" font-family="Georgia, 'Palatino Linotype', 'Book Antiqua', serif" font-weight="700" font-size="128" letter-spacing="4" fill="url(#goldGrad)">Kursi</text>
 
-  <!-- Animated shine sweeping across the wordmark -->
-  <rect x="-420" y="30" width="220" height="190" fill="url(#shineGrad)" clip-path="url(#textClip)">
-    <animate attributeName="x" from="-420" to="1200" dur="4.5s" repeatCount="indefinite"/>
-  </rect>
+  <!-- shine sweeping across the wordmark -->
+  <rect id="kursi-shine" x="60" y="40" width="70" height="150" fill="#F4ECD8" opacity="0.18" transform="skewX(-18)"/>
 
-  <!-- Tagline, fades in once -->
-  <text x="64" y="208" font-family="Georgia, 'Palatino Linotype', serif" font-size="21" fill="#F4ECD8" opacity="0">
+  <!-- Tagline -->
+  <text x="64" y="208" font-family="Georgia, 'Palatino Linotype', serif" font-size="21" fill="#F4ECD8" opacity="0.9">
     Kursi ke liye kuch bhi karega.
-    <animate attributeName="opacity" from="0" to="0.9" begin="0.5s" dur="1.1s" fill="freeze"/>
   </text>
-  <text x="64" y="234" font-family="Georgia, 'Palatino Linotype', serif" font-size="15" font-style="italic" fill="#E08A1E" opacity="0">
+  <text x="64" y="234" font-family="Georgia, 'Palatino Linotype', serif" font-size="15" font-style="italic" fill="#E08A1E" opacity="0.75">
     He'll do anything for the chair.
-    <animate attributeName="opacity" from="0" to="0.75" begin="0.9s" dur="1.1s" fill="freeze"/>
   </text>
 
-  <!-- Khokha coin motif: a pulsing, slowly-spinning brass coin -->
-  <g transform="translate(1080,140)">
-    <circle r="50" fill="url(#coinGrad)" stroke="#7A5A22" stroke-width="3" filter="url(#coinGlow)">
-      <animate attributeName="r" values="48;53;48" dur="2.6s" repeatCount="indefinite"/>
-    </circle>
+  <!-- Khokha coin motif -->
+  <g id="kursi-coin" transform="translate(1080,140)">
+    <circle r="50" fill="url(#coinGrad)" stroke="#7A5A22" stroke-width="3" filter="url(#coinGlow)"/>
     <g stroke="#1A1A2E" stroke-width="2" opacity="0.45" fill="none">
       <circle r="37"/>
-      <g>
-        <line x1="-28" y1="0" x2="28" y2="0"/>
-        <line x1="0" y1="-28" x2="0" y2="28"/>
-        <line x1="-20" y1="-20" x2="20" y2="20"/>
-        <line x1="-20" y1="20" x2="20" y2="-20"/>
-        <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="16s" repeatCount="indefinite"/>
-      </g>
+      <line x1="-28" y1="0" x2="28" y2="0"/>
+      <line x1="0" y1="-28" x2="0" y2="28"/>
+      <line x1="-20" y1="-20" x2="20" y2="20"/>
+      <line x1="-20" y1="20" x2="20" y2="-20"/>
     </g>
     <text x="0" y="11" font-family="Georgia, serif" font-size="30" font-weight="700" fill="#1A1A2E" text-anchor="middle">₹</text>
   </g>

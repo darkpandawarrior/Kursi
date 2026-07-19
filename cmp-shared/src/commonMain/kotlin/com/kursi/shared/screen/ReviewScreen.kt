@@ -18,19 +18,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kursi.designsystem.BrandTokens
-import com.kursi.designsystem.KursiNeutrals
-import com.kursi.designsystem.KursiType
+import com.kursi.designsystem.*
 import com.kursi.feature.game.GameScreen
 import com.kursi.feature.game.GameUiState
 import com.kursi.feature.game.Language
@@ -65,6 +61,10 @@ import kotlinx.coroutines.withContext
  * The heavy reconstruction (one ISMCTS read per decision) runs OFF the main thread via [buildReplay];
  * the screen shows a teak void until it lands. The render harness can pass a pre-built [prebuilt]
  * session + [initialStep] so a static fixture captures a mid-replay frame with its annotation.
+ *
+ * AAA pass: lit ground + engraved nav chrome around the reused live board; the annotation panel and
+ * scrubber transport dissolve their bordered boxes into hairline-lifted strips (non-negotiable #1),
+ * matching the rest of the "Sarkari Noir" language while keeping the scrubber fully usable.
  */
 @Composable
 fun ReviewScreen(
@@ -92,12 +92,12 @@ fun ReviewScreen(
 
     val r = replay
     if (r == null) {
-        // Building (or no record) — teak void. The header still offers a way back.
-        Box(modifier.fillMaxSize().background(BrandTokens.TeakInk)) {
+        // Building (or no record) — lit void. The header still offers a way back.
+        Box(modifier.fillMaxSize().litGround()) {
             ReviewHeader(onBack = onBack, modifier = Modifier.align(Alignment.TopCenter))
             Text(
                 "…",
-                style = KursiType.title.copy(fontSize = 28.sp),
+                style = KursiType.display.rozha().copy(fontSize = 28.sp),
                 color = BrandTokens.BrassAged.copy(alpha = 0.5f),
                 modifier = Modifier.align(Alignment.Center),
             )
@@ -123,7 +123,7 @@ fun ReviewScreen(
     val annotation: ReplayAnnotation? = remember(r, step) { r.annotationAt(step) }
     val isTerminal = step == r.stepCount - 1
 
-    Box(modifier.fillMaxSize().background(BrandTokens.TeakInk)) {
+    Box(modifier.fillMaxSize().litGround()) {
         Column(Modifier.fillMaxSize()) {
             ReviewHeader(onBack = onBack)
 
@@ -177,53 +177,28 @@ private fun ReviewHeader(
     modifier: Modifier = Modifier,
 ) {
     val s = LocalKursiStrings.current
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(BrandTokens.TeakDark)
-                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(0.dp))
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .defaultMinSize(minHeight = 52.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                    .semantics(mergeDescendants = true) {
-                        role = Role.Button
-                        contentDescription = "Back"
-                    }.clickable(onClick = onBack)
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-        ) {
-            Text(s.reviewBack, style = KursiType.title.copy(fontSize = 13.sp), color = KursiNeutrals.TextPrimary)
-        }
-        Text(
-            s.reviewHeader,
-            style = KursiType.title.copy(fontSize = 15.sp, letterSpacing = 1.sp),
-            color = BrandTokens.GoldAntique,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        // Corner stamp
-        Box(
-            modifier =
-                Modifier
-                    .clip(RoundedCornerShape(4.dp))
-                    .border(1.dp, BrandTokens.StampRed.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp, vertical = 3.dp),
-        ) {
-            Text(
-                s.reviewBadge,
-                style = KursiType.label_micro.copy(fontSize = 8.sp, letterSpacing = 1.sp),
-                color = BrandTokens.StampRed.copy(alpha = 0.85f),
-            )
-        }
-    }
+    EngravedNavHeader(
+        title = s.reviewHeader,
+        onBack = onBack,
+        backLabel = s.back,
+        modifier = modifier.padding(top = 16.dp, start = 4.dp, end = 4.dp, bottom = 4.dp),
+        trailing = {
+            // Corner stamp — a small crafted tag, allowed to keep a hairline rim (non-negotiable #4).
+            Box(
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .border(1.dp, BrandTokens.StampRed.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
+            ) {
+                Text(
+                    s.reviewBadge,
+                    style = KursiType.label_micro.copy(fontSize = 8.sp, letterSpacing = 1.sp),
+                    color = BrandTokens.StampRed.copy(alpha = 0.85f),
+                )
+            }
+        },
+    )
 }
 
 @Composable
@@ -263,19 +238,28 @@ private fun AnnotationPanel(
         }
     val belief = if (language == Language.ENGLISH) a.beliefEnglish else a.beliefHinglish
 
-    Box(
+    Column(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF1C140E))
-                .border(width = 1.dp, color = accent.copy(alpha = 0.55f), shape = RoundedCornerShape(0.dp))
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .background(Brush.verticalGradient(listOf(Color(0xFF1C140E), BrandTokens.TeakInk)))
                 .semantics {
                     contentDescription = "Advisor read. You played ${a.playedLabel}. Best move ${a.bestLabel}. $belief"
                 },
     ) {
+        // A colour-coded hairline rule lifts the panel off the board — not a border framing it
+        // (non-negotiable #1); the accent still reads as an "engraved" seam of colour.
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(2.dp)
+                    .background(
+                        Brush.horizontalGradient(listOf(Color.Transparent, accent.copy(alpha = 0.85f), Color.Transparent)),
+                    ),
+        )
         Column(
-            modifier = Modifier.widthIn(max = 760.dp).fillMaxWidth(),
+            modifier = Modifier.widthIn(max = 760.dp).fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             // Header row: advisor tag + verdict badge
@@ -314,10 +298,10 @@ private fun AnnotationPanel(
                 overflow = TextOverflow.Ellipsis,
             )
 
-            // Played vs best + EV gap.
+            // Played vs best + EV gap — bare DM Mono/label readouts, no boxes (non-negotiable #1).
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(24.dp),
             ) {
                 MoveCell(label = s.reviewPlayedLabel, value = a.playedLabel, accent = accent, modifier = Modifier.weight(1f))
                 MoveCell(label = s.reviewBestLabel, value = a.bestLabel, accent = BrandTokens.GoldAntique, modifier = Modifier.weight(1f))
@@ -347,6 +331,8 @@ private fun AnnotationPanel(
     }
 }
 
+/** A bare played/best readout — label caption over the value in its verdict accent, no box
+ *  (non-negotiable #1 + #5). */
 @Composable
 private fun MoveCell(
     label: String,
@@ -354,17 +340,9 @@ private fun MoveCell(
     accent: Color,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier =
-            modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(BrandTokens.PaperCream.copy(alpha = 0.05f))
-                .border(1.dp, accent.copy(alpha = 0.35f), RoundedCornerShape(8.dp))
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(3.dp),
-    ) {
+    Column(modifier = modifier) {
         Text(label, style = KursiType.label_micro.copy(fontSize = 8.sp, letterSpacing = 1.sp), color = KursiNeutrals.TextMuted)
-        Text(value, style = KursiType.title.copy(fontSize = 12.sp), color = KursiNeutrals.TextPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(value, style = KursiType.title.copy(fontSize = 12.sp), color = accent, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -392,92 +370,102 @@ private fun Scrubber(
     val prevDecision = decisionIdx.lastOrNull { it < step }
     val nextDecision = decisionIdx.firstOrNull { it > step }
 
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(BrandTokens.TeakDark)
-                .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.5f), RoundedCornerShape(0.dp))
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Column(modifier = Modifier.widthIn(max = 760.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            // ── Timeline strip — one pip per step, decision pips brass, terminal pip red. ──
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    s.reviewTimeline,
-                    style = KursiType.label_micro.copy(fontSize = 8.sp, letterSpacing = 1.5.sp),
-                    color = KursiNeutrals.TextMuted,
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    for (i in 0 until replay.stepCount) {
-                        val isDecision = i in decisionIdx
-                        val isCurrent = i == step
-                        val isLast = i == replay.stepCount - 1
-                        val pipColor =
-                            when {
-                                isCurrent -> BrandTokens.GoldAntique
-                                isLast -> BrandTokens.StampRed.copy(alpha = 0.8f)
-                                isDecision -> BrandTokens.BrassAged.copy(alpha = 0.85f)
-                                else -> BrandTokens.BrassDark.copy(alpha = 0.5f)
-                            }
-                        Box(
-                            modifier =
-                                Modifier
-                                    .weight(1f)
-                                    .height(if (isCurrent) 16.dp else 10.dp)
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(pipColor)
-                                    .clickable { onStep(i) }
-                                    .semantics { contentDescription = "Step ${i + 1}" },
-                        )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // A hairline rule lifts the transport off the board — not a filled/bordered bar
+        // (non-negotiable #1), the same idiom as the home footer.
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color.Transparent, BrandTokens.BrassDark.copy(alpha = 0.5f), Color.Transparent),
+                        ),
+                    ),
+        )
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Column(modifier = Modifier.widthIn(max = 760.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                // ── Timeline strip — one pip per step, decision pips brass, terminal pip red. ──
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        s.reviewTimeline,
+                        style = KursiType.label_micro.copy(fontSize = 8.sp, letterSpacing = 1.5.sp),
+                        color = KursiNeutrals.TextMuted,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        for (i in 0 until replay.stepCount) {
+                            val isDecision = i in decisionIdx
+                            val isCurrent = i == step
+                            val isLast = i == replay.stepCount - 1
+                            val pipColor =
+                                when {
+                                    isCurrent -> BrandTokens.GoldAntique
+                                    isLast -> BrandTokens.StampRed.copy(alpha = 0.8f)
+                                    isDecision -> BrandTokens.BrassAged.copy(alpha = 0.85f)
+                                    else -> BrandTokens.BrassDark.copy(alpha = 0.5f)
+                                }
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .weight(1f)
+                                        .height(if (isCurrent) 16.dp else 10.dp)
+                                        .clip(RoundedCornerShape(3.dp))
+                                        .background(pipColor)
+                                        .clickable { onStep(i) }
+                                        .semantics { contentDescription = "Step ${i + 1}" },
+                            )
+                        }
                     }
                 }
-            }
 
-            // ── Transport row ──
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TransportButton("⏮", s.reviewPrevDecision, enabled = prevDecision != null) { prevDecision?.let(onStep) }
-                TransportButton("◂", s.reviewStepBack, enabled = step > 0) { onStep(step - 1) }
-                // Play / pause — the hero control.
-                Box(
-                    modifier =
-                        Modifier
-                            .size(46.dp)
-                            .clip(CircleShape)
-                            .background(BrandTokens.BrassAged)
-                            .border(1.dp, BrandTokens.GoldAntique, CircleShape)
-                            .clickable(onClick = onTogglePlay)
-                            .semantics { contentDescription = if (playing) s.reviewPause else s.reviewPlay },
-                    contentAlignment = Alignment.Center,
+                // ── Transport row ──
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    TransportButton("⏮", s.reviewPrevDecision, enabled = prevDecision != null) { prevDecision?.let(onStep) }
+                    TransportButton("◂", s.reviewStepBack, enabled = step > 0) { onStep(step - 1) }
+                    // Play / pause — the hero control.
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(BrandTokens.BrassAged)
+                                .border(1.dp, BrandTokens.GoldAntique, CircleShape)
+                                .clickable(onClick = onTogglePlay)
+                                .semantics { contentDescription = if (playing) s.reviewPause else s.reviewPlay },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            if (playing) "❚❚" else "▶",
+                            style = KursiType.title.copy(fontSize = 16.sp),
+                            color = BrandTokens.TeakInk,
+                        )
+                    }
+                    TransportButton("▸", s.reviewStepForward, enabled = step < replay.stepCount - 1) { onStep(step + 1) }
+                    TransportButton("⏭", s.reviewNextDecision, enabled = nextDecision != null) { nextDecision?.let(onStep) }
+
+                    Spacer(Modifier.weight(1f))
+
+                    // Step counter / terminal tag.
                     Text(
-                        if (playing) "❚❚" else "▶",
-                        style = KursiType.title.copy(fontSize = 16.sp),
-                        color = BrandTokens.TeakInk,
+                        if (isTerminal) s.reviewTerminal else s.reviewStepCounter(step + 1, replay.stepCount),
+                        style = KursiType.caption.copy(fontSize = 11.sp),
+                        color = if (isTerminal) BrandTokens.StampRed.copy(alpha = 0.85f) else KursiNeutrals.TextMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
-                TransportButton("▸", s.reviewStepForward, enabled = step < replay.stepCount - 1) { onStep(step + 1) }
-                TransportButton("⏭", s.reviewNextDecision, enabled = nextDecision != null) { nextDecision?.let(onStep) }
-
-                Spacer(Modifier.weight(1f))
-
-                // Step counter / terminal tag.
-                Text(
-                    if (isTerminal) s.reviewTerminal else s.reviewStepCounter(step + 1, replay.stepCount),
-                    style = KursiType.caption.copy(fontSize = 11.sp),
-                    color = if (isTerminal) BrandTokens.StampRed.copy(alpha = 0.85f) else KursiNeutrals.TextMuted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
             }
         }
     }
@@ -493,7 +481,7 @@ private fun TransportButton(
     Box(
         modifier =
             Modifier
-                .size(38.dp)
+                .size(48.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(Color(0xFF1E1610))
                 .border(1.dp, BrandTokens.BrassAged.copy(alpha = if (enabled) 0.7f else 0.25f), RoundedCornerShape(8.dp))
@@ -510,7 +498,7 @@ private fun TransportButton(
 
 /**
  * RecentMatchesList — the Review entry list shown on Career (M6c §1). Renders the persisted
- * [CompletedMatch] records (most-recent first) as tappable office files; a tap opens [ReviewScreen]
+ * [CompletedMatch] records (most-recent first) as tappable hairline rows; a tap opens [ReviewScreen]
  * on that game. Empty list → an honest "no file closed yet" notice.
  */
 @Composable
@@ -520,32 +508,26 @@ fun RecentMatchesList(
     modifier: Modifier = Modifier,
 ) {
     val s = LocalKursiStrings.current
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(s.reviewRecentHeader, style = KursiType.title.copy(fontSize = 13.sp, letterSpacing = 1.sp), color = BrandTokens.GoldAntique)
-            Text(s.reviewRecentSub, style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic), color = KursiNeutrals.TextMuted)
-        }
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        EngravedHeader(eyebrow = s.reviewRecentHeader)
+        Text(
+            s.reviewRecentSub,
+            style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
+            color = KursiNeutrals.TextMuted,
+            modifier = Modifier.padding(top = 2.dp, bottom = 4.dp),
+        )
         if (matches.isEmpty()) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(BrandTokens.PaperCream.copy(alpha = 0.04f))
-                        .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-                        .padding(20.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    s.reviewRecentEmpty,
-                    style = KursiType.caption.copy(fontSize = 11.sp, fontStyle = FontStyle.Italic),
-                    color = KursiNeutrals.TextMuted,
-                    textAlign = TextAlign.Center,
-                )
-            }
+            Text(
+                s.reviewRecentEmpty,
+                style = KursiType.caption.copy(fontSize = 11.sp, fontStyle = FontStyle.Italic),
+                color = KursiNeutrals.TextMuted,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+            )
         } else {
-            matches.forEachIndexed { index, m ->
-                RecentMatchRow(match = m, onClick = { onReview(index) })
+            Column(modifier = Modifier.fillMaxWidth()) {
+                matches.forEachIndexed { index, m ->
+                    RecentMatchRow(match = m, onClick = { onReview(index) }, showDivider = index != matches.lastIndex)
+                }
             }
         }
     }
@@ -555,39 +537,25 @@ fun RecentMatchesList(
 private fun RecentMatchRow(
     match: CompletedMatch,
     onClick: () -> Unit,
+    showDivider: Boolean,
 ) {
     val s = LocalKursiStrings.current
     val won = match.humanWon
     val tagColor = if (won) BrandTokens.GoldAntique else BrandTokens.StampRed
-    Row(
+    HairlineRow(
+        onClick = onClick,
+        showDivider = showDivider,
+        verticalPadding = 12.dp,
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(Color(0xFF1E1610))
-                .border(1.dp, BrandTokens.BrassAged.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
-                .clickable(onClick = onClick)
-                .semantics { contentDescription = "Review ${match.players}-player ${match.difficulty} game, ${if (won) "won" else "lost"}" }
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+            Modifier.semantics {
+                contentDescription = "Review ${match.players}-player ${match.difficulty} game, ${if (won) "won" else "lost"}"
+            },
     ) {
-        // Win/loss roundel
-        Box(
-            modifier =
-                Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(tagColor.copy(alpha = 0.15f))
-                    .border(1.dp, tagColor.copy(alpha = 0.7f), CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                if (won) s.reviewMatchWon.take(1) else s.reviewMatchLost.take(1),
-                style = KursiType.title.copy(fontSize = 13.sp),
-                color = tagColor,
-            )
-        }
+        BrassToken(
+            monogram = if (won) s.reviewMatchWon.take(1) else s.reviewMatchLost.take(1),
+            fill = tagColor,
+            size = 34.dp,
+        )
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 s.reviewMatchCaption(match.players, match.difficultyEnum.name, match.humanLog.size),

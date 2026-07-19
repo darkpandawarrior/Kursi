@@ -183,6 +183,11 @@ fun Application.configureRouting(registry: RoomRegistry) {
                                 ),
                             )
                         }
+                        is ClientMessage.ContinueBeat -> {
+                            // Track 6: release a currently-pending beat wait now instead of waiting out
+                            // the server's bounded ack timeout (see BeatAckGate). No-op if none is pending.
+                            actor.post(MatchCommand.BeatAckReceived(connectionId))
+                        }
                         is ClientMessage.JoinRoom -> {
                             // Ignore subsequent JoinRoom frames
                         }

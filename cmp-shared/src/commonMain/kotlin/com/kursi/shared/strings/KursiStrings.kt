@@ -203,9 +203,13 @@ sealed class KursiStrings {
     abstract val tutorialBack: String
     abstract val tutorialSkip: String
     abstract val tutorialFinish: String
-    abstract val tutorialDoIt: String // the action-prompt CTA on the bluff beat
+    abstract val tutorialDoIt: String // the action-prompt CTA on the bluff (claim) beat
+    abstract val tutorialDoBlock: String // the action-prompt CTA on the block beat
+    abstract val tutorialDoCoup: String // the action-prompt CTA on the coup beat
+    abstract val tutorialDoExchange: String // the action-prompt CTA on the exchange beat
 
-    /** 8 scripted teaching beats: title + body. Bilingual, deadpan sarkari voice. */
+    /** 11 scripted teaching beats: title + body. Bilingual, deadpan sarkari voice. Mechanic-at-a-time
+     *  per spec §6: claim (tut5) → challenge (tut6) → reveal (tut7) → block → coup → exchange → tut8. */
     abstract val tut1Title: String
     abstract val tut1Body: String
     abstract val tut2Title: String
@@ -215,11 +219,17 @@ sealed class KursiStrings {
     abstract val tut4Title: String
     abstract val tut4Body: String
     abstract val tut5Title: String
-    abstract val tut5Body: String // YOU act (Ghotala)
+    abstract val tut5Body: String // YOU act (Ghotala / claim)
     abstract val tut6Title: String
     abstract val tut6Body: String // rival challenges
     abstract val tut7Title: String
     abstract val tut7Body: String // reveal — JHOOTH (bluff caught)
+    abstract val tutBlockTitle: String
+    abstract val tutBlockBody: String // YOU act — VAKIL blocks a SUPARI
+    abstract val tutCoupTitle: String
+    abstract val tutCoupBody: String // YOU act — KHELA (coup)
+    abstract val tutExchangeTitle: String
+    abstract val tutExchangeBody: String // YOU act — SETTING (exchange)
     abstract val tut8Title: String
     abstract val tut8Body: String // graduation
 
@@ -640,6 +650,9 @@ sealed class KursiStrings {
         override val tutorialSkip = "Training chhodo →"
         override val tutorialFinish = "HAZRI POORI ✦"
         override val tutorialDoIt = "GHOTALA STAMP KARO"
+        override val tutorialDoBlock = "VAKIL ROKO"
+        override val tutorialDoCoup = "KHELA STAMP KARO"
+        override val tutorialDoExchange = "SETTING KARO"
         override val tut1Title = "Do Certificate, Do Jaan"
         override val tut1Body = "Ye do gupt parchiyaan aapki asli pehchaan hain. Dono gayi, toh aap kursi se bahar. Inhe chhupa ke rakhiye."
         override val tut2Title = "Khokha Hi Taqat Hai"
@@ -656,8 +669,16 @@ sealed class KursiStrings {
         override val tut7Body =
             "Aapke paas NETA tha hi nahi — bluff rangey haath pakda gaya. Ek certificate kurbaan. Yahi hai khel ka dil: daava, challenge, " +
                 "faisla."
+        override val tutBlockTitle = "VAKIL Rokta Hai"
+        override val tutBlockBody =
+            "Netaji Vachan SUPARI bol raha hai — aapki jaan lene ka daava. VAKIL block karta hai. Ek tap, khatra tal gaya."
+        override val tutCoupTitle = "KHELA — Seedha Vaar"
+        override val tutCoupBody = "7 khokha ho toh KHELA khareediye. Na block, na challenge — seedha ek influence chhinti hai. 10 pe majboori."
+        override val tutExchangeTitle = "SETTING — Hath Badaliye"
+        override val tutExchangeBody = "SETTING se 2 naye card khinchte hain, best do rakh ke baaki laut dete hain. Koi nahi jaanta kya badla."
         override val tut8Title = "Hazri Poori, Sarkar"
-        override val tut8Body = "Ab aap niyam jaante hain. Bluff karo, jhooth pakdo, kursi pe baith jao. Asli daftar intezaar mein hai."
+        override val tut8Body =
+            "Ab aap sab jaante hain — daava, challenge, block, khela, aur setting. Kursi pe baithne ka waqt aa gaya."
 
         // ── M5 ONBOARD — Presets / quick-match ──
         override val setupQuickMatchLabel = "TURANT KHEL"
@@ -1026,6 +1047,9 @@ sealed class KursiStrings {
         override val tutorialSkip = "Skip training →"
         override val tutorialFinish = "DAY COMPLETE ✦"
         override val tutorialDoIt = "STAMP GHOTALA"
+        override val tutorialDoBlock = "BLOCK WITH VAKIL"
+        override val tutorialDoCoup = "STAMP KHELA"
+        override val tutorialDoExchange = "RUN SETTING"
         override val tut1Title = "Two Certificates, Two Lives"
         override val tut1Body = "These two secret certificates are your real identities. Lose both and you're out of the chair. Keep them hidden."
         override val tut2Title = "Coins Are Power"
@@ -1042,8 +1066,14 @@ sealed class KursiStrings {
         override val tut7Body =
             "You never held NETA — the bluff is caught red-handed. One certificate sacrificed. This is the heart of the game: claim, " +
                 "challenge, verdict."
+        override val tutBlockTitle = "VAKIL Blocks"
+        override val tutBlockBody = "Netaji Vachan calls SUPARI — a claim to take your life. VAKIL blocks it. One tap, threat gone."
+        override val tutCoupTitle = "KHELA — The Direct Hit"
+        override val tutCoupBody = "At 7 coins, KHELA is on the table. No block, no challenge — a straight loss of influence. Forced at 10."
+        override val tutExchangeTitle = "SETTING — Refresh Your Hand"
+        override val tutExchangeBody = "SETTING draws 2 new cards, keeps the best two, returns the rest. Nobody else knows what changed."
         override val tut8Title = "First Day Done, Sarkar"
-        override val tut8Body = "Now you know the rules. Bluff, catch liars, take the chair. The real office is waiting."
+        override val tut8Body = "Now you know it all — claim, challenge, block, coup, and exchange. Time to take the chair for real."
 
         // ── M5 ONBOARD — Presets / quick-match ──
         override val setupQuickMatchLabel = "QUICK MATCH"

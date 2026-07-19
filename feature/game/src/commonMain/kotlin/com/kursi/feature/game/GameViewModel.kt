@@ -2,6 +2,7 @@ package com.kursi.feature.game
 
 import com.kursi.ai.ExpertPolicy
 import com.kursi.ai.GrandmasterPolicy
+import com.kursi.ai.MunshiNarrator
 import com.kursi.ai.Policy
 import com.kursi.ai.persona.BotDifficulty
 import com.kursi.ai.persona.PersonaAssigner
@@ -12,17 +13,18 @@ import com.kursi.engine.PlayerId
 import com.kursi.feature.game.narrative.ChatVoice
 import com.kursi.feature.game.narrative.SeatInfo
 import com.kursi.feature.game.narrative.SocialDirector
+import com.kursi.feature.game.session.AutoPlayer
 import com.kursi.feature.game.session.GameSession
 import com.kursi.feature.game.session.MatchSnapshot
 import com.kursi.feature.game.session.toEngine
 import com.kursi.feature.game.session.toInput
 import com.siddharth.kmp.mvi.EffectEmitter
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -104,6 +106,10 @@ class GameViewModel(
      * app can wire this from the language preference; tests / render harness use the default.
      */
     private val language: Language = Language.HINGLISH,
+    /** PROGRESSIVE-DISCLOSURE layer flow (spec §3), sourced from AppPrefs by the app. Null = ANALYST. */
+    private val densityLayerFlow: StateFlow<DensityLayer>? = null,
+    /** Persist a density-layer change (e.g. graduation / settings). Null = in-memory only. */
+    private val onDensityLayerChange: ((DensityLayer) -> Unit)? = null,
 ) {
     private val _state = MutableStateFlow<GameUiState?>(null)
     val state: StateFlow<GameUiState?> = _state.asStateFlow()
@@ -131,9 +137,11 @@ class GameViewModel(
     private fun GameUiState.withUnread(): GameUiState =
         if (!narrativeEnabled) this else copy(unreadChat = chatFeed.count { it.id > chatReadHwm && !it.fromPlayer })
 
-    /** Publish [ui] to the UI, stamping the Darbar unread badge. */
+    /** Publish [ui] to the UI, stamping the Darbar unread badge, then kick off Munshi narration for it. */
     private fun emitState(ui: GameUiState) {
-        _state.value = ui.withUnread()
+        val stamped = ui.withUnread()
+        _state.value = stamped
+        requestNarration(stamped)
     }
 
     private val coroutineScope: CoroutineScope = scope
@@ -148,14 +156,39 @@ class GameViewModel(
     /** The in-flight paced bot-advance loop (one bot action per tick). Cancelled on each new submit/new game. */
     private var advanceJob: Job? = null
 
+    /**
+     * Completed by [GameAction.ContinueBeat] (or, in online play — Track 6 — a server-timeout job) to
+     * release a gated beat. Non-null only while the paced loop is holding on a [PendingBeat].
+     */
+    private var beatAck: CompletableDeferred<Unit>? = null
+
     /** M5: current turn-speed multiplier applied to the pacing constants. 1.0 = normal. */
     private var speedMultiplier: Float = turnSpeedFlow?.value ?: 1.0f
+
+    /** M5 AUTO-MODE / M6e TAMASHA — auto-play, auto-resolve, and spectator-demo machinery. */
+    private val autoPlayer =
+        AutoPlayer(
+            session = { session },
+            shown = { _state.value },
+            submit = ::submitIntent,
+            scope = coroutineScope,
+            speed = { speedMultiplier },
+        )
 
     /**
      * The in-flight DECISION-COACH computation (ISMCTS ~200–400 ms). Cancelled/replaced on every
      * new human decision and on new game, so stale advice never lands on a fresh decision point.
      */
     private var adviceJob: Job? = null
+
+    /** MUNSHI (Track 3, spec §8.1) — the AI narrator's provider-matrix selection, built once. */
+    private val munshi = MunshiNarrator()
+
+    /**
+     * The in-flight Munshi narration job for the beat most recently published via [emitState].
+     * Cancelled/replaced on every new beat so a stale line can never land on a newer one.
+     */
+    private var narrationJob: Job? = null
 
     private companion object {
         /** Pure bookkeeping (income / foreign aid / a coin tick / a bare turn pass): readable but brisk. */
@@ -210,9 +243,6 @@ class GameViewModel(
     /** The human player's display name — threaded into moment beats and chat. Default "Khiladi". */
     var humanDisplayName: String = "Khiladi"
         private set
-
-    /** M6e TAMASHA / DEMO — when true, the advisor auto-plays the human seat(s) so the whole game runs itself. */
-    private var spectator: Boolean = false
 
     /** M6c: the persona lineup for the live match (human + bot seats), captured at game start. */
     private var matchPersonas: Map<PlayerId, OpponentPersona> = emptyMap()
@@ -345,6 +375,14 @@ class GameViewModel(
                 turnSpeedFlow.collect { speedMultiplier = it }
             }
         }
+        // PROGRESSIVE-DISCLOSURE: re-stamp densityLayer onto the live state whenever the flow emits.
+        if (densityLayerFlow != null) {
+            coroutineScope.launch {
+                densityLayerFlow.collect { layer ->
+                    _state.value = _state.value?.copy(densityLayer = layer)
+                }
+            }
+        }
     }
 
     /**
@@ -362,6 +400,20 @@ class GameViewModel(
     }
 
     /**
+     * PROGRESSIVE-DISCLOSURE — change the density layer (e.g. from Settings, or a future
+     * graduation prompt). Calls [onDensityLayerChange] to persist (if wired) AND immediately
+     * re-stamps the live state so the UI reflects it without waiting for the flow round-trip
+     * (mirrors [toggleCoach]). Nothing gates on [GameUiState.densityLayer] yet (Wave 1 Track 4).
+     */
+    fun setDensityLayer(layer: DensityLayer) {
+        onDensityLayerChange?.invoke(layer)
+        if (densityLayerFlow == null) {
+            // No flow wired (e.g. tests / render harness): update state directly.
+            _state.value = _state.value?.copy(densityLayer = layer)
+        }
+    }
+
+    /**
      * Dispatch an MVI [action].
      *
      * This is intentionally synchronous — [GameSession] is a pure in-memory reducer
@@ -372,9 +424,10 @@ class GameViewModel(
         when (action) {
             is GameAction.NewGame -> startGame(action)
             is GameAction.Submit -> submitIntent(action)
-            is GameAction.PlayBestMove -> playBestMove()
+            is GameAction.PlayBestMove -> autoPlayer.playBestMove()
             is GameAction.SendChat -> sendChat(action)
             is GameAction.MarkChatRead -> markChatRead()
+            is GameAction.ContinueBeat -> beatAck?.complete(Unit)
         }
     }
 
@@ -412,23 +465,6 @@ class GameViewModel(
         _state.value = _state.value?.copy(unreadChat = 0)
     }
 
-    /**
-     * M5 ASSISTANT — resolve the best move off-thread and submit it like a tap. No-op if it is not a
-     * human's turn or the game is over. Reuses the same legality-guarded [submitIntent] path.
-     */
-    private fun playBestMove() {
-        val currentSession = session ?: return
-        if (_state.value?.isHumanTurn != true) return
-        coroutineScope.launch {
-            val best = currentSession.bestHumanMove() ?: return@launch
-            // Re-check on the main flow: the decision must still be live and the move still legal.
-            val shown = _state.value ?: return@launch
-            if (shown.isHumanTurn && best in shown.legalIntents) {
-                submitIntent(GameAction.Submit(best))
-            }
-        }
-    }
-
     /** Cancel all coroutines; call when the ViewModel is no longer needed. */
     fun clear() {
         job?.cancel()
@@ -439,7 +475,8 @@ class GameViewModel(
     private fun startGame(action: GameAction.NewGame) {
         advanceJob?.cancel() // drop any paced bot round still running from a prior game
         adviceJob?.cancel() // drop any decision-coach computation from a prior game
-        spectateJob?.cancel() // M6e: drop any spectator auto-play from a prior game
+        narrationJob?.cancel() // drop any Munshi narration computation from a prior game
+        autoPlayer.cancelSpectate() // M6e: drop any spectator auto-play from a prior game
         // M6b: fresh match → fresh decision-quality tally.
         decisionTally = MatchDecisionTally()
         tallyEmitted = false
@@ -471,7 +508,7 @@ class GameViewModel(
                 inflationEnabled = action.inflationEnabled,
                 scarcityEnabled = action.scarcityEnabled,
             )
-        spectator = action.spectator
+        autoPlayer.spectator = action.spectator
         humanDisplayName = action.playerName.ifBlank { "Khiladi" }
         // DARBAR: fresh narrative state for the new match.
         narrativeEnabled = action.narrativeEnabled
@@ -591,7 +628,12 @@ class GameViewModel(
             } else {
                 newSession.start()
             }
-        emitState(initialUi.copy(coachEnabled = coachEnabledFlow?.value ?: true))
+        emitState(
+            initialUi.copy(
+                coachEnabled = coachEnabledFlow?.value ?: true,
+                densityLayer = initialDensityLayer(densityLayerFlow),
+            ),
+        )
         // A resumed game re-establishes its snapshot (identical content); a fresh game writes its
         // empty-log baseline so a relaunch before the first move still finds the in-progress match.
         if (!initialUi.isGameOver) {
@@ -603,9 +645,9 @@ class GameViewModel(
         // If the human acts first, start coaching their opening decision immediately.
         requestAdvice(newSession)
         // M5: if the opening decision is auto-resolvable (e.g. resumed mid-forced-Coup), handle it.
-        maybeAutoResolve(newSession)
+        autoPlayer.maybeAutoResolve(newSession, autoPassFlow?.value == true, autoPlayForcedFlow?.value == true)
         // M6e: in spectator/demo mode, let the advisor play the opening human decision too.
-        maybeAutoSpectate(newSession)
+        autoPlayer.maybeAutoSpectate(newSession)
     }
 
     private fun submitIntent(action: GameAction.Submit) {
@@ -632,7 +674,7 @@ class GameViewModel(
         }
 
         // A real submit lands — cancel any pending auto-resolve so it can't fire a stale move.
-        autoJob?.cancel()
+        autoPlayer.cancelAuto()
         // DARBAR: drop any in-flight chat handling so it can't mutate the fabric under the move.
         darbarChatJob?.cancel()
 
@@ -660,9 +702,9 @@ class GameViewModel(
             requestAdvice(currentSession)
             // M5: the bounce-back decision may itself be auto-resolvable (e.g. lose-influence with
             // one card after a self-challenge). Handle it before spinning the bot loop.
-            if (maybeAutoResolve(currentSession)) return
+            if (autoPlayer.maybeAutoResolve(currentSession, autoPassFlow?.value == true, autoPlayForcedFlow?.value == true)) return
             // M6e: in spectator mode, the demo plays the bounce-back human decision too.
-            if (maybeAutoSpectate(currentSession)) return
+            if (autoPlayer.maybeAutoSpectate(currentSession)) return
         }
 
         // Then walk the bot round ONE action at a time with a readable pause between each, so the
@@ -672,7 +714,7 @@ class GameViewModel(
             coroutineScope.launch {
                 var lastEvents = humanStep.newEvents
                 while (!currentSession.awaitingHumanOrOver()) {
-                    delay(pauseFor(lastEvents)) // let the previous beat's moment breathe
+                    awaitBeat(lastEvents) // let the previous beat's moment breathe (or hold for a tap)
                     // DARBAR: the social fabric is touched here AND by a chat tap — serialize the two.
                     val step = darbarMutex.withLock { currentSession.stepBotOnce() } ?: break
                     feedEventsToExperts(step.newEvents)
@@ -684,9 +726,9 @@ class GameViewModel(
                 if (currentSession.awaitingHumanOrOver() && _state.value?.isHumanTurn == true) {
                     requestAdvice(currentSession)
                     // M5: auto-resolve a pass-only / forced decision the bot round handed back to us.
-                    maybeAutoResolve(currentSession)
+                    autoPlayer.maybeAutoResolve(currentSession, autoPassFlow?.value == true, autoPlayForcedFlow?.value == true)
                     // M6e: in spectator mode, the demo plays the human decision the bot round handed back.
-                    maybeAutoSpectate(currentSession)
+                    autoPlayer.maybeAutoSpectate(currentSession)
                 }
                 // The game can end during the bot round (a bot couped the human out) without the human
                 // acting again — clear the resume snapshot so a relaunch doesn't offer a finished match.
@@ -695,86 +737,6 @@ class GameViewModel(
                     finishGameOver() // M6b+M6c: a bot ended the game during the paced round.
                 }
             }
-    }
-
-    /** The in-flight auto-mode resolve loop (auto-pass / auto-forced). Cancelled on each new submit. */
-    private var autoJob: Job? = null
-
-    /** M6e: the in-flight spectator auto-play job (plays the human seat's best move). */
-    private var spectateJob: Job? = null
-
-    /**
-     * M6e TAMASHA / DEMO. In spectator mode the advisor plays the human seat(s) too, so the whole game
-     * unfolds on the real table as a watch-only demo. When control rests on a human decision, this
-     * resolves the single best move OFF the main thread (reusing [GameSession.bestHumanMove], exactly
-     * like [playBestMove]) after a paced beat, then submits it like a tap — which kicks the normal bot
-     * advance loop and eventually hands control back to a human seat, re-triggering this. The paced
-     * delay respects the live turn-speed multiplier so the demo is watchable. A no-op outside spectator
-     * mode, when it is not a human's turn, or when the game is over. Returns true if it scheduled a play.
-     */
-    private fun maybeAutoSpectate(currentSession: GameSession): Boolean {
-        if (!spectator) return false
-        if (_state.value?.isHumanTurn != true) return false
-        if (_state.value?.isGameOver == true) return false
-        spectateJob?.cancel()
-        spectateJob =
-            coroutineScope.launch {
-                // Let the player watch the table settle before the demo "thinks" and acts.
-                delay((ROUTINE_STEP_MS * speedMultiplier).toLong().coerceIn(800L, 4800L))
-                val best = currentSession.bestHumanMove() ?: return@launch
-                // bestHumanMove() is a synchronous, non-suspending ISMCTS search - a cancel() issued
-                // while it was running has no effect until it returns. Check explicitly here so a
-                // superseded job (cancelled by a newer maybeAutoSpectate call) aborts instead of racing
-                // the fresh job to submitIntent against the same mutable GameSession.state.
-                coroutineContext.ensureActive()
-                // Re-check on the shown state: still this session, still the human's turn, still legal.
-                val shown = _state.value ?: return@launch
-                if (currentSession === session && shown.isHumanTurn && best in shown.legalIntents) {
-                    submitIntent(GameAction.Submit(best))
-                }
-            }
-        return spectateJob?.isActive == true
-    }
-
-    /**
-     * M5 AUTO-MODE. When control rests on a human decision that the session deems auto-resolvable
-     * AND the matching preference is on, play it for them after a brief readable beat. Loops so a
-     * chain of forced/pass-only decisions clears in one go (e.g. forced-Coup → lose-influence). A
-     * no-op in pass-and-play (auto-resolving one hot-seat player's choice would rob them of agency)
-     * and whenever no preference is enabled. Returns true if it scheduled an auto-resolve.
-     */
-    private fun maybeAutoResolve(currentSession: GameSession): Boolean {
-        // Never auto-act for a hot-seat human in pass-and-play — each human keeps full agency.
-        if (currentSession.isPassAndPlay) return false
-        val autoPass = autoPassFlow?.value == true
-        val autoForced = autoPlayForcedFlow?.value == true
-        if (!autoPass && !autoForced) return false
-        if (_state.value?.isHumanTurn != true) return false
-
-        autoJob?.cancel()
-        autoJob =
-            coroutineScope.launch {
-                while (currentSession.awaitingHumanOrOver() && _state.value?.isHumanTurn == true) {
-                    val decision = currentSession.autoDecision() ?: break
-                    val allowed =
-                        when (decision.kind) {
-                            GameSession.AutoKind.ONLY_PASS -> autoPass
-                            GameSession.AutoKind.SINGLE_LEGAL,
-                            GameSession.AutoKind.FORCED_COUP,
-                            -> autoForced
-                        }
-                    if (!allowed) break
-                    // Let the player register what they're being relieved of before it fires.
-                    delay((1200L * speedMultiplier).toLong().coerceIn(400L, 2800L))
-                    // Bail if the situation changed under us (race with the advance loop).
-                    val shown = _state.value ?: break
-                    if (!shown.isHumanTurn || decision.intent !in shown.legalIntents) break
-                    submitIntent(GameAction.Submit(decision.intent))
-                    // submitIntent kicks its own advance loop; yield so it can settle, then re-check.
-                    return@launch
-                }
-            }
-        return autoJob?.isActive == true
     }
 
     /**
@@ -804,34 +766,72 @@ class GameViewModel(
             }
     }
 
+    /**
+     * MUNSHI (Track 3, spec §8.1) — cancel any in-flight narration and ask for a fresh line for the
+     * beat just published in [ui]. Per spec §8.6's latency rule, [ui]'s templated headline has
+     * ALREADY rendered synchronously by the time this fires (see
+     * [com.kursi.feature.game.overlays.headlineFor]); this only ever upgrades it in place if a
+     * nicer line lands before the NEXT beat cancels it. Staleness guard: [GameUiState.recentEvents]
+     * is a fresh list built per-beat ([com.kursi.feature.game.session.GameSession]), so reference
+     * equality on it — rather than the whole state object, which other in-place updates (coach
+     * toggle, unread badge, advice landing, ...) also `.copy()` — is exactly "still the same beat".
+     *
+     * DISPLAY-ONLY (spec §8.6): the result only ever lands in the ephemeral
+     * [GameUiState.narrationText] field — never `humanIntentLog`, never `GameState`, never a legal-
+     * action gate, and never the replay record.
+     */
+    private fun requestNarration(ui: GameUiState) {
+        narrationJob?.cancel()
+        narrationJob =
+            coroutineScope.launch {
+                val line = munshi.narrate(ui.view, ui.recentEvents) ?: return@launch
+                val shown = _state.value
+                if (shown != null && shown.recentEvents === ui.recentEvents) {
+                    _state.value = shown.copy(narrationText = line)
+                }
+            }
+    }
+
     /** Three-tier rhythm: dramatic beats linger, declared actions are readable, bookkeeping is brisk. */
     private fun pauseFor(events: List<GameEvent>): Long {
-        val dramatic =
-            events.any {
-                it is GameEvent.Challenged ||
-                    it is GameEvent.ChallengeRevealed ||
-                    it is GameEvent.Blocked ||
-                    it is GameEvent.InfluenceLost ||
-                    it is GameEvent.PlayerEliminated ||
-                    it is GameEvent.GameEnded
-            }
         val base =
-            if (dramatic) {
-                DRAMATIC_STEP_MS
-            } else {
-                val routine =
-                    events.any {
-                        it is GameEvent.ActionDeclared ||
-                            it is GameEvent.ActionResolved ||
-                            it is GameEvent.ActionNegated ||
-                            it is GameEvent.Exchanged ||
-                            it is GameEvent.CoinsTransferred
-                    }
-                if (routine) ROUTINE_STEP_MS else TRIVIAL_STEP_MS
+            when (tierFor(events)) {
+                BeatTier.DRAMATIC -> DRAMATIC_STEP_MS
+                BeatTier.ROUTINE -> ROUTINE_STEP_MS
+                BeatTier.TRIVIAL -> TRIVIAL_STEP_MS
             }
         // M5 TURN-SPEED: scale the pacing by the live multiplier (SLOW 1.4× / NORMAL 1.0× / FAST 0.5×),
         // clamped so even FAST keeps a readable floor and SLOW never drags past ~3s.
         return (base * speedMultiplier).toLong().coerceIn(400L, 6000L)
+    }
+
+    /**
+     * Pace the gap before the NEXT bot step. In ANALYST — or when no density-layer flow is wired
+     * (tests / render harness) — this is exactly today's timed [delay]. In FOCUS/GUIDED a non-trivial
+     * beat instead surfaces a [PendingBeat] and SUSPENDS until [GameAction.ContinueBeat] completes
+     * [beatAck]. Trivial beats always flow (no tap for a bare income tick).
+     *
+     * ONLINE (Track 6) will additionally complete [beatAck] from a server ack-timeout so one player
+     * cannot stall the table; the suspension point here is that hook.
+     */
+    private suspend fun awaitBeat(events: List<GameEvent>) {
+        val layer = _state.value?.densityLayer ?: DensityLayer.ANALYST
+        val gated =
+            (layer == DensityLayer.FOCUS || layer == DensityLayer.GUIDED) &&
+                tierFor(events) != BeatTier.TRIVIAL
+        if (!gated) {
+            delay(pauseFor(events))
+            return
+        }
+        val ack = CompletableDeferred<Unit>()
+        beatAck = ack
+        _state.value = _state.value?.copy(pendingBeat = PendingBeat(tierFor(events)))
+        try {
+            ack.await()
+        } finally {
+            beatAck = null
+            _state.value = _state.value?.copy(pendingBeat = null)
+        }
     }
 
     /**
@@ -855,3 +855,6 @@ class GameViewModel(
         }
     }
 }
+
+/** Initial density layer for a fresh match: the flow's value, or ANALYST when no flow is wired. */
+private fun initialDensityLayer(flow: StateFlow<DensityLayer>?): DensityLayer = flow?.value ?: DensityLayer.ANALYST

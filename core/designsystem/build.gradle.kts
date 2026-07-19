@@ -37,5 +37,14 @@ kotlin {
             implementation("com.siddharth.kmp:feedback:1.0.0")
             implementation("com.siddharth.kmp:common:1.0.0")
         }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
     }
+}
+
+// Res class defaults to internal; other modules (cmp-shared) read Res.string.* directly, so it
+// must be public here (scaffold for spec §13 string-resource path — see KursiMotion / strings.xml).
+compose.resources {
+    publicResClass = true
 }
