@@ -47,6 +47,7 @@ android {
         applicationId = "com.kursi.android"
         minSdk = 26
         targetSdk = 37
+        ndk { abiFilters += setOf("arm64-v8a", "armeabi-v7a") } // drop emulator-only x86/x86_64 — ~61MB of libllm_inference_engine_jni.so
         versionCode = readBuildCode()
         versionName = readVersionName()
         buildConfigField("String", "FINGERPRINT", "\"${readFingerprint()}\"")
