@@ -46,7 +46,7 @@ jobs:
       - name: Build Android artifacts
         run: |
           set -uo pipefail
-          cmd="${RELEASE_BUILD_CMD:-:cmp-android:assembleGmsDebug :cmp-android:assembleGmsRelease :cmp-android:assembleNoGmsDebug :cmp-android:assembleNoGmsRelease}"
+          cmd="${RELEASE_BUILD_CMD:-:cmp-android:assembleGmsRelease :cmp-android:assembleNoGmsRelease}"
           ./gradlew $cmd || ./gradlew ${cmd%% *} || true
           mkdir -p dist
           tag="${GITHUB_REF_NAME}"
