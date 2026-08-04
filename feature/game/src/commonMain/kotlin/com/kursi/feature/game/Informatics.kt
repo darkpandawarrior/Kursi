@@ -45,6 +45,25 @@ import com.kursi.designsystem.*
 import com.kursi.engine.*
 import com.kursi.feature.game.docks.loseInfluenceCause
 import com.kursi.feature.game.overlays.*
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.a11y_close_gazette
+import kursi.core.designsystem.generated.resources.a11y_decision_coach_toggle
+import kursi.core.designsystem.generated.resources.game_block_chain_header
+import kursi.core.designsystem.generated.resources.game_coach_off
+import kursi.core.designsystem.generated.resources.game_coach_on
+import kursi.core.designsystem.generated.resources.game_darbar_tab_footnote
+import kursi.core.designsystem.generated.resources.game_dastur_tab_footnote
+import kursi.core.designsystem.generated.resources.game_dhandha_tab_footnote
+import kursi.core.designsystem.generated.resources.game_gazette_footer_quote
+import kursi.core.designsystem.generated.resources.game_gazette_subtitle
+import kursi.core.designsystem.generated.resources.game_gazette_title
+import kursi.core.designsystem.generated.resources.game_hisaab_tab_footnote
+import kursi.core.designsystem.generated.resources.game_niyam_label
+import kursi.core.designsystem.generated.resources.game_primer_done
+import kursi.core.designsystem.generated.resources.game_primer_skip
+import kursi.core.designsystem.generated.resources.game_replay_primer
+import kursi.core.designsystem.generated.resources.game_tab_darbar
+import org.jetbrains.compose.resources.stringResource
 
 // ─────────────────────────── Primer persistence (in-memory for multiplatform) ──
 // Using a simple Kotlin object singleton rather than DataStore/Settings to keep
@@ -1282,7 +1301,8 @@ private fun CoachToggleChip(
 ) {
     val accentColor = if (coachEnabled) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.55f)
     val bgColor = if (coachEnabled) BrandTokens.BrassAged.copy(alpha = 0.22f) else BrandTokens.TeakDark.copy(alpha = 0.85f)
-    val label = if (coachEnabled) "COACH ON" else "COACH OFF"
+    val label = if (coachEnabled) stringResource(Res.string.game_coach_on) else stringResource(Res.string.game_coach_off)
+    val toggleDesc = stringResource(Res.string.a11y_decision_coach_toggle)
     Box(
         modifier =
             Modifier
@@ -1296,7 +1316,7 @@ private fun CoachToggleChip(
                     role = androidx.compose.ui.semantics.Role.Switch
                     toggleableState = if (coachEnabled) ToggleableState.On else ToggleableState.Off
                     stateDescription = if (coachEnabled) "On" else "Off"
-                    contentDescription = "Decision coach"
+                    contentDescription = toggleDesc
                 }.clickable(onClick = onToggle)
                 .padding(horizontal = KursiDimens.space_sm, vertical = 2.dp),
         contentAlignment = Alignment.Center,
@@ -1482,7 +1502,7 @@ fun NiyamButton(
     ) {
         Text(text = "?", style = KursiType.label_md, color = BrandTokens.TeakDark, textAlign = TextAlign.Center)
         Text(
-            text = "NIYAM",
+            text = stringResource(Res.string.game_niyam_label),
             style = KursiType.label_micro.copy(letterSpacing = 0.5.sp),
             color = BrandTokens.TeakDark.copy(alpha = 0.7f),
             textAlign = TextAlign.Center,
@@ -1555,7 +1575,8 @@ private fun GazetteContent(
     initialTab: Int,
 ) {
     var selectedTab by remember { mutableStateOf(initialTab) }
-    val tabs = listOf("DARBAR", "DHANDHA", "DASTUR", "HISAAB")
+    val tabs = listOf(stringResource(Res.string.game_tab_darbar), "DHANDHA", "DASTUR", "HISAAB")
+    val closeGazetteDesc = stringResource(Res.string.a11y_close_gazette)
 
     Column(modifier = Modifier.fillMaxSize()) {
         // ── Masthead — engraved, not a filled brass bar (design-language.md #3) ────
@@ -1569,13 +1590,13 @@ private fun GazetteContent(
         ) {
             Column {
                 Text(
-                    text = "THE KURSI GAZETTE",
+                    text = stringResource(Res.string.game_gazette_title),
                     style = KursiType.display.copy(letterSpacing = 1.sp).rozha(),
                     color = BrandTokens.GoldAntique,
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = "Published by the Ministry of Whatever Works · Price: One Favour",
+                    text = stringResource(Res.string.game_gazette_subtitle),
                     style = KursiType.label_micro.copy(fontStyle = FontStyle.Italic),
                     color = KursiNeutrals.TextMuted,
                 )
@@ -1590,7 +1611,7 @@ private fun GazetteContent(
                         .background(
                             Brush.radialGradient(listOf(BrandTokens.GoldAntique.copy(alpha = 0.18f), Color.Transparent)),
                         ).clickable(onClick = onDismiss)
-                        .semantics { contentDescription = "Close Niyam Gazette" },
+                        .semantics { contentDescription = closeGazetteDesc },
                 contentAlignment = Alignment.Center,
             ) {
                 Text("✕", style = KursiType.label_md, color = BrandTokens.BrassAged)
@@ -1661,12 +1682,12 @@ private fun GazetteContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "In KURSI, the truth is whatever survives a challenge.",
+                text = stringResource(Res.string.game_gazette_footer_quote),
                 style = KursiType.label_micro.copy(fontStyle = FontStyle.Italic),
                 color = KursiNeutrals.TextMuted,
             )
             Text(
-                text = "↩ Replay the primer",
+                text = stringResource(Res.string.game_replay_primer),
                 style = KursiType.label_sm,
                 color = BrandTokens.BrassAged,
                 modifier = Modifier.clickable(onClick = onReplayPrimer),
@@ -1688,7 +1709,7 @@ private fun DarbarTab() {
         item {
             Spacer(Modifier.height(KursiDimens.space_sm))
             Text(
-                text = "Every card is a claim, not a fact. You may claim a role you do not hold — that is called 'leadership'.",
+                text = stringResource(Res.string.game_darbar_tab_footnote),
                 style = KursiType.label_sm.copy(fontStyle = FontStyle.Italic),
                 color = BrandTokens.BrassAged,
                 modifier = Modifier.fillMaxWidth().padding(vertical = KursiDimens.space_sm),
@@ -1776,7 +1797,7 @@ private fun DhandhaTab() {
         item {
             Spacer(Modifier.height(KursiDimens.space_sm))
             Text(
-                text = "DEHAADI and KHELA need no lie. Everything else, you'd better hope nobody calls your bluff.",
+                text = stringResource(Res.string.game_dhandha_tab_footnote),
                 style = KursiType.label_sm.copy(fontStyle = FontStyle.Italic),
                 color = BrandTokens.BrassAged,
                 textAlign = TextAlign.Center,
@@ -1828,7 +1849,7 @@ private fun DasturTab() {
         item {
             Spacer(Modifier.height(KursiDimens.space_sm))
             Text(
-                text = "Two cards. Two lives. Lose both and you're just a spectator with opinions.",
+                text = stringResource(Res.string.game_dastur_tab_footnote),
                 style = KursiType.label_sm.copy(fontStyle = FontStyle.Italic),
                 color = BrandTokens.BrassAged,
                 textAlign = TextAlign.Center,
@@ -1898,7 +1919,11 @@ private fun HisaabTab() {
                 modifier = Modifier.fillMaxWidth().padding(vertical = KursiDimens.space_sm),
                 verticalArrangement = Arrangement.spacedBy(KursiDimens.space_xs),
             ) {
-                Text("BLOCK CHAIN", style = KursiType.label_sm.dmMono().copy(letterSpacing = 1.sp), color = BrandTokens.GoldAntique)
+                Text(
+                    text = stringResource(Res.string.game_block_chain_header),
+                    style = KursiType.label_sm.dmMono().copy(letterSpacing = 1.sp),
+                    color = BrandTokens.GoldAntique,
+                )
                 HairlineRule(alpha = 0.3f)
                 Spacer(Modifier.height(2.dp))
                 val items =
@@ -1920,7 +1945,7 @@ private fun HisaabTab() {
         item {
             Spacer(Modifier.height(KursiDimens.space_sm))
             Text(
-                text = "When in doubt: everyone's lying. Including the chart.",
+                text = stringResource(Res.string.game_hisaab_tab_footnote),
                 style = KursiType.label_sm.copy(fontStyle = FontStyle.Italic),
                 color = BrandTokens.BrassAged,
                 textAlign = TextAlign.Center,
@@ -2061,7 +2086,7 @@ fun SwearingInPrimer(onDone: () -> Unit) {
             ) {
                 // Skip
                 Text(
-                    text = "Skip the formalities →",
+                    text = stringResource(Res.string.game_primer_skip),
                     style = KursiType.label_sm,
                     color = BrandTokens.BrassDark.copy(alpha = 0.7f),
                     modifier =
@@ -2089,7 +2114,7 @@ fun SwearingInPrimer(onDone: () -> Unit) {
                             }.padding(horizontal = KursiDimens.space_lg, vertical = KursiDimens.space_sm),
                 ) {
                     Text(
-                        text = if (isLast) "SWORN IN" else "Next",
+                        text = if (isLast) stringResource(Res.string.game_primer_done) else "Next",
                         style = KursiType.label_md,
                         color = BrandTokens.TeakDark,
                     )

@@ -30,6 +30,11 @@ import com.kursi.feature.game.GauntletLadder
 import com.kursi.feature.game.GauntletRung
 import com.kursi.shared.strings.KursiStrings
 import com.kursi.shared.strings.LocalKursiStrings
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.a11y_gauntlet_current_rung
+import kursi.core.designsystem.generated.resources.a11y_gauntlet_ladder_row
+import kursi.core.designsystem.generated.resources.gauntlet_rung_sub
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * M6e — GAUNTLET / Tarakki ki Seedhi: the escalating promotion ladder. A vertical bracket of five
@@ -158,6 +163,8 @@ private fun GauntletCurrentSpotlight(
 ) {
     val nameplate = rungNameOf(rung.index, strings)
     val difficultyName = difficultyNameOf(rung.difficulty, strings)
+    val currentRungDesc =
+        stringResource(Res.string.a11y_gauntlet_current_rung, nameplate, difficultyName, rung.players, strings.gauntletCurrentTag)
     Column(
         modifier =
             Modifier
@@ -170,7 +177,7 @@ private fun GauntletCurrentSpotlight(
                     ),
                 ).padding(horizontal = 16.dp, vertical = 14.dp)
                 .semantics(mergeDescendants = true) {
-                    contentDescription = "$nameplate. $difficultyName. ${rung.players} seats. ${strings.gauntletCurrentTag}"
+                    contentDescription = currentRungDesc
                 },
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -183,7 +190,7 @@ private fun GauntletCurrentSpotlight(
                     color = BrandTokens.GoldAntique,
                 )
                 Text(
-                    text = "$difficultyName · ${rung.players} kursiyaan",
+                    text = stringResource(Res.string.gauntlet_rung_sub, difficultyName, rung.players),
                     style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
                     color = KursiNeutrals.TextSecondary,
                 )
@@ -234,6 +241,7 @@ private fun GauntletLadderRow(
             RungState.CURRENT -> strings.gauntletCurrentTag
         }
 
+    val ladderRowDesc = stringResource(Res.string.a11y_gauntlet_ladder_row, nameplate, difficultyName, rung.players, tag)
     HairlineRow(
         onClick = if (cleared) onPlay else null,
         showDivider = showDivider,
@@ -241,7 +249,7 @@ private fun GauntletLadderRow(
         modifier =
             Modifier.alpha(if (locked) 0.55f else 1f).semantics(mergeDescendants = true) {
                 if (cleared) role = androidx.compose.ui.semantics.Role.Button
-                contentDescription = "$nameplate. $difficultyName. ${rung.players} seats. $tag"
+                contentDescription = ladderRowDesc
             },
     ) {
         BrassToken(

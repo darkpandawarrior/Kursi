@@ -30,6 +30,13 @@ import com.kursi.designsystem.moment.TableAnchors
 import com.kursi.designsystem.moment.rememberMomentHost
 import com.kursi.feature.game.Difficulty
 import com.kursi.shared.strings.LocalKursiStrings
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.game_you_monogram
+import kursi.core.designsystem.generated.resources.lobby_bark_attribution
+import kursi.core.designsystem.generated.resources.lobby_cabinet_eyebrow
+import kursi.core.designsystem.generated.resources.lobby_tap_hint
+import kursi.core.designsystem.generated.resources.lobby_voice_hint
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * LobbyScreen — Hazri Register (S3) from 17_app_plan.md §4.
@@ -121,11 +128,11 @@ fun LobbyScreen(
                     // bar. A sparing Rozha title carries the one focal point at the top of the list.
                     val cabinetNo = (currentSeed % 9999).let { if (it < 0) it + 9999 else it }
                     EngravedHeader(
-                        eyebrow = "Cabinet #$cabinetNo · ${players}p · ${difficulty.name}",
+                        eyebrow = stringResource(Res.string.lobby_cabinet_eyebrow, cabinetNo, players, difficulty.name),
                         title = ls.lobbyHeader,
                     ) {
                         Text(
-                            text = "Tap a row for their voice →",
+                            text = stringResource(Res.string.lobby_tap_hint),
                             style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
                             color = KursiNeutrals.TextSecondary,
                         )
@@ -149,7 +156,7 @@ fun LobbyScreen(
                         name = ls.humanSeatName,
                         title = ls.humanSeatTitle,
                         archetype = ls.humanSeatArchetype,
-                        monogram = "AAP",
+                        monogram = stringResource(Res.string.game_you_monogram),
                         seatColor = Color(0xFFE63946),
                         personalityLine = ls.humanSeatPersonality,
                         isHuman = true,
@@ -319,7 +326,7 @@ private fun PersonaRegisterRow(
                     color = KursiNeutrals.TextPrimary,
                 )
                 Text(
-                    "— $name  (tap to flip back)",
+                    stringResource(Res.string.lobby_bark_attribution, name),
                     style = KursiType.caption.copy(fontSize = 10.sp),
                     color = KursiNeutrals.TextMuted,
                     modifier = Modifier.padding(top = 6.dp),
@@ -375,7 +382,7 @@ private fun PersonaRegisterRow(
             }
 
             Text(
-                text = "VOICE ▸",
+                text = stringResource(Res.string.lobby_voice_hint),
                 style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 0.5.sp),
                 color = BrandTokens.BrassAged.copy(alpha = 0.85f),
             )

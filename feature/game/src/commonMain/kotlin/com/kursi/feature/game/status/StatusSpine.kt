@@ -19,6 +19,11 @@ import com.kursi.designsystem.*
 import com.kursi.engine.*
 import com.kursi.feature.game.*
 import com.kursi.feature.game.overlays.*
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.a11y_niyam_rules_gazette
+import kursi.core.designsystem.generated.resources.game_bot_fallback_name
+import kursi.core.designsystem.generated.resources.game_recap_label_pichla_dav
+import org.jetbrains.compose.resources.stringResource
 
 // ─────────────────────────── WHAT-JUST-HAPPENED recap (Clarity, Tenet 1) ──────
 // A compact, plain-language recap of the most-recent resolved beat, shown near the
@@ -95,7 +100,7 @@ internal fun RecapRail(
 
     if (lastBotMsg != null) {
         val senderPlayer = state.view.players.firstOrNull { it.seatIndex == lastBotMsg.senderSeat }
-        val senderName = senderPlayer?.let { state.opponentPersonas[it.id]?.name } ?: "Bot"
+        val senderName = senderPlayer?.let { state.opponentPersonas[it.id]?.name } ?: stringResource(Res.string.game_bot_fallback_name)
         val chatLine = "\"${lastBotMsg.body}\""
         Row(
             modifier =
@@ -145,7 +150,7 @@ internal fun RecapRail(
     val event = mostRecentRecapEvent(state) ?: return
     val (actor, other) = recapNames(event, state)
     val line = voice.recap(event, actor, other) ?: return
-    val label = if (isPickAction) "PICHLA DAV" else voice.recapLabel
+    val label = if (isPickAction) stringResource(Res.string.game_recap_label_pichla_dav) else voice.recapLabel
 
     Row(
         modifier =
@@ -238,6 +243,7 @@ internal fun EngravedTurnHeader(
             SpineTone.Danger -> BrandTokens.StampRed
             SpineTone.Gold -> BrandTokens.GoldAntique
         }
+    val niyamGazetteDesc = stringResource(Res.string.a11y_niyam_rules_gazette)
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier =
@@ -286,7 +292,7 @@ internal fun EngravedTurnHeader(
                                             .MutableInteractionSource()
                                     },
                                 onClick = onOpenGazette,
-                            ).semantics { contentDescription = "Niyam — rules & Gazette" },
+                            ).semantics { contentDescription = niyamGazetteDesc },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text("☰", style = KursiType.label_sm.copy(fontSize = 13.sp), color = BrandTokens.BrassAged)

@@ -35,6 +35,26 @@ import com.kursi.designsystem.moment.rememberMomentHost
 import com.kursi.feature.game.LocalKursiVoice
 import com.kursi.shared.nav.MatchSummary
 import com.kursi.shared.strings.LocalKursiStrings
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.a11y_results_expired
+import kursi.core.designsystem.generated.resources.a11y_winner
+import kursi.core.designsystem.generated.resources.label_expired_stamp
+import kursi.core.designsystem.generated.resources.label_unknown
+import kursi.core.designsystem.generated.resources.results_bluffs_caught_value
+import kursi.core.designsystem.generated.resources.results_bluffs_held_value
+import kursi.core.designsystem.generated.resources.results_expired_body
+import kursi.core.designsystem.generated.resources.results_expired_home_cta
+import kursi.core.designsystem.generated.resources.results_expired_new_game_cta
+import kursi.core.designsystem.generated.resources.results_expired_new_game_sub
+import kursi.core.designsystem.generated.resources.results_expired_title
+import kursi.core.designsystem.generated.resources.results_home_sub
+import kursi.core.designsystem.generated.resources.results_new_game_sub
+import kursi.core.designsystem.generated.resources.results_promote_cta
+import kursi.core.designsystem.generated.resources.results_promote_sub
+import kursi.core.designsystem.generated.resources.results_share_cta
+import kursi.core.designsystem.generated.resources.results_share_sub
+import kursi.core.designsystem.generated.resources.results_turns_value
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -175,8 +195,8 @@ fun ResultsScreen(
                     // PROMOTE — shown only for gauntlet wins with a next rung available
                     if (onNextGauntletRung != null) {
                         StampChit(
-                            label = "PROMOTE",
-                            sublabel = "Agla rung — next challenge awaits",
+                            label = stringResource(Res.string.results_promote_cta),
+                            sublabel = stringResource(Res.string.results_promote_sub),
                             isHero = true,
                             onClick = onNextGauntletRung,
                             modifier = Modifier.fillMaxWidth(),
@@ -201,8 +221,8 @@ fun ResultsScreen(
                     }
                     if (onShare != null) {
                         StampChit(
-                            label = "SHARE",
-                            sublabel = "Faisla share karo",
+                            label = stringResource(Res.string.results_share_cta),
+                            sublabel = stringResource(Res.string.results_share_sub),
                             onClick = onShare,
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -210,14 +230,14 @@ fun ResultsScreen(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         StampButton(
                             label = s.resultsNewGame,
-                            sublabel = "Reconfigure",
+                            sublabel = stringResource(Res.string.results_new_game_sub),
                             onClick = onNewGame,
                             style = StampStyle.Secondary,
                             modifier = Modifier.weight(1f),
                         )
                         StampButton(
                             label = s.resultsHome,
-                            sublabel = "Main office",
+                            sublabel = stringResource(Res.string.results_home_sub),
                             onClick = onHome,
                             style = StampStyle.Secondary,
                             modifier = Modifier.weight(1f),
@@ -256,6 +276,8 @@ private fun VerdictMedallion(
     winnerColor: Color,
     stampColor: Color,
 ) {
+    val unknownLabel = stringResource(Res.string.label_unknown)
+    val winnerDesc = stringResource(Res.string.a11y_winner, summary.winnerName ?: unknownLabel)
     Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(bottom = 14.dp)) {
         Box(
             modifier =
@@ -285,7 +307,7 @@ private fun VerdictMedallion(
                         }
                         drawCircle(stampColor.copy(alpha = 0.15f), r * 0.7f, Offset(cx, cy), style = Stroke(0.8.dp.toPx()))
                     }.semantics {
-                        contentDescription = "Winner: ${summary.winnerName ?: "Unknown"}"
+                        contentDescription = winnerDesc
                     },
             contentAlignment = Alignment.Center,
         ) {
@@ -337,9 +359,9 @@ private fun RoznamchaRecap(
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         EngravedHeader(eyebrow = s.resultsRecapHeader)
         Spacer(Modifier.height(4.dp))
-        RecapRow(s.resultsRecapSurvived, "${summary.turnsTotal} turns")
-        RecapRow(s.resultsRecapBluffsLanded, "${summary.bluffsHeld} bluffs held")
-        RecapRow(s.resultsRecapBluffsCaught, "${summary.bluffsCaught} bluffs caught")
+        RecapRow(s.resultsRecapSurvived, stringResource(Res.string.results_turns_value, summary.turnsTotal))
+        RecapRow(s.resultsRecapBluffsLanded, stringResource(Res.string.results_bluffs_held_value, summary.bluffsHeld))
+        RecapRow(s.resultsRecapBluffsCaught, stringResource(Res.string.results_bluffs_caught_value, summary.bluffsCaught))
         // M6b — per-game decision-quality line (omitted when no gradeable decisions were recorded).
         summary.decisionSummary?.let { dq ->
             RecapRow(s.resultsRecapDecision, s.resultsDecisionValue(dq.accuracyPct, dq.avgEvLostPct))
@@ -405,6 +427,7 @@ private fun ResultsExpired(
     onHome: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val expiredDesc = stringResource(Res.string.a11y_results_expired)
     Box(modifier = modifier.fillMaxSize().litGround()) {
         Column(
             modifier =
@@ -419,7 +442,7 @@ private fun ResultsExpired(
                     Modifier
                         .widthIn(max = 440.dp)
                         .fillMaxWidth()
-                        .semantics { contentDescription = "Match record expired" },
+                        .semantics { contentDescription = expiredDesc },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -435,34 +458,33 @@ private fun ResultsExpired(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        "RAD",
+                        stringResource(Res.string.label_expired_stamp),
                         style = KursiType.display.copy(fontSize = 20.sp, letterSpacing = 3.sp),
                         color = BrandTokens.StampRed.copy(alpha = 0.7f),
                     )
                 }
                 Text(
-                    "File band ho gayi",
+                    stringResource(Res.string.results_expired_title),
                     style = KursiType.display.rozha().copy(fontSize = 20.sp),
                     color = BrandTokens.GoldAntique,
                     textAlign = TextAlign.Center,
                 )
                 Text(
-                    "Is khel ka record ab daftar mein nahi mila — purana faisla guzar gaya. " +
-                        "Koi naya record banaya nahi gaya; jo hua so hua.",
+                    stringResource(Res.string.results_expired_body),
                     style = KursiType.body.copy(fontSize = 13.sp),
                     color = KursiNeutrals.TextSecondary,
                     textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(6.dp))
                 StampChit(
-                    label = "NAYA KHEL",
-                    sublabel = "Start a fresh match",
+                    label = stringResource(Res.string.results_expired_new_game_cta),
+                    sublabel = stringResource(Res.string.results_expired_new_game_sub),
                     isHero = true,
                     onClick = onNewGame,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 StampButton(
-                    label = "DAFTAR",
+                    label = stringResource(Res.string.results_expired_home_cta),
                     onClick = onHome,
                     style = StampStyle.Secondary,
                     modifier = Modifier.fillMaxWidth(),

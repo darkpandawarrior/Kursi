@@ -33,6 +33,29 @@ import com.kursi.core.prefs.StatsLedger
 import com.kursi.designsystem.*
 import com.kursi.shared.strings.KursiStrings
 import com.kursi.shared.strings.LocalKursiStrings
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.a11y_avg_ev_lost_suffix
+import kursi.core.designsystem.generated.resources.a11y_best_move_match_suffix
+import kursi.core.designsystem.generated.resources.a11y_bluff_success_suffix
+import kursi.core.designsystem.generated.resources.a11y_bluffs_caught_suffix
+import kursi.core.designsystem.generated.resources.a11y_bluffs_held_suffix
+import kursi.core.designsystem.generated.resources.a11y_career_empty
+import kursi.core.designsystem.generated.resources.a11y_career_headline
+import kursi.core.designsystem.generated.resources.a11y_career_strip
+import kursi.core.designsystem.generated.resources.a11y_challenge_accuracy_suffix
+import kursi.core.designsystem.generated.resources.a11y_grade_summary
+import kursi.core.designsystem.generated.resources.a11y_h2h_row
+import kursi.core.designsystem.generated.resources.career_bluffs_caught_label
+import kursi.core.designsystem.generated.resources.career_bluffs_held_label
+import kursi.core.designsystem.generated.resources.career_empty_body
+import kursi.core.designsystem.generated.resources.career_empty_title
+import kursi.core.designsystem.generated.resources.career_games_losses
+import kursi.core.designsystem.generated.resources.career_h2h_header
+import kursi.core.designsystem.generated.resources.career_register_badge
+import kursi.core.designsystem.generated.resources.career_strip_summary
+import kursi.core.designsystem.generated.resources.career_title
+import kursi.core.designsystem.generated.resources.career_wins_stamp
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
 /**
@@ -65,13 +88,13 @@ fun CareerScreen(
     val scroll = rememberScrollState()
     Column(modifier = modifier.fillMaxSize().litGround()) {
         EngravedNavHeader(
-            title = "ROZNAMCHA",
+            title = stringResource(Res.string.career_title),
             onBack = onBack,
             backLabel = s.back,
             modifier = Modifier.padding(top = 16.dp, start = 4.dp, end = 4.dp, bottom = 4.dp),
             trailing = {
                 Text(
-                    "CAREER REGISTER",
+                    stringResource(Res.string.career_register_badge),
                     style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 1.sp),
                     color = KursiNeutrals.TextMuted,
                 )
@@ -114,18 +137,19 @@ fun CareerScreen(
 
 @Composable
 private fun CareerEmpty() {
+    val emptyDesc = stringResource(Res.string.a11y_career_empty)
     Column(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .padding(vertical = 36.dp)
-                .semantics { contentDescription = "No career record yet. Play a game to open your file." },
+                .semantics { contentDescription = emptyDesc },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text("Khaata khaali hai", style = KursiType.display.rozha().copy(fontSize = 20.sp), color = BrandTokens.GoldAntique)
+        Text(stringResource(Res.string.career_empty_title), style = KursiType.display.rozha().copy(fontSize = 20.sp), color = BrandTokens.GoldAntique)
         Text(
-            "Abhi tak koi khel poora nahi hua. Ek baazi khelo — phir yahan record darj hoga.",
+            stringResource(Res.string.career_empty_body),
             style = KursiType.body.copy(fontSize = 12.sp),
             color = KursiNeutrals.TextSecondary,
             textAlign = TextAlign.Center,
@@ -138,6 +162,7 @@ private fun CareerEmpty() {
 @Composable
 private fun CareerHeadline(ledger: StatsLedger) {
     val winPct = (ledger.winRate * 100).roundToInt()
+    val headlineDesc = stringResource(Res.string.a11y_career_headline, ledger.wins, ledger.games, winPct)
     Row(
         modifier =
             Modifier
@@ -150,8 +175,7 @@ private fun CareerHeadline(ledger: StatsLedger) {
                     ),
                 ).padding(horizontal = 20.dp, vertical = 20.dp)
                 .semantics {
-                    contentDescription =
-                        "${ledger.wins} wins from ${ledger.games} games, $winPct percent win rate."
+                    contentDescription = headlineDesc
                 },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(20.dp),
@@ -170,12 +194,12 @@ private fun CareerHeadline(ledger: StatsLedger) {
         }
         Column {
             Text(
-                "${ledger.wins} KURSI HAASIL",
+                stringResource(Res.string.career_wins_stamp, ledger.wins),
                 style = KursiType.display.rozha().copy(fontSize = 22.sp),
                 color = KursiNeutrals.TextPrimary,
             )
             Text(
-                "${ledger.games} khel · ${ledger.losses} haar",
+                stringResource(Res.string.career_games_losses, ledger.games, ledger.losses),
                 style = KursiType.body.copy(fontSize = 12.sp, fontStyle = FontStyle.Italic),
                 color = KursiNeutrals.TextSecondary,
             )
@@ -186,8 +210,18 @@ private fun CareerHeadline(ledger: StatsLedger) {
 @Composable
 private fun CareerStatGrid(ledger: StatsLedger) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-        StatReadout("Jhooth chala", "${ledger.bluffsHeld}", "bluffs held", Modifier.weight(1f))
-        StatReadout("Rangey haath", "${ledger.bluffsCaught}", "bluffs caught", Modifier.weight(1f))
+        StatReadout(
+            stringResource(Res.string.career_bluffs_held_label),
+            "${ledger.bluffsHeld}",
+            stringResource(Res.string.a11y_bluffs_held_suffix),
+            Modifier.weight(1f),
+        )
+        StatReadout(
+            stringResource(Res.string.career_bluffs_caught_label),
+            "${ledger.bluffsCaught}",
+            stringResource(Res.string.a11y_bluffs_caught_suffix),
+            Modifier.weight(1f),
+        )
     }
 }
 
@@ -226,6 +260,7 @@ private fun DecisionDossier(dl: DecisionLedger) {
             DecisionGrade.RECKLESS -> BrandTokens.StampRed
             DecisionGrade.UNRATED -> BrandTokens.BrassAged
         }
+    val gradeSummaryDesc = stringResource(Res.string.a11y_grade_summary, gradeName, dl.accuracyPct, dl.decisions)
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         EngravedHeader(eyebrow = s.dqHeader)
         // Grade stamp row — a small crafted chip (allowed to keep a hairline rim; non-negotiable #4).
@@ -234,9 +269,7 @@ private fun DecisionDossier(dl: DecisionLedger) {
                 Modifier
                     .fillMaxWidth()
                     .semantics {
-                        contentDescription =
-                            "Grade $gradeName. ${dl.accuracyPct} percent of moves matched the best move, " +
-                            "over ${dl.decisions} decisions."
+                        contentDescription = gradeSummaryDesc
                     },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -263,20 +296,25 @@ private fun DecisionDossier(dl: DecisionLedger) {
         }
         // 2×2 readouts — bare DM Mono numerals on the ground, no boxes.
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-            StatReadout(s.dqAccuracyLabel, "${dl.accuracyPct}%", "best-move match", Modifier.weight(1f))
-            StatReadout(s.dqEvLostLabel, "${dl.avgEvLostPct}%", "average win-prob bled per decision", Modifier.weight(1f))
+            StatReadout(s.dqAccuracyLabel, "${dl.accuracyPct}%", stringResource(Res.string.a11y_best_move_match_suffix), Modifier.weight(1f))
+            StatReadout(
+                s.dqEvLostLabel,
+                "${dl.avgEvLostPct}%",
+                stringResource(Res.string.a11y_avg_ev_lost_suffix),
+                Modifier.weight(1f),
+            )
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(28.dp)) {
             StatReadout(
                 s.dqChallengeLabel,
                 if (dl.challenges == 0) "—" else "${dl.challengeAccuracyPct}%",
-                "challenge accuracy over ${dl.challenges} challenges",
+                stringResource(Res.string.a11y_challenge_accuracy_suffix, dl.challenges),
                 Modifier.weight(1f),
             )
             StatReadout(
                 s.dqBluffLabel,
                 if (dl.bluffsTried == 0) "—" else "${dl.bluffSuccessPct}%",
-                "bluff success over ${dl.bluffsTried} attempts",
+                stringResource(Res.string.a11y_bluff_success_suffix, dl.bluffsTried),
                 Modifier.weight(1f),
             )
         }
@@ -301,7 +339,7 @@ private fun CareerH2H(ledger: StatsLedger) {
     // Order rivals by games faced (most-encountered first), resolving display names from the roster.
     val rows = ledger.headToHead.entries.sortedByDescending { it.value.played }
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        EngravedHeader(eyebrow = "AAMNE-SAAMNE — HEAD TO HEAD")
+        EngravedHeader(eyebrow = stringResource(Res.string.career_h2h_header))
         Column(modifier = Modifier.fillMaxWidth()) {
             rows.forEachIndexed { i, entry ->
                 H2HRow(personaId = entry.key, record = entry.value, showDivider = i != rows.lastIndex)
@@ -320,12 +358,13 @@ private fun H2HRow(
     val name = persona?.name ?: personaId.replace("_", " ").replaceFirstChar { it.uppercase() }
     val color = persona?.seatColorArgb?.let { Color(it) } ?: BrandTokens.BrassAged
     val pct = if (record.played == 0) 0 else (record.wins * 100 / record.played)
+    val h2hDesc = stringResource(Res.string.a11y_h2h_row, name, record.played, record.wins, pct)
     HairlineRow(
         showDivider = showDivider,
         verticalPadding = 10.dp,
         modifier =
             Modifier.semantics {
-                contentDescription = "$name: faced ${record.played} times, won ${record.wins}, $pct percent."
+                contentDescription = h2hDesc
             },
     ) {
         BrassToken(monogram = persona?.monogram ?: "?", fill = color, size = 32.dp)
@@ -357,14 +396,14 @@ fun CareerStrip(
 ) {
     if (ledger.games == 0) return
     val winPct = (ledger.winRate * 100).roundToInt()
+    val stripDesc = stringResource(Res.string.a11y_career_strip, ledger.wins, ledger.games, winPct)
     HairlineRow(
         onClick = onOpen,
         verticalPadding = 11.dp,
         modifier =
             modifier.semantics(mergeDescendants = true) {
                 liveRegion = LiveRegionMode.Polite
-                contentDescription =
-                    "Career: ${ledger.wins} wins from ${ledger.games} games, $winPct percent. Tap to open the register."
+                contentDescription = stripDesc
             },
     ) {
         Box(
@@ -385,7 +424,7 @@ fun CareerStrip(
                 color = BrandTokens.BrassAged,
             )
             Text(
-                "${ledger.wins}W · ${ledger.losses}L · $winPct%",
+                stringResource(Res.string.career_strip_summary, ledger.wins, ledger.losses, winPct),
                 style = KursiType.numeric.copy(fontSize = 13.sp),
                 color = BrandTokens.GoldAntique,
             )

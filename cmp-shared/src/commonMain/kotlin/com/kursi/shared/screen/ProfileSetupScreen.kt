@@ -32,6 +32,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kursi.core.prefs.AppPrefs
 import com.kursi.designsystem.*
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.a11y_avatar_option
+import kursi.core.designsystem.generated.resources.a11y_seat_color
+import kursi.core.designsystem.generated.resources.cta_confirm_stamp
+import kursi.core.designsystem.generated.resources.profile_avatar_label
+import kursi.core.designsystem.generated.resources.profile_back_label
+import kursi.core.designsystem.generated.resources.profile_eyebrow_first_run
+import kursi.core.designsystem.generated.resources.profile_name_label
+import kursi.core.designsystem.generated.resources.profile_name_placeholder
+import kursi.core.designsystem.generated.resources.profile_seat_color_label
+import kursi.core.designsystem.generated.resources.profile_skip_link
+import kursi.core.designsystem.generated.resources.profile_title_settings
+import kursi.core.designsystem.generated.resources.profile_welcome_title
+import org.jetbrains.compose.resources.stringResource
 
 // ══════════════════════════════════════════════════════════════════════════════
 // ProfileSetupScreen — shown after the primer (first run) or from Settings.
@@ -97,15 +111,15 @@ fun ProfileSetupScreen(
         // ── Header ────────────────────────────────────────────────────────────
         if (fromSettings && onBack != null) {
             EngravedNavHeader(
-                title = "APNA PROFILE",
+                title = stringResource(Res.string.profile_title_settings),
                 onBack = onBack,
-                backLabel = "Wapas",
+                backLabel = stringResource(Res.string.profile_back_label),
                 modifier = Modifier.padding(top = 16.dp, start = 20.dp, end = 20.dp, bottom = 4.dp),
             )
         } else {
             EngravedHeader(
-                eyebrow = "PEHLI HAZRI",
-                title = "Welcome to the Darbar",
+                eyebrow = stringResource(Res.string.profile_eyebrow_first_run),
+                title = stringResource(Res.string.profile_welcome_title),
                 modifier = Modifier.padding(top = 20.dp, start = 20.dp, end = 20.dp, bottom = 4.dp),
             )
         }
@@ -156,11 +170,11 @@ fun ProfileSetupScreen(
 
             // ── FORM FIELD 1 — Display name ────────────────────────────────
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                EngravedHeader(eyebrow = "AAPKA NAAM")
+                EngravedHeader(eyebrow = stringResource(Res.string.profile_name_label))
                 EngravedField(
                     value = name,
                     onValueChange = { if (it.length <= 18) name = it },
-                    placeholder = "Khiladi",
+                    placeholder = stringResource(Res.string.profile_name_placeholder),
                     singleLine = true,
                     capitalization = KeyboardCapitalization.Words,
                     imeAction = ImeAction.Done,
@@ -176,7 +190,7 @@ fun ProfileSetupScreen(
 
             // ── FORM FIELD 2 — Avatar emoji ────────────────────────────────
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                EngravedHeader(eyebrow = "AVATAR CHUNEIN")
+                EngravedHeader(eyebrow = stringResource(Res.string.profile_avatar_label))
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(6),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -186,6 +200,7 @@ fun ProfileSetupScreen(
                 ) {
                     itemsIndexed(AVATAR_ROSTER) { idx, emoji ->
                         val selected = idx == avatarIdx
+                        val avatarDesc = stringResource(Res.string.a11y_avatar_option, emoji)
                         val ringColor by animateColorAsState(
                             if (selected) BrandTokens.GoldAntique else BrandTokens.BrassDark.copy(alpha = 0.55f),
                             animationSpec = tween(180),
@@ -208,7 +223,7 @@ fun ProfileSetupScreen(
                                         indication = null,
                                         interactionSource = remember { MutableInteractionSource() },
                                     ) { avatarIdx = idx }
-                                    .semantics { contentDescription = "Avatar $emoji" },
+                                    .semantics { contentDescription = avatarDesc },
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(text = emoji, fontSize = 24.sp)
@@ -219,7 +234,8 @@ fun ProfileSetupScreen(
 
             // ── FORM FIELD 3 — Seat color ──────────────────────────────────
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                EngravedHeader(eyebrow = "KURSI KA RANG")
+                EngravedHeader(eyebrow = stringResource(Res.string.profile_seat_color_label))
+                val seatColorDesc = stringResource(Res.string.a11y_seat_color)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     KursiSeatColors.all.forEach { swatch ->
                         val swatchArgb = swatch.value.toLong()
@@ -247,7 +263,7 @@ fun ProfileSetupScreen(
                                         indication = null,
                                         interactionSource = remember { MutableInteractionSource() },
                                     ) { colorArgb = swatchArgb }
-                                    .semantics { contentDescription = "Seat color" },
+                                    .semantics { contentDescription = seatColorDesc },
                         )
                     }
                 }
@@ -255,7 +271,7 @@ fun ProfileSetupScreen(
 
             // ── MUHAR LAGAO — commit button ────────────────────────────────────
             StampButton(
-                label = "MUHAR LAGAO ✦",
+                label = stringResource(Res.string.cta_confirm_stamp),
                 onClick = {
                     prefs.playerName = name.trim().ifBlank { "Khiladi" }
                     prefs.playerAvatarIdx = avatarIdx
@@ -269,7 +285,7 @@ fun ProfileSetupScreen(
             // ── Skip link (first-run only) ─────────────────────────────────────
             if (!fromSettings) {
                 Text(
-                    text = "BAAD MEIN KAREIN",
+                    text = stringResource(Res.string.profile_skip_link),
                     style = KursiType.label_sm.dmMono().copy(letterSpacing = 1.sp),
                     color = BrandTokens.BrassAged.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center,

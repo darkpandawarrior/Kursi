@@ -19,6 +19,18 @@ import com.kursi.engine.*
 import com.kursi.feature.game.*
 import com.kursi.feature.game.coach.*
 import com.kursi.feature.game.overlays.*
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.game_jaanch_decide_redraw
+import kursi.core.designsystem.generated.resources.game_jaanch_peeked_prompt
+import kursi.core.designsystem.generated.resources.game_jaanch_target_header
+import kursi.core.designsystem.generated.resources.game_keep_none
+import kursi.core.designsystem.generated.resources.game_keep_roles_label
+import kursi.core.designsystem.generated.resources.game_leave_it
+import kursi.core.designsystem.generated.resources.game_new_game_4p
+import kursi.core.designsystem.generated.resources.game_play_again
+import kursi.core.designsystem.generated.resources.game_players_count
+import kursi.core.designsystem.generated.resources.game_spike_it
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun ReactionDock(
@@ -451,9 +463,9 @@ internal fun ExchangeKeepOption(
 ) {
     val label =
         if (keepCards.isEmpty()) {
-            "Keep —"
+            stringResource(Res.string.game_keep_none)
         } else {
-            "Keep " + keepCards.joinToString(" + ") { roleLabel(it.role) }
+            stringResource(Res.string.game_keep_roles_label, keepCards.joinToString(" + ") { roleLabel(it.role) })
         }
     val accent = if (recommended) KursiSemantics.Success else BrandTokens.BrassAged
 
@@ -538,21 +550,21 @@ internal fun InvestigatePeekDock(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "JAANCH · $targetName's card",
+            text = stringResource(Res.string.game_jaanch_target_header, targetName),
             style = KursiType.label_sm.copy(letterSpacing = 1.sp),
             color = BrandTokens.GoldAntique,
         )
         if (phase.peekedRole != null) {
             RoleCard(role = phase.peekedRole, size = CardSize.Small)
             Text(
-                text = "You peeked: ${roleLabel(phase.peekedRole)}. Spike it back into the deck, or leave it?",
+                text = stringResource(Res.string.game_jaanch_peeked_prompt, roleLabel(phase.peekedRole)),
                 style = KursiType.body,
                 color = KursiNeutrals.TextSecondary,
                 textAlign = TextAlign.Center,
             )
         } else {
             Text(
-                text = "Decide whether to force $targetName to redraw the examined card.",
+                text = stringResource(Res.string.game_jaanch_decide_redraw, targetName),
                 style = KursiType.body,
                 color = KursiNeutrals.TextSecondary,
                 textAlign = TextAlign.Center,
@@ -564,7 +576,7 @@ internal fun InvestigatePeekDock(
         ) {
             if (redrawIntent != null) {
                 InvestigateChoice(
-                    label = "SPIKE IT (redraw)",
+                    label = stringResource(Res.string.game_spike_it),
                     accent = Color(0xFF8E2B22),
                     onClick = { onAction(GameAction.Submit(redrawIntent)) },
                     modifier = Modifier.weight(1f),
@@ -572,7 +584,7 @@ internal fun InvestigatePeekDock(
             }
             if (keepIntent != null) {
                 InvestigateChoice(
-                    label = "LEAVE IT",
+                    label = stringResource(Res.string.game_leave_it),
                     accent = BrandTokens.BrassAged,
                     onClick = { onAction(GameAction.Submit(keepIntent)) },
                     modifier = Modifier.weight(1f),
@@ -620,14 +632,14 @@ internal fun GameOverDock(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         KursiActionButton(
-            label = "Play Again",
-            sublabel = "${state.view.config.seatCount} players",
+            label = stringResource(Res.string.game_play_again),
+            sublabel = stringResource(Res.string.game_players_count, state.view.config.seatCount),
             roleAccent = KursiSemantics.Success,
             enabled = true,
             onClick = { onAction(GameAction.NewGame(playerCount = state.view.config.seatCount)) },
         )
         KursiActionButton(
-            label = "New Game (4 players)",
+            label = stringResource(Res.string.game_new_game_4p),
             enabled = true,
             onClick = { onAction(GameAction.NewGame(playerCount = 4)) },
         )

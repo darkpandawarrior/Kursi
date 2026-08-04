@@ -33,6 +33,12 @@ import com.kursi.core.prefs.SarkariRank
 import com.kursi.designsystem.*
 import com.kursi.shared.strings.LocalKursiStrings
 import com.kursi.shared.strings.rankName
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.a11y_rank_plaque
+import kursi.core.designsystem.generated.resources.a11y_ranked_strip
+import kursi.core.designsystem.generated.resources.a11y_rating_history
+import kursi.core.designsystem.generated.resources.a11y_standing_row
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * M6d — Leaderboard / Darja-Suchi: the LOCAL standings screen. Shows the ranked ELO standing (rating
@@ -128,6 +134,7 @@ private fun RankPlaque(ranked: RankedStanding) {
     val s = LocalKursiStrings.current
     val rank = ranked.rank
     val rankColor = rankColor(rank)
+    val rankPlaqueDesc = stringResource(Res.string.a11y_rank_plaque, s.rankName(rank), ranked.rating, ranked.peak, ranked.games)
     Column(
         modifier =
             Modifier
@@ -140,8 +147,7 @@ private fun RankPlaque(ranked: RankedStanding) {
                     ),
                 ).padding(horizontal = 20.dp, vertical = 20.dp)
                 .semantics {
-                    contentDescription =
-                        "Rank ${s.rankName(rank)}, rating ${ranked.rating}, peak ${ranked.peak}, over ${ranked.games} ranked games."
+                    contentDescription = rankPlaqueDesc
                 },
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -245,6 +251,7 @@ private fun RatingHistoryCard(ranked: RankedStanding) {
                 color = KursiNeutrals.TextSecondary,
             )
         } else {
+            val ratingHistoryDesc = stringResource(Res.string.a11y_rating_history, pts.size, pts.first(), pts.last())
             RatingSparkline(
                 points = pts,
                 modifier =
@@ -252,8 +259,7 @@ private fun RatingHistoryCard(ranked: RankedStanding) {
                         .fillMaxWidth()
                         .height(88.dp)
                         .semantics {
-                            contentDescription =
-                                "Rating history: ${pts.size} points, from ${pts.first()} to ${pts.last()}."
+                            contentDescription = ratingHistoryDesc
                         },
             )
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -391,10 +397,11 @@ private fun OnlineStandingRowView(
     row: OnlineStandingRow,
     showDivider: Boolean,
 ) {
+    val standingRowDesc = stringResource(Res.string.a11y_standing_row, row.position, row.name, row.rating)
     HairlineRow(
         showDivider = showDivider,
         verticalPadding = 10.dp,
-        modifier = Modifier.semantics { contentDescription = "${row.position}. ${row.name}, rating ${row.rating}" },
+        modifier = Modifier.semantics { contentDescription = standingRowDesc },
     ) {
         BrassToken(
             monogram = "${row.position}",
@@ -440,14 +447,14 @@ fun RankedStrip(
     val s = LocalKursiStrings.current
     val rank = ranked.rank
     val rankColor = rankColor(rank)
+    val rankedStripDesc = stringResource(Res.string.a11y_ranked_strip, s.rankName(rank), ranked.rating)
     HairlineRow(
         onClick = onOpen,
         verticalPadding = 11.dp,
         modifier =
             modifier.semantics(mergeDescendants = true) {
                 liveRegion = LiveRegionMode.Polite
-                contentDescription =
-                    "Rank ${s.rankName(rank)}, rating ${ranked.rating}. Tap to open standings."
+                contentDescription = rankedStripDesc
             },
     ) {
         Box(

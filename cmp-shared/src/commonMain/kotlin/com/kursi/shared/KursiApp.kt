@@ -69,6 +69,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.nav_resume_label
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Root Compose entry point for Kursi, shared across all platforms (android / ios / desktop / wasm).
@@ -180,7 +183,7 @@ fun KursiApp() {
                         val resumeSnap = remember(snapRaw) { MatchSnapshot.decode(snapRaw) }
                         val resumeLabel =
                             resumeSnap?.let {
-                                "${it.players} khiladi · ${it.difficultyEnum.name} · ${it.humanLog.size} chaal"
+                                stringResource(Res.string.nav_resume_label, it.players, it.difficultyEnum.name, it.humanLog.size)
                             }
                         // M5 ONBOARD — one-time post-primer offer to take the interactive tutorial. Shows on
                         // the FIRST landing on Home after the primer; dismiss or accept marks it seen forever.

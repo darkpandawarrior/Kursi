@@ -25,6 +25,14 @@ import com.kursi.feature.game.*
 import com.kursi.feature.game.coach.*
 import com.kursi.feature.game.overlays.*
 import com.kursi.feature.game.status.*
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.game_cancel
+import kursi.core.designsystem.generated.resources.game_declare
+import kursi.core.designsystem.generated.resources.game_recommended_target
+import kursi.core.designsystem.generated.resources.game_section_attack
+import kursi.core.designsystem.generated.resources.game_section_earn
+import kursi.core.designsystem.generated.resources.game_section_special
+import org.jetbrains.compose.resources.stringResource
 
 /** A small label row used in the compact mobile action dock to separate grouped sections. */
 @Composable
@@ -126,7 +134,7 @@ internal fun PickActionDock(
             // ① EARN — no role claim, always available
             // Row with equal weights: each chip fills exactly 1/3 of available width so
             // names and costs never overflow or wrap unevenly across different phone sizes.
-            ActionSectionLabel(label = "KAMAAI  +coins", color = brassColor)
+            ActionSectionLabel(label = stringResource(Res.string.game_section_earn), color = brassColor)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
                 Box(modifier = Modifier.weight(1f)) {
                     CompactActionChip(
@@ -179,7 +187,7 @@ internal fun PickActionDock(
             }
 
             // ② ATTACK — costs coins, targets opponents
-            ActionSectionLabel(label = "HAMLA  ⚔ Attack", color = disruptColor)
+            ActionSectionLabel(label = stringResource(Res.string.game_section_attack), color = disruptColor)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
                 Box(modifier = Modifier.weight(1f)) {
                     CompactActionChip(
@@ -218,7 +226,7 @@ internal fun PickActionDock(
             }
 
             // ③ SPECIAL — steal, swap cards, investigate
-            ActionSectionLabel(label = "DAANV  ★ Special", color = defendColor)
+            ActionSectionLabel(label = stringResource(Res.string.game_section_special), color = defendColor)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
                 Box(modifier = Modifier.weight(1f)) {
                     CompactActionChip(
@@ -633,7 +641,7 @@ internal fun PickTargetDock(
             ) {
                 RecommendedStar()
                 Text(
-                    text = "Aim at $targetName — $reason",
+                    text = stringResource(Res.string.game_recommended_target, targetName, reason),
                     style = KursiType.label_sm,
                     color = KursiNeutrals.TextPrimary,
                     maxLines = 1,
@@ -647,7 +655,7 @@ internal fun PickTargetDock(
             textAlign = TextAlign.Center,
         )
         KursiActionButton(
-            label = "Cancel",
+            label = stringResource(Res.string.game_cancel),
             enabled = true,
             onClick = { onLocalPhase(GamePhase.PickAction) },
         )
@@ -726,7 +734,7 @@ internal fun ConfirmDock(
                 onClick = { onLocalPhase(GamePhase.PickAction) },
             )
             KursiActionButton(
-                label = "Declare",
+                label = stringResource(Res.string.game_declare),
                 roleAccent = KursiSemantics.Success,
                 enabled = true,
                 modifier = Modifier.weight(1f),
