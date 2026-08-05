@@ -78,7 +78,20 @@ jobs:
 
       - name: Verify this app still builds against the new pins
         if: steps.move.outputs.changed == 'true'
-        run: ./gradlew :cmp-android:assembleDebug --stacktrace
+        # The wasm leg is NOT optional here, and Kursi is the only repo where it matters.
+        # The Compose Multiplatform hold at 1.12.0-beta01 existed because beta02+ stopped the
+        # generated compose-resources `Res` class landing on the androidMain compilation source
+        # path for a KMP LIBRARY that also targets wasmJs. core/designsystem is exactly that
+        # shape — wasmJs{browser()} + android{} + composeResources/ + publicResClass.
+        #
+        # The hold was lifted upstream on a workaround, not a fix: PaymentsLab deleted its
+        # trigger (moved the typeface out of its designsystem) and Mileway is immune by
+        # construction (no wasmJs in core/ui). So Kursi is the last repo that can actually
+        # falsify the claim — and every bump so far verified with assembleDebug alone, which
+        # never compiles wasm and therefore proves nothing about this specific bug.
+        run: |
+          ./gradlew :cmp-android:assembleDebug --stacktrace
+          ./gradlew :cmp-web:compileKotlinWasmJs --stacktrace
 
       - name: Open the pin-bump PR
         if: steps.move.outputs.changed == 'true'
