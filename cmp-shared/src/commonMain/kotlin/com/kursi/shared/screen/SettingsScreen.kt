@@ -27,6 +27,8 @@ import com.kursi.designsystem.*
 import com.kursi.feature.game.Difficulty
 import com.kursi.shared.strings.LocalKursiStrings
 import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.a11y_player_count_radio
+import kursi.core.designsystem.generated.resources.settings_edit_profile_label
 import kursi.core.designsystem.generated.resources.settings_title
 import org.jetbrains.compose.resources.stringResource
 
@@ -107,7 +109,7 @@ fun SettingsScreen(
                                     color = KursiNeutrals.TextPrimary,
                                 )
                                 Text(
-                                    text = "EDIT PROFILE",
+                                    text = stringResource(Res.string.settings_edit_profile_label),
                                     style = KursiType.label_micro.copy(letterSpacing = 0.8.sp, fontSize = 10.sp),
                                     color = BrandTokens.BrassAged.copy(alpha = 0.7f),
                                 )
@@ -265,6 +267,7 @@ fun SettingsScreen(
                     ) {
                         (2..10).forEach { n ->
                             val isSelected = n == defaultPlayers
+                            val playerCountDesc = stringResource(Res.string.a11y_player_count_radio, n)
                             BrassToken(
                                 monogram = "$n",
                                 fill = if (isSelected) BrandTokens.GoldAntique else BrandTokens.TeakMid,
@@ -276,7 +279,7 @@ fun SettingsScreen(
                                             prefs.defaultPlayerCount = n
                                         }.semantics(mergeDescendants = true) {
                                             role = Role.RadioButton
-                                            contentDescription = "$n players"
+                                            contentDescription = playerCountDesc
                                             selected = isSelected
                                         },
                             )

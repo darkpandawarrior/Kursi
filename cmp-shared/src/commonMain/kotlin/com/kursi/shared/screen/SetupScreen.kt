@@ -40,6 +40,34 @@ import com.kursi.designsystem.*
 import com.kursi.feature.game.Difficulty
 import com.kursi.feature.game.DraftPresets
 import com.kursi.shared.strings.LocalKursiStrings
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.a11y_advanced_options
+import kursi.core.designsystem.generated.resources.a11y_decrease_players
+import kursi.core.designsystem.generated.resources.a11y_increase_players
+import kursi.core.designsystem.generated.resources.a11y_toggle_state
+import kursi.core.designsystem.generated.resources.cta_quick_start_stamp
+import kursi.core.designsystem.generated.resources.label_active_badge
+import kursi.core.designsystem.generated.resources.label_coins_suffix
+import kursi.core.designsystem.generated.resources.label_players_plural
+import kursi.core.designsystem.generated.resources.label_selected_check
+import kursi.core.designsystem.generated.resources.label_vs
+import kursi.core.designsystem.generated.resources.setup_advanced_options_label
+import kursi.core.designsystem.generated.resources.setup_advanced_options_sub
+import kursi.core.designsystem.generated.resources.setup_anarchy_toggle_off
+import kursi.core.designsystem.generated.resources.setup_anarchy_toggle_on
+import kursi.core.designsystem.generated.resources.setup_darbar_toggle_off
+import kursi.core.designsystem.generated.resources.setup_darbar_toggle_on
+import kursi.core.designsystem.generated.resources.setup_draft_classic
+import kursi.core.designsystem.generated.resources.setup_vishesh_bail
+import kursi.core.designsystem.generated.resources.setup_vishesh_emergency
+import kursi.core.designsystem.generated.resources.setup_vishesh_hawala
+import kursi.core.designsystem.generated.resources.setup_vishesh_inflation
+import kursi.core.designsystem.generated.resources.setup_vishesh_khazana
+import kursi.core.designsystem.generated.resources.setup_vishesh_sabotage
+import kursi.core.designsystem.generated.resources.setup_vishesh_scarcity
+import kursi.core.designsystem.generated.resources.setup_vishesh_section_label
+import kursi.core.designsystem.generated.resources.setup_vishesh_section_sub
+import org.jetbrains.compose.resources.stringResource
 import kotlin.random.Random
 
 // ── Difficulty descriptors ────────────────────────────────────────────────────
@@ -372,8 +400,8 @@ fun SetupScreen(
                             FormSection(label = s.setupDarbarLabel, sublabel = s.setupDarbarSub) {
                                 TeamToggle(
                                     on = narrativeEnabled,
-                                    onLabel = "DARBAR · CHALU",
-                                    offLabel = "Classic (no chat)",
+                                    onLabel = stringResource(Res.string.setup_darbar_toggle_on),
+                                    offLabel = stringResource(Res.string.setup_darbar_toggle_off),
                                     teamAName = "",
                                     teamBName = "",
                                     onToggle = { narrativeEnabled = it },
@@ -385,8 +413,8 @@ fun SetupScreen(
                             FormSection(label = s.setupAnarchyLabel, sublabel = s.setupAnarchySub) {
                                 TeamToggle(
                                     on = anarchyEnabled,
-                                    onLabel = "ANDHER NAGARI · CHALU",
-                                    offLabel = "Classic rules",
+                                    onLabel = stringResource(Res.string.setup_anarchy_toggle_on),
+                                    offLabel = stringResource(Res.string.setup_anarchy_toggle_off),
                                     teamAName = "",
                                     teamBName = "",
                                     onToggle = { anarchyEnabled = it },
@@ -395,20 +423,30 @@ fun SetupScreen(
                         }
                         // 1-G: Vishesh (Special) variant modes
                         if (visheshEligible) {
-                            FormSection(label = "VISHESH MODES", sublabel = "Experimental rules — vs-AI only. All off = classic.") {
+                            FormSection(
+                                label = stringResource(Res.string.setup_vishesh_section_label),
+                                sublabel = stringResource(Res.string.setup_vishesh_section_sub),
+                            ) {
                                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    VisheshToggle("BAIL PE BAHAR", "Pay 9 coins to restore one revealed card face-down.", bailEnabled) { bailEnabled = it }
-                                    VisheshToggle("BALI KHEL", "Sacrifice a face-down influence to gain 3 coins.", sabotageEnabled) { sabotageEnabled = it }
-                                    VisheshToggle("HAWALA", "Gift up to 5 coins directly to any opponent.", hawalaEnabled) { hawalaEnabled = it }
+                                    val (bailLabel, bailSub) = stringResource(Res.string.setup_vishesh_bail).split(" / ", limit = 2)
+                                    VisheshToggle(bailLabel, bailSub, bailEnabled) { bailEnabled = it }
+                                    val (sabotageLabel, sabotageSub) = stringResource(Res.string.setup_vishesh_sabotage).split(" / ", limit = 2)
+                                    VisheshToggle(sabotageLabel, sabotageSub, sabotageEnabled) { sabotageEnabled = it }
+                                    val (hawalaLabel, hawalaSub) = stringResource(Res.string.setup_vishesh_hawala).split(" / ", limit = 2)
+                                    VisheshToggle(hawalaLabel, hawalaSub, hawalaEnabled) { hawalaEnabled = it }
+                                    val (emergencyLabel, emergencySub) =
+                                        stringResource(Res.string.setup_vishesh_emergency).split(" / ", limit = 2)
                                     VisheshToggle(
-                                        "ADHYADESH",
-                                        "Spend all coins to mass-Coup every opponent (needs 25 lifetime coins earned).",
+                                        emergencyLabel,
+                                        emergencySub,
                                         emergencyEnabled,
                                     ) {
                                         emergencyEnabled =
                                             it
                                     }
-                                    VisheshToggle("KHAZANA RAJ", "First to earn $khazanaTarget lifetime coins wins (not last-standing).", khazanaEnabled) {
+                                    val (khazanaLabel, khazanaSub) =
+                                        stringResource(Res.string.setup_vishesh_khazana, khazanaTarget).split(" / ", limit = 2)
+                                    VisheshToggle(khazanaLabel, khazanaSub, khazanaEnabled) {
                                         khazanaEnabled =
                                             it
                                     }
@@ -458,17 +496,25 @@ fun SetupScreen(
                                                     )
                                                 }
                                             }
-                                            Text("coins", style = KursiType.caption.copy(fontSize = 10.sp), color = KursiNeutrals.TextMuted)
+                                            Text(
+                                                stringResource(Res.string.label_coins_suffix),
+                                                style = KursiType.caption.copy(fontSize = 10.sp),
+                                                color = KursiNeutrals.TextMuted,
+                                            )
                                         }
                                     }
+                                    val (inflationLabel, inflationSub) =
+                                        stringResource(Res.string.setup_vishesh_inflation).split(" / ", limit = 2)
                                     VisheshToggle(
-                                        "MEHENGAI",
-                                        "All coin costs increase every few turns (inflation).",
+                                        inflationLabel,
+                                        inflationSub,
                                         inflationEnabled,
                                     ) { inflationEnabled = it }
+                                    val (scarcityLabel, scarcitySub) =
+                                        stringResource(Res.string.setup_vishesh_scarcity).split(" / ", limit = 2)
                                     VisheshToggle(
-                                        "TANGI",
-                                        "Total coin pool is capped — hoarding and denial dominate.",
+                                        scarcityLabel,
+                                        scarcitySub,
                                         scarcityEnabled,
                                     ) { scarcityEnabled = it }
                                 }
@@ -479,9 +525,10 @@ fun SetupScreen(
                         if (draftEligible) {
                             FormSection(label = s.setupDraftLabel, sublabel = s.setupDraftSub) {
                                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    val (classicTitle, classicSub) = stringResource(Res.string.setup_draft_classic).split(" / ", limit = 2)
                                     DraftOptionChit(
-                                        title = "CLASSIC",
-                                        subtitle = "Standard deck — no draft",
+                                        title = classicTitle,
+                                        subtitle = classicSub,
                                         selected = selectedDraftCode.isEmpty(),
                                         onSelect = { selectedDraftCode = "" },
                                     )
@@ -790,7 +837,11 @@ private fun TeamToggle(
             // Show the two faction nameplates so the player knows what they're signing up for.
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TeamPill(name = teamAName, teamId = 0)
-                Text("vs", style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic), color = KursiNeutrals.TextMuted)
+                Text(
+                    stringResource(Res.string.label_vs),
+                    style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
+                    color = KursiNeutrals.TextMuted,
+                )
                 TeamPill(name = teamBName, teamId = 1)
             }
         }
@@ -806,6 +857,7 @@ private fun VisheshToggle(
     onToggle: (Boolean) -> Unit,
 ) {
     // AAA polish: bare row on the ground — the pill switch + gold label already read on/off.
+    val toggleStateDesc = stringResource(Res.string.a11y_toggle_state, label, if (on) "on" else "off")
     Row(
         modifier =
             Modifier
@@ -813,7 +865,7 @@ private fun VisheshToggle(
                 .clickable { onToggle(!on) }
                 .semantics(mergeDescendants = true) {
                     role = androidx.compose.ui.semantics.Role.Switch
-                    contentDescription = "$label: ${if (on) "on" else "off"}"
+                    contentDescription = toggleStateDesc
                 }.padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -899,6 +951,9 @@ private fun PlayerCountStepper(
     max: Int,
     onChange: (Int) -> Unit,
 ) {
+    val decreaseDesc = stringResource(Res.string.a11y_decrease_players)
+    val increaseDesc = stringResource(Res.string.a11y_increase_players)
+    val playersLabel = stringResource(Res.string.label_players_plural)
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -934,7 +989,7 @@ private fun PlayerCountStepper(
                         RoundedCornerShape(10.dp),
                     ).semantics {
                         role = androidx.compose.ui.semantics.Role.Button
-                        contentDescription = "Decrease players"
+                        contentDescription = decreaseDesc
                     }.clickable(enabled = count > min) { onChange(count - 1) }
                     .alpha(if (count > min) 1f else 0.4f),
             contentAlignment = Alignment.Center,
@@ -950,7 +1005,7 @@ private fun PlayerCountStepper(
                 color = BrandTokens.GoldAntique,
             )
             Text(
-                text = if (count == 1) "KHILADI" else "KHILADI",
+                text = playersLabel,
                 style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 2.sp),
                 color = KursiNeutrals.TextMuted,
             )
@@ -1007,7 +1062,7 @@ private fun PlayerCountStepper(
                         RoundedCornerShape(10.dp),
                     ).semantics {
                         role = androidx.compose.ui.semantics.Role.Button
-                        contentDescription = "Increase players"
+                        contentDescription = increaseDesc
                     }.clickable(enabled = count < max) { onChange(count + 1) }
                     .alpha(if (count < max) 1f else 0.4f),
             contentAlignment = Alignment.Center,
@@ -1106,7 +1161,7 @@ private fun DifficultyPillRow(
                 )
                 if (isSelected) {
                     Text(
-                        "✓ SELECTED",
+                        stringResource(Res.string.label_selected_check),
                         style = KursiType.caption.copy(fontSize = 7.sp, letterSpacing = 0.3.sp, fontWeight = FontWeight.Bold),
                         color = BrandTokens.TeakInk.copy(alpha = 0.7f),
                     )
@@ -1126,6 +1181,8 @@ private fun AdvancedOptionsSection(
     hasActiveOption: Boolean,
     content: @Composable () -> Unit,
 ) {
+    val advancedOptionsDesc =
+        stringResource(Res.string.a11y_advanced_options, if (expanded) "Tap to collapse." else "Tap to expand.")
     Column(
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -1137,7 +1194,7 @@ private fun AdvancedOptionsSection(
             modifier =
                 Modifier.semantics(mergeDescendants = true) {
                     role = androidx.compose.ui.semantics.Role.Button
-                    contentDescription = "Advanced options. ${if (expanded) "Tap to collapse." else "Tap to expand."}"
+                    contentDescription = advancedOptionsDesc
                 },
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -1146,7 +1203,7 @@ private fun AdvancedOptionsSection(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
-                        "ADVANCED OPTIONS",
+                        stringResource(Res.string.setup_advanced_options_label),
                         style = KursiType.label_sm.dmMono().copy(letterSpacing = 1.5.sp),
                         color = if (hasActiveOption) BrandTokens.GoldAntique else BrandTokens.BrassAged,
                     )
@@ -1159,12 +1216,16 @@ private fun AdvancedOptionsSection(
                                     .border(0.7.dp, BrandTokens.GoldAntique.copy(alpha = 0.7f), RoundedCornerShape(3.dp))
                                     .padding(horizontal = 5.dp, vertical = 2.dp),
                         ) {
-                            Text("ACTIVE", style = KursiType.caption.copy(fontSize = 8.sp, letterSpacing = 0.5.sp), color = BrandTokens.GoldAntique)
+                            Text(
+                                stringResource(Res.string.label_active_badge),
+                                style = KursiType.caption.copy(fontSize = 8.sp, letterSpacing = 0.5.sp),
+                                color = BrandTokens.GoldAntique,
+                            )
                         }
                     }
                 }
                 Text(
-                    text = "Teams · Darbar · Anarchy · Deck",
+                    text = stringResource(Res.string.setup_advanced_options_sub),
                     style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
                     color = KursiNeutrals.TextMuted,
                 )
@@ -1297,7 +1358,7 @@ private fun QuickMatchChit(
                         .padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
                 Text(
-                    "⚡ START",
+                    stringResource(Res.string.cta_quick_start_stamp),
                     style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold),
                     color = KursiNeutrals.Cream,
                 )

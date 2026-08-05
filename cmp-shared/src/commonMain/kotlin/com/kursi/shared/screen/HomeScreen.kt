@@ -46,6 +46,26 @@ import com.kursi.core.prefs.AppPrefs
 import com.kursi.designsystem.*
 import com.kursi.shared.strings.KursiStrings
 import com.kursi.shared.strings.LocalKursiStrings
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.a11y_career_mini_strip
+import kursi.core.designsystem.generated.resources.a11y_hero_play_button
+import kursi.core.designsystem.generated.resources.a11y_resume_in_progress
+import kursi.core.designsystem.generated.resources.a11y_resume_match
+import kursi.core.designsystem.generated.resources.brand_wordmark
+import kursi.core.designsystem.generated.resources.brass_seal_authority
+import kursi.core.designsystem.generated.resources.brass_seal_ruin
+import kursi.core.designsystem.generated.resources.cta_enter
+import kursi.core.designsystem.generated.resources.home_hero_subtitle
+import kursi.core.designsystem.generated.resources.home_hero_title
+import kursi.core.designsystem.generated.resources.home_more_modes_header
+import kursi.core.designsystem.generated.resources.home_progress_header
+import kursi.core.designsystem.generated.resources.label_approved_stamp
+import kursi.core.designsystem.generated.resources.label_games_short
+import kursi.core.designsystem.generated.resources.label_on_duty
+import kursi.core.designsystem.generated.resources.label_unavailable
+import kursi.core.designsystem.generated.resources.label_win_rate_short
+import kursi.core.designsystem.generated.resources.label_wins_short
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -777,6 +797,7 @@ private fun HeroPlayButton(
         Brush.linearGradient(
             listOf(BrandTokens.BrassDark, BrandTokens.BrassAged, BrandTokens.GoldAntique, BrandTokens.BrassAged),
         )
+    val heroPlayDesc = stringResource(Res.string.a11y_hero_play_button)
 
     Box(
         modifier =
@@ -795,7 +816,7 @@ private fun HeroPlayButton(
                     RoundedCornerShape(14.dp),
                 ).semantics(mergeDescendants = true) {
                     role = androidx.compose.ui.semantics.Role.Button
-                    contentDescription = "Naya Khel — start a new game"
+                    contentDescription = heroPlayDesc
                 }.clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
                 .padding(horizontal = 20.dp, vertical = 22.dp),
     ) {
@@ -806,7 +827,7 @@ private fun HeroPlayButton(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "NAYA KHEL",
+                    text = stringResource(Res.string.home_hero_title),
                     style =
                         MaterialTheme.typography.displayLarge.copy(
                             fontSize = 32.sp,
@@ -816,7 +837,7 @@ private fun HeroPlayButton(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Kursi kitne ki hai? — Challenge the Cabinet",
+                    text = stringResource(Res.string.home_hero_subtitle),
                     style = KursiType.body.copy(fontSize = 12.sp, fontStyle = FontStyle.Italic),
                     color = BrandTokens.BrassDark,
                     maxLines = 2,
@@ -860,7 +881,7 @@ private fun HeroPlayButton(
                             .padding(horizontal = 6.dp, vertical = 3.dp),
                 ) {
                     Text(
-                        text = "APPROVED",
+                        text = stringResource(Res.string.label_approved_stamp),
                         style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold),
                         color = BrandTokens.PaperCream,
                     )
@@ -884,6 +905,7 @@ private fun ResumeStripProminent(
         animationSpec = tween(80),
         label = "resumePress",
     )
+    val resumeDesc = stringResource(Res.string.a11y_resume_match, label)
     Box(
         modifier =
             Modifier
@@ -899,7 +921,7 @@ private fun ResumeStripProminent(
                 ).border(2.dp, BrandTokens.GoldAntique.copy(alpha = 0.75f), RoundedCornerShape(10.dp))
                 .semantics(mergeDescendants = true) {
                     role = androidx.compose.ui.semantics.Role.Button
-                    contentDescription = "Resume match: $label"
+                    contentDescription = resumeDesc
                 }.clickable(interactionSource = interactionSource, indication = null, onClick = onResume)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
@@ -966,7 +988,7 @@ private fun ModeRail(
             },
     ) {
         Text(
-            text = "AUR MODES",
+            text = stringResource(Res.string.home_more_modes_header),
             style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 2.sp),
             color = KursiNeutrals.TextMuted,
             modifier = Modifier.padding(bottom = 8.dp),
@@ -1064,7 +1086,7 @@ private fun CompactContinuityDashboard(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            text = "AAPKI TARAKKI",
+            text = stringResource(Res.string.home_progress_header),
             style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 2.sp),
             color = KursiNeutrals.TextMuted,
         )
@@ -1101,6 +1123,7 @@ private fun CareerMiniStrip(
     onOpen: () -> Unit,
 ) {
     val s = LocalKursiStrings.current
+    val careerMiniDesc = stringResource(Res.string.a11y_career_mini_strip, ledger.games, ledger.wins)
     Box(
         modifier =
             Modifier
@@ -1110,7 +1133,7 @@ private fun CareerMiniStrip(
                 .border(1.dp, BrandTokens.BrassDark.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
                 .semantics(mergeDescendants = true) {
                     role = androidx.compose.ui.semantics.Role.Button
-                    contentDescription = "Career stats. ${ledger.games} games, ${ledger.wins} wins."
+                    contentDescription = careerMiniDesc
                 }.clickable(onClick = onOpen)
                 .padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
@@ -1123,11 +1146,11 @@ private fun CareerMiniStrip(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CareerStat(value = "${ledger.games}", label = "KHEL")
-                CareerStat(value = "${ledger.wins}", label = "JEET")
+                CareerStat(value = "${ledger.games}", label = stringResource(Res.string.label_games_short))
+                CareerStat(value = "${ledger.wins}", label = stringResource(Res.string.label_wins_short))
                 if (ledger.games > 0) {
                     val pct = (ledger.wins * 100 / ledger.games)
-                    CareerStat(value = "$pct%", label = "RATE")
+                    CareerStat(value = "$pct%", label = stringResource(Res.string.label_win_rate_short))
                 }
             }
             Text(
@@ -1216,7 +1239,7 @@ private fun PersonaTeaserChip(
             )
         }
         Text(
-            text = "ON DUTY",
+            text = stringResource(Res.string.label_on_duty),
             style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 1.sp),
             color = seatColor.copy(alpha = 0.7f),
         )
@@ -1303,9 +1326,10 @@ private fun ResumeStrip(
     onResume: () -> Unit,
 ) {
     val s = LocalKursiStrings.current
+    val resumeInProgressDesc = stringResource(Res.string.a11y_resume_in_progress, label)
     HairlineRow(
         onClick = onResume,
-        modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "Resume in-progress match: $label" },
+        modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = resumeInProgressDesc },
         verticalPadding = 11.dp,
     ) {
         Text("⟳", style = KursiType.title.copy(fontSize = 18.sp), color = BrandTokens.GoldAntique)
@@ -1512,7 +1536,7 @@ private fun KursiWordmark(
 
             // KURSI wordmark in Rozha One with brass gradient
             Text(
-                text = "KURSI",
+                text = stringResource(Res.string.brand_wordmark),
                 style =
                     MaterialTheme.typography.displayLarge.copy(
                         fontSize = displaySize.sp,
@@ -1594,7 +1618,7 @@ fun BrassSeal(modifier: Modifier = Modifier) {
                 color = BrandTokens.BrassAged,
             )
             Text(
-                text = "ADHIKAAR",
+                text = stringResource(Res.string.brass_seal_authority),
                 style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 1.sp),
                 color = BrandTokens.BrassAged,
             )
@@ -1604,7 +1628,7 @@ fun BrassSeal(modifier: Modifier = Modifier) {
                 color = BrandTokens.BrassAged,
             )
             Text(
-                text = "SATYANAASH",
+                text = stringResource(Res.string.brass_seal_ruin),
                 style = KursiType.caption.copy(fontSize = 9.sp, letterSpacing = 1.sp),
                 color = BrandTokens.BrassAged,
             )
@@ -1936,14 +1960,14 @@ private fun ModePreviewPanel(
             // ENTER / disabled stamp button
             if (!mode.isDisabled) {
                 StampButton(
-                    label = "ENTER →",
+                    label = stringResource(Res.string.cta_enter),
                     style = StampStyle.Primary,
                     onClick = mode.onClick,
                     modifier = Modifier.fillMaxWidth(),
                 )
             } else {
                 StampButton(
-                    label = mode.disabledStamp ?: "UNAVAILABLE",
+                    label = mode.disabledStamp ?: stringResource(Res.string.label_unavailable),
                     style = StampStyle.Ghost,
                     enabled = false,
                     onClick = {},

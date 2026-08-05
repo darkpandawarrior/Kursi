@@ -31,6 +31,18 @@ import com.kursi.designsystem.*
 import com.kursi.feature.game.Difficulty
 import com.kursi.feature.game.narrative.ArcId
 import com.kursi.shared.strings.LocalKursiStrings
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.label_selected_stamp
+import kursi.core.designsystem.generated.resources.story_arc_section_header
+import kursi.core.designsystem.generated.resources.story_arc_section_sub
+import kursi.core.designsystem.generated.resources.story_badge
+import kursi.core.designsystem.generated.resources.story_difficulty_header
+import kursi.core.designsystem.generated.resources.story_difficulty_sub
+import kursi.core.designsystem.generated.resources.story_explainer_body
+import kursi.core.designsystem.generated.resources.story_player_count_header
+import kursi.core.designsystem.generated.resources.story_player_count_sub
+import kursi.core.designsystem.generated.resources.story_start_sublabel
+import org.jetbrains.compose.resources.stringResource
 import kotlin.random.Random
 
 // ── Arc metadata ──────────────────────────────────────────────────────────────
@@ -129,7 +141,11 @@ fun StoryScreen(
             backLabel = s.back,
             modifier = Modifier.padding(top = 16.dp, start = 4.dp, end = 4.dp, bottom = 4.dp),
             trailing = {
-                Text("KISSA · DARBAR", style = KursiType.caption.copy(fontSize = 9.sp), color = KursiNeutrals.TextMuted)
+                Text(
+                    stringResource(Res.string.story_badge),
+                    style = KursiType.caption.copy(fontSize = 9.sp),
+                    color = KursiNeutrals.TextMuted,
+                )
             },
         )
 
@@ -155,19 +171,16 @@ fun StoryScreen(
                         color = BrandTokens.GoldAntique,
                     )
                     Text(
-                        text =
-                            "Bots will chat, conspire, and react to each other mid-game. You can read their whispers, " +
-                                "placate rivals, fan grudges, or pull the whole table into one of four story arcs. " +
-                                "Pick a lead arc below — or let the Darbar unfold freely.",
+                        text = stringResource(Res.string.story_explainer_body),
                         style = KursiType.body.copy(fontSize = 12.sp),
                         color = KursiNeutrals.TextSecondary,
                     )
                 }
 
                 // ── Arc section ───────────────────────────────────────────────
-                EngravedHeader(eyebrow = "Kissa ka Dhara") {
+                EngravedHeader(eyebrow = stringResource(Res.string.story_arc_section_header)) {
                     Text(
-                        text = "Choose your arc",
+                        text = stringResource(Res.string.story_arc_section_sub),
                         style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
                         color = KursiNeutrals.TextSecondary,
                     )
@@ -184,9 +197,9 @@ fun StoryScreen(
                 }
 
                 // ── Player count ──────────────────────────────────────────────
-                EngravedHeader(eyebrow = "Kitne Log") {
+                EngravedHeader(eyebrow = stringResource(Res.string.story_player_count_header)) {
                     Text(
-                        text = "How many seats at the Darbar table",
+                        text = stringResource(Res.string.story_player_count_sub),
                         style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
                         color = KursiNeutrals.TextSecondary,
                     )
@@ -221,9 +234,9 @@ fun StoryScreen(
                 }
 
                 // ── Difficulty quick-pick ─────────────────────────────────────
-                EngravedHeader(eyebrow = "Darbar ka Tajurba") {
+                EngravedHeader(eyebrow = stringResource(Res.string.story_difficulty_header)) {
                     Text(
-                        text = "Opponent calibre",
+                        text = stringResource(Res.string.story_difficulty_sub),
                         style = KursiType.caption.copy(fontSize = 10.sp, fontStyle = FontStyle.Italic),
                         color = KursiNeutrals.TextSecondary,
                     )
@@ -253,7 +266,7 @@ fun StoryScreen(
             val arcLabel = ARC_METAS.firstOrNull { it.code == selectedArcCode }?.title ?: "FREE DARBAR"
             StampChit(
                 label = s.storyStartCta,
-                sublabel = "$arcLabel · ${playerCount}p · ${difficulty.name}",
+                sublabel = stringResource(Res.string.story_start_sublabel, arcLabel, playerCount, difficulty.name),
                 isHero = true,
                 onClick = {
                     onStart(Random.nextLong(), playerCount, difficulty, selectedArcCode)
@@ -337,7 +350,7 @@ private fun ArcRow(
                         .padding(horizontal = 6.dp, vertical = 3.dp),
             ) {
                 Text(
-                    "CHUNA ✓",
+                    stringResource(Res.string.label_selected_stamp),
                     style = KursiType.caption.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold),
                     color = BrandTokens.GoldAntique,
                 )

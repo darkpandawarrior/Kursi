@@ -37,6 +37,11 @@ import com.kursi.feature.game.session.ReplaySession
 import com.kursi.shared.strings.LocalKursiStrings
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.a11y_advisor_read
+import kursi.core.designsystem.generated.resources.a11y_review_match_row
+import kursi.core.designsystem.generated.resources.a11y_step_number
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * ReviewScreen — M6c REVIEW. Replays a recorded finished match on the REAL in-game table
@@ -237,6 +242,7 @@ private fun AnnotationPanel(
             ReplayAnnotation.Verdict.COSTLY -> s.reviewVerdictCostly
         }
     val belief = if (language == Language.ENGLISH) a.beliefEnglish else a.beliefHinglish
+    val advisorReadDesc = stringResource(Res.string.a11y_advisor_read, a.playedLabel, a.bestLabel, belief)
 
     Column(
         modifier =
@@ -244,7 +250,7 @@ private fun AnnotationPanel(
                 .fillMaxWidth()
                 .background(Brush.verticalGradient(listOf(Color(0xFF1C140E), BrandTokens.TeakInk)))
                 .semantics {
-                    contentDescription = "Advisor read. You played ${a.playedLabel}. Best move ${a.bestLabel}. $belief"
+                    contentDescription = advisorReadDesc
                 },
     ) {
         // A colour-coded hairline rule lifts the panel off the board — not a border framing it
@@ -412,6 +418,7 @@ private fun Scrubber(
                                     isDecision -> BrandTokens.BrassAged.copy(alpha = 0.85f)
                                     else -> BrandTokens.BrassDark.copy(alpha = 0.5f)
                                 }
+                            val stepDesc = stringResource(Res.string.a11y_step_number, i + 1)
                             Box(
                                 modifier =
                                     Modifier
@@ -420,7 +427,7 @@ private fun Scrubber(
                                         .clip(RoundedCornerShape(3.dp))
                                         .background(pipColor)
                                         .clickable { onStep(i) }
-                                        .semantics { contentDescription = "Step ${i + 1}" },
+                                        .semantics { contentDescription = stepDesc },
                             )
                         }
                     }
@@ -542,13 +549,15 @@ private fun RecentMatchRow(
     val s = LocalKursiStrings.current
     val won = match.humanWon
     val tagColor = if (won) BrandTokens.GoldAntique else BrandTokens.StampRed
+    val reviewRowDesc =
+        stringResource(Res.string.a11y_review_match_row, match.players, match.difficulty, if (won) "won" else "lost")
     HairlineRow(
         onClick = onClick,
         showDivider = showDivider,
         verticalPadding = 12.dp,
         modifier =
             Modifier.semantics {
-                contentDescription = "Review ${match.players}-player ${match.difficulty} game, ${if (won) "won" else "lost"}"
+                contentDescription = reviewRowDesc
             },
     ) {
         BrassToken(

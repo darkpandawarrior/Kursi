@@ -34,6 +34,13 @@ import com.kursi.feature.game.LobbyState
 import com.kursi.feature.game.OnlineHubUiState
 import com.kursi.shared.strings.LocalKursiStrings
 import com.siddharth.kmp.network.LanHost
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.a11y_lan_host_row
+import kursi.core.designsystem.generated.resources.cta_join_short
+import kursi.core.designsystem.generated.resources.game_you_monogram
+import kursi.core.designsystem.generated.resources.label_boli_stamp
+import kursi.core.designsystem.generated.resources.label_muhar_stamp
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * S-ONLINE — ONLINE MEHFIL hub (Sarkari Noir): the front desk where a player hosts a PRIVATE
@@ -161,7 +168,7 @@ fun OnlineHubScreen(
                         enabled = !working,
                         onClick = { onCreatePrivate(parsedHost(), parsedPort(), playerCount) },
                         modifier = Modifier.fillMaxWidth(),
-                        trailing = { StampTag(text = "MUHAR", dark = true) },
+                        trailing = { StampTag(text = stringResource(Res.string.label_muhar_stamp), dark = true) },
                     )
 
                     // ── JOIN BY CODE ──
@@ -204,7 +211,7 @@ fun OnlineHubScreen(
                         enabled = !working,
                         onClick = { onQuickMatch(parsedHost(), parsedPort(), playerCount) },
                         modifier = Modifier.fillMaxWidth(),
-                        trailing = { StampTag(text = "BOLI", dark = false) },
+                        trailing = { StampTag(text = stringResource(Res.string.label_boli_stamp), dark = false) },
                     )
 
                     // ── LAN BROWSE ──
@@ -359,7 +366,7 @@ private fun SeatTokens(
             BrassToken(
                 monogram =
                     if (isMe) {
-                        "AAP"
+                        stringResource(Res.string.game_you_monogram)
                     } else if (filled) {
                         "✓"
                     } else {
@@ -427,13 +434,14 @@ private fun LanHostRow(
     onJoin: () -> Unit,
     showDivider: Boolean,
 ) {
+    val lanHostDesc = stringResource(Res.string.a11y_lan_host_row, host.name, host.host, host.port, host.payload)
     HairlineRow(
         onClick = onJoin,
         showDivider = showDivider,
         modifier =
             Modifier.semantics(mergeDescendants = true) {
                 role = Role.Button
-                contentDescription = "${host.name}, ${host.host} port ${host.port}, room ${host.payload}"
+                contentDescription = lanHostDesc
             },
     ) {
         BrassToken(monogram = host.name, fill = BrandTokens.BrassAged.copy(alpha = 0.7f), size = 38.dp)
@@ -453,7 +461,11 @@ private fun LanHostRow(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        Text("AAO ›", style = KursiType.label_sm.dmMono().copy(fontSize = 11.sp, fontWeight = FontWeight.Bold), color = BrandTokens.GoldAntique)
+        Text(
+            stringResource(Res.string.cta_join_short),
+            style = KursiType.label_sm.dmMono().copy(fontSize = 11.sp, fontWeight = FontWeight.Bold),
+            color = BrandTokens.GoldAntique,
+        )
     }
 }
 

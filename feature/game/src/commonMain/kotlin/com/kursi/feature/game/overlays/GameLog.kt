@@ -24,6 +24,9 @@ import com.kursi.designsystem.*
 import com.kursi.engine.*
 import com.kursi.feature.game.*
 import kotlinx.coroutines.launch
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.game_darbar_empty
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Phone: a tap-to-expand drawer at the bottom of the game screen.
@@ -274,7 +277,7 @@ internal fun DarbarLogInline(state: GameUiState) {
     if (state.chatFeed.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(
-                text = "Koi baat nahin abhi tak...",
+                text = stringResource(Res.string.game_darbar_empty),
                 style =
                     KursiType.caption.copy(
                         fontSize = 12.sp,

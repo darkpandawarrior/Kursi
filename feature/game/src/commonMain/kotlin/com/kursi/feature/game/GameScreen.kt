@@ -28,6 +28,11 @@ import com.kursi.feature.game.board.*
 import com.kursi.feature.game.docks.*
 import com.kursi.feature.game.overlays.*
 import com.kursi.feature.game.status.*
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.a11y_darbar_close
+import kursi.core.designsystem.generated.resources.a11y_darbar_open
+import kursi.core.designsystem.generated.resources.game_actor_claims
+import org.jetbrains.compose.resources.stringResource
 
 // ─────────────────────────── deriveGamePhase ───────────────────────────
 
@@ -252,6 +257,13 @@ fun GameScreen(
             // ── DARBAR toggle FAB — brass button, top-end, clear of SpectatorBanner ──
             // DENSITY GATE: the Darbar chat panel/FAB is ANALYST-only (spec §3) — FOCUS/GUIDED hide it.
             if (state.narrativeEnabled && state.densityLayer == DensityLayer.ANALYST) {
+                val darbarChatDesc =
+                    if (showDarbar) {
+                        stringResource(Res.string.a11y_darbar_close)
+                    } else {
+                        val unreadSuffix = if (state.unreadChat > 0) ", ${state.unreadChat} unread" else ""
+                        stringResource(Res.string.a11y_darbar_open, unreadSuffix)
+                    }
                 Box(
                     modifier =
                         Modifier
@@ -280,8 +292,7 @@ fun GameScreen(
                                 showDarbar = !showDarbar
                                 if (showDarbar) onAction(GameAction.MarkChatRead)
                             }.semantics {
-                                contentDescription =
-                                    if (showDarbar) "Darbar chat — close" else "Darbar chat${if (state.unreadChat > 0) ", ${state.unreadChat} unread" else ""}"
+                                contentDescription = darbarChatDesc
                             },
                     contentAlignment = Alignment.Center,
                 ) {
@@ -775,7 +786,7 @@ internal fun ReactionSpotlight(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "$actorName claims",
+                text = stringResource(Res.string.game_actor_claims, actorName),
                 style = KursiType.label,
                 color = KursiNeutrals.TextSecondary,
             )

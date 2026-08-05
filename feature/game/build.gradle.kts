@@ -50,6 +50,7 @@ kotlin {
             implementation(libs.foundation)
             implementation(libs.material3)
             implementation(libs.ui)
+            implementation(libs.components.resources)
             implementation(project(":engine"))
             implementation(project(":ai"))
             implementation(project(":core:designsystem"))

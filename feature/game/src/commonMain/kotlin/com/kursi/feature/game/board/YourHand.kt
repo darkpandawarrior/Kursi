@@ -15,6 +15,9 @@ import com.kursi.designsystem.*
 import com.kursi.designsystem.moment.reportAnchor
 import com.kursi.engine.*
 import com.kursi.feature.game.*
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.game_your_hand_label
+import org.jetbrains.compose.resources.stringResource
 
 // ─────────────────────────── Your Hand Panel ───────────────────────────
 
@@ -97,7 +100,7 @@ internal fun YourHandPanel(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                 ) {
                     Text(
-                        text = "Your hand",
+                        text = stringResource(Res.string.game_your_hand_label),
                         style = KursiType.caption,
                         color = KursiNeutrals.TextMuted,
                     )

@@ -50,6 +50,17 @@ import com.kursi.designsystem.RoleGlyph
 import com.kursi.designsystem.litGround
 import com.kursi.engine.Role
 import com.kursi.shared.strings.LocalKursiStrings
+import kursi.core.designsystem.generated.resources.Res
+import kursi.core.designsystem.generated.resources.label_jhooth_stamp
+import kursi.core.designsystem.generated.resources.label_move_dehaadi_fdi
+import kursi.core.designsystem.generated.resources.tutorial_action_ghotala
+import kursi.core.designsystem.generated.resources.tutorial_action_khela
+import kursi.core.designsystem.generated.resources.tutorial_action_setting
+import kursi.core.designsystem.generated.resources.tutorial_action_vakil
+import kursi.core.designsystem.generated.resources.tutorial_coin_tally
+import kursi.core.designsystem.generated.resources.tutorial_persona_netaji_vachan
+import kursi.core.designsystem.generated.resources.tutorial_persona_vakil_loophole
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -537,9 +548,16 @@ private fun ScriptedTable(
                     active = challenged,
                     modifier = Modifier.weight(1f),
                 )
-                RivalPlate(name = "Netaji Vachan", monogram = "NV", hue = KursiRoleHues.Neta, role = Role.NETA, active = false, modifier = Modifier.weight(1f))
                 RivalPlate(
-                    name = "Vakil Loophole",
+                    name = stringResource(Res.string.tutorial_persona_netaji_vachan),
+                    monogram = "NV",
+                    hue = KursiRoleHues.Neta,
+                    role = Role.NETA,
+                    active = false,
+                    modifier = Modifier.weight(1f),
+                )
+                RivalPlate(
+                    name = stringResource(Res.string.tutorial_persona_vakil_loophole),
                     monogram = "VL",
                     hue = KursiRoleHues.Vakil,
                     role = Role.VAKIL,
@@ -562,9 +580,10 @@ private fun ScriptedTable(
             CoinTally(coins = 5)
 
             // Action dock — the GHOTALA chip pulses when prompting the learner to act.
+            val (ghotalaLabel, ghotalaSub) = stringResource(Res.string.tutorial_action_ghotala).split(" / ", limit = 2)
             ActionDock(
-                label = "GHOTALA",
-                sub = "claims NETA · +3",
+                label = ghotalaLabel,
+                sub = ghotalaSub,
                 pulse = promptingAction,
                 spent = challenged, // once acted, the dock is dimmed (the move was made)
             )
@@ -704,7 +723,7 @@ private fun HandCard(
                                 .padding(horizontal = 6.dp, vertical = 2.dp),
                     ) {
                         Text(
-                            "JHOOTH",
+                            stringResource(Res.string.label_jhooth_stamp),
                             style = KursiType.caption.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp),
                             color = KursiNeutrals.Cream,
                         )
@@ -742,7 +761,11 @@ private fun CoinTally(coins: Int) {
         ) {
             Text("₹", style = KursiType.caption.copy(fontSize = 11.sp, fontWeight = FontWeight.Bold), color = BrandTokens.TeakDark)
         }
-        Text("$coins KHOKHA", style = KursiType.label.copy(fontSize = 12.sp, letterSpacing = 1.sp), color = BrandTokens.GoldAntique)
+        Text(
+            stringResource(Res.string.tutorial_coin_tally, coins),
+            style = KursiType.label.copy(fontSize = 12.sp, letterSpacing = 1.sp),
+            color = BrandTokens.GoldAntique,
+        )
     }
 }
 
@@ -808,6 +831,7 @@ private fun ActionDock(
             }
         }
         // Two dimmed sibling chips (context — there are always more moves).
+        val (dehaadiLabel, fdiLabel) = stringResource(Res.string.label_move_dehaadi_fdi).split(" / ", limit = 2)
         repeat(2) {
             Box(
                 modifier =
@@ -819,7 +843,7 @@ private fun ActionDock(
                         .alpha(0.55f)
                         .padding(horizontal = 14.dp, vertical = 12.dp),
             ) {
-                Text(if (it == 0) "DEHAADI" else "FDI", style = KursiType.name.copy(fontSize = 12.sp), color = KursiNeutrals.TextSecondary)
+                Text(if (it == 0) dehaadiLabel else fdiLabel, style = KursiType.name.copy(fontSize = 12.sp), color = KursiNeutrals.TextSecondary)
             }
         }
     }
@@ -881,32 +905,38 @@ private fun MechanicTable(
             CoinTally(coins = if (mechanic == Mechanic.COUP) 7 else 5)
 
             when (mechanic) {
-                Mechanic.BLOCK ->
+                Mechanic.BLOCK -> {
+                    val (vakilLabel, vakilSub) = stringResource(Res.string.tutorial_action_vakil).split(" / ", limit = 2)
                     ActionDock(
-                        label = "VAKIL ROKO",
-                        sub = "blocks SUPARI",
+                        label = vakilLabel,
+                        sub = vakilSub,
                         pulse = !acted,
                         spent = acted,
                         iconRole = Role.VAKIL,
                         iconTint = KursiRoleHues.Vakil,
                     )
-                Mechanic.COUP ->
+                }
+                Mechanic.COUP -> {
+                    val (khelaLabel, khelaSub) = stringResource(Res.string.tutorial_action_khela).split(" / ", limit = 2)
                     ActionDock(
-                        label = "KHELA",
-                        sub = "no claim · unblockable",
+                        label = khelaLabel,
+                        sub = khelaSub,
                         pulse = !acted,
                         spent = acted,
                         iconRole = null,
                     )
-                Mechanic.EXCHANGE ->
+                }
+                Mechanic.EXCHANGE -> {
+                    val (settingLabel, settingSub) = stringResource(Res.string.tutorial_action_setting).split(" / ", limit = 2)
                     ActionDock(
-                        label = "SETTING",
-                        sub = "claims JUGAADU · draw 2",
+                        label = settingLabel,
+                        sub = settingSub,
                         pulse = !acted,
                         spent = acted,
                         iconRole = Role.JUGAADU,
                         iconTint = KursiRoleHues.Jugaadu,
                     )
+                }
             }
         }
     }

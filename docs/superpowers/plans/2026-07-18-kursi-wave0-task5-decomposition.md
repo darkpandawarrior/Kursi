@@ -1,5 +1,18 @@
 # Wave 0 · Task 5 — GameScreen / GameViewModel Decomposition
 
+> **STATUS: LANDED — verified in code 2026-08-05. DO NOT RE-EXECUTE.** All 8 checkboxes below
+> are unticked and the "5,522-line GameScreen.kt" premise is stale — the split shipped.
+> Evidence on `origin/main`:
+>
+> - `GameScreen.kt` is now **1,131 lines** (`git show origin/main:feature/game/src/commonMain/kotlin/com/kursi/feature/game/GameScreen.kt | wc -l`).
+> - Every Phase-B subpackage exists under `com.kursi.feature.game`: `board/`, `docks/`, `overlays/`, `coach/`, `status/` — plus `narrative/` and `session/` beyond what this plan named.
+> - Phase C landed: `session/AutoPlayer.kt`.
+> - `overlays/BeatGatePrompt.kt:56` `internal fun ContinueBeatPrompt`, called from `GameScreen.kt:364-365`.
+> - The detekt baseline re-fingerprinted exactly as the "DISCOVERED CONSTRAINT" below predicted: `feature/game/detekt-baseline.xml` now carries **86** `<ID>` entries.
+>
+> Provenance: this plan originated in the repo (`docs/superpowers/plans/`); copied to
+> `AgentHarness/plans/kursi/` on 2026-08-05 so both plan homes carry it.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development or executing-plans. Steps are `- [ ]`. Behaviour-preserving refactor — **no functional change**; the gate is "still compiles, all existing tests + screenshots unchanged."
 
 **Goal:** Split the 5,522-line `GameScreen.kt` (43 `@Composable`, ~65 top-level `private` decls) into responsibility-scoped files, and relieve `GameViewModel` from detekt's function ceiling — so the remaining Wave 0 contract tasks (beat gate, motion, l10n) don't trip `TooManyFunctions`/complexity, and the screen becomes comprehensible + recomposition-tunable.

@@ -1,5 +1,19 @@
 # Kursi Launch Overhaul — Wave 0 (Foundation) Implementation Plan
 
+> **STATUS: LANDED — verified in code 2026-08-05. DO NOT RE-EXECUTE.** All 32 checkboxes below
+> are unticked, but every task shipped via PR #24 (merge `86f6b039`, 2026-07-19, branch
+> `launch-overhaul-integration`). Evidence on `origin/main`:
+>
+> - **Task 1 (DensityLayer):** `feature/game/src/commonMain/kotlin/com/kursi/feature/game/DensityLayer.kt`; `core/prefs/.../AppPrefs.kt:368` `val densityLayerFlow`; wired at `cmp-shared/.../KursiApp.kt:550-551`; `DensityLayerTest.kt` in `commonTest`.
+> - **Task 2 (Beat gate):** `feature/game/.../BeatGate.kt`; `GameViewModel.kt:163` `private var beatAck`, `:430` `is GameAction.ContinueBeat -> beatAck?.complete(Unit)`; `GameAction.kt:94` `data object ContinueBeat`; `BeatGateTest.kt` in `commonTest`.
+> - **Task 3 (Motion tokens):** `core/designsystem/.../KursiMotion.kt` + `KursiMotionTest.kt`.
+> - **Task 4 (String externalization):** landed as **scaffold only** — `core/designsystem/src/commonMain/composeResources/values/strings.xml` has exactly one `<string>` entry and there is exactly one `stringResource()` call site repo-wide (`SettingsScreen.kt`). Finishing externalization is FRONTIER item 4 — new bounded work, not a re-run of this plan.
+> - **Task 5 (Decomposition):** split out into `2026-07-18-kursi-wave0-task5-decomposition.md`, also LANDED — see that file's banner.
+>
+> **Gate correction 2026-08-05:** the gate is `:feature:game:jvmTest` (and `:<module>:jvmTest`
+> per module). The harness copy previously prescribed `testDebugUnitTest` at 10 sites; running
+> that task does not exercise these `commonTest` suites. All sites corrected to `jvmTest`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Land the serial foundation that freezes the cross-track contracts (density layers + beat gate) and stubs (motion tokens, string externalization) every Wave 1 parallel track builds against — additively, with zero behavior change to existing play.
