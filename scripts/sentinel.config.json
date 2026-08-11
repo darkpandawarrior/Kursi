@@ -1,0 +1,7 @@
+{
+  "shots": "docs/screenshots",
+  "sources": ["**/commonMain/**/*.kt", "**/androidMain/**/*.kt"],
+  "screenRegex": "fun (\\w+Screen)\\s*\\(",
+  "ignore": ["banner", "hero", "logo", "og"],
+  "minBytes": 1000
+}
