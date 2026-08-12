@@ -1516,6 +1516,18 @@ private fun buildFixtures(): List<Triple<String, GameUiState, GamePhase?>> =
             add(Triple("4p_focus", state.copy(densityLayer = DensityLayer.FOCUS), null))
         }
 
+        // ── 4p_guided ─────────────────────────────────────────────────────────────
+        // DensityLayer.GUIDED (spec §3) — the missing middle rung of the same mid-claim table.
+        // FOCUS plus exactly one suggestion: the Hint Rail comes back (GameScreen §"DENSITY GATE:
+        // not in the FOCUS whitelist") while the ANALYST-only furniture stays gone — no suspicion
+        // pips, no Status Spine, no RecapRail, no log rail, no Darbar. Rendering all three layers
+        // from one buildMidClaimState() is what makes FOCUS/GUIDED/ANALYST a comparison rather
+        // than three unrelated screens.
+        run {
+            val (state, _) = buildMidClaimState()
+            add(Triple("4p_guided", state.copy(densityLayer = DensityLayer.GUIDED), null))
+        }
+
         // ── 4p_reaction ───────────────────────────────────────────────────────────
         // Real engine AwaitingReactions where seat 0 must respond. Use a for-loop
         // with break so we don't overshoot into game-over.
