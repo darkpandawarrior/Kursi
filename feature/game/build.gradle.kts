@@ -35,6 +35,11 @@ kotlin {
                 filter.excludeTestsMatching("com.kursi.feature.game.ReplaySessionTest")
             }
         }
+
+        // CMP 1.12.0-rc01 promoted checkComposeUiTestConfigurationForWasmJs to a hard build
+        // failure (CMP-4906): Compose UI tests can't load the Skiko runtime from a bare klib,
+        // so the wasmJs target must declare a real webpack-bundled executable.
+        binaries.executable()
     }
 
     android {
