@@ -34,14 +34,17 @@ subprojects {
         // detekt 2.x's default ruleset + renamed rules surfaced pre-existing findings that
         // 1.23.x's config didn't catch; baseline grandfathers those in, new code is still gated.
         baseline = file("detekt-baseline.xml")
-        // Only scan hand-authored source; skip generated + build output
-        source.setFrom(
-            "src/commonMain/kotlin",
-            "src/androidMain/kotlin",
-            "src/jvmMain/kotlin",
-            "src/iosMain/kotlin",
-            "src/wasmJsMain/kotlin",
-        )
+        // Point at `src` itself rather than an enumerated list of source sets. The list this
+        // replaced named five (commonMain, androidMain, jvmMain, iosMain, wasmJsMain) while fifteen
+        // exist, so nativeMain, gms, noGms and main — all *production* code — were never scanned. A
+        // `// TODO:` in engine/src/nativeMain passed clean while the identical line in commonMain
+        // failed the build, which is how the gap was found.
+        //
+        // An enumerated list cannot hold: adding a target adds a source set, and nothing fails when
+        // the list is not updated to match. Coverage silently shrinks. `src` covers whatever exists
+        // now and whatever gets added later. The filter above already drops build/ and generated/,
+        // and detekt only reads .kt, so pointing a level up costs nothing.
+        source.setFrom(layout.projectDirectory.dir("src"))
     }
 }
 

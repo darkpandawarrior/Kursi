@@ -10,18 +10,18 @@
     <ID>CyclomaticComplexMethod:MediumPolicy.kt:MediumPolicy$private fun decideTurn: Intent</ID>
     <ID>CyclomaticComplexMethod:MoveAdvisor.kt:MoveAdvisor$private fun computeSuccessOdds: Double?</ID>
     <ID>CyclomaticComplexMethod:MoveAdvisor.kt:MoveAdvisor$private fun labelFor: String</ID>
+    <ID>CyclomaticComplexMethod:VindictiveGrudgeTest.kt:VindictiveGrudgeTest$private fun grudgePlayout: Pair&lt;Int, Int&gt;</ID>
     <ID>LongMethod:Determinizer.kt:Determinizer$fun sample: Pair&lt;GameState, Rng&gt;</ID>
     <ID>LongMethod:HardPolicy.kt:HardPolicy$private fun decideTurn: Intent</ID>
     <ID>LongMethod:MediumPolicy.kt:MediumPolicy$private fun decideTurn: Intent</ID>
     <ID>LongMethod:PersonaPrompts.kt:PersonaPrompts$private fun voiceFor: String</ID>
-    <ID>LoopWithTooManyJumpStatements:Ismcts.kt:Ismcts$while</ID>
-    <ID>MagicNumber:AnthropicProvider.kt:AnthropicProvider$5_000</ID>
+    <ID>LoopWithTooManyJumpStatements:OpponentInsightTest.kt:OpponentInsightTest$while</ID>
+    <ID>LoopWithTooManyJumpStatements:VindictiveGrudgeTest.kt:VindictiveGrudgeTest$while</ID>
     <ID>MagicNumber:BeliefModel.kt:BotMemory$0.8</ID>
     <ID>MagicNumber:BeliefModel.kt:BotMemory$2.5</ID>
     <ID>MagicNumber:EasyPolicy.kt:EasyPolicy$15</ID>
     <ID>MagicNumber:EasyPolicy.kt:EasyPolicy$40</ID>
     <ID>MagicNumber:EasyPolicy.kt:EasyPolicy$60</ID>
-    <ID>MagicNumber:GeminiProvider.kt:GeminiProvider$5_000</ID>
     <ID>MagicNumber:HardPolicy.kt:HardPolicy$25</ID>
     <ID>MagicNumber:HardPolicy.kt:HardPolicy$60</ID>
     <ID>MagicNumber:HardPolicy.kt:HardPolicy$70</ID>
@@ -40,7 +40,6 @@
     <ID>MagicNumber:MoveAdvisor.kt:MoveAdvisor$0.63</ID>
     <ID>MagicNumber:MoveAdvisor.kt:MoveAdvisor$0.86</ID>
     <ID>MagicNumber:MoveAdvisor.kt:MoveAdvisor$50</ID>
-    <ID>MagicNumber:OpenAiProvider.kt:OpenAiProvider$5_000</ID>
     <ID>MagicNumber:PersonaAssigner.kt:PersonaAssigner$0xFFL</ID>
     <ID>MagicNumber:PersonaAssigner.kt:PersonaAssigner$1442695040888963407L</ID>
     <ID>MagicNumber:PersonaAssigner.kt:PersonaAssigner$16</ID>
@@ -53,6 +52,7 @@
     <ID>MagicNumber:SocialModel.kt:SocialState.Companion$0xFFFF</ID>
     <ID>MagicNumber:SocialModel.kt:SocialState.Companion$16</ID>
     <ID>MatchingDeclarationName:OnDeviceAiProvider.wasmJs.kt:OnDeviceAiProvider : AiProvider</ID>
+    <ID>NestedBlockDepth:VindictiveGrudgeTest.kt:VindictiveGrudgeTest$private fun grudgePlayout: Pair&lt;Int, Int&gt;</ID>
     <ID>ReturnCount:EasyPolicy.kt:EasyPolicy$private fun decideReaction: Intent</ID>
     <ID>ReturnCount:GrandmasterPolicy.kt:GrandmasterPolicy$private fun challengeExploit: Intent?</ID>
     <ID>ReturnCount:GrandmasterPolicy.kt:GrandmasterPolicy$private fun turnExploit: Intent?</ID>
@@ -67,11 +67,9 @@
     <ID>ReturnCount:PersonaPolicy.kt:PersonaPolicy$private fun maybeRetarget: Intent</ID>
     <ID>SwallowedException:ExpertPolicy.kt:ExpertPolicy$t: Throwable</ID>
     <ID>SwallowedException:GrandmasterPolicy.kt:GrandmasterPolicy$t: Throwable</ID>
-    <ID>SwallowedException:Ismcts.kt:Ismcts$e: Exception</ID>
     <ID>SwallowedException:MoveAdvisor.kt:MoveAdvisor$t: Throwable</ID>
     <ID>TooGenericExceptionCaught:ExpertPolicy.kt:ExpertPolicy$t: Throwable</ID>
     <ID>TooGenericExceptionCaught:GrandmasterPolicy.kt:GrandmasterPolicy$t: Throwable</ID>
-    <ID>TooGenericExceptionCaught:Ismcts.kt:Ismcts$e: Exception</ID>
     <ID>TooGenericExceptionCaught:IsmctsSearch.kt:IsmctsSearch$e: Exception</ID>
     <ID>TooGenericExceptionCaught:MoveAdvisor.kt:MoveAdvisor$t: Throwable</ID>
     <ID>UnusedParameter:AiBotDecisionEngine.kt:AiBotDecisionEngine$botId: PlayerId</ID>

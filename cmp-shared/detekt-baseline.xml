@@ -2,10 +2,8 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>CyclomaticComplexMethod:GauntletScreen.kt:@Composable private fun GauntletRungCard</ID>
     <ID>CyclomaticComplexMethod:HomeScreen.kt:@Composable fun StampChit</ID>
     <ID>CyclomaticComplexMethod:KursiApp.kt:@Composable fun KursiApp</ID>
-    <ID>CyclomaticComplexMethod:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
     <ID>CyclomaticComplexMethod:SetupScreen.kt:@Composable fun SetupScreen</ID>
     <ID>ForEachOnRange:GameUiStateExt.kt:(0 until players).filter { it != winnerSeat }</ID>
     <ID>ForEachOnRange:SettingsScreen.kt:2..10</ID>
