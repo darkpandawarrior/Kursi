@@ -3,6 +3,7 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ComplexCondition:GameViewModel.kt:GameViewModel$session === this@GameViewModel.session &amp;&amp; shown != null &amp;&amp; shown.isHumanTurn &amp;&amp; shown.advice.isEmpty() &amp;&amp; shown.legalIntents.toSet() == advice.map { it.intent }.toSet()</ID>
+    <ID>ComplexCondition:TeamKhelTest.kt:TeamKhelTest$!ui.isGameOver &amp;&amp; ui.isHumanTurn &amp;&amp; ui.legalIntents.isNotEmpty() &amp;&amp; guard &lt; 5000</ID>
     <ID>CyclomaticComplexMethod:ActionDocks.kt:@Composable internal fun CompactActionChip</ID>
     <ID>CyclomaticComplexMethod:ActionDocks.kt:@OptIn(ExperimentalLayoutApi::class) @Composable internal fun PickActionDock</ID>
     <ID>CyclomaticComplexMethod:ChatVoice.kt:ChatVoice$fun arcBeat: String</ID>
@@ -32,6 +33,7 @@
     <ID>LongMethod:StoryArc.kt:StoryArcs$fun begin: ArcStep</ID>
     <ID>LoopWithTooManyJumpStatements:AutoPlayer.kt:AutoPlayer$while</ID>
     <ID>LoopWithTooManyJumpStatements:GameSession.kt:GameSession$for</ID>
+    <ID>LoopWithTooManyJumpStatements:MatchResumeTest.kt:MatchResumeTest$while</ID>
     <ID>LoopWithTooManyJumpStatements:ReplaySession.kt:ReplaySession.Companion$for</ID>
     <ID>MagicNumber:DailyChallenge.kt:DailyChallenge.Companion$0x7fff_ffff_ffff_ffffL</ID>
     <ID>MagicNumber:DailyChallenge.kt:DailyChallenge.Companion$27</ID>
