@@ -61,6 +61,20 @@ jobs:
           mkdir -p docs/screenshots
           cp -r cmp-desktop/build/shots/. docs/screenshots/
 
+      # Skia does not promise byte-identical output between runs, and the step below decides
+      # "did anything change?" with `git diff` — a BYTE comparison. Measured 2026-08-15:
+      # 4p_chit_dossier.png differed from a fresh render by ONE pixel, blue channel, delta 1, out
+      # of 1,296,000. Three bytes. That was enough to open a baseline-refresh PR on every run;
+      # two were stacked open at once and #64 proposed content byte-identical to main.
+      #
+      # This restores files whose difference is below threshold so the git diff that follows sees
+      # only changes a human would see. It is a filter, never a gate — anything above threshold
+      # stays staged and the PR opens exactly as before.
+      - name: Drop rasterisation noise
+        run: |
+          python3 -m pip install --quiet --disable-pip-version-check Pillow
+          python3 scripts/drop-screenshot-noise.py docs/screenshots
+
       # main: baselines drifted. Push straight to main bypasses review and can race other
       # pushes, so open a refresh PR instead (idempotent branch name per source SHA; re-runs
       # force-push the same branch and reuse the open PR). gh pr create is made non-fatal so a
