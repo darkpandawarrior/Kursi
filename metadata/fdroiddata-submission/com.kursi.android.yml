@@ -1,0 +1,78 @@
+# Kursi — submission for the OFFICIAL fdroiddata repo (metadata/com.kursi.android.yml at
+# gitlab.com/fdroid/fdroiddata), NOT for the self-hosted repo. The self-hosted equivalent lives at
+# ../com.kursi.android.yml and targets darkpandawarrior's own F-Droid index; that file is untouched.
+#
+# Every field below was checked live against F-Droid's current (2026) docs on 2026-08-26, not
+# written from memory. Sources are cited inline. See README.md next to this file for the fork/MR
+# commands, the checks to run before opening the MR, and what was deliberately left out.
+
+Categories:
+  - Games
+License: GPL-3.0-or-later
+AuthorName: Siddharth Pandalai
+AuthorEmail: siddharthpandalai990@gmail.com
+
+SourceCode: https://github.com/darkpandawarrior/Kursi
+IssueTracker: https://github.com/darkpandawarrior/Kursi/issues
+
+RepoType: git
+Repo: https://github.com/darkpandawarrior/Kursi
+
+# No Name / Summary / Description here on purpose. The current Build Metadata Reference marks all
+# three "Don't use this. The localized metadata in the app's source code should be used instead."
+# (https://f-droid.org/en/docs/Build_Metadata_Reference/, fetched 2026-08-26). F-Droid's importer
+# reads fastlane/metadata/android/en-US/{title,short_description,full_description}.txt straight out
+# of this repo, and Kursi already ships all three, already written for this exact build:
+# full_description.txt says outright "This build (from F-Droid) is the noGms flavor: no Google Play
+# Services, no Firebase, no proprietary blobs. ... opponents here use the built-in rule-based play."
+# (short_description.txt is 59 bytes, full_description.txt is 2,655 bytes — both under the docs'
+# stated caps of 80 and 4000 respectively, so no truncation risk if F-Droid ever falls back to
+# reading them as Summary/Description directly.)
+
+Builds:
+  - versionName: 2026.08.35.1.234
+    versionCode: 235
+    # Tag v2026.08.35.1.234, but the commit field must be the resolved SHA, not the tag name:
+    # "Don't use branch name or tag name. The full commit hash should be used."
+    # (Build Metadata Reference, "commit" field, fetched 2026-08-26)
+    commit: 00784a2c937cc080d3b684a02ff319a3d4f091aa
+    subdir: cmp-android
+    # external/kmp-toolkit and external/kmp-build-logic are git submodules, both public GitHub
+    # repos, wired into cmp-android's build via includeBuild composite builds in settings.gradle.kts
+    # (not a network dependency at Gradle-configuration time beyond what submodule checkout already
+    # requires — see README.md for what this claim rests on and what's still unverified).
+    submodules: true
+    gradle:
+      - noGms
+    # -Pfdroid: disables R8/resource shrinking (isMinifyEnabled = !fdroidBuild in
+    # cmp-android/build.gradle.kts) so the build doesn't depend on a shrink pass being
+    # machine-invariant. gradleprops entries with no "=" become a bare -P flag per the Build
+    # Metadata Reference's own example ("gradleprops=enableFoo ... gradle -PenableFoo").
+    gradleprops:
+      - fdroid
+    # Verified, not assumed: ran `./gradlew :cmp-android:assembleNoGmsRelease -Pfdroid` locally on
+    # 2026-08-26 with no keystore.properties present (same signing condition F-Droid's builder will
+    # have — hasReleaseSigning is false either way). The APK that Gradle actually produced is named
+    # cmp-android-noGms-release.apk, with NO "-unsigned" suffix, and unzips with no
+    # META-INF/*.RSA|DSA|EC (genuinely unsigned; F-Droid signs it with its own key as normal). The
+    # "-unsigned" suffix that appears in the self-hosted metadata's output: path is added by a
+    # rename step inside .github/workflows/github-release.yml when it prepares GitHub Release
+    # assets — that workflow never runs on F-Droid's builder, so that filename never exists there.
+    output: build/outputs/apk/noGms/release/cmp-android-noGms-release.apk
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v[0-9]{4}\.[0-9]{2}\.[0-9]{2}\.[0-9]+\.[0-9]+$
+
+CurrentVersion: 2026.08.35.1.234
+CurrentVersionCode: 235
+
+# No AntiFeatures: block. The noGms flavor is the one being submitted here, and it is verified
+# clean (see the top-level session context: excluding com.google.mediapipe:tasks-genai and the
+# com.google.mlkit / com.google.android.gms dependency groups removed all GMS/ML Kit/Firebase class
+# references and the AICore BIND_SERVICE permission; the only native libraries in the APK are
+# AndroidX's own libandroidx.graphics.path.so). One caveat found while building the exact -Pfdroid
+# artifact for this file, not previously recorded anywhere — see README.md's Notes section.
+
+# No AllowedAPKSigningKeys: / Binaries: block. Deliberately left out of this first submission —
+# see README.md for why, and what would need to change in gradle/versioning.gradle.kts before
+# adding one would be safe.
