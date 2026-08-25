@@ -35,7 +35,20 @@ kotlin {
         androidMain.dependencies {
             // Consolidation #7: OnDeviceAiProvider.android routes through toolkit :ai's real
             // MlKitGenAiOnDeviceLlm/MediaPipeOnDeviceLlm backends (CompositeOnDeviceLlm chain).
-            implementation("com.siddharth.kmp:ai:1.0.0")
+            //
+            // F-Droid build only: drop com.google.mediapipe:tasks-genai (the 25.4MB arm64 +
+            // 18.3MB armeabi-v7a libllm_inference_engine_jni.so, ~70% of the FOSS APK). Verified
+            // safe to exclude — MediaPipeOnDeviceLlm/MediaPipeModelManager never touch mediapipe
+            // types in their constructors or in isAvailable(); generate() is the only call site
+            // that does, and it's wrapped in runCatching{}.getOrNull(), so a missing class there
+            // degrades to null (composite falls through to MlKitGenAiOnDeviceLlm, then the
+            // rule-based heuristic tier) instead of crashing. ML Kit GenAI (AICore) stays intact.
+            val fdroidBuild = providers.gradleProperty("fdroid").isPresent
+            implementation("com.siddharth.kmp:ai:1.0.0") {
+                if (fdroidBuild) {
+                    exclude(group = "com.google.mediapipe", module = "tasks-genai")
+                }
+            }
         }
         iosMain.dependencies {
             // Consolidation #7: OnDeviceAiProvider.ios routes through toolkit :ai's
