@@ -1,0 +1,1 @@
+v2026.07.30.1.190: detekt now scans every source set instead of a hardcoded five, the wasm yarn lock got its own upgrade path separate from the JVM lock, and screenshot baselines are refreshed to match. No gameplay changes in this release.
