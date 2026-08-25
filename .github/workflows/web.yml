@@ -35,6 +35,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # versionCode derives from `git rev-list --count HEAD`. A shallow clone
+          # reports 1, which silently produced versionCode 2 on every published APK.
+          fetch-depth: 0
           submodules: recursive
 
       - uses: actions/setup-java@v5.7.0
@@ -72,6 +75,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # versionCode derives from `git rev-list --count HEAD`. A shallow clone
+          # reports 1, which silently produced versionCode 2 on every published APK.
+          fetch-depth: 0
           submodules: recursive
 
       - uses: actions/setup-java@v5.7.0
