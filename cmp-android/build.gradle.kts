@@ -1,6 +1,12 @@
+import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.FileSystemOperations
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputDirectory
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.FileInputStream
 import java.util.Properties
+import javax.inject.Inject
 
 plugins {
     id("com.android.application")
@@ -146,10 +152,64 @@ tasks.withType<KotlinCompile>().configureEach {
     }
 }
 
+// ── Compose resources on Android ──────────────────────────────────────────────
+// Consumer half of the workaround in core/designsystem/build.gradle.kts. That module cannot
+// package its own composeResources because AGP's KMP library plugin has no assets support, so
+// it publishes them as a variant and this module, a real com.android.application with working
+// assets, merges them in. Without this the app crashes on first frame with
+// MissingResourceException.
+val composeAndroidAssets =
+    configurations.create("composeAndroidAssets") {
+        isCanBeConsumed = false
+        isCanBeResolved = true
+    }
+
+// A real @OutputDirectory DirectoryProperty (not Sync's plain destinationDir) so
+// addGeneratedSourceDirectory can reference the property and AGP infers the task dependency.
+abstract class CopyComposeResourcesForAssetsTask : DefaultTask() {
+    @get:InputFiles
+    abstract val inputFiles: ConfigurableFileCollection
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @get:Inject
+    abstract val fs: FileSystemOperations
+
+    @TaskAction
+    fun copy() {
+        fs.sync {
+            from(inputFiles)
+            into(outputDir)
+        }
+    }
+}
+
+val copyComposeResourcesForAssets =
+    tasks.register<CopyComposeResourcesForAssetsTask>("copyComposeResourcesForAssets") {
+        inputFiles.from(composeAndroidAssets)
+        outputDir.set(layout.buildDirectory.dir("composeResourcesForAppAssets"))
+    }
+
+// sourceSets.assets.srcDir() rejects Providers, so register a generated assets dir per variant.
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(
+            copyComposeResourcesForAssets,
+            CopyComposeResourcesForAssetsTask::outputDir,
+        )
+    }
+}
+
 dependencies {
     implementation(project(":cmp-shared"))
     implementation(project(":feature:game"))
     implementation(project(":core:designsystem"))
+    // Pulls core:designsystem's prepared compose-resources into composeAndroidAssets above.
+    add(
+        "composeAndroidAssets",
+        project(mapOf("path" to ":core:designsystem", "configuration" to "composeAndroidAssetsElements")),
+    )
     implementation("com.siddharth.kmp:feedback:1.0.0")
     implementation(project(":core:prefs"))
 

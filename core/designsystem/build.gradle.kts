@@ -9,6 +9,37 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+// AGP's KMP library plugin has no Android assets support, so CMP's
+// copyAndroidMainComposeResourcesToAndroidAssets never gets its outputDirectory wired and the
+// resources never reach the APK. Placed immediately after `plugins {}` so it runs before the KMP
+// plugin finalises targets: appending it at the end of this file breaks composite-build
+// substitution for :cmp-desktop.
+// Publish that fixed output as a consumable variant so :cmp-android (a real
+// com.android.application, which does have assets support) can merge it into its own assets.
+// The artifact is a deferred provider: CMP registers the task later than this file is evaluated.
+configurations.create("composeAndroidAssetsElements") {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+    val outputDirectory =
+        provider {
+            val task = tasks.getByName("copyAndroidMainComposeResourcesToAndroidAssets")
+            task.javaClass.getMethod("getOutputDirectory").invoke(task)
+                as org.gradle.api.file.DirectoryProperty
+        }.flatMap { it }
+    outgoing.artifact(outputDirectory) {
+        builtBy("copyAndroidMainComposeResourcesToAndroidAssets")
+    }
+}
+
+tasks.configureEach {
+    if (name == "copyAndroidMainComposeResourcesToAndroidAssets") {
+        val out =
+            this.javaClass.getMethod("getOutputDirectory").invoke(this)
+                as org.gradle.api.file.DirectoryProperty
+        out.set(layout.buildDirectory.dir("composeResourcesForAndroidAssets"))
+    }
+}
+
 kotlin {
     jvm()
     iosArm64()
