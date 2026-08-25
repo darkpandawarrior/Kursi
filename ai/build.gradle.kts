@@ -46,7 +46,21 @@ kotlin {
             val fdroidBuild = providers.gradleProperty("fdroid").isPresent
             implementation("com.siddharth.kmp:ai:1.0.0") {
                 if (fdroidBuild) {
+                    // Both on-device LLM backends come out of the F-Droid build, not just the
+                    // MediaPipe one. Excluding tasks-genai alone still left genai-prompt pulling
+                    // Play Services in transitively, so the published APK carried 28,909 GMS,
+                    // 19,046 ML Kit and 2,228 Firebase class references and requested
+                    // com.google.android.apps.aicore.service.BIND_SERVICE, while its own listing
+                    // told installers there were no proprietary components. Verify against the
+                    // built APK, never against this file.
+                    //
+                    // Safe: MlKitGenAiOnDeviceLlm holds its GenerativeModel `by lazy`, so nothing
+                    // resolves at construction, and every call site sits inside runCatching or
+                    // Flow.catch. CompositeOnDeviceLlm falls through to the rule-based tier, which
+                    // is what the F-Droid build already relied on for MediaPipe.
                     exclude(group = "com.google.mediapipe", module = "tasks-genai")
+                    exclude(group = "com.google.mlkit")
+                    exclude(group = "com.google.android.gms")
                 }
             }
         }

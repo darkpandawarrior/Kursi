@@ -26,7 +26,7 @@ Everything else: interactive tutorial (Pehli Hazri), career stats and bot H2H re
 
 The visual identity is License Raj Deco: a 1950s to 1970s government-issue document aesthetic. Ration cards for liars. Enamel nameplates for crooks. Everything is on theme.
 
-Kursi is written in Kotlin Multiplatform and Compose Multiplatform, one codebase across Android, iOS, desktop, and web, with a Ktor server backing the online modes. This build (from F-Droid) is the noGms flavor: no Google Play Services, no Firebase, no proprietary blobs. Source is GPL-3.0-or-later.
+Kursi is written in Kotlin Multiplatform and Compose Multiplatform, one codebase across Android, iOS, desktop, and web, with a Ktor server backing the online modes. This build (from F-Droid) is the noGms flavor: no Google Play Services, no Firebase, no proprietary blobs. The on-device AI opponent that the Play build ships is left out of this one for that reason, so opponents here use the built-in rule-based play. Source is GPL-3.0-or-later.
 
 Sab mile hue hain. Trust no claim. Especially your own.
 
