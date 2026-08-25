@@ -1,0 +1,109 @@
+# ios-ipa.yml — tag-triggered UNSIGNED iOS IPA, attached to the same GitHub Release
+# github-release.yml creates.
+#
+# CI has no Apple Developer Program membership, no distribution certificate, and no provisioning
+# profile — Apple's platform requires all of those to produce an App Store / TestFlight / ad-hoc
+# installable IPA, and none of that is obtainable for free. What CI CAN do is build the .app with
+# CODE_SIGNING_ALLOWED=NO (exactly what github-release.yml's ios-build-check job already proves
+# green: :cmp-ios:linkReleaseFrameworkIosArm64 + xcodebuild build), zip it Payload/-style, and hand
+# it to the user as the *input* to a third-party resigning tool.
+#
+# That input is genuinely useful: AltServer/SideStore/Sideloadly strip whatever signature an .ipa
+# has (or doesn't have) and resign it from scratch with the installing user's own free Apple ID —
+# that is their entire purpose, not a workaround. See docs/SIDELOADING.md for the install steps.
+# Verified NOT viable as a distribution channel on their own: AltStore PAL, Onside and the EU/Japan
+# marketplace lane of Aptoide/Epic all require the publisher to hold a paid Apple Developer Program
+# membership and notarize through Apple, and are geo-gated to devices whose Apple Account region is
+# EU or Japan — none of that is available here. This workflow is the reachable alternative:
+# publish the artifact, let the end user's own AltStore/SideStore/Sideloadly do the resigning.
+name: iOS IPA (unsigned)
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  ios-ipa:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # gen_ios_version.sh counts commits for the build number
+          submodules: recursive
+
+      - name: Check iosApp/ exists
+        id: has_ios
+        run: echo "present=$([ -d iosApp ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK 17
+        if: steps.has_ios.outputs.present == 'true'
+        uses: actions/setup-java@v5.7.0
+        with: { java-version: '17', distribution: 'temurin' }
+
+      - name: Setup Gradle
+        if: steps.has_ios.outputs.present == 'true'
+        uses: gradle/actions/setup-gradle@v6.3.0
+
+      - name: Stamp iOS version from tag
+        if: steps.has_ios.outputs.present == 'true'
+        run: bash scripts/gen_ios_version.sh
+
+      - name: Build KMP iOS framework
+        if: steps.has_ios.outputs.present == 'true'
+        run: ./gradlew :cmp-ios:linkReleaseFrameworkIosArm64
+
+      # -sdk iphoneos, not a simulator destination: sideloading tools need a device-arch binary.
+      # The three CODE_SIGN* overrides together are what let `archive` (a stricter action than the
+      # plain `build` ios-build-check already proves green) complete with no team/cert/profile.
+      - name: Archive (unsigned)
+        if: steps.has_ios.outputs.present == 'true'
+        id: archive
+        run: |
+          set -uo pipefail
+          mkdir -p build dist
+          if xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp -configuration Release \
+              -sdk iphoneos -archivePath build/Kursi.xcarchive archive \
+              CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+              2>&1 | tee build/xcodebuild-archive.log; then
+            echo "archived=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "archived=false" >> "$GITHUB_OUTPUT"
+            echo "::error::xcodebuild archive failed (unsigned) — see the 'Archive (unsigned)' step log."
+            exit 1
+          fi
+
+      - name: Package unsigned .ipa
+        if: steps.has_ios.outputs.present == 'true' && steps.archive.outputs.archived == 'true'
+        run: |
+          set -uo pipefail
+          app="$(find build/Kursi.xcarchive/Products/Applications -maxdepth 1 -name '*.app' | head -1)"
+          if [ -z "$app" ]; then
+            echo "::error::Archive succeeded but produced no .app under Products/Applications."
+            exit 1
+          fi
+          tag="${GITHUB_REF_NAME}"
+          mkdir -p dist/Payload
+          cp -R "$app" dist/Payload/
+          ( cd dist && zip -qr "Kursi-${tag}-ios-unsigned.ipa" Payload )
+          rm -rf dist/Payload
+          ls -la dist/
+
+      - name: Upload to release
+        if: steps.has_ios.outputs.present == 'true' && steps.archive.outputs.archived == 'true'
+        run: |
+          set -uo pipefail
+          tag="${GITHUB_REF_NAME}"
+          # github-release.yml (triggered by the same tag push) creates the release with notes; this
+          # job only needs the release object to exist so the upload has somewhere to land — idempotent
+          # create-if-absent, same as the convention in github-release.yml's own upload step.
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "$tag" --notes "" || true
+          shopt -s nullglob
+          files=(dist/*.ipa)
+          if [ ${#files[@]} -gt 0 ]; then
+            gh release upload "$tag" "${files[@]}" --clobber
+          else
+            echo "::error::no .ipa produced to attach"
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}

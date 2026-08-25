@@ -14,14 +14,32 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.TimeZone
 
-fun kursiCommitCount(): Int =
-    providers
-        .exec {
-            commandLine("git", "rev-list", "--count", "HEAD")
-        }.standardOutput.asText
-        .get()
-        .trim()
-        .toIntOrNull() ?: 0
+// A shallow clone reports 1 commit, which silently produces versionCode 2 and an absurd
+// FINGERPRINT. That is exactly what shipped: every Kursi APK published to F-Droid carried
+// versionCode 2, so no client could ever see an upgrade. actions/checkout defaults to
+// fetch-depth 1, so any workflow that forgets fetch-depth: 0 reintroduces it.
+//
+// Refuse rather than guess. A build that cannot know its own version must not produce one.
+fun kursiCommitCount(): Int {
+    val shallow =
+        providers
+            .exec { commandLine("git", "rev-parse", "--is-shallow-repository") }
+            .standardOutput.asText
+            .get()
+            .trim() == "true"
+    val count =
+        providers
+            .exec { commandLine("git", "rev-list", "--count", "HEAD") }
+            .standardOutput.asText
+            .get()
+            .trim()
+            .toIntOrNull() ?: 0
+    require(!shallow) {
+        "Shallow clone: git rev-list reports $count commits, so versionCode would be " +
+            "${1 + count}. Set `fetch-depth: 0` on actions/checkout."
+    }
+    return count
+}
 
 fun kursiMilestone(): Int =
     rootProject
