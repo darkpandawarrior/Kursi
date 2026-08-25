@@ -83,6 +83,8 @@ includeBuild("external/kmp-toolkit") {
         // IsmctsOnlyProvider (implements AiProvider) and OnDeviceAiProvider.* (consumes toolkit :ai)
         // stayed behind as Kursi-specific.
         substitute(module("com.siddharth.kmp:llm-chat")).using(project(":llm-chat"))
+        // Adaptive substrate for core:designsystem — see that module's build.gradle.kts.
+        substitute(module("com.siddharth.kmp:designsystem")).using(project(":designsystem"))
     }
 }
 
@@ -120,3 +122,6 @@ include(":cmp-web")           // wasmJs browser shell; calls ComposeViewport(doc
 
 // ── SERVER (T9: JVM Ktor authoritative game server) ───────────────────────────
 include(":server")            // Ktor/Netty WebSocket server; authoritative GameState; Channel-actor per match.
+
+// Headless client for :engine — see cli/build.gradle.kts.
+include(":cli")
