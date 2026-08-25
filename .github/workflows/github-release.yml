@@ -24,12 +24,30 @@ jobs:
 
       - name: Assemble release notes
         id: cl
+        env:
+          RELEASE_SCRUBLIST_B64: ${{ secrets.RELEASE_SCRUBLIST_B64 }}
         run: |
           set -uo pipefail
           cur="${GITHUB_REF_NAME}"
           prev="$(git describe --tags --abbrev=0 "${cur}^" 2>/dev/null || echo "")"
           range="${prev:+$prev..}$cur"
           git log --no-merges --pretty='- %s' "$range" > CHANGELOG_BODY.md
+
+          # Leak gate. These notes go to a PUBLIC release, so a reference-app name in a
+          # commit subject would be published verbatim. Refuse rather than redact: a
+          # silent redaction hides that a guarded term reached a commit message at all.
+          if [ -n "${RELEASE_SCRUBLIST_B64:-}" ]; then
+            echo "$RELEASE_SCRUBLIST_B64" | base64 -d > /tmp/scrublist.txt
+            pat="$(grep -vE '^[[:space:]]*#|^[[:space:]]*$' /tmp/scrublist.txt | paste -sd'|' -)"
+            if [ -n "$pat" ] && grep -Eiq "$pat" CHANGELOG_BODY.md; then
+              echo "::error::release notes match a scrublist term, refusing to publish"
+              exit 1
+            fi
+            echo "leak gate: clean against $(grep -cvE '^[[:space:]]*#|^[[:space:]]*$' /tmp/scrublist.txt) patterns"
+          else
+            echo "::error::RELEASE_SCRUBLIST_B64 is not set; this repo is public and must not publish unscrubbed notes"
+            exit 1
+          fi
           echo "prev=$prev" >> "$GITHUB_OUTPUT"
 
       - name: Set up JDK 17
@@ -47,7 +65,9 @@ jobs:
         run: |
           set -uo pipefail
           cmd="${RELEASE_BUILD_CMD:-:cmp-android:assembleGmsRelease :cmp-android:assembleNoGmsRelease}"
-          ./gradlew $cmd || ./gradlew ${cmd%% *} || true
+          # No `|| true` here. It used to swallow a total build failure, so a release
+          # could be published with zero APKs attached and still show green.
+          ./gradlew $cmd
           mkdir -p dist
           tag="${GITHUB_REF_NAME}"
           # Attach APKs under meaningful names: Kursi-<tag>-<flavor>-<buildType>[-unsigned].apk
