@@ -14,7 +14,8 @@ social layer (DARBAR) and an ISMCTS-powered coach on top.
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.4.20--Beta1-7F52FF?logo=kotlin&logoColor=white)
 ![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.12.0--beta02-4285F4?logo=jetpackcompose&logoColor=white)
 ![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS%20%7C%20Desktop%20%7C%20Web-3DDC84)
-[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-blue)](LICENSE)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
+[![Assets: CC BY-SA 4.0](https://img.shields.io/badge/assets-CC%20BY--SA%204.0-lightgrey)](ASSETS-LICENSE)
 ![Players](https://img.shields.io/badge/players-2--10-C99A3B)
 
 **[Why](#why-kursi)** · **[Highlights](#highlights)** · **[Screenshots](#screenshots)** · **[Features](#features-at-a-glance)** · **[Architecture](#architecture)** · **[Tech stack](#tech)** · **[Getting started](#getting-started)** · **[Roadmap](#roadmap)**
@@ -824,7 +825,14 @@ Full list: `git log --oneline`.
 
 ## License
 
-CC BY-NC-SA 4.0 — Source code is available for study and non-commercial modification at https://github.com/darkpandawarrior/Kursi. Commercial use requires explicit written permission. 
+Two licences, because code and art are not the same thing.
+
+**Code is GPL-3.0-or-later** (see [LICENSE](LICENSE)). Fork it, study it, ship it. If you distribute a derivative, publish its source under the same terms. An App Store exception is granted so forks can reach iOS.
+
+**Shipped assets are CC BY-SA 4.0** (see [ASSETS-LICENSE](ASSETS-LICENSE)) — the art, fonts, audio, character names and Hinglish voice lines compiled into the app. Credit and share alike.
+
+The unshipped story bible, lore and design notes stay all rights reserved.
+
 
 Copyright (c) 2024–2025 Siddharth Pandalai.
 

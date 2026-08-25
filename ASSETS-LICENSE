@@ -1,0 +1,40 @@
+KURSI — CREATIVE ASSET LICENCE
+==============================
+
+Copyright (c) 2024-2026 Siddharth Pandalai
+
+The source code of Kursi is licensed under GPL-3.0-or-later (see LICENSE).
+Code and creative work carry different terms, so this file governs the
+creative work.
+
+WHAT THIS FILE COVERS
+---------------------
+Everything compiled into the shipped application:
+
+  - core/designsystem/src/commonMain/composeResources/**
+      (drawables, fonts, audio, and the License Raj Deco visual tokens)
+  - cmp-android/src/main/res/**
+  - the in-game written text, character names and Hinglish voice lines
+      in cmp-shared/src/commonMain/kotlin/com/kursi/shared/strings/**
+
+These are licensed under the Creative Commons Attribution-ShareAlike 4.0
+International licence (CC BY-SA 4.0).
+
+    https://creativecommons.org/licenses/by-sa/4.0/
+
+You may share and adapt them, including commercially, provided you give
+appropriate credit and license your adaptations under the same terms.
+
+WHAT THIS FILE DOES NOT COVER
+-----------------------------
+Creative work that is NOT shipped inside the application remains
+All Rights Reserved. This includes the story bible, lore and worldbuilding
+documents, unshipped design notes, and marketing artwork held outside the
+build. Nothing in this file grants any right to that material.
+
+WHY THE SPLIT
+-------------
+CC licences are not written for software, and GPL is not written for art.
+Applying one licence to both would either under-protect the code or make
+the assets unusable. The boundary is deliberate and simple: if it is
+compiled into the APK, CC BY-SA 4.0 applies; if it is not, it is reserved.
