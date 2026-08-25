@@ -24,6 +24,9 @@ jobs:
         with:
           ref: ${{ github.event.inputs.tag }}
           submodules: recursive
+          # Without full history `git rev-list --count HEAD` returns 1, and versionCode
+          # becomes 2. Every APK published to F-Droid so far carried versionCode 2.
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5.7.0
