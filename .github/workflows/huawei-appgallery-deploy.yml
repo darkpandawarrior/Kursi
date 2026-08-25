@@ -15,10 +15,25 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # A run with no HAS_SECRET skips every step below and still exits green — GitHub shows a
+    # checkmark even though nothing was built or uploaded. "Report deploy status" always runs so
+    # the summary says so explicitly instead of letting a green check imply a real deploy happened.
     env:
       HAS_SECRET: ${{ secrets.HUAWEI_CLIENT_ID != '' }}
       GRADLE_OPTS: "-Dorg.gradle.daemon=false"
     steps:
+      - name: Report deploy status
+        run: |
+          if [ "${{ env.HAS_SECRET }}" = "true" ]; then
+            echo "Deploying to Huawei AppGallery." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Not deployed to Huawei AppGallery" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "No store credentials are configured, so every build and upload step was skipped." >> "$GITHUB_STEP_SUMMARY"
+            echo "This run is green because nothing failed, NOT because the app was published." >> "$GITHUB_STEP_SUMMARY"
+            echo "Set the required secrets to enable it: HUAWEI_CLIENT_ID, HUAWEI_CLIENT_KEY, HUAWEI_APP_ID." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - uses: actions/checkout@v4
         with:
           submodules: recursive
