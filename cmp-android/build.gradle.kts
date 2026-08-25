@@ -48,6 +48,10 @@ android {
         minSdk = 26
         targetSdk = 37
         ndk { abiFilters += setOf("arm64-v8a", "armeabi-v7a") } // drop emulator-only x86/x86_64 — ~61MB of libllm_inference_engine_jni.so
+        // No values-<locale> dir ships in this app (checked: only values/strings.xml exists) — this
+        // only strips the *other* locales' copies of strings that AndroidX/Compose/Material bring in
+        // for their own UI (e.g. accessibility labels), not anything the app itself translates.
+        resourceConfigurations += setOf("en")
         versionCode = readBuildCode()
         versionName = readVersionName()
         buildConfigField("String", "FINGERPRINT", "\"${readFingerprint()}\"")
