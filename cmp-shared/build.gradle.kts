@@ -14,7 +14,14 @@ kotlin {
     jvm()
     iosArm64()
     iosSimulatorArm64()
-    wasmJs { browser() }
+    wasmJs {
+        browser()
+        // CMP-4906: without a declared executable the Compose plugin's Skiko-runtime check fails
+        // `check` outright, because Compose UI cannot load its renderer from a bare klib. This gate
+        // was permanently red before 2026-08-27 - it never told anyone anything, it just failed.
+        // Same fix the toolkit's :designsystem already carries.
+        binaries.executable()
+    }
 
     android {
         namespace = "com.kursi.shared"
@@ -32,6 +39,9 @@ kotlin {
             implementation(project(":feature:game"))
             implementation(project(":core:designsystem"))
             implementation("com.siddharth.kmp:feedback:1.0.0")
+            // capturable()/rememberCaptureController + ImageBitmap.toPngBytes(), for sharing the
+            // Faisla certificate as an image rather than as plain text.
+            implementation("com.siddharth.kmp:designsystem:1.0.0")
             implementation(project(":core:prefs"))
             implementation(project(":core:network"))
             implementation(project(":engine"))

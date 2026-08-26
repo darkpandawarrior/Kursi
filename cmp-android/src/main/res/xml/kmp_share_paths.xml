@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backs the `${applicationId}.kmpshare` FileProvider that com.siddharth.kmp:feedback's shareImage()
+  writes into. Scoped to the one cache subdirectory it uses, deliberately NOT <cache-path path="."/>:
+  a wildcard would expose every cached file the app holds to whatever app the user picks out of the
+  share chooser.
+-->
+<paths>
+    <cache-path name="kmp-share" path="kmp-share/" />
+</paths>

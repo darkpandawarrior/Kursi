@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,6 +19,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -35,6 +37,9 @@ import com.kursi.designsystem.moment.rememberMomentHost
 import com.kursi.feature.game.LocalKursiVoice
 import com.kursi.shared.nav.MatchSummary
 import com.kursi.shared.strings.LocalKursiStrings
+import com.siddharth.kmp.designsystem.capturable
+import com.siddharth.kmp.designsystem.rememberCaptureController
+import kotlinx.coroutines.launch
 import kursi.core.designsystem.generated.resources.Res
 import kursi.core.designsystem.generated.resources.a11y_results_expired
 import kursi.core.designsystem.generated.resources.a11y_winner
@@ -87,7 +92,11 @@ fun ResultsScreen(
      * was a gauntlet game, the human won, and a next rung exists. Null hides the PROMOTE CTA.
      */
     onNextGauntletRung: (() -> Unit)? = null,
-    onShare: (() -> Unit)? = null,
+    /**
+     * Share the verdict. Receives the certificate rendered to an [ImageBitmap], or null when the
+     * capture failed, so the caller can fall back to sharing text.
+     */
+    onShare: ((ImageBitmap?) -> Unit)? = null,
 ) {
     // M3 §4 — honest empty state. On a MatchSummaryStore cache miss (process death cleared the
     // in-memory store) we do NOT fabricate a 0-turn certificate; we show a "record expired" notice.
@@ -105,6 +114,11 @@ fun ResultsScreen(
     // The verdict certificate stamps itself in: a Win moment plays once when the
     // screen first composes, celebrating the result before the static card settles.
     val momentHost = rememberMomentHost()
+    // Share-as-image: the certificate Column below is the captured subtree, deliberately NOT the
+    // whole screen — the footer CTAs are chrome, and nobody wants REMATCH burned into the image
+    // they post. Capture is a suspend read-back off the GPU, hence the scope.
+    val captureController = rememberCaptureController()
+    val captureScope = rememberCoroutineScope()
     val tableAnchors = remember { resultsAnchors() }
     LaunchedEffect(summary.matchId) {
         momentHost.play(KursiMoment.Win(actorSeat = summary.winnerSeat ?: 0))
@@ -126,7 +140,7 @@ fun ResultsScreen(
                 verticalArrangement = Arrangement.Center,
             ) {
                 Column(
-                    modifier = Modifier.widthIn(max = 640.dp).fillMaxWidth(),
+                    modifier = Modifier.widthIn(max = 640.dp).fillMaxWidth().capturable(captureController),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(28.dp),
                 ) {
@@ -223,7 +237,11 @@ fun ResultsScreen(
                         StampChit(
                             label = stringResource(Res.string.results_share_cta),
                             sublabel = stringResource(Res.string.results_share_sub),
-                            onClick = onShare,
+                            onClick = {
+                                captureScope.launch {
+                                    onShare(runCatching { captureController.captureAsImageBitmap() }.getOrNull())
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
