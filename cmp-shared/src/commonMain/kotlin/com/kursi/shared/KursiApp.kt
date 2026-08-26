@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -64,6 +65,9 @@ import com.kursi.shared.screen.TutorialOfferDialog
 import com.kursi.shared.screen.TutorialScreen
 import com.kursi.shared.strings.KursiStrings
 import com.kursi.shared.strings.LocalKursiStrings
+import com.siddharth.kmp.designsystem.toPngBytes
+import com.siddharth.kmp.feedback.canShareImage
+import com.siddharth.kmp.feedback.shareImage
 import com.siddharth.kmp.feedback.shareText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
@@ -760,8 +764,20 @@ fun KursiApp() {
                             summary = summary,
                             onShare =
                                 summary?.let { sm ->
-                                    {
-                                        shareText(buildShareText(sm.winnerName, sm.humanWon, sm.turnsTotal, sm.bluffsHeld))
+                                    { certificate: ImageBitmap? ->
+                                        val caption =
+                                            buildShareText(sm.winnerName, sm.humanWon, sm.turnsTotal, sm.bluffsHeld)
+                                        // Share the certificate itself when the platform can carry an image and
+                                        // the capture came back; otherwise the text, which is what shipped before.
+                                        // canShareImage() is checked rather than assumed: shareImage() is a no-op
+                                        // on iOS, desktop and web today, and a share button that silently does
+                                        // nothing is worse than one that shares a line of text.
+                                        val png = certificate?.toPngBytes()
+                                        if (png != null && canShareImage()) {
+                                            shareImage(png, "kursi-faisla-${sm.matchId}", caption)
+                                        } else {
+                                            shareText(caption)
+                                        }
                                     }
                                 },
                             onReview =
