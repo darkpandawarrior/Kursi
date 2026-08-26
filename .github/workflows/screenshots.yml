@@ -95,13 +95,17 @@ jobs:
             echo "Screenshots unchanged — nothing to commit."
             exit 0
           fi
-          branch="bot/refresh-screenshot-baselines-${GITHUB_SHA::7}"
+          # Stable branch name, NOT per-SHA: the push below is a force-push, so one branch
+          # and one open PR get reused for every refresh. A ${GITHUB_SHA}-suffixed branch
+          # opened a fresh PR per commit to main, and they stacked up conflicting on the
+          # same PNGs (7 open at once in Kursi, 2 in Mileway on 2026-08-27).
+          branch="bot/refresh-screenshot-baselines"
           git checkout -b "$branch"
           git commit -m "chore(screenshots): refresh baselines for ${GITHUB_SHA::7}"
           git push --force origin "$branch"
           if ! gh pr list --head "$branch" --state open --json number --jq '.[0].number' | grep -q .; then
             gh pr create --base main --head "$branch" \
-              --title "chore(screenshots): refresh baselines for ${GITHUB_SHA::7}" \
+              --title "chore(screenshots): refresh render-harness baselines" \
               --body "Automated render-harness baseline refresh — screens changed on main and CI re-rendered them. Review the PNG diffs and merge." \
               || echo "::warning::gh pr create failed (branch $branch was still pushed) — open the PR manually if needed."
           fi
