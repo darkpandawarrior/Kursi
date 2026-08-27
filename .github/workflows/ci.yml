@@ -1,6 +1,11 @@
 name: CI
 
 on:
+  # Manual re-run. A branch pushed by a workflow using GITHUB_TOKEN does NOT trigger push or
+  # pull_request runs (GitHub's loop prevention), so bot-authored PRs land with zero checks and
+  # sit BLOCKED forever on required contexts that will never report. Until those pushes carry a
+  # PAT or App token, this at least lets a human start the run without closing and reopening.
+  workflow_dispatch:
   push:
     branches: [ main ]
   pull_request:
